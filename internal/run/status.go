@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
 // States of an item of status.
@@ -48,11 +48,11 @@ type Item struct {
 // Status is what is to verify in a project folder.
 type Status struct {
 	// SpecErrors stop the list: there is none until the spec compiles.
-	SpecErrors model.Diagnostics
+	SpecErrors spec.Diagnostics
 	Items      []Item
 	// Errors are the errors in the realization: an unlisted file, a stale registry
 	// row, an unused Definition.
-	Errors model.Diagnostics
+	Errors spec.Diagnostics
 	// Skipped are the Definitions recorded skip at the inputs as they are: notes,
 	// which do not count.
 	Skipped []Item
@@ -149,7 +149,7 @@ func (f *folder) see(rec Record) (view, error) {
 	v := view{now: now, items: map[string]Item{}, goneInputs: map[string]Inputs{}, evidence: evidence}
 	lines := rec.byDefinition()
 	for _, id := range sortedKeys(now) {
-		d := f.cur.Model.Definitions[id]
+		d := f.cur.Spec.Definitions[id]
 		it := Item{Definition: id, Title: d.Title, Fingerprint: now[id].Fingerprint(), Look: append([]string{d.File}, now[id].Files(InputFile)...)}
 		s := settle(lines[id], now[id], evidence)
 		switch {
@@ -194,7 +194,7 @@ func (f *folder) status(rec Record, all bool) (Status, error) {
 		st.SpecErrors = errs
 		return st, nil
 	}
-	st.Definitions = len(f.cur.Model.ModelDefinitions())
+	st.Definitions = len(f.cur.Spec.OwnDefinitions())
 	v, err := f.see(rec)
 	if err != nil {
 		return Status{}, err
@@ -210,25 +210,25 @@ func (f *folder) status(rec Record, all bool) (Status, error) {
 		}
 	}
 	st.Errors = f.cur.RealizationErrors()
-	st.Packages = packageItems(f.cur.Model, st.Items)
+	st.Packages = packageItems(f.cur.Spec, st.Items)
 	return st, nil
 }
 
-// packageItems counts the items per Package, for every Package of the model and
+// packageItems counts the items per Package, for every Package of the spec and
 // for a Package that is gone but still has a gone Definition on the list.
-func packageItems(m *model.Model, items []Item) []PackageItems {
+func packageItems(sp *spec.Spec, items []Item) []PackageItems {
 	byName := map[string]*PackageItems{}
-	for _, path := range m.SortedPackages() {
-		p := &PackageItems{Package: model.PackageName(path), Definitions: len(m.Packages[path].Definitions), DependsOn: []string{}}
-		for _, to := range sortedKeys(m.Edges[path]) {
+	for _, path := range sp.SortedPackages() {
+		p := &PackageItems{Package: spec.PackageName(path), Definitions: len(sp.Packages[path].Definitions), DependsOn: []string{}}
+		for _, to := range sortedKeys(sp.Edges[path]) {
 			if to != path {
-				p.DependsOn = append(p.DependsOn, model.PackageName(to))
+				p.DependsOn = append(p.DependsOn, spec.PackageName(to))
 			}
 		}
 		byName[p.Package] = p
 	}
 	for _, it := range items {
-		name := model.PackageName(model.ParentOf(it.Definition))
+		name := spec.PackageName(spec.ParentOf(it.Definition))
 		p := byName[name]
 		if p == nil {
 			p = &PackageItems{Package: name, DependsOn: []string{}}
@@ -251,8 +251,8 @@ const CodeUnreadable = "record.unreadable"
 
 // RecordErrors are the lines of the record markitect cannot read, as
 // diagnostics.
-func (s Status) RecordErrors() model.Diagnostics {
-	var ds model.Diagnostics
+func (s Status) RecordErrors() spec.Diagnostics {
+	var ds spec.Diagnostics
 	for _, n := range s.Unreadable {
 		ds.Add(CodeUnreadable, project.ReviewFile, n, "markitect cannot read this line; the owner fixes or removes it")
 	}

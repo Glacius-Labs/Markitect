@@ -1,4 +1,4 @@
-package model
+package spec
 
 import (
 	"strings"
@@ -15,7 +15,7 @@ func def(kind, body string) string {
 	return "---\nkind: " + kind + "\n---\n" + body
 }
 
-func compile(t *testing.T, files map[string]string, libs ...LibrarySource) (*Model, Diagnostics) {
+func compile(t *testing.T, files map[string]string, libs ...LibrarySource) (*Spec, Diagnostics) {
 	t.Helper()
 	src := Source{Dir: ".markitect/spec", Libraries: append([]LibrarySource{stdKinds}, libs...)}
 	for p, data := range files {
@@ -50,7 +50,7 @@ func clean(t *testing.T, ds Diagnostics) {
 	}
 }
 
-func TestCompileValidModel(t *testing.T) {
+func TestCompileValidSpec(t *testing.T) {
 	m, ds := compile(t, map[string]string{
 		"project.md":         def("std/Concept", "# Lending library\n\nMembers borrow copies. See [[members]] and [[catalog]].\n"),
 		"policy.md":          def("std/Rule", "# Loan policy\n\nAt most five loans.\n"),
@@ -257,7 +257,7 @@ func TestCompileLibraryErrors(t *testing.T) {
 		{Path: "Page.md", Data: []byte("---\nkind: Kind\ninternal: true\n---\n# Page\n")},
 		{Path: "Home.md", Data: []byte("---\nkind: web/Page\n---\n# Home, not a Kind\n")},
 		{Path: "nested/Thing.md", Data: []byte("---\nkind: Kind\n---\n# Nested\n")},
-		{Path: "Link.md", Data: []byte("---\nkind: Kind\n---\n# Link\n\nInto the model: [[members/member]], other Library: [[rest/Endpoint]].\n")},
+		{Path: "Link.md", Data: []byte("---\nkind: Kind\n---\n# Link\n\nInto the spec: [[members/member]], other Library: [[rest/Endpoint]].\n")},
 	}}
 	_, ds := compile(t, map[string]string{"members/member.md": def("std/Rule", "# Member\n")}, bad,
 		LibrarySource{Name: "Bad Name", Dir: "x"})

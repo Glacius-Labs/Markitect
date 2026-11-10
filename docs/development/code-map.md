@@ -14,17 +14,17 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Layer | Meaning | May import | Packages |
 |---|---|---|---|
-| `model` | The model language over supplied bytes: Definitions, Kinds, links, visibility, cycles, manifest and lock. | nothing | 1 |
+| `spec` | The spec language over supplied bytes: Definitions, Kinds, links, visibility, cycles, manifest and lock. | nothing | 1 |
 | `assets` | Files built into the binary: the standard Libraries, the skills and the harness of the work. | nothing | 2 |
 | `harness` | harness.yaml at user and project level, resolved key by key, and the agents' front matter rendered from it. | nothing | 1 |
-| `domain` | Registry pages, ownership and file accounting over a compiled model. | `model` | 1 |
-| `project` | Loads and checks a project's Markitect folder from the files of a project folder. | `model`, `assets`, `harness`, `domain` | 1 |
-| `service` | Questions about a loaded project: what it holds, what depends on what, and vet. | `model`, `assets`, `domain`, `project` | 1 |
-| `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, status, mark and the hook. | `model`, `assets`, `domain`, `project` | 1 |
+| `domain` | Registry pages, ownership and file accounting over a compiled spec. | `spec` | 1 |
+| `project` | Loads and checks a project's Markitect folder from the files of a project folder. | `spec`, `assets`, `harness`, `domain` | 1 |
+| `service` | Questions about a loaded project: what it holds, what depends on what, and vet. | `spec`, `assets`, `domain`, `project` | 1 |
+| `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, status, mark and the hook. | `spec`, `assets`, `domain`, `project` | 1 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete project-folder, command-line and release adapters; no adapter imports another. | `model`, `assets`, `harness`, `domain`, `project`, `service`, `run`, `build` | 3 |
-| `composition` | Constructs the command line with its adapters. | `model`, `project`, `service`, `run`, `adapter` | 1 |
+| `adapter` | Concrete project-folder, command-line and release adapters; no adapter imports another. | `spec`, `assets`, `harness`, `domain`, `project`, `service`, `run`, `build` | 3 |
+| `composition` | Constructs the command line with its adapters. | `spec`, `project`, `service`, `run`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `maintenance` | The import gate and release packaging, separate from product execution. | `guardedwrite` | 2 |
 | `maintenance-command` | Release maintenance entrypoint. | `maintenance`, `build` | 1 |
@@ -39,11 +39,11 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `internal/run` | `internal/adapters/folder` | tests only | The record is tested on real folders. |
 | `internal/tooling/release` | `internal/buildinfo` | tests only | Tests compare the packaged notices with the embedded ones. |
 
-## Canonical model
+## Spec language
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/model` | Package model compiles the spec from explicitly supplied Markdown files: Definitions with front matter, Packages as folders, Libraries of Kinds, links by path, visibility and the Package dependency graph. | [docs/guides/spec-language.md#definitions](../guides/spec-language.md#definitions) |
+| `internal/spec` | Package spec compiles the spec from explicitly supplied Markdown files: Definitions with front matter, Packages as folders, Libraries of Kinds, links by path, visibility and the Package dependency graph. | [docs/guides/spec-language.md#definitions](../guides/spec-language.md#definitions) |
 
 ## Built-in files
 
@@ -62,7 +62,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/realization` | Package realization checks the realization record beside the model: one registry page per Package with the path patterns it owns and the files it realizes, and the ignore file. | [docs/guides/spec-language.md#the-realization-record](../guides/spec-language.md#the-realization-record) |
+| `internal/realization` | Package realization checks the realization record beside the spec: one registry page per Package with the path patterns it owns and the files it realizes, and the ignore file. | [docs/guides/spec-language.md#the-realization-record](../guides/spec-language.md#the-realization-record) |
 
 ## Project
 

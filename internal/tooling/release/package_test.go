@@ -26,7 +26,7 @@ func TestPackageIsDeterministicAndContainsOnlyReleaseSources(t *testing.T) {
 		t.Fatal("packaging the same source twice changed output")
 	}
 	entries := archiveEntries(t, first)
-	want := []string{"LICENSE", "README.md", "go.mod", "go.sum", "schema/manifest.yaml", "cmd/markitect/main.go", "internal/model/model.go", "internal/model/format/schema.go", "internal/tooling/release/package.go", "internal/tooling/release/package_test.go"}
+	want := []string{"LICENSE", "README.md", "go.mod", "go.sum", "schema/manifest.yaml", "cmd/markitect/main.go", "internal/spec/spec.go", "internal/spec/format/schema.go", "internal/tooling/release/package.go", "internal/tooling/release/package_test.go"}
 	sort.Strings(want)
 	if strings.Join(entries, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("unexpected package contents:\n%v\nwant:\n%v", entries, want)
@@ -93,7 +93,7 @@ func TestPackageChangesWhenIncludedSourceChanges(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(root, "internal", "model", "model.go")
+	path := filepath.Join(root, "internal", "spec", "spec.go")
 	if err := os.WriteFile(path, []byte("package core\n// changed\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
@@ -119,8 +119,8 @@ func TestPackageNormalizesTextLineEndingsForReproducibleArchive(t *testing.T) {
 		"LICENSE",
 		"README.md",
 		"cmd/markitect/main.go",
-		"internal/model/model.go",
-		"internal/model/format/schema.go",
+		"internal/spec/spec.go",
+		"internal/spec/format/schema.go",
 		"internal/tooling/release/package.go",
 		"internal/tooling/release/package_test.go",
 		"schema/manifest.yaml",
@@ -144,7 +144,7 @@ func TestPackageNormalizesTextLineEndingsForReproducibleArchive(t *testing.T) {
 		t.Fatal("CRLF checkout changed the canonical source archive or lock")
 	}
 	entries := archiveContents(t, crlfArchive)
-	if got, want := string(entries["internal/model/model.go"]), "package core\n"; got != want {
+	if got, want := string(entries["internal/spec/spec.go"]), "package core\n"; got != want {
 		t.Fatalf("normalized source = %q, want %q", got, want)
 	}
 }

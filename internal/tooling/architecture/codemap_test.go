@@ -96,20 +96,20 @@ func TestCheckInventoryReportsEveryProblem(t *testing.T) {
 	root := t.TempDir()
 	writeFixture(t, root, map[string]string{
 		"go.mod":                         "module example\n",
-		"internal/model/c.go":            "package model\n",
+		"internal/spec/c.go":             "package spec\n",
 		"internal/analysis/h.go":         "package analysis\n",
 		"internal/analysis/missing/m.go": "package missing\n",
 		"docs/owner.md":                  "# Owner\n\n## Real section\n\n```text\n# Not a heading\n```\n\n<a id=\"explicit\"></a>\n",
 	})
 	valid := Rules{Layers: Table.Layers, Packages: []Package{
-		{"internal/model", "model", "docs/owner.md#real-section"},
+		{"internal/spec", "spec", "docs/owner.md#real-section"},
 		{"internal/analysis", "service", "docs/owner.md#explicit"},
 	}}
 	if problems, err := valid.CheckInventory(root); err != nil || len(problems) != 1 || problems[0] != "missing package internal/analysis/missing: add a row to the rule table" {
 		t.Fatalf("valid rows: %v %v", problems, err)
 	}
 	bad := Rules{Layers: Table.Layers, Packages: []Package{
-		{"internal/model", "model", "docs/owner.md#not-a-heading"},
+		{"internal/spec", "spec", "docs/owner.md#not-a-heading"},
 		{"internal/analysis", "service", "docs/owner.md"},
 		{"internal/gone", "service", "docs/absent.md"},
 		{"internal/other", "service", "../outside.md"},
@@ -120,7 +120,7 @@ func TestCheckInventoryReportsEveryProblem(t *testing.T) {
 	}
 	text := strings.Join(problems, "\n")
 	for _, want := range []string{
-		"package internal/model: owning document: docs/owner.md has no anchor #not-a-heading",
+		"package internal/spec: owning document: docs/owner.md has no anchor #not-a-heading",
 		"package internal/gone: owning document: docs/absent.md does not exist",
 		`package internal/other: owning document: "../outside.md" is not a clean repository-relative path`,
 		"missing package internal/analysis/missing: add a row to the rule table",
@@ -137,28 +137,28 @@ func TestCheckInventoryReportsEveryProblem(t *testing.T) {
 }
 
 func TestSummariesNeedExactlyOneDocComment(t *testing.T) {
-	rules := Rules{Layers: Table.Layers, Packages: []Package{{"internal/model", "model", "README.md"}}}
+	rules := Rules{Layers: Table.Layers, Packages: []Package{{"internal/spec", "spec", "README.md"}}}
 	for _, tc := range []struct {
 		name  string
 		files map[string]string
 		want  string
 	}{
-		{"one", map[string]string{"a.go": "// Package model checks models. More text.\npackage model\n", "b.go": "package model\n", "a_test.go": "// Package model tests.\npackage model\n"}, "Package model checks models."},
-		{"none", map[string]string{"a.go": "package model\n"}, "package internal/model has no package doc comment"},
-		{"build constraint only", map[string]string{"a.go": "//go:build windows\n\npackage model\n"}, "package internal/model has no package doc comment"},
-		{"two", map[string]string{"a.go": "// Package model a.\npackage model\n", "b.go": "// Package model b.\npackage model\n"}, "package internal/model has package doc comments in a.go, b.go; keep one"},
-		{"pipe", map[string]string{"a.go": "// Package model a | b.\npackage model\n"}, "must be non-empty and contain no '|'"},
+		{"one", map[string]string{"a.go": "// Package spec checks specs. More text.\npackage spec\n", "b.go": "package spec\n", "a_test.go": "// Package spec tests.\npackage spec\n"}, "Package spec checks specs."},
+		{"none", map[string]string{"a.go": "package spec\n"}, "package internal/spec has no package doc comment"},
+		{"build constraint only", map[string]string{"a.go": "//go:build windows\n\npackage spec\n"}, "package internal/spec has no package doc comment"},
+		{"two", map[string]string{"a.go": "// Package spec a.\npackage spec\n", "b.go": "// Package spec b.\npackage spec\n"}, "package internal/spec has package doc comments in a.go, b.go; keep one"},
+		{"pipe", map[string]string{"a.go": "// Package spec a | b.\npackage spec\n"}, "must be non-empty and contain no '|'"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := t.TempDir()
 			files := map[string]string{}
 			for name, content := range tc.files {
-				files["internal/model/"+name] = content
+				files["internal/spec/"+name] = content
 			}
 			writeFixture(t, root, files)
 			got, err := rules.Summaries(root)
 			if strings.HasPrefix(tc.want, "Package ") {
-				if err != nil || got["internal/model"] != tc.want {
+				if err != nil || got["internal/spec"] != tc.want {
 					t.Fatalf("%v %v", got, err)
 				}
 			} else if err == nil || !strings.Contains(err.Error(), tc.want) {
@@ -171,19 +171,19 @@ func TestSummariesNeedExactlyOneDocComment(t *testing.T) {
 func TestRenderCodeMapLinksFromPageDirectory(t *testing.T) {
 	root := t.TempDir()
 	writeFixture(t, root, map[string]string{
-		"internal/model/m.go":           "// Package model checks.\npackage model\n",
+		"internal/spec/m.go":            "// Package spec checks.\npackage spec\n",
 		"cmd/markitect/main.go":         "// Command markitect runs.\npackage main\n",
 		"internal/tooling/release/r.go": "// Package release builds.\npackage release\n",
 		"internal/buildinfo/b.go":       "// Package buildinfo knows the version.\npackage buildinfo\n",
 	})
 	rules := Rules{Layers: Table.Layers, Packages: []Package{
-		{"internal/model", "model", "docs/architecture.md#go"},
+		{"internal/spec", "spec", "docs/architecture.md#go"},
 		{"internal/buildinfo", "build", "docs/development/other.md"},
 		{"cmd/markitect", "command", "CONTRIBUTING.md"},
 		{"internal/tooling/release", "maintenance", "internal/tooling/release/README.md"},
 	}, Exceptions: []Exception{
 		{From: "internal/tooling/release", To: "internal/buildinfo", TestOnly: true, Reason: "Tests read the notices."},
-		{From: "cmd/markitect", To: "internal/model", Reason: "A fixture edge."},
+		{From: "cmd/markitect", To: "internal/spec", Reason: "A fixture edge."},
 	}}
 	data, err := rules.RenderCodeMap(root)
 	if err != nil {
@@ -191,14 +191,14 @@ func TestRenderCodeMapLinksFromPageDirectory(t *testing.T) {
 	}
 	page := string(data)
 	for _, want := range []string{
-		"| `internal/model` | Package model checks. | [docs/architecture.md#go](../architecture.md#go) |",
+		"| `internal/spec` | Package spec checks. | [docs/architecture.md#go](../architecture.md#go) |",
 		"| `cmd/markitect` | Command markitect runs. | [CONTRIBUTING.md](../../CONTRIBUTING.md) |",
 		"| `internal/buildinfo` | Package buildinfo knows the version. | [docs/development/other.md](other.md) |",
 		"| `internal/tooling/release` | Package release builds. | [internal/tooling/release/README.md](../../internal/tooling/release/README.md) |",
-		"| `model` | The model language over supplied bytes: Definitions, Kinds, links, visibility, cycles, manifest and lock. | nothing | 1 |",
+		"| `spec` | The spec language over supplied bytes: Definitions, Kinds, links, visibility, cycles, manifest and lock. | nothing | 1 |",
 		"| `command` | Thin entrypoints to product composition. | `composition` | 1 |",
 		"| `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 0 |",
-		"| `cmd/markitect` | `internal/model` | all | A fixture edge. |\n| `internal/tooling/release` | `internal/buildinfo` | tests only | Tests read the notices. |",
+		"| `cmd/markitect` | `internal/spec` | all | A fixture edge. |\n| `internal/tooling/release` | `internal/buildinfo` | tests only | Tests read the notices. |",
 		"[rules.go](../../internal/tooling/architecture/rules.go)",
 		"[Architecture](../architecture.md#layers)",
 		CodeMapUpdate,

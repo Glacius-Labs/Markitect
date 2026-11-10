@@ -4,21 +4,21 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
-func testModel(t *testing.T) *model.Model {
+func testSpec(t *testing.T) *spec.Spec {
 	t.Helper()
-	kinds := model.LibrarySource{Name: "std", Version: "1.0.0", Dir: "std", Files: []model.File{
+	kinds := spec.LibrarySource{Name: "std", Version: "1.0.0", Dir: "std", Files: []spec.File{
 		{Path: "Rule.md", Data: []byte("---\nkind: Kind\n---\n# Rule\n")},
 	}}
-	src := model.Source{Dir: ".markitect/spec", Libraries: []model.LibrarySource{kinds}}
+	src := spec.Source{Dir: ".markitect/spec", Libraries: []spec.LibrarySource{kinds}}
 	for _, p := range []string{"project", "members/member", "members/loans/loan", "catalog/book"} {
-		src.Files = append(src.Files, model.File{Path: p + ".md", Data: []byte("---\nkind: std/Rule\n---\n# " + p + "\n")})
+		src.Files = append(src.Files, spec.File{Path: p + ".md", Data: []byte("---\nkind: std/Rule\n---\n# " + p + "\n")})
 	}
-	m, ds := model.Compile(src)
+	m, ds := spec.Compile(src)
 	if len(ds) != 0 {
-		t.Fatalf("fixture model: %v", ds)
+		t.Fatalf("fixture spec: %v", ds)
 	}
 	return m
 }
@@ -33,9 +33,9 @@ func page(pkg, body string) PageFile {
 
 const table = "| File | Realizes | Why |\n|---|---|---|\n"
 
-func account(t *testing.T, files []string, ignored []string, pages ...PageFile) (*Registry, model.Diagnostics) {
+func account(t *testing.T, files []string, ignored []string, pages ...PageFile) (*Registry, spec.Diagnostics) {
 	t.Helper()
-	in := Input{Model: testModel(t), Pages: pages, Files: files, OwnDir: ".markitect",
+	in := Input{Spec: testSpec(t), Pages: pages, Files: files, OwnDir: ".markitect",
 		GitIgnored: func(f string) bool {
 			for _, i := range ignored {
 				if i == f {
@@ -47,7 +47,7 @@ func account(t *testing.T, files []string, ignored []string, pages ...PageFile) 
 	return Account(in)
 }
 
-func expect(t *testing.T, ds model.Diagnostics, code, fragment string) {
+func expect(t *testing.T, ds spec.Diagnostics, code, fragment string) {
 	t.Helper()
 	for _, d := range ds {
 		if d.Code == code && strings.Contains(d.String(), fragment) {
@@ -95,8 +95,8 @@ func TestAccountUnregisteredFile(t *testing.T) {
 }
 
 func TestAccountIgnorePage(t *testing.T) {
-	ignore := model.File{Path: ".markitect/ignore", Data: []byte("# Installed\n.claude/skills/**\n\nLICENSE\n")}
-	in := Input{Model: testModel(t), Ignore: &ignore, OwnDir: ".markitect",
+	ignore := spec.File{Path: ".markitect/ignore", Data: []byte("# Installed\n.claude/skills/**\n\nLICENSE\n")}
+	in := Input{Spec: testSpec(t), Ignore: &ignore, OwnDir: ".markitect",
 		Files: []string{".claude/skills/markitect-architect/SKILL.md", "LICENSE"},
 		Pages: []PageFile{page("", table+"| LICENSE | | Also registered |\n")}}
 	reg, ds := Account(in)
@@ -107,8 +107,8 @@ func TestAccountIgnorePage(t *testing.T) {
 }
 
 func TestAccountIgnoreSyntax(t *testing.T) {
-	ignore := model.File{Path: ".markitect/ignore", Data: []byte("# a comment\n\n/abs\ndocs/\n!keep.txt\n.markitect/spec/x.md\nok.txt\n")}
-	_, ds := Account(Input{Model: testModel(t), Ignore: &ignore, OwnDir: ".markitect"})
+	ignore := spec.File{Path: ".markitect/ignore", Data: []byte("# a comment\n\n/abs\ndocs/\n!keep.txt\n.markitect/spec/x.md\nok.txt\n")}
+	_, ds := Account(Input{Spec: testSpec(t), Ignore: &ignore, OwnDir: ".markitect"})
 	expect(t, ds, "ignore.syntax", `"/abs"`)
 	expect(t, ds, "ignore.syntax", `"docs/"`)
 	expect(t, ds, "ignore.syntax", "takes a file back")
@@ -120,7 +120,7 @@ func TestAccountIgnoreSyntax(t *testing.T) {
 
 // The tool's own files count as ignored, unless a page lists them.
 func TestAccountOwnFiles(t *testing.T) {
-	reg, ds := Account(Input{Model: testModel(t), OwnDir: ".markitect",
+	reg, ds := Account(Input{Spec: testSpec(t), OwnDir: ".markitect",
 		Own:   func(f string) bool { return f == "tool.md" || f == ".gitignore" },
 		Files: []string{"tool.md", ".gitignore"},
 		Pages: []PageFile{page("", table+"| .gitignore | | Listed by the owner |\n")}})
@@ -162,7 +162,7 @@ func TestAccountEntryErrors(t *testing.T) {
 	expect(t, ds, "registry.table", `"../outside"`)
 	expect(t, ds, "registry.link", "[[members]] is not a Definition")
 	expect(t, ds, "registry.link", "[[std/Rule]] is not a Definition")
-	expect(t, ds, "registry.link", "[[bad path]] is not a model path")
+	expect(t, ds, "registry.link", "[[bad path]] is not a spec path")
 	expect(t, ds, "registry.front_matter", `unknown key "owner"`)
 	expect(t, ds, "file.unregistered", "src/members/m.go")
 }

@@ -159,7 +159,7 @@ func (s *smoke) distributionChecks(bootstrapDir string) []check {
 	return []check{
 		{"bootstrap prints third-party notices", func() error { return s.notices(bootstrapDir) }},
 		{"packaged CLI reports a build version", s.version},
-		{"model commands over a small project, and refusals", s.modelCommands},
+		{"spec commands over a small project, and refusals", s.specCommands},
 	}
 }
 

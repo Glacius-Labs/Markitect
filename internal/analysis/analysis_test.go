@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
-	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
 type memRepo map[string]string
@@ -53,13 +53,13 @@ func def(kind, title, body string) string {
 func library(t *testing.T) memRepo {
 	t.Helper()
 	files, _ := libraries.Files("std")
-	std := model.LibrarySource{Name: "std", Version: libraries.Version}
+	std := spec.LibrarySource{Name: "std", Version: libraries.Version}
 	for _, f := range files {
-		std.Files = append(std.Files, model.File{Path: f.Path, Data: f.Data})
+		std.Files = append(std.Files, spec.File{Path: f.Path, Data: f.Data})
 	}
 	return memRepo{
 		project.ManifestFile:                      "libraries:\n  std: 1.0.0\n",
-		project.LockFile:                          string(model.RenderLock([]model.LibrarySource{std})),
+		project.LockFile:                          string(spec.RenderLock([]spec.LibrarySource{std})),
 		m + "project.md":                          def("std/Project", "Library", "Parts: [[members]], [[catalog]]."),
 		m + "loan-limit.md":                       def("std/Rule", "Loan limit", "At most `5` open loans."),
 		m + "members/member.md":                   def("std/Concept", "Member", "A person."),
@@ -137,7 +137,7 @@ func TestGraphMeasures(t *testing.T) {
 	}
 }
 
-func vetCodes(t *testing.T, r memRepo) model.Diagnostics {
+func vetCodes(t *testing.T, r memRepo) spec.Diagnostics {
 	t.Helper()
 	return Vet(loadRepo(t, r), History{}).Warnings
 }
@@ -149,7 +149,7 @@ func vetNotes(t *testing.T, r memRepo, revisions map[string]int) []Note {
 	return Vet(loadRepo(t, r), History{Revisions: revisions}).Notes
 }
 
-func expectWarning(t *testing.T, ds model.Diagnostics, code, fragment string) {
+func expectWarning(t *testing.T, ds spec.Diagnostics, code, fragment string) {
 	t.Helper()
 	for _, d := range ds {
 		if d.Code == code && strings.Contains(d.String(), fragment) {

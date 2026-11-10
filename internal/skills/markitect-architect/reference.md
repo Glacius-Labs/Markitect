@@ -1,6 +1,6 @@
-# Reference: the model form
+# Reference: the spec form
 
-A compact summary. The canonical text is `docs/guides/model-language.md` in the Markitect repository; if they differ, the guide wins.
+A compact summary. The canonical text is `docs/guides/spec-language.md` in the Markitect repository; if they differ, the guide wins.
 
 ## Layout
 
@@ -81,7 +81,7 @@ paths:
 - Patterns: `*` and `?` inside one name; a whole segment `**` matches any depth; a trailing `**` matches what is inside the folder. No `[ ]` or `{ }` (`registry.pattern`).
 - Ownership: the most specific pattern wins; a pattern with no wildcard beats any with one; otherwise more literal characters win. Root owns what no one claims. Two Packages with the same pattern: `registry.duplicate_pattern`; equal specificity matching the same file: `registry.ambiguous_owner`.
 - Accounting: every file outside `.markitect/` is listed on its owner's page or in the ignore file (`file.unregistered`). Listed on a page of a different owner: `registry.wrong_owner`; listed twice: `registry.duplicate_entry`; listed and ignored: `registry.ignored_file`; excluded by a `.gitignore`: `registry.git_ignored`; below `.markitect/`: `registry.own_file`.
-- Rows: tables whose first header is `File`, three cells: file, links to the Definitions it realizes (model Definitions only; none is allowed), a short reason (`registry.table`, `registry.link`). The registry folder holds only pages (`registry.page`).
+- Rows: tables whose first header is `File`, three cells: file, links to the Definitions it realizes (Definitions of the spec only; none is allowed), a short reason (`registry.table`, `registry.link`). The registry folder holds only pages (`registry.page`).
 - Shared files (README, CI pipeline, compose file) belong to the lowest common parent of the Packages they serve, often Root, and list every Definition they realize.
 
 ## Ignore file

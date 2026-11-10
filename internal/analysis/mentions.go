@@ -6,8 +6,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
 // Where a link that an unlinked mention asks for would go, when not within the
@@ -27,21 +27,21 @@ const (
 // names others, and one more for each group of names a link to which would go
 // against the Package structure or beyond it.
 func unlinkedMentions(p *project.Project) []Note {
-	m := p.Model
-	ids := m.ModelDefinitions()
+	sp := p.Spec
+	ids := sp.OwnDefinitions()
 	byFirst := map[string][]named{}
 	nameList := map[string][][]string{}
 	for _, id := range ids {
-		for _, n := range namesOf(m.Definitions[id]) {
+		for _, n := range namesOf(sp.Definitions[id]) {
 			byFirst[n[0]] = append(byFirst[n[0]], named{id, n})
 			nameList[id] = append(nameList[id], n)
 		}
 	}
-	reach := reachability{m: m, seen: map[string]map[string]bool{}}
+	reach := reachability{sp: sp, seen: map[string]map[string]bool{}}
 	var out []Note
 	for _, x := range ids {
-		d := m.Definitions[x]
-		page, err := model.ParsePage(d.Data)
+		d := sp.Definitions[x]
+		page, err := spec.ParsePage(d.Data)
 		if err != nil {
 			continue
 		}
@@ -49,7 +49,7 @@ func unlinkedMentions(p *project.Project) []Note {
 		toks := tokenize(text)
 		linked := map[string]bool{}
 		for _, l := range d.Links {
-			if t := m.Definitions[l.Target]; !l.Package && t != nil && t.InModel() {
+			if t := sp.Definitions[l.Target]; !l.Package && t != nil && t.Own() {
 				linked[l.Target] = true
 			}
 		}
@@ -58,8 +58,8 @@ func unlinkedMentions(p *project.Project) []Note {
 		first := map[string]int{}
 		for _, s := range longestFirst(spans(toks, byFirst)) {
 			dd := s.id
-			t := m.Definitions[dd]
-			if dd == x || linked[dd] || t.Kind == model.CoreKind || !mayLink(d, t) {
+			t := sp.Definitions[dd]
+			if dd == x || linked[dd] || t.Kind == spec.CoreKind || !mayLink(d, t) {
 				continue
 			}
 			if _, ok := first[dd]; ok || covered(s.words, linked, nameList) {
@@ -69,7 +69,7 @@ func unlinkedMentions(p *project.Project) []Note {
 		}
 		groups := map[string][]string{}
 		for dd := range first {
-			s := reach.structure(d.Package, m.Definitions[dd].Package)
+			s := reach.structure(d.Package, sp.Definitions[dd].Package)
 			groups[s] = append(groups[s], dd)
 		}
 		for _, structure := range []string{"", StructureAgainst, StructureNew} {
@@ -94,7 +94,7 @@ func unlinkedMentions(p *project.Project) []Note {
 			case StructureNew:
 				msg = "names %s without linking %s; " + plural(len(targets), "a link would add a Package dependency the spec does not have", "links would add Package dependencies the spec does not have")
 			}
-			var n model.Diagnostics
+			var n spec.Diagnostics
 			n.Add("vet.unlinked_mention", d.File, line, msg, names(targets), it)
 			out = append(out, Note{Diagnostic: n[0], Targets: targets, Structure: structure})
 		}
@@ -110,7 +110,7 @@ type named struct {
 
 // namesOf returns a Definition's names: its title and the last segment of its ID,
 // as words.
-func namesOf(d *model.Definition) [][]string {
+func namesOf(d *spec.Definition) [][]string {
 	var out [][]string
 	seen := map[string]bool{}
 	segment := d.ID[strings.LastIndexByte(d.ID, '/')+1:]
@@ -307,17 +307,17 @@ func sameName(a, b []string) bool {
 
 // mayLink says whether Definition d may link t at all: not into a child Package,
 // and not to a Definition internal to a Package d lies outside of.
-func mayLink(d, t *model.Definition) bool {
-	if t.Package != d.Package && model.Within(t.Package, d.Package) {
+func mayLink(d, t *spec.Definition) bool {
+	if t.Package != d.Package && spec.Within(t.Package, d.Package) {
 		return false
 	}
-	return !t.Internal || model.Within(d.Package, t.Package)
+	return !t.Internal || spec.Within(d.Package, t.Package)
 }
 
 // reachability answers whether a Package depends on another along the explicit
 // and implicit edges, as the cycle check reads them.
 type reachability struct {
-	m    *model.Model
+	sp   *spec.Spec
 	seen map[string]map[string]bool
 }
 
@@ -327,7 +327,7 @@ type reachability struct {
 // StructureNew when it would add a dependency.
 func (r reachability) structure(from, to string) string {
 	switch {
-	case model.Within(from, to), r.m.Edges[from][to] != nil:
+	case spec.Within(from, to), r.sp.Edges[from][to] != nil:
 		return ""
 	case r.reaches(to)[from]:
 		return StructureAgainst
@@ -345,7 +345,7 @@ func (r reachability) reaches(p string) map[string]bool {
 	for len(stack) > 0 {
 		q := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
-		for _, s := range r.m.Successors(q) {
+		for _, s := range r.sp.Successors(q) {
 			if !got[s] {
 				got[s] = true
 				stack = append(stack, s)

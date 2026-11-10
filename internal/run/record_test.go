@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/folder"
-	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
@@ -278,7 +278,7 @@ func TestALibraryCountsByItsLockDigest(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		p.write(project.LockFile, string(model.RenderLock(pr.Libraries)))
+		p.write(project.LockFile, string(spec.RenderLock(pr.Libraries)))
 	}
 	relock()
 	p.verifyAll()

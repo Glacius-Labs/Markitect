@@ -60,7 +60,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 			t.Fatalf("init output lacks %q:\n%s", want, out)
 		}
 	}
-	if !strings.Contains(read(t, r.Dir, ".claude/skills/markitect-architect/SKILL.md"), "## Who writes") || !strings.Contains(read(t, r.Dir, ".agents/skills/markitect-architect/reference.md"), "model form") {
+	if !strings.Contains(read(t, r.Dir, ".claude/skills/markitect-architect/SKILL.md"), "## Who writes") || !strings.Contains(read(t, r.Dir, ".agents/skills/markitect-architect/reference.md"), "spec form") {
 		t.Fatal("skills not installed")
 	}
 	if !strings.Contains(read(t, r.Dir, ".markitect/spec/project.md"), "# Lending library") {
@@ -149,7 +149,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 		t.Fatalf("vet: %d %s", code, out)
 	}
 	r.Write(".markitect/spec/members/orphan.md", "---\nkind: std/Concept\n---\n# Orphan\n\nA member within the loan limit. "+strings.Repeat("word ", 1001)+"\n")
-	if code, out, _ := run(t, r.Dir, "vet"); code != 0 || out != ".markitect/spec/members/orphan.md: vet.definition_size: 1009 words (more than 1000); split it or move detail the model does not need to the realization\nnotes: 2 unlinked mentions in 1 Definition; markitect vet --strict lists them\n" {
+	if code, out, _ := run(t, r.Dir, "vet"); code != 0 || out != ".markitect/spec/members/orphan.md: vet.definition_size: 1009 words (more than 1000); split it or move detail the spec does not need to the realization\nnotes: 2 unlinked mentions in 1 Definition; markitect vet --strict lists them\n" {
 		t.Fatalf("vet with a warning and a note: %d %s", code, out)
 	}
 	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 1 || !strings.Contains(out, ".markitect/spec/members/orphan.md:6: vet.unlinked_mention: names loan-limit and members/member without linking them\n") || strings.Contains(out, "notes:") {

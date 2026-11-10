@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
 // The inputs of a Definition: everything its verification depended on, each by
@@ -79,10 +79,10 @@ type state struct {
 	hash func(file string) (string, error)
 }
 
-// inputs computes the inputs of every Definition of the project's model, without
+// inputs computes the inputs of every Definition of the project's spec, without
 // evidence.
 func (s state) inputs() (map[string]Inputs, error) {
-	m := s.p.Model
+	sp := s.p.Spec
 	rows := map[string][]string{}
 	if s.p.Registry != nil {
 		for _, file := range sortedKeys(s.p.Registry.Entries) {
@@ -92,8 +92,8 @@ func (s state) inputs() (map[string]Inputs, error) {
 		}
 	}
 	out := map[string]Inputs{}
-	for _, id := range m.ModelDefinitions() {
-		d := m.Definitions[id]
+	for _, id := range sp.OwnDefinitions() {
+		d := sp.Definitions[id]
 		in := Inputs{InputSelf: Hash(d.Data)}
 		for _, l := range d.Links {
 			if l.Target == "" || l.Package || l.Target == d.ID {
@@ -121,16 +121,16 @@ func (s state) inputs() (map[string]Inputs, error) {
 	return out, nil
 }
 
-// linked is the input a link contributes: a model Definition's text, or for a
+// linked is the input a link contributes: the text of a Definition of the spec, or for a
 // Library Definition its Library's digest from the lock, so that a newer binary
 // changes nothing until the lock is written again. Core's Kind never changes and
 // is no input.
 func (s state) linked(target string) (string, bool) {
-	t := s.p.Model.Definitions[target]
+	t := s.p.Spec.Definitions[target]
 	switch {
 	case t == nil, t.Library == "core":
 		return "", false
-	case t.InModel():
+	case t.Own():
 		return Hash(t.Data), true
 	}
 	if locked, ok := s.p.Lock.Libraries[t.Library]; ok {
@@ -138,7 +138,7 @@ func (s state) linked(target string) (string, bool) {
 	}
 	for _, lib := range s.p.Libraries {
 		if lib.Name == t.Library {
-			return model.LibraryDigest(lib.Files), true
+			return spec.LibraryDigest(lib.Files), true
 		}
 	}
 	return "", false

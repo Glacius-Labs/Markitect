@@ -15,8 +15,8 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/harness"
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
-	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
 // The fixed layout of Markitect's own folder.
@@ -92,14 +92,14 @@ type Repository interface {
 
 // Project is one checked state of a project.
 type Project struct {
-	Files     []string   // every visible repository file
-	Lock      model.Lock // empty when the lock is missing or unreadable
-	Libraries []model.LibrarySource
-	Model     *model.Model
+	Files     []string  // every visible repository file
+	Lock      spec.Lock // empty when the lock is missing or unreadable
+	Libraries []spec.LibrarySource
+	Spec      *spec.Spec
 	Registry  *realization.Registry
 	// Errors are the compile errors, of the spec and of the realization; a
 	// Project with errors is still loaded as far as its files allow.
-	Errors model.Diagnostics
+	Errors spec.Diagnostics
 }
 
 // Codes of the errors that say the realization does not match the spec yet:
@@ -117,8 +117,8 @@ func IsRealization(code string) bool {
 
 // SpecErrors are the errors in the spec itself: what stops a Command before it
 // starts an agent.
-func (p *Project) SpecErrors() model.Diagnostics {
-	var out model.Diagnostics
+func (p *Project) SpecErrors() spec.Diagnostics {
+	var out spec.Diagnostics
 	for _, d := range p.Errors {
 		if !IsRealization(d.Code) {
 			out = append(out, d)
@@ -128,8 +128,8 @@ func (p *Project) SpecErrors() model.Diagnostics {
 }
 
 // RealizationErrors are the errors that say the work does not match the spec yet.
-func (p *Project) RealizationErrors() model.Diagnostics {
-	var out model.Diagnostics
+func (p *Project) RealizationErrors() spec.Diagnostics {
+	var out spec.Diagnostics
 	for _, d := range p.Errors {
 		if IsRealization(d.Code) {
 			out = append(out, d)
@@ -162,7 +162,7 @@ func Load(repo Repository) (*Project, error) {
 	}
 	sort.Strings(files)
 	p := &Project{Files: files}
-	var ds model.Diagnostics
+	var ds spec.Diagnostics
 	read := func(file string) ([]byte, bool) {
 		data, err := repo.Read(file)
 		if err != nil {
@@ -172,7 +172,7 @@ func Load(repo Repository) (*Project, error) {
 		return Normalize(data), true
 	}
 	present := map[string]bool{}
-	var specFiles []model.File
+	var specFiles []spec.File
 	var pages []realization.PageFile
 	var libraryFiles, others []string
 	for _, f := range files {
@@ -192,7 +192,7 @@ func Load(repo Repository) (*Project, error) {
 			}
 		case f == RootPage:
 			if data, ok := read(f); ok {
-				pages = append(pages, realization.PageFile{Package: model.RootPackage, File: f, Data: data})
+				pages = append(pages, realization.PageFile{Package: spec.RootPackage, File: f, Data: data})
 			}
 		case first == "registry" && rest != "":
 			pkg, ok := strings.CutSuffix(rest, ".md")
@@ -205,7 +205,7 @@ func Load(repo Repository) (*Project, error) {
 			}
 		case first == "spec" && rest != "":
 			if data, ok := read(f); ok {
-				specFiles = append(specFiles, model.File{Path: rest, Data: data})
+				specFiles = append(specFiles, spec.File{Path: rest, Data: data})
 			}
 		case first == "libraries" && strings.Contains(rest, "/"):
 			libraryFiles = append(libraryFiles, f)
@@ -215,34 +215,34 @@ func Load(repo Repository) (*Project, error) {
 			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the harness configuration %s, the registry, the spec, Libraries, the record %s with its %s, and the installed tool", Dir, HarnessFile, ReviewFile, AttributesFile)
 		}
 	}
-	local := map[string][]model.File{}
+	local := map[string][]spec.File{}
 	for _, f := range libraryFiles {
 		name, file, _ := strings.Cut(strings.TrimPrefix(f, LibraryDir+"/"), "/")
 		if data, ok := read(f); ok {
-			local[name] = append(local[name], model.File{Path: file, Data: data})
+			local[name] = append(local[name], spec.File{Path: file, Data: data})
 		}
 	}
 	p.loadManifest(read, present, local, &ds)
-	m, errs := model.Compile(model.Source{Dir: SpecDir, Files: specFiles, Libraries: p.Libraries})
-	p.Model = m
+	sp, errs := spec.Compile(spec.Source{Dir: SpecDir, Files: specFiles, Libraries: p.Libraries})
+	p.Spec = sp
 	ds = append(ds, errs...)
-	in := realization.Input{Model: m, Pages: pages, Files: others, GitIgnored: repo.GitIgnored, OwnDir: Dir, Own: isOwn}
+	in := realization.Input{Spec: sp, Pages: pages, Files: others, GitIgnored: repo.GitIgnored, OwnDir: Dir, Own: isOwn}
 	if present[IgnoreFile] {
 		if data, ok := read(IgnoreFile); ok {
-			in.Ignore = &model.File{Path: IgnoreFile, Data: data}
+			in.Ignore = &spec.File{Path: IgnoreFile, Data: data}
 		}
 	}
 	reg, errs := realization.Account(in)
 	p.Registry = reg
 	ds = append(ds, errs...)
-	addRealizationErrors(&ds, m, reg)
+	addRealizationErrors(&ds, sp, reg)
 	p.Errors = ds.Sorted()
 	return p, nil
 }
 
 // addRealizationErrors makes stale registry entries and unused Definitions
 // errors: spec and code do not match, whichever side changed.
-func addRealizationErrors(ds *model.Diagnostics, m *model.Model, reg *realization.Registry) {
+func addRealizationErrors(ds *spec.Diagnostics, sp *spec.Spec, reg *realization.Registry) {
 	if reg != nil {
 		for _, s := range reg.Stale {
 			switch s.Code {
@@ -259,11 +259,11 @@ func addRealizationErrors(ds *model.Diagnostics, m *model.Model, reg *realizatio
 			}
 		}
 	}
-	if m == nil {
+	if sp == nil {
 		return
 	}
 	incoming := map[string]bool{}
-	for _, d := range m.Definitions {
+	for _, d := range sp.Definitions {
 		for _, l := range d.Links {
 			if l.Target != d.ID {
 				incoming[l.Target] = true
@@ -278,14 +278,14 @@ func addRealizationErrors(ds *model.Diagnostics, m *model.Model, reg *realizatio
 			}
 		}
 	}
-	for _, id := range m.ModelDefinitions() {
+	for _, id := range sp.OwnDefinitions() {
 		if !incoming[id] && !realized[id] {
-			ds.Add(CodeUnused, m.Definitions[id].File, 0, "nothing links to %s and no file realizes it", id)
+			ds.Add(CodeUnused, sp.Definitions[id].File, 0, "nothing links to %s and no file realizes it", id)
 		}
 	}
 }
 
-func (p *Project) loadManifest(read func(string) ([]byte, bool), present map[string]bool, local map[string][]model.File, ds *model.Diagnostics) {
+func (p *Project) loadManifest(read func(string) ([]byte, bool), present map[string]bool, local map[string][]spec.File, ds *spec.Diagnostics) {
 	if !present[ManifestFile] {
 		ds.Add("manifest.missing", ManifestFile, 0, "the project has no manifest; run markitect init")
 		return
@@ -294,7 +294,7 @@ func (p *Project) loadManifest(read func(string) ([]byte, bool), present map[str
 	if !ok {
 		return
 	}
-	manifest, errs := model.ParseManifest(ManifestFile, data)
+	manifest, errs := spec.ParseManifest(ManifestFile, data)
 	*ds = append(*ds, errs...)
 	named := map[string]bool{}
 	for _, ref := range manifest.Libraries {
@@ -319,11 +319,11 @@ func (p *Project) loadManifest(read func(string) ([]byte, bool), present map[str
 		return
 	}
 	if data, ok := read(LockFile); ok {
-		lock, errs := model.ParseLock(LockFile, data)
+		lock, errs := spec.ParseLock(LockFile, data)
 		*ds = append(*ds, errs...)
 		if len(errs) == 0 {
 			p.Lock = lock
-			*ds = append(*ds, model.VerifyLock(LockFile, lock, p.Libraries)...)
+			*ds = append(*ds, spec.VerifyLock(LockFile, lock, p.Libraries)...)
 		}
 	}
 }
@@ -331,31 +331,31 @@ func (p *Project) loadManifest(read func(string) ([]byte, bool), present map[str
 // LibrarySource finds the files of a Library the manifest names: a standard
 // Library from the binary, any other from the project's Library folder. It
 // returns a diagnostic code and reason when the Library is not available.
-func LibrarySource(ref model.LibraryRef, local map[string][]model.File) (model.LibrarySource, string, string) {
+func LibrarySource(ref spec.LibraryRef, local map[string][]spec.File) (spec.LibrarySource, string, string) {
 	if files, ok := libraries.Files(ref.Name); ok {
 		if _, shadowed := local[ref.Name]; shadowed {
-			return model.LibrarySource{}, "library.reserved", fmt.Sprintf("%s is a standard Library that ships with markitect; remove %s/%s", ref.Name, LibraryDir, ref.Name)
+			return spec.LibrarySource{}, "library.reserved", fmt.Sprintf("%s is a standard Library that ships with markitect; remove %s/%s", ref.Name, LibraryDir, ref.Name)
 		}
 		if ref.Version != libraries.Version {
-			return model.LibrarySource{}, "library.version", fmt.Sprintf("this markitect ships %s %s, not %s", ref.Name, libraries.Version, ref.Version)
+			return spec.LibrarySource{}, "library.version", fmt.Sprintf("this markitect ships %s %s, not %s", ref.Name, libraries.Version, ref.Version)
 		}
-		lib := model.LibrarySource{Name: ref.Name, Version: ref.Version, Dir: "markitect:" + ref.Name}
+		lib := spec.LibrarySource{Name: ref.Name, Version: ref.Version, Dir: "markitect:" + ref.Name}
 		for _, f := range files {
-			lib.Files = append(lib.Files, model.File{Path: f.Path, Data: f.Data})
+			lib.Files = append(lib.Files, spec.File{Path: f.Path, Data: f.Data})
 		}
 		return lib, "", ""
 	}
 	files, ok := local[ref.Name]
 	if !ok {
-		return model.LibrarySource{}, "library.missing", fmt.Sprintf("Library %s is neither a standard Library nor committed under %s/%s", ref.Name, LibraryDir, ref.Name)
+		return spec.LibrarySource{}, "library.missing", fmt.Sprintf("Library %s is neither a standard Library nor committed under %s/%s", ref.Name, LibraryDir, ref.Name)
 	}
-	return model.LibrarySource{Name: ref.Name, Version: ref.Version, Dir: path.Join(LibraryDir, ref.Name), Files: files}, "", ""
+	return spec.LibrarySource{Name: ref.Name, Version: ref.Version, Dir: path.Join(LibraryDir, ref.Name), Files: files}, "", ""
 }
 
 // LocalLibraries returns the files below the project's Library folder,
 // grouped by Library name.
-func LocalLibraries(repo Repository, files []string) (map[string][]model.File, error) {
-	local := map[string][]model.File{}
+func LocalLibraries(repo Repository, files []string) (map[string][]spec.File, error) {
+	local := map[string][]spec.File{}
 	for _, f := range files {
 		rest, ok := strings.CutPrefix(f, LibraryDir+"/")
 		if !ok || !strings.Contains(rest, "/") {
@@ -366,7 +366,7 @@ func LocalLibraries(repo Repository, files []string) (map[string][]model.File, e
 			return nil, err
 		}
 		name, file, _ := strings.Cut(rest, "/")
-		local[name] = append(local[name], model.File{Path: file, Data: Normalize(data)})
+		local[name] = append(local[name], spec.File{Path: file, Data: Normalize(data)})
 	}
 	return local, nil
 }

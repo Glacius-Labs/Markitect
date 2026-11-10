@@ -14,10 +14,10 @@ import (
 	"io"
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
-	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/skills"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
 // Workspace is a project folder, as a walk of it finds its files.
@@ -241,12 +241,12 @@ func (c CLI) check(_ context.Context, args []string) (int, error) {
 	if err != nil {
 		return Misused, err
 	}
-	spec, realization := p.SpecErrors(), p.RealizationErrors()
+	specErrs, realization := p.SpecErrors(), p.RealizationErrors()
 	nothingBuilt := !specOnly && p.NothingBuilt()
 	if specOnly || nothingBuilt {
 		realization = nil
 	}
-	total := len(spec) + len(realization)
+	total := len(specErrs) + len(realization)
 	if o.json {
 		doc := struct {
 			envelope
@@ -258,21 +258,21 @@ func (c CLI) check(_ context.Context, args []string) (int, error) {
 			SpecErrors        int          `json:"spec_errors"`
 			RealizationErrors int          `json:"realization_errors"`
 			Diagnostics       []diagnostic `json:"diagnostics"`
-		}{newEnvelope("check"), total == 0, nothingBuilt, len(p.Model.ModelDefinitions()), len(p.Model.Packages), len(p.Registry.Owner), len(spec), len(realization), append(diagnostics(severityError, spec), diagnostics(severityError, realization)...)}
+		}{newEnvelope("check"), total == 0, nothingBuilt, len(p.Spec.OwnDefinitions()), len(p.Spec.Packages), len(p.Registry.Owner), len(specErrs), len(realization), append(diagnostics(severityError, specErrs), diagnostics(severityError, realization)...)}
 		if err := c.printJSON(doc); err != nil {
 			return Misused, err
 		}
 	} else {
-		for _, d := range append(append(model.Diagnostics{}, spec...), realization...) {
+		for _, d := range append(append(spec.Diagnostics{}, specErrs...), realization...) {
 			fmt.Fprintln(c.Stdout, d.String())
 		}
 		switch {
 		case nothingBuilt:
-			fmt.Fprintf(c.Stdout, "ok: the spec compiles, with %d Definitions in %d Packages. Nothing is built yet, and /markitect-build builds it.\n", len(p.Model.ModelDefinitions()), len(p.Model.Packages))
+			fmt.Fprintf(c.Stdout, "ok: the spec compiles, with %d Definitions in %d Packages. Nothing is built yet, and /markitect-build builds it.\n", len(p.Spec.OwnDefinitions()), len(p.Spec.Packages))
 		case total == 0:
-			fmt.Fprintf(c.Stdout, "ok: %d Definitions in %d Packages, %d files accounted\n", len(p.Model.ModelDefinitions()), len(p.Model.Packages), len(p.Registry.Owner))
+			fmt.Fprintf(c.Stdout, "ok: %d Definitions in %d Packages, %d files accounted\n", len(p.Spec.OwnDefinitions()), len(p.Spec.Packages), len(p.Registry.Owner))
 		default:
-			fmt.Fprintf(c.Stdout, "%d %s: %d in the spec, for the owner to settle; %d in the realization, so spec and code do not match yet, which /markitect-build settles\n", total, plural(total, "error", "errors"), len(spec), len(realization))
+			fmt.Fprintf(c.Stdout, "%d %s: %d in the spec, for the owner to settle; %d in the realization, so spec and code do not match yet, which /markitect-build settles\n", total, plural(total, "error", "errors"), len(specErrs), len(realization))
 		}
 	}
 	if total > 0 {

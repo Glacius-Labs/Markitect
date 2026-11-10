@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
-	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
 // The commands on the spec besides check: vet analyses its design, list shows
@@ -194,9 +194,9 @@ func (c CLI) list(_ context.Context, args []string) (int, error) {
 	return OK, nil
 }
 
-// listPackages is the model as list shows it.
+// listPackages is the spec as list shows it.
 func listPackages(p *project.Project, deps bool) []listedPackage {
-	m := p.Model
+	sp := p.Spec
 	g := analysis.BuildGraph(p)
 	nodes := map[string]analysis.PackageNode{}
 	for _, n := range g.Packages {
@@ -207,20 +207,20 @@ func listPackages(p *project.Project, deps bool) []listedPackage {
 		edges[e.From] = append(edges[e.From], e)
 	}
 	out := []listedPackage{}
-	for _, path := range m.SortedPackages() {
-		pkg := m.Packages[path]
-		lp := listedPackage{Path: path, Name: model.PackageName(path), Definitions: []listedDefinition{}}
-		if path != model.RootPackage {
-			lp.Parent = model.PackageName(pkg.Parent)
+	for _, path := range sp.SortedPackages() {
+		pkg := sp.Packages[path]
+		lp := listedPackage{Path: path, Name: spec.PackageName(path), Definitions: []listedDefinition{}}
+		if path != spec.RootPackage {
+			lp.Parent = spec.PackageName(pkg.Parent)
 		}
 		for _, id := range pkg.Definitions {
-			lp.Definitions = append(lp.Definitions, listDefinition(m.Definitions[id], deps))
+			lp.Definitions = append(lp.Definitions, listDefinition(sp.Definitions[id], deps))
 		}
 		if deps {
 			n := nodes[path]
 			d := &packageDeps{Afferent: n.Afferent, Efferent: n.Efferent, Instability: n.Instability, Abstractness: n.Abstractness, Distance: n.Distance, DependsOn: []dependency{}}
 			for _, e := range edges[path] {
-				dep := dependency{Package: model.PackageName(e.To)}
+				dep := dependency{Package: spec.PackageName(e.To)}
 				for _, u := range e.Uses {
 					via := "link"
 					if u.Kind {
@@ -239,7 +239,7 @@ func listPackages(p *project.Project, deps bool) []listedPackage {
 
 // listDefinition is one Definition as list shows it; with links, the Definitions
 // and Packages its body links to.
-func listDefinition(d *model.Definition, links bool) listedDefinition {
+func listDefinition(d *spec.Definition, links bool) listedDefinition {
 	ld := listedDefinition{ID: d.ID, Title: d.Title, Kind: d.Kind, File: d.File, Internal: d.Internal}
 	if links {
 		seen := map[string]bool{}
@@ -315,7 +315,7 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 	}
 	c.warnErrors(p)
 	target := strings.TrimSuffix(strings.TrimSuffix(strings.TrimPrefix(positional[0], "[["), "]]"), ".md")
-	if d := p.Model.Definitions[target]; d != nil {
+	if d := p.Spec.Definitions[target]; d != nil {
 		dd := c.docDefinition(ctx, o, p, d)
 		if o.json {
 			return OK, c.printJSON(struct {
@@ -327,9 +327,9 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 		return OK, nil
 	}
 	if target == "Root" || target == "." {
-		target = model.RootPackage
+		target = spec.RootPackage
 	}
-	if pkg := p.Model.Packages[target]; pkg != nil {
+	if pkg := p.Spec.Packages[target]; pkg != nil {
 		dp := docPackageOf(p, pkg)
 		if o.json {
 			return OK, c.printJSON(struct {
@@ -340,7 +340,7 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 		fmt.Fprint(c.Stdout, renderDocPackage(dp))
 		return OK, nil
 	}
-	var ds model.Diagnostics
+	var ds spec.Diagnostics
 	ds.Add("doc.unknown", "", 0, "%s is neither a Definition nor a Package of the spec", target)
 	if o.json {
 		return Failed, c.printJSON(struct {
@@ -353,8 +353,8 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 }
 
 // docDefinition gathers what doc shows of a Definition.
-func (c CLI) docDefinition(ctx context.Context, o options, p *project.Project, d *model.Definition) docDefinition {
-	dd := docDefinition{listedDefinition: listDefinition(d, true), Package: model.PackageName(d.Package), Library: d.Library, Text: body(d.Data), LinkedFrom: []analysis.Ref{}, RealizedBy: []realizer{}}
+func (c CLI) docDefinition(ctx context.Context, o options, p *project.Project, d *spec.Definition) docDefinition {
+	dd := docDefinition{listedDefinition: listDefinition(d, true), Package: spec.PackageName(d.Package), Library: d.Library, Text: body(d.Data), LinkedFrom: []analysis.Ref{}, RealizedBy: []realizer{}}
 	if d.Library != "" {
 		dd.Package = ""
 	}
@@ -366,7 +366,7 @@ func (c CLI) docDefinition(ctx context.Context, o options, p *project.Project, d
 		}
 		dd.LinkedFrom = append(dd.LinkedFrom, r)
 	}
-	if d.InModel() {
+	if d.Own() {
 		if st, err := c.Record.Status(ctx, run.StatusRequest{Dir: o.repo, All: true}); err == nil {
 			for _, it := range st.Items {
 				if it.Definition != d.ID {
@@ -384,14 +384,14 @@ func (c CLI) docDefinition(ctx context.Context, o options, p *project.Project, d
 }
 
 // docPackageOf gathers what doc shows of a Package.
-func docPackageOf(p *project.Project, pkg *model.Package) docPackage {
-	dp := docPackage{Path: pkg.Path, Name: model.PackageName(pkg.Path), Children: []string{}, Paths: []string{}, Definitions: []listedDefinition{}, LinkedFrom: []analysis.Ref{}, Files: []string{}}
-	if pkg.Path != model.RootPackage {
-		dp.Parent = model.PackageName(pkg.Parent)
+func docPackageOf(p *project.Project, pkg *spec.Package) docPackage {
+	dp := docPackage{Path: pkg.Path, Name: spec.PackageName(pkg.Path), Children: []string{}, Paths: []string{}, Definitions: []listedDefinition{}, LinkedFrom: []analysis.Ref{}, Files: []string{}}
+	if pkg.Path != spec.RootPackage {
+		dp.Parent = spec.PackageName(pkg.Parent)
 	}
 	dp.Children = append(dp.Children, pkg.Children...)
 	for _, id := range pkg.Definitions {
-		dp.Definitions = append(dp.Definitions, listDefinition(p.Model.Definitions[id], false))
+		dp.Definitions = append(dp.Definitions, listDefinition(p.Spec.Definitions[id], false))
 	}
 	if p.Registry != nil {
 		if page := p.Registry.Pages[pkg.Path]; page != nil {
@@ -407,7 +407,7 @@ func docPackageOf(p *project.Project, pkg *model.Package) docPackage {
 		}
 		sort.Strings(dp.Files)
 	}
-	if pkg.Path != model.RootPackage {
+	if pkg.Path != spec.RootPackage {
 		if refs, err := analysis.Refs(p, pkg.Path); err == nil {
 			dp.LinkedFrom = append(dp.LinkedFrom, refs...)
 		}

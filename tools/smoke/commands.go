@@ -18,9 +18,9 @@ func (s *smoke) version() error {
 	return nil
 }
 
-// smokeModel is a small project in the model language: Root with a Rule, and
+// smokeSpec is a small project in the spec language: Root with a Rule, and
 // the Packages members and catalog, with registry pages for every file.
-var smokeModel = map[string]string{
+var smokeSpec = map[string]string{
 	".markitect/spec/loan-limit.md":     "---\nkind: std/Rule\n---\n# Loan limit\n\nA member has at most `5` open loans; see [[members]].\n",
 	".markitect/spec/members/member.md": "---\nkind: std/Concept\n---\n# Member\n\nA person who borrows copies.\n",
 	".markitect/spec/catalog/copy.md":   "---\nkind: std/Concept\n---\n# Copy\n\nA copy is lent to a [[members/member]].\n",
@@ -31,12 +31,12 @@ var smokeModel = map[string]string{
 	"src/catalog/copy.go":               "package catalog\n",
 }
 
-// modelCommands drives the packaged CLI over a small project in a plain folder,
+// specCommands drives the packaged CLI over a small project in a plain folder,
 // with no Git: init, check, tidy, doc, list and vet; status and mark that
 // verify every Definition; status after a change of the spec; and the refusal of
-// a model that does not compile. It starts no agent.
-func (s *smoke) modelCommands() error {
-	repo := filepath.Join(s.work, "model-commands")
+// a spec that does not compile. It starts no agent.
+func (s *smoke) specCommands() error {
+	repo := filepath.Join(s.work, "spec-commands")
 	if err := os.MkdirAll(repo, 0o755); err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (s *smoke) modelCommands() error {
 	if err := requirePresent(repo, ".claude/skills/markitect-architect/SKILL.md", ".agents/skills/markitect-architect/SKILL.md", ".claude/agents/markitect-architect.md", ".claude/workflows/markitect-parallel.js", ".markitect/spec/project.md"); err != nil {
 		return err
 	}
-	for name, content := range smokeModel {
+	for name, content := range smokeSpec {
 		path := filepath.Join(repo, filepath.FromSlash(name))
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			return err
@@ -118,7 +118,7 @@ func (s *smoke) modelCommands() error {
 	// A change of the spec: the loan limit drops from five to three. Only the Rule itself
 	// is to verify again: nothing links to it, and no file changed.
 	limit := filepath.Join(repo, ".markitect", "spec", "loan-limit.md")
-	if err := os.WriteFile(limit, []byte(strings.Replace(smokeModel[".markitect/spec/loan-limit.md"], "`5`", "`3`", 1)), 0o644); err != nil {
+	if err := os.WriteFile(limit, []byte(strings.Replace(smokeSpec[".markitect/spec/loan-limit.md"], "`5`", "`3`", 1)), 0o644); err != nil {
 		return err
 	}
 	if out, err := markitect("status"); err == nil || !strings.Contains(out, "To verify (1 of 4 Definitions)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self") {
@@ -135,7 +135,7 @@ func (s *smoke) modelCommands() error {
 		return fmt.Errorf("check accepted a Definition without front matter: %s", tail(out))
 	}
 	if out, err := markitect("status"); err == nil || !strings.Contains(out, "no list until it compiles") {
-		return fmt.Errorf("status listed over a model that does not compile: %s", tail(out))
+		return fmt.Errorf("status listed over a spec that does not compile: %s", tail(out))
 	}
 	for _, retired := range []string{"apply", "verify", "submit", "stop", "impact", "lint", "refs", "graph", "lock", "checklist", "answer", "gate"} {
 		if _, err := markitect(retired); err == nil {
