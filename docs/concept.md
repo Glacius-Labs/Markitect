@@ -6,18 +6,16 @@ This page is the one description of the product, and the target that Main builds
 
 ## 1. The aim
 
-Make one clean and simple version work reliably on Sonnet ([DEC-009](decisions.md#dec-009-how-markitect-is-judged)): the spec as it stands gets applied reliably, with no human babysitting, review or other slowing down, so that people concentrate on what agents can't do by themselves, design and modeling. Every choice below is judged by that.
+Make one clean and simple version work reliably on Sonnet ([DEC-009](decisions.md#dec-009-how-markitect-is-judged)): the spec as it stands gets applied reliably, with no human babysitting, review or other slowing down, so that people concentrate on what agents can't do by themselves: architecture. Every choice below is judged by that.
 
-**The problem.** A project holds what *is*: its artifacts. What *should be* lives in people's heads. Six problems follow:
+**The problem.** When agents build a project, trust and overview no longer come with the work, and nothing in the project states what it should be; the [vision](vision.md#why-markitect-exists) gives the reasoning. Markitect supplies that statement: one spec with authority, and every file accounted for in the registry ([§2](#the-spec)). The spec is how a change is made, so it cannot be ignored while work goes through it. On it, Markitect answers four questions:
 
-| Problem | Markitect's answer |
+| Question | Markitect's answer |
 |---|---|
-| 1. No *should* in the project: work arrives as tickets that say what to change, not what must stay true, and nothing shows what was missed | One spec with authority, and every file accounted for in the registry ([§2](#the-spec)) |
-| 2. A written *should* decays: docs, rules and agent instructions are just more artifacts, and they drift | The spec is how a change is made, so it cannot be ignored while work goes through it |
-| 3. Drift enters at the moment of change, because nothing shows what else a change reaches | `status` lists what a change reaches, from the spec and the record, not from memory ([§3](#how-status-works)) |
-| 4. Drift is found late, by checks that pick their own route and cannot say what they covered | Every Definition keeps a verdict at the inputs it was verified at; a full review is `/markitect-review --all` |
-| 5. Agents change a project faster than a person can follow | Follow the spec, not the code: it moves only when the owner accepts a change |
-| 6. "Is this what I wanted?" Only a person can answer, today by reading diffs or trusting blindly | A fresh reviewer answers code against spec; only the owner answers spec against intent |
+| Was something forgotten? | `status` lists what a change reaches, from the spec and the record, not from memory ([§3](#how-status-works)). Every Definition keeps a verdict at the inputs it was verified at, and a full review is `/markitect-review --all` |
+| Was it understood correctly? | A fresh reviewer judges the code against the spec and records a verdict per Definition, with its evidence ([§5](#5-what-build-does), [§6](#6-the-record)) |
+| Does the spec say what was meant? | Only the owner answers spec against intent. `check` finds structural errors, `vet` measures the design, and the auditor reports contradictions, gaps, unclear and duplicated statements ([§4](#4-is-the-spec-good), [§8](#8-other-skills)) |
+| How does the project stand, and how is it organized? | Follow the spec, not the code: `list`, `doc` and `vet` show its structure, and it moves only when the owner accepts a change ([§3](#3-the-tools)) |
 
 **The way of working:**
 
@@ -60,9 +58,9 @@ What is left to the agents is what needs judgment: how to build it, and whether 
 
 **What belongs in it.** What good documentation of the project would state: what a book is, how many a member may borrow, which interfaces exist, which technologies are used, which modules exist. What nobody cares about stays out, and agents decide it ([DEC-079](decisions.md#dec-079-the-spec-is-as-explicit-as-good-documentation)). [What makes a good spec](guides/good-spec.md) says how to cut it.
 
-**The language.** The spec lives in `.markitect/spec/`. A Definition is one Markdown file whose front matter names its Kind; a Kind is itself a Definition; a Package is a folder whose Definitions reach its whole subtree; a link `[[path]]` is a declared dependency, like an import; a cycle between Packages is a compile error; Libraries supply common Kinds, and `std`, `rest` and `cli` ship in the binary ([DEC-080](decisions.md#dec-080-the-spec-is-typed-documentation-in-markdown)). A link is never decorative: it states a relation that matters for change, and navigation belongs in documentation rendered from the spec. A record that others name gets an identity Definition of its own, and a Package publishes what is not `internal: true`, as code writes both ([DEC-104](decisions.md#dec-104-a-link-is-never-decorative-identity-and-surface-are-written-as-code-writes-them)). The [spec language guide](guides/spec-language.md) is the canonical description.
+**The form.** The spec lives in `.markitect/spec/`. A Definition is one Markdown file whose front matter names its Kind; a Kind is itself a Definition; a Package is a folder whose Definitions reach its whole subtree; a link `[[path]]` is a declared dependency, like an import; a cycle between Packages is a compile error; Libraries supply common Kinds, and `std`, `rest` and `cli` ship in the binary ([DEC-080](decisions.md#dec-080-the-spec-is-typed-documentation-in-markdown)). A link is never decorative: it states a relation that matters for change, and navigation belongs in documentation rendered from the spec. A record that others name gets an identity Definition of its own, and a Package publishes what is not `internal: true`, as code writes both ([DEC-104](decisions.md#dec-104-a-link-is-never-decorative-identity-and-surface-are-written-as-code-writes-them)). The [spec language guide](guides/spec-language.md) is the canonical description.
 
-**Authority.** Where an artifact differs from the spec, the artifact is wrong: code, tests, docs, pipelines and configuration alike. The agents that build never change the spec, and the owner accepts every spec change. A bad spec is never made to work during the build: its Definitions get `spec-problem`, and the owner keeps modeling ([DEC-063](decisions.md#dec-063-the-spec-is-the-authority-and-its-defects-go-to-the-owner)). That loop runs per change, not as one long phase up front, because some flaws show only once something is built.
+**Authority.** Where an artifact differs from the spec, the artifact is wrong: code, tests, docs, pipelines and configuration alike. The agents that build never change the spec, and the owner accepts every spec change. A bad spec is never made to work during the build: its Definitions get `spec-problem`, and the owner changes the spec ([DEC-063](decisions.md#dec-063-the-spec-is-the-authority-and-its-defects-go-to-the-owner)). That loop runs per change, not as one long phase up front, because some flaws show only once something is built.
 
 **The registry.** Every file has one owning Package, the most specific path pattern wins, and each file is listed with the Definitions it realizes, or is ignored. Shared files sit with the lowest common parent. The builder keeps every registry page current. When a Definition disappears, every file whose only basis it was goes, or gets a new basis ([DEC-006](decisions.md#dec-006-every-file-is-accounted-for)).
 
@@ -101,7 +99,7 @@ None of these starts an agent or uses Git. `--repo DIR` names a folder of the pr
 | **The spec** | A Kind or link that does not resolve, a Package cycle, a link into a child's Definitions or to an internal Definition from outside, a Library that does not match the lock | The owner, in the spec |
 | **The realization** | A file neither listed nor ignored, a registry entry for a Definition or file that no longer exists, and a Definition that nothing links to and no file realizes | The builder, in the work |
 
-So `check` goes red the moment the owner deletes a Definition or adds one nothing uses yet, and stays red until the work has realized the change: spec and code don't match yet. `--spec` answers the narrower question "is the spec itself valid?", which is what a modeling session asks. `status` gives no list while the spec has errors; errors in the realization are on its list.
+So `check` goes red the moment the owner deletes a Definition or adds one nothing uses yet, and stays red until the work has realized the change: spec and code don't match yet. `--spec` answers the narrower question "is the spec itself valid?", which is what a session on the spec asks. `status` gives no list while the spec has errors; errors in the realization are on its list.
 
 ### How `status` works
 
@@ -158,12 +156,12 @@ A spec is judged like code, so it gets the same kind of analysis code gets. `che
 
 ## 5. What build does
 
-The owner models until the spec looks right, then uses `/markitect-build` in their own Claude Code session. The tool computes, checks and records; the skill, the agents and the session do the rest, and nothing steers them. [The project workflow](guides/project-workflow.md#7-build-and-review) says how to use it, and [the record](../internal/run/README.md) owns the rules.
+The owner architects the project until the spec looks right, then uses `/markitect-build` in their own Claude Code session. The tool computes, checks and records; the skill, the agents and the session do the rest, and nothing steers them. [The project workflow](guides/project-workflow.md#7-build-and-review) says how to use it, and [the record](../internal/run/README.md) owns the rules.
 
 1. **Start the builder.** The skill is a plain prompt: the owner's session starts the `markitect-builder` agent in a worktree of its own, through Claude Code's worktree isolation ([DEC-100](decisions.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)). The builder starts with fresh context, on the last commit of the owner's branch, and holds its task in its agent file. A worktree holds no uncommitted change, so the skill asks the owner to commit first.
 2. **See what is to verify.** The builder runs `markitect status`. An error in the spec gives no list, and the builder says so.
 3. **Implement.** The builder makes the project match the spec for what the list holds and keeps the registry current. It does not change the spec, and the hook refuses its edits under `.markitect/` except the registry pages. A gap with no effect at the project's boundary is its own to decide. Where the spec contradicts itself or leaves open behaviour at the boundary, it builds nothing for that Definition and tells the reviewer what it found. Where the machine lacks a program or a service the work needs, it stops and says so ([OQ-013](decisions.md#open-questions)).
-4. **Review.** The builder starts the `markitect-reviewer` agent as its own subagent, the only agent the hook lets it start, and waits, so it keeps its context. The reviewer works in the builder's worktree, starts with fresh context, has no tool to edit files and starts no further agents. It runs `status`, reads each Definition, the Definitions it links to and the code, runs the project's tests where they bear on an item, and records a verdict with `markitect mark`. It treats what the builder tells it as claims to check, and judges a reported spec problem on its own reading.
+4. **Review.** The builder starts the `markitect-reviewer` agent as its own subagent, the only agent the hook lets it start, and waits, so it keeps its context. The reviewer works in the builder's worktree, starts with fresh context, has no tool to edit files and starts no further agents. It runs `status`, reads each Definition, the Definitions it links to and the code, runs the project's tests where they bear on an item, and records a verdict with `markitect mark`. An `ok` covers the Rules above the Definition's Package too, so a change that breaks an unchanged Rule fails. It treats what the builder tells it as claims to check, and judges a reported spec problem on its own reading.
 5. **Repeat.** The builder runs `status` again and works on what it lists, until it lists nothing or only `spec-problem`s for the owner. Each verdict is bound to the inputs the reviewer read, so a repair puts back on the list only what it touched. There is no limit on rounds, but the builder stops when three rounds in a row end without the list getting shorter. What the builder notices beside its task it tells the reviewer, which records it as `fail` or `spec-problem`: the record is the one store of findings.
 6. **Bring it back.** When the builder has ended, the owner's session runs `status` in the worktree and commits the work there together with `.markitect/review.sum`. When `status` is empty there, it merges that branch into the owner's branch and removes the worktree; otherwise it asks the owner whether to merge the work as it stands. It pushes nothing. In a folder that is not a Git repository the builder works in the folder itself, and the session commits nothing.
 
@@ -183,7 +181,7 @@ The owner models until the spec looks right, then uses `/markitect-build` in the
 
 | Verdict | Means |
 |---|---|
-| `ok` | The Definition is implemented, as the evidence shows |
+| `ok` | The Definition is implemented and the Rules above its Package hold for it, as the evidence shows |
 | `fail` | It is not; the line says why |
 | `skip` | Verified as far as the project can show, with the reason. A note, which never changes `status`'s exit code |
 | `spec-problem` | The spec contradicts itself or leaves open behaviour at the project's boundary, and only the owner can settle it |

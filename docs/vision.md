@@ -128,7 +128,7 @@ Target outcomes, each to be validated; none is an established result.
 - Software becomes understandable: the spec states what the system does and should do, and people can reason over it without reading the code.
 - Order pays off: structure and careful definition are rewarded instead of turning into endless cleanup.
 - Capable mid-tier models, such as Sonnet, do most of the delegated work; Haiku counts if it proves sufficient. Lower cost is a possible benefit, not the purpose.
-- People concentrate on deciding and modeling. Their review moves from code diffs to spec changes and `spec-problem`s, while the code reliably reflects the spec. A fresh reviewer stays part of the method, and a project's own acceptance policy still applies.
+- People concentrate on architecture. Their review moves from code diffs to spec changes and `spec-problem`s, while the code reliably reflects the spec. A fresh reviewer stays part of the method, and a project's own acceptance policy still applies.
 
 The intended end state is **spec → AI realizes and independently reviews it → people rely on the result without routinely reviewing code diffs**. This is a target to earn through evidence, not a claim that Markitect has achieved it.
 
