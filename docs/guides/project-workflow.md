@@ -22,11 +22,20 @@ Claude Code reads `AGENTS.md` through that `CLAUDE.md`, and it finds skills only
 
 ## 2. Write the spec
 
-Open Claude Code in the project and run `/markitect-architect`. In a new project it asks what the project is, who it is for, what it must do and what it is built with, one question at a time, and starts the spec with you. In a repository that already has code it draws a first spec from the code with you, and in a project that has a spec it changes it. A session that was open before `init` doesn't see the skill yet, because Claude Code doesn't watch a skills folder that wasn't there when the session started: run `/reload-skills` there, or start a new session.
+Open Claude Code in the project and run `/markitect-architect`. In a new project it asks what the project is, who it is for, what it must do and what it is built with, one question at a time, and starts the spec with you. In a project that already exists it draws a first spec from the project as it is, with you ([below](#a-project-that-already-exists)), and in a project that has a spec it changes it. A session that was open before `init` doesn't see the skill yet, because Claude Code doesn't watch a skills folder that wasn't there when the session started: run `/reload-skills` there, or start a new session.
 
 The spec lives under `.markitect/spec/`: one Markdown file with front matter per Definition, one folder per Package. The [spec language guide](spec-language.md#definitions) gives the form. A project writes its own Kinds for what the standard Libraries do not cover; to use `rest` or `cli`, add it to the manifest and run `markitect tidy`.
 
 The architect skill has your session write the spec with you and ask first when something is open. A large first draft it can hand to the `markitect-architect` agent, which writes only under `.markitect/` and hands its questions back. You accept every change of the spec yourself; the builder never changes it. `/markitect-audit` has a fresh auditor read the spec for contradictions, gaps, unclear and duplicated statements and missing links, and report them to you: it triages the unlinked mentions `markitect vet --strict` lists into missing links and ordinary words, and you add the links, with `/markitect-architect` or by hand.
+
+### A project that already exists
+
+The first spec of an existing project states what is as what should be ([DEC-105](../decisions.md#dec-105-a-first-spec-of-an-existing-project-states-what-is-as-what-should-be)). `/markitect-architect` reads every artifact, not only the code, proposes the Packages to you, and writes the Definitions and the registry. The spec is not a copy of the project: it states what callers rely on, and leaves the rest to the agents.
+
+The draft is finished when a build would change nothing. So, with your word, the session commits the draft on its branch and runs `/markitect-review --all`, which reads the whole project once more. Where a Definition does not hold, the session corrects the spec if the spec misread the project, and reviews again what that put back on the list. You get the spec with two lists:
+
+- **What `status` still lists:** places where the project contradicts itself, such as its documentation against a script. Say which side holds. The spec then states that side, and if the other side is a defect, it stays `fail` and `/markitect-build` repairs it.
+- **What the spec leaves unstated:** behaviour that nothing in the project states and that looks like an accident. Say for each whether it is intended; only then does it enter the spec.
 
 ## 3. Register the files
 
@@ -47,7 +56,7 @@ README.md: file.unregistered: neither registered nor ignored: list it on .markit
 1 error: 0 in the spec, for the owner to settle; 1 in the realization, so spec and code do not match yet, which /markitect-build settles
 ```
 
-That is expected: `/markitect-architect` registers the files as it draws the first spec ([§2](#2-write-the-spec)). From then on, `/markitect-review --all` verifies every Definition and records where the code deviates, and `/markitect-build` repairs it.
+That is expected: `/markitect-architect` registers the files as it draws the first spec, and has a reviewer verify every Definition against the project before you get it ([§2](#a-project-that-already-exists)). From then on, `/markitect-review` records where the project deviates, and `/markitect-build` repairs it.
 
 ## 5. Vet and look around
 

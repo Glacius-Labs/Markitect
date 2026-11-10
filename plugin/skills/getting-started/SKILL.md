@@ -15,7 +15,7 @@ reviewer verify each Definition; markitect status says what is left to verify.
 
 ## How to begin
 
-- **An empty folder, a new project or a repository that already has code:** run `markitect init`, then use the `markitect-architect` skill. It starts the spec with the owner, or draws it from the code.
+- **An empty folder, a new project or a repository that already has code:** run `markitect init`, then use the `markitect-architect` skill. It starts the spec with the owner, or draws it from the project as it is.
 - **A folder that already has `.markitect/`:** it is set up, and `markitect check` says how it stands; the `markitect-architect` skill changes the spec.
 
 `init` installs that skill into the project, so a session that was open before it does not have it yet. Read `.claude/skills/markitect-architect/SKILL.md` and follow it, or have the user run `/reload-skills`.

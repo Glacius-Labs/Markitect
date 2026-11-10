@@ -83,7 +83,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 ### DEC-079 The spec is as explicit as good documentation
 
 - A statement belongs in the spec when good documentation of the project would state it that explicitly: domain concepts, features, interfaces such as REST endpoints and CLI commands, rules, decisions and the architecture. Loops, maps and data structures stay with the agents.
-- The binding part is what callers rely on: inputs and their validation, data shapes, status and exit codes, stored data. Detail a caller can observe but not reasonably depend on, such as message wording or identifier formats, is free unless the project fixes it. This holds for a spec drawn from existing code too.
+- The binding part is what callers rely on: inputs and their validation, data shapes, status and exit codes, stored data. Detail a caller can observe but not reasonably depend on, such as message wording or identifier formats, is free unless the project fixes it. This holds for the first spec of an existing project too ([DEC-105](#dec-105-a-first-spec-of-an-existing-project-states-what-is-as-what-should-be)).
 - The project's owner decides the architecture, and the spec encodes it as its own structure: Packages, their links and their file ownership.
 - Granularity is the author's choice. Markitect measures and warns; it imposes nothing ([DEC-102](#dec-102-what-vet-measures)).
 
@@ -114,6 +114,17 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - `doc PACKAGE` shows a Package's public Definitions apart from its internal ones, and every Definition that `list` and `doc` show carries `internal` in their JSON.
 - Link keywords such as `id` and `part` were weighed and not chosen; they are added only on new evidence: a real spec whose surface must differ from its visibility, or whose identity Definitions, measured over its history, cost more than the re-verification they save ([OQ-015](#open-questions) is the one point left open).
 - [What makes a good spec](guides/good-spec.md#every-link-is-a-relation) states the patterns. On the archived Makerspace specs they put 113 items on the list instead of 133 over eight change steps, and 354 instead of 468 on a project five times as large, with no needed item lost ([measurements](https://github.com/Glacius-Labs/Markitect/blob/d0c23a31efc928e95f3acc0633deb01a5f887884/docs/validation/spec-relations-20261108.md)).
+
+### DEC-105 A first spec of an existing project states what is as what should be
+
+- An existing project without a spec gets its first spec from the project as it is. What is, is every artifact, not only the code: code, tests, documentation, scripts, pipelines and configuration. The first spec reads what is as what should be and states it, as explicitly as [DEC-079](#dec-079-the-spec-is-as-explicit-as-good-documentation) says.
+- It is finished when a build would change nothing. This is the loop of a build with the roles turned round: the reviewer verifies every Definition against the project, the architect changes the spec where it is wrong about the project, and the two repeat until nothing is left to verify but what waits for the owner.
+- A Definition that does not hold is one of three things:
+  - the spec misread the project, and the spec is corrected;
+  - the project contradicts itself, such as its documentation against a script. The architect does not choose a side: the Definition stays on the list as `fail`, and the owner says which side holds;
+  - the project does something that nothing in it states and that looks like an accident. The spec leaves it unstated, since stating it would make the spec demand it, and the architect names it to the owner.
+- The spec is not a transcription of the project. The question at each artifact is what it holds that should also be in the spec, not what it holds that the spec does not say. Most of what a file holds is then stated as an obligation without its values, or left to the agents.
+- With the owner's acceptance the spec becomes the authority ([DEC-063](#dec-063-the-spec-is-the-authority-and-its-defects-go-to-the-owner)). What the owner confirmed as a defect stays `fail`, and `/markitect-build` repairs it; the spec is not changed to empty the list.
 
 ## The tool
 
