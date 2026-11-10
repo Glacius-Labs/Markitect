@@ -66,7 +66,7 @@ In a project that already exists, `/markitect-architect` draws a first spec from
 2. **`markitect status` makes the list.** It lists the Definitions the change reaches: those it edits, those that link to them, and those whose files changed.
 3. **A builder agent does the work.** It changes code, tests and documentation for what the list holds and keeps the registry current. A hook keeps it out of the spec and the record.
 4. **A fresh reviewer verifies it.** It reads the spec, the list and the code, and treats what the builder tells it as claims to check. It records each item: `ok` with its evidence, `fail`, `skip`, or `spec-problem` with the question for you.
-5. **The builder repairs what failed** and has it verified again. It stops when the list has not got shorter for three rounds.
+5. **The builder repairs what failed** and has it verified again. It stops when three rounds in a row leave the list no shorter than it has been.
 6. **Nothing left.** Your session commits the work with the record and merges it into your branch.
 
 The record, `.markitect/review.sum`, works like Go's test cache: a verdict holds until one of its inputs changes, so a later change puts back on the list only what it reaches. Every file of the project is listed with the Definitions it builds, or explicitly ignored.

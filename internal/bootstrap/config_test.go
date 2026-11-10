@@ -165,7 +165,7 @@ func TestInitInstallsTheParallelWorkflow(t *testing.T) {
 	if !strings.HasPrefix(script, "export const meta = {\n  name: \"markitect-parallel\",") {
 		t.Fatalf("the workflow's meta:\n%.200s", script)
 	}
-	for _, want := range []string{`agentType: "markitect-builder", isolation: "worktree"`, `agentType: "markitect-reviewer"`, `agentType: "markitect-auditor"`, "const STALE_ROUNDS = 3", "markitect status"} {
+	for _, want := range []string{`agentType: "markitect-builder", isolation: "worktree"`, `"Review", "markitect-reviewer"`, `"Audit", "markitect-auditor"`, "const STALE_ROUNDS = 3", "markitect status"} {
 		if !strings.Contains(script, want) {
 			t.Errorf("the workflow lacks %q", want)
 		}

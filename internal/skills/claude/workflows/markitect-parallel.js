@@ -60,8 +60,9 @@ const STATUS_COMMAND = `markitect status${ALL ? " --all" : ""} --json`
 
 const STATUS = {
   type: "object",
-  required: ["spec_errors", "realization_errors", "packages"],
+  required: ["clean", "spec_errors", "realization_errors", "packages"],
   properties: {
+    clean: { type: "boolean" },
     spec_errors: { type: "integer" },
     realization_errors: { type: "integer" },
     packages: {
@@ -119,7 +120,7 @@ const MERGED = {
 // the user stops an agent or it fails on an API error.
 class Lost extends Error {}
 
-const READ_STATUS = `Run \`${STATUS_COMMAND}\` in your working folder and return its fields spec_errors, realization_errors and packages exactly as it prints them, each Package with package, definitions, items, spec_problems and depends_on.`
+const READ_STATUS = `Run \`${STATUS_COMMAND}\` in your working folder and return its fields clean, spec_errors, realization_errors and packages exactly as it prints them, each Package with package, definitions, items, spec_problems and depends_on.`
 
 async function readStatus(label, checkWorktree) {
   const worktree = checkWorktree
@@ -225,18 +226,25 @@ ${list}`,
   return out
 }
 
-// review starts a reviewer per Package here, on the run's branch, where the
-// merged work is, to verify the Package's items and record the verdicts.
-async function review(names, task) {
+// each starts one agent of a role per task, side by side, here on the run's
+// branch, and returns the reports of those that returned one.
+async function each(tasks, phase, agentType) {
   const done = await parallel(
-    names.map((name) => () =>
-      agent(task(name), { label: `review ${name}`, phase: "Review", agentType: "markitect-reviewer" }).then((r) => (r ? { package: name, report: r } : null)),
+    tasks.map((t) => () =>
+      agent(t.task, { label: `${phase.toLowerCase()} ${t.name}`, phase, agentType }).then((r) => (r ? { package: t.name, report: r } : null)),
     ),
   )
-  for (let i = 0; i < names.length; i++) {
-    if (!done[i]) unreviewed.push(names[i])
-  }
   return done.filter(Boolean)
+}
+
+// review starts a reviewer per Package here, where the merged work is, to
+// verify the Package's items and record the verdicts, and notes the Packages
+// whose reviewer returned nothing.
+async function review(names, task) {
+  const done = await each(names.map((name) => ({ name, task: task(name) })), "Review", "markitect-reviewer")
+  const reviewed = new Set(done.map((d) => d.package))
+  unreviewed.push(...names.filter((name) => !reviewed.has(name)))
+  return done
 }
 
 // record commits the verdicts the reviewers recorded here, alone, and reads
@@ -289,6 +297,15 @@ function waves(packages, wanted) {
 const count = (st) => st.realization_errors + st.packages.reduce((n, p) => n + p.items, 0)
 const workable = (p) => p.items > p.spec_problems
 const onlyForTheOwner = (st) => st.realization_errors === 0 && !st.packages.some(workable)
+// ended says how a run ends that has nothing left for a builder: status is
+// clean, or what is left waits for the owner. That is an error the spec gained
+// meanwhile, a spec-problem or, when no item is left at all, a line of the
+// record that markitect cannot read.
+function ended(st) {
+  if (st.clean) return "empty"
+  if (st.spec_errors > 0) return "spec-errors"
+  return count(st) === 0 ? "record-unreadable: markitect status names the lines of the record the owner fixes" : "spec-problems"
+}
 
 // round runs one round of strands: the Packages in waves, in batches, and Root
 // last and alone. Every Package lies below Root, so none depends on it as list
@@ -357,11 +374,7 @@ async function run() {
     const pkgs = st.packages.filter((p) => p.definitions > 0).map((p) => p.package)
     const tasks = pkgs.map((name) => ({ name, task: `Audit the spec of Package ${name}, and triage the unlinked mentions markitect vet --strict lists in it.${FOCUS}` }))
     tasks.push({ name: "across Packages", task: `Audit the spec across Packages: look only for contradictions between Packages.${FOCUS}` })
-    reports = (
-      await parallel(
-        tasks.map((t) => () => agent(t.task, { label: `audit ${t.name}`, phase: "Audit", agentType: "markitect-auditor" }).then((r) => (r ? { package: t.name, report: r } : null))),
-      )
-    ).filter(Boolean)
+    reports = await each(tasks, "Audit", "markitect-auditor")
     rounds = 1
     return finish(reports.length === tasks.length ? "audited" : `audited, ${tasks.length - reports.length} of ${tasks.length} auditors returned nothing`)
   }
@@ -369,10 +382,9 @@ async function run() {
   if (MODE === "review") {
     const pkgs = st.packages.filter((p) => (ALL ? p.items > 0 : workable(p))).map((p) => p.package)
     if (pkgs.length === 0) {
-      if (count(st) === 0) return finish("empty")
-      return finish(onlyForTheOwner(st) ? "spec-problems" : "nothing-to-review: only errors in the realization are left, which /markitect-build settles")
+      return finish(onlyForTheOwner(st) ? ended(st) : "nothing-to-review: only errors in the realization are left, which /markitect-build settles")
     }
-    const task = (name) => (ALL ? `Verify every Definition in Package ${name}: markitect status --all.${FOCUS}` : verify(name))
+    const task = (name) => (ALL ? `Verify every Definition in Package ${name}: markitect status --all --package ${name}.${FOCUS}` : verify(name))
     reports = await review(pkgs, task)
     rounds = 1
     st = await readStatus("status after the review", false)
@@ -382,22 +394,15 @@ async function run() {
   if (MODE === "bughunt") {
     phase("Hunt")
     const pkgs = st.packages.filter((p) => p.definitions > 0).map((p) => p.package)
-    reports = (
-      await parallel(
-        pkgs.map((name) => () =>
-          agent(`Hunt bugs in Package ${name}: look beyond what markitect status lists.${FOCUS}`, { label: `hunt ${name}`, phase: "Hunt", agentType: "markitect-reviewer" }).then((r) =>
-            r ? { package: name, report: r } : null,
-          ),
-        ),
-      )
-    ).filter(Boolean)
+    const tasks = pkgs.map((name) => ({ name, task: `Hunt bugs in Package ${name}: look beyond what markitect status lists.${FOCUS}` }))
+    reports = await each(tasks, "Hunt", "markitect-reviewer")
     st = await record("commit the hunt", "markitect: hunt")
   }
 
   if (MODE === "cleanup") {
     rounds = 1
     st = await round(st, 1, true)
-    return finish(count(st) === 0 ? "empty" : "cleaned")
+    return finish(st.clean ? "empty" : "cleaned")
   }
 
   // The list must get shorter than it has been: a list that swings down and up
@@ -405,8 +410,7 @@ async function run() {
   let stale = 0
   let best = count(st)
   for (;;) {
-    if (count(st) === 0) return finish("empty")
-    if (onlyForTheOwner(st)) return finish("spec-problems")
+    if (onlyForTheOwner(st)) return finish(ended(st))
     rounds++
     st = await round(st, rounds, false)
     const now = count(st)

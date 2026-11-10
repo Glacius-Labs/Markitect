@@ -20,14 +20,16 @@ import (
 func (c CLI) status(ctx context.Context, args []string) (int, error) {
 	var o options
 	var all bool
+	var pkg string
 	fs := c.flags("status", &o)
 	fs.BoolVar(&all, "all", false, "list every Definition, to verify everything again")
+	fs.StringVar(&pkg, "package", "", "list only the items whose Definition lies directly in this Package, Root for the one at the top")
 	if positional, err := parse(fs, args); err != nil {
 		return Misused, err
 	} else if len(positional) != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
-	st, err := c.Record.Status(ctx, run.StatusRequest{Dir: o.repo, All: all})
+	st, err := c.Record.Status(ctx, run.StatusRequest{Dir: o.repo, All: all, Package: pkg})
 	if err != nil {
 		return Misused, err
 	}
@@ -44,6 +46,8 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 		if err := c.printJSON(struct {
 			envelope
 			Clean             bool               `json:"clean"`
+			Package           string             `json:"package,omitempty"`
+			NotListed         int                `json:"not_listed,omitempty"`
 			Definitions       int                `json:"definitions"`
 			SpecErrors        int                `json:"spec_errors"`
 			RealizationErrors int                `json:"realization_errors"`
@@ -52,7 +56,7 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 			Diagnostics       []diagnostic       `json:"diagnostics"`
 			Skipped           []run.Item         `json:"skipped"`
 			Unreadable        []int              `json:"unreadable_lines"`
-		}{newEnvelope("status"), st.Clean(), st.Definitions, len(st.SpecErrors), len(st.Errors), packages, items, append(append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), diagnostics(severityError, st.RecordErrors())...), skipped, unreadable}); err != nil {
+		}{newEnvelope("status"), st.Clean(), st.Package, st.ErrorsElsewhere + st.UnreadableElsewhere, st.Definitions, len(st.SpecErrors), len(st.Errors), packages, items, append(append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), diagnostics(severityError, st.RecordErrors())...), skipped, unreadable}); err != nil {
 			return Misused, err
 		}
 	} else {
