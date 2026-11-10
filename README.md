@@ -6,7 +6,7 @@
 </h1>
 
 <p align="center">
-  Architect your project in Markdown.
+  Architect in Markdown.
 </p>
 
 <p align="center">
