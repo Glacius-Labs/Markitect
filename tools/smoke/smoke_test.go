@@ -55,19 +55,13 @@ func TestUnzipRefusesEntriesOutsideTheTarget(t *testing.T) {
 	}
 }
 
-func TestPresenceAndDigestChecks(t *testing.T) {
+func TestPresenceCheck(t *testing.T) {
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "present.txt"), nil, 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if requirePresent(root, "present.txt") != nil || requirePresent(root, "missing.txt") == nil {
 		t.Fatal("requirePresent misjudged a file")
-	}
-	if requireAbsent(root, "missing.txt") != nil || requireAbsent(root, "present.txt") == nil {
-		t.Fatal("requireAbsent misjudged a file")
-	}
-	if !isDigest(strings.Repeat("a", 64)) || isDigest(strings.Repeat("A", 64)) || isDigest("abc") {
-		t.Fatal("isDigest accepts only 64 lowercase hexadecimal characters")
 	}
 }
 

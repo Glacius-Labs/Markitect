@@ -25,9 +25,6 @@ type LibrarySource struct {
 	Version string
 	Dir     string // where the files come from, for diagnostics
 	Files   []File
-	// Standard marks a Library built into the binary rather than committed
-	// in the project.
-	Standard bool
 }
 
 // Source is everything Compile reads: the spec folder and the Libraries.
@@ -122,19 +119,6 @@ func Within(p, q string) bool {
 	return q == RootPackage || p == q || strings.HasPrefix(p, q+"/")
 }
 
-// Ancestors returns the Packages above p, nearest first, ending with Root.
-func Ancestors(p string) []string {
-	var out []string
-	for p != RootPackage {
-		p = ParentOf(p)
-		out = append(out, p)
-	}
-	return out
-}
-
-// PackageOf returns the Package a model Definition ID lies in.
-func PackageOf(id string) string { return ParentOf(id) }
-
 // SortedPackages returns every Package path in order, Root first.
 func (m *Model) SortedPackages() []string {
 	out := make([]string, 0, len(m.Packages))
@@ -151,18 +135,6 @@ func (m *Model) ModelDefinitions() []string {
 	for id, d := range m.Definitions {
 		if d.InModel() {
 			out = append(out, id)
-		}
-	}
-	sort.Strings(out)
-	return out
-}
-
-// Subtree returns p and every Package below it, sorted.
-func (m *Model) Subtree(p string) []string {
-	var out []string
-	for q := range m.Packages {
-		if Within(q, p) {
-			out = append(out, q)
 		}
 	}
 	sort.Strings(out)

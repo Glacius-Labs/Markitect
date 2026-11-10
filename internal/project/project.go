@@ -43,19 +43,6 @@ const (
 // Attributes is the content of AttributesFile.
 const Attributes = "review.sum merge=union\n"
 
-// OldSpecDir is where markitect up to 0.24.0 kept the spec, from when it was
-// called the canonical model. markitect update moves it to SpecDir.
-const OldSpecDir = Dir + "/model"
-
-// SpecPath is a file's path after the move of OldSpecDir to SpecDir: the same
-// path below SpecDir for a file below OldSpecDir, any other unchanged.
-func SpecPath(file string) string {
-	if rest, ok := strings.CutPrefix(file, OldSpecDir+"/"); ok {
-		return SpecDir + "/" + rest
-	}
-	return file
-}
-
 // harnessPrefixes are what the files of the harness start with, in lower case.
 var harnessPrefixes = []string{".claude/agents/markitect-", ".claude/skills/markitect-", ".agents/skills/markitect-", ".claude/workflows/markitect-"}
 
@@ -106,8 +93,7 @@ type Repository interface {
 
 // Project is one checked state of a project.
 type Project struct {
-	Files     []string // every visible repository file
-	Manifest  model.Manifest
+	Files     []string   // every visible repository file
 	Lock      model.Lock // empty when the lock is missing or unreadable
 	Libraries []model.LibrarySource
 	Model     *model.Model
@@ -188,7 +174,7 @@ func Load(repo Repository) (*Project, error) {
 		return Normalize(data), true
 	}
 	present := map[string]bool{}
-	var specFiles, oldSpecFiles []model.File
+	var specFiles []model.File
 	var pages []realization.PageFile
 	var libraryFiles, others []string
 	for _, f := range files {
@@ -223,16 +209,10 @@ func Load(repo Repository) (*Project, error) {
 			if data, ok := read(f); ok {
 				specFiles = append(specFiles, model.File{Path: rest, Data: data})
 			}
-		case first == "model" && rest != "":
-			if data, ok := read(f); ok {
-				oldSpecFiles = append(oldSpecFiles, model.File{Path: rest, Data: data})
-			}
 		case first == "libraries" && strings.Contains(rest, "/"):
 			libraryFiles = append(libraryFiles, f)
 		case first == "tool", first == "bootstrap":
 			// the installed tool; accounted for here.
-		case first == "results":
-			ds.Add("project.results", f, 0, "certificates and Result pages are retired; markitect update writes %s from the newest certificate and removes %s/results", ReviewFile, Dir)
 		default:
 			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the harness configuration %s, the registry, the spec, Libraries, the record %s with its %s, and the installed tool", Dir, HarnessFile, ReviewFile, AttributesFile)
 		}
@@ -245,16 +225,7 @@ func Load(repo Repository) (*Project, error) {
 		}
 	}
 	p.loadManifest(read, present, local, &ds)
-	dir := SpecDir
-	if len(oldSpecFiles) > 0 {
-		// One error for the folder, not one per file of a spec that has not moved.
-		ds.Add("project.model", OldSpecDir, 0, "an earlier markitect kept the spec here; markitect update moves it to %s", SpecDir)
-		if len(specFiles) == 0 {
-			// Compiled where it is, so that the move is all that stands in the way.
-			dir, specFiles = OldSpecDir, oldSpecFiles
-		}
-	}
-	m, errs := model.Compile(model.Source{Dir: dir, Files: specFiles, Libraries: p.Libraries})
+	m, errs := model.Compile(model.Source{Dir: SpecDir, Files: specFiles, Libraries: p.Libraries})
 	p.Model = m
 	ds = append(ds, errs...)
 	in := realization.Input{Model: m, Pages: pages, Files: others, GitIgnored: repo.GitIgnored, OwnDir: Dir, Own: isOwn}
@@ -327,7 +298,6 @@ func (p *Project) loadManifest(read func(string) ([]byte, bool), present map[str
 	}
 	manifest, errs := model.ParseManifest(ManifestFile, data)
 	*ds = append(*ds, errs...)
-	p.Manifest = manifest
 	named := map[string]bool{}
 	for _, ref := range manifest.Libraries {
 		named[ref.Name] = true
@@ -371,7 +341,7 @@ func LibrarySource(ref model.LibraryRef, local map[string][]model.File) (model.L
 		if ref.Version != libraries.Version {
 			return model.LibrarySource{}, "library.version", fmt.Sprintf("this markitect ships %s %s, not %s", ref.Name, libraries.Version, ref.Version)
 		}
-		lib := model.LibrarySource{Name: ref.Name, Version: ref.Version, Dir: "markitect:" + ref.Name, Standard: true}
+		lib := model.LibrarySource{Name: ref.Name, Version: ref.Version, Dir: "markitect:" + ref.Name}
 		for _, f := range files {
 			lib.Files = append(lib.Files, model.File{Path: f.Path, Data: f.Data})
 		}

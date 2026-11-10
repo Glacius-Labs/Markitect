@@ -72,9 +72,6 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 		}
 		evidence = append(evidence, ev)
 	}
-	if e.Folder == nil {
-		return "", false, errors.New("this build reads no project folder")
-	}
 	root, err := e.Folder.Root(req.Dir)
 	if err != nil {
 		return "", false, err

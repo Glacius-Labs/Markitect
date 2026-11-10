@@ -48,8 +48,8 @@ func TestResolveKeyByKey(t *testing.T) {
 	if model, effort := c.Agent("builder"); model != "haiku" || effort != "max" {
 		t.Errorf("builder = %s %s", model, effort)
 	}
-	if got := Resolve(File{}, File{}).Strategy("build"); got != Auto {
-		t.Errorf("the built-in strategy is %q", got)
+	if got, _ := Resolve(File{}, File{}).Get("strategy.build"); got.Value != Auto {
+		t.Errorf("the built-in strategy is %q", got.Value)
 	}
 	if n := len(c.Values()); n != 4*2+1+len(Skills) {
 		t.Errorf("%d values: %+v", n, c.Values())

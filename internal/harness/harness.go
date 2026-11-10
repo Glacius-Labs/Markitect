@@ -60,16 +60,13 @@ const (
 	Auto = "auto"
 	// Sequential runs one agent of each role at a time, in the session.
 	Sequential = "sequential"
-	// Parallel runs the shipped workflow, ParallelWorkflow.
+	// Parallel runs the shipped workflow, markitect-parallel, which init installs
+	// as .claude/workflows/markitect-parallel.js.
 	Parallel = "parallel"
 )
 
 // Strategies are the built-in strategies.
 var Strategies = []string{Auto, Sequential, Parallel}
-
-// ParallelWorkflow is the name of the workflow the parallel strategy runs, which
-// init installs as .claude/workflows/markitect-parallel.js.
-const ParallelWorkflow = "markitect-parallel"
 
 // ownPrefix starts the name of every file init and update ship and keep, so a
 // custom workflow may not start with it.
@@ -353,9 +350,6 @@ func joinComments(a, b string) string {
 	return a + "\n" + b
 }
 
-// Empty says whether the file sets nothing.
-func (f File) Empty() bool { return len(f.Values()) == 0 }
-
 // Bytes returns the file as text, with two spaces of indent.
 func (f File) Bytes() ([]byte, error) {
 	top := f.root(false)
@@ -459,12 +453,6 @@ func (c Config) Values() []Value {
 // Agent returns the model and effort of a role's agent.
 func (c Config) Agent(role string) (model, effort string) {
 	return c.byKey["agents."+role+".model"].Value, c.byKey["agents."+role+".effort"].Value
-}
-
-// Strategy returns the strategy of a skill: auto, sequential, parallel or the
-// name of a custom workflow.
-func (c Config) Strategy(skill string) string {
-	return c.byKey["strategy."+skill].Value
 }
 
 // Workflow returns the path of a custom workflow's script.

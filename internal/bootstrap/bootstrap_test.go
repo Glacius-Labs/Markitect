@@ -3,8 +3,6 @@ package bootstrap
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -719,17 +717,9 @@ func TestUsageAndRefusals(t *testing.T) {
 			t.Fatalf("%s outside a project: %d %s", args[0], code, errOut)
 		}
 	}
-	// For one release, the retired commands of the work say on standard output,
-	// with exit 0, that markitect update is needed, so that an old project's skill
-	// does not fail silently.
-	for _, args := range [][]string{{"checklist", "--start"}, {"answer"}, {"gate", "--verify"}} {
-		if code, out, _ := run(t, dir, args...); code != 0 || !strings.Contains(out, "markitect "+args[0]+" is gone") || !strings.Contains(out, "run markitect update") {
-			t.Fatalf("%s: %d %s", args[0], code, out)
-		}
-	}
 	// The commands step 2 of the tooling plan renamed are gone: vet, list, doc and
 	// tidy take their place, and the commands stay flat.
-	for _, cmd := range []string{"impact", "lint", "refs", "graph", "lock", "review"} {
+	for _, cmd := range []string{"impact", "lint", "refs", "graph", "lock", "review", "checklist", "answer", "gate"} {
 		if code, _, errOut := run(t, dir, cmd); code != 2 || !strings.Contains(errOut, "unknown command") {
 			t.Fatalf("%s: %d %s", cmd, code, errOut)
 		}
@@ -915,41 +905,4 @@ func TestDocAndVetDocuments(t *testing.T) {
 	if is, ok := internal["members/limit"]; !ok || !is || internal["members/member"] {
 		t.Fatalf("list --json internal: %v", internal)
 	}
-}
-
-// update turns the newest certificate of markitect 0.20 into the record, and
-// removes the retired results folder.
-func TestUpdateWritesTheRecordFromTheNewestCertificate(t *testing.T) {
-	emptyHome(t)
-	r := newFolder(t)
-	mustRun(t, r.Dir, "init")
-	r.Write(".markitect/registry.md", "| File | Realizes | Why |\n|---|---|---|\n| README.md | [[project]] | Overview |\n")
-	r.Write("README.md", "# A project\n")
-	files := map[string]string{}
-	spec := map[string]string{}
-	for file, content := range snapshot(t, r.Dir) {
-		sum := sha256.Sum256([]byte(content))
-		files[file] = hex.EncodeToString(sum[:])
-		if strings.HasPrefix(file, ".markitect/") {
-			spec[file] = content
-		}
-	}
-	cert, _ := json.Marshal(map[string]any{
-		"kind": "markitect-certificate", "format": 1, "created": "2026-11-06T12:00:00Z", "files": files, "definitions": map[string]string{}, "spec": spec,
-		"items": []map[string]any{{"item": "project", "kind": "definition", "definition": "project", "answer": "ok", "pointers": []map[string]any{{"file": "README.md", "line": 1}}}},
-	})
-	r.Write(".markitect/results/gate-20261106-120000-0a1b2c3d.json", string(cert))
-	r.Write(".markitect/results/gate-20261106-120000-0a1b2c3d.md", "# Result\n")
-	if code, out, _ := run(t, r.Dir, "check"); code != 1 || !strings.Contains(out, "project.results") {
-		t.Fatalf("check with a results folder: %d\n%s", code, out)
-	}
-	code, out, _ := run(t, r.Dir, "update", "--check")
-	if code != 1 || !strings.Contains(out, "record: the certificates under .markitect/results are retired") {
-		t.Fatalf("update --check: %d\n%s", code, out)
-	}
-	wantAll(t, mustRun(t, r.Dir, "update", "--files"), "record: wrote .markitect/review.sum from the newest certificate", "record: removed the retired .markitect/results (2 files)")
-	if code, out, _ := run(t, r.Dir, "status"); code != 0 || !strings.Contains(out, "Nothing to verify") {
-		t.Fatalf("status after the migration: %d\n%s", code, out)
-	}
-	wantAll(t, read(t, r.Dir, ".markitect/review.sum"), `"evidence":["README.md:1"]`)
 }

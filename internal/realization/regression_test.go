@@ -36,13 +36,3 @@ func TestPatternErrorsNameTheirLine(t *testing.T) {
 	_, ds := account(t, nil, nil, page("members", "---\npaths:\n  - src/members/**\n  - /abs\n---\n"))
 	expect(t, ds, "registry.pattern", ".markitect/registry/members.md:4:")
 }
-
-func TestStaleFileOfARemovedPackageGoesToRoot(t *testing.T) {
-	reg, _ := account(t, nil, nil,
-		page("gone", "---\npaths: [src/gone/**]\n---\n"+table+"| src/gone/missing.go | | the Package and the file are gone |\n"))
-	for _, s := range reg.Stale {
-		if s.Code == "stale.file" && s.Package != "" {
-			t.Fatalf("stale file assigned to the removed Package %q", s.Package)
-		}
-	}
-}

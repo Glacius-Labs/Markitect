@@ -9,12 +9,10 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
-	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/harness"
 	"github.com/Glacius-Labs/Markitect/internal/project"
-	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
 // fileState says how something this binary writes compares with what is in place.
@@ -102,19 +100,10 @@ type projectState struct {
 	files    []string  // the skills, agents and settings that differ
 	lock     bool      // the lock differs
 	lockCode int       // Failed when the manifest names a Library the binary cannot supply
-	// migrated are the record written from the newest certificate and the files
-	// of the retired results folder, removed.
-	migrated []string
-	// moved are the manifest and the harness configuration, when the agents'
-	// model moved from the one to the other (DEC-103).
-	moved []string
-	// spec is the move of the spec from the folder an earlier markitect kept it
-	// in, with the record's evidence there.
-	spec run.SpecMove
 }
 
 func (p projectState) stale() bool {
-	return len(p.files) > 0 || p.lock || len(p.migrated) > 0 || len(p.moved) > 0 || p.spec.Changed()
+	return len(p.files) > 0 || p.lock
 }
 
 // refreshProject finds what differs in the project at repo and, unless dry,
@@ -128,10 +117,6 @@ func (c CLI) refreshProject(repo string, dry bool) (projectState, error) {
 		return st, nil
 	}
 	st.ws = ws
-	// First, so that a project with two specs is refused before anything changes.
-	if st.spec, err = run.MoveSpec(ws.Root(), dry); err != nil {
-		return st, err
-	}
 	user, _, err := readUserHarness()
 	if err != nil {
 		return st, err
@@ -140,14 +125,8 @@ func (c CLI) refreshProject(repo string, dry bool) (projectState, error) {
 	if err != nil {
 		return st, err
 	}
-	if proj, st.moved, err = moveManifestModel(ws, proj, dry); err != nil {
-		return st, err
-	}
 	if st.files, err = c.refreshHarness(ws, harness.Resolve(user, proj), dry); err != nil {
 		return st, err
-	}
-	if st.migrated, err = run.Migrate(ws.Root(), dry); err != nil {
-		return st, fmt.Errorf("could not write the record from the newest certificate: %w", err)
 	}
 	l := &refresher{Workspace: ws, dry: dry}
 	quiet := c
@@ -260,8 +239,7 @@ func (c CLI) upgradeBinary(ctx context.Context, repo string, check, force bool) 
 
 // update installs the newest release of markitect and then brings what the
 // binary wrote earlier in line with it: the personal skill, if there is one, and
-// the project's skills, agents, hook and lock. It moves a spec from the folder an
-// earlier markitect kept it in, and changes no spec file.
+// the project's skills, agents, hook and lock. It changes no spec file.
 func (c CLI) update(ctx context.Context, args []string) (int, error) {
 	var o options
 	var check, files, force bool
@@ -318,11 +296,6 @@ func (c CLI) update(ctx context.Context, args []string) (int, error) {
 	case !proj.stale() && proj.lockCode == OK:
 		fmt.Fprintln(c.Stdout, "project: up to date")
 	default:
-		if proj.spec.Changed() {
-			stale = stale || check
-			// The record's migration below says to commit, when it runs too.
-			c.reportSpecMove(proj.spec, check, len(proj.migrated) == 0)
-		}
 		if len(proj.files) > 0 {
 			if check {
 				stale = true
@@ -337,30 +310,6 @@ func (c CLI) update(ctx context.Context, args []string) (int, error) {
 				fmt.Fprintln(c.Stdout, "Markitect uses no Git: commit them when you like.")
 			}
 		}
-		if len(proj.moved) > 0 {
-			if check {
-				stale = true
-				fmt.Fprintf(c.Stdout, "manifest: names the agents' model, which belongs in %s now; markitect update moves it there\n", project.HarnessFile)
-			} else {
-				fmt.Fprintf(c.Stdout, "manifest: moved the agents' model to %s (%s)\n", project.HarnessFile, strings.Join(proj.moved, ", "))
-			}
-		}
-		if len(proj.migrated) > 0 {
-			if check {
-				stale = true
-				fmt.Fprintf(c.Stdout, "record: the certificates under %s are retired; markitect update writes %s from the newest one and removes them\n", run.ResultsDir, project.ReviewFile)
-			} else {
-				removed := len(proj.migrated)
-				if slices.Contains(proj.migrated, project.ReviewFile) {
-					removed--
-					fmt.Fprintf(c.Stdout, "record: wrote %s from the newest certificate: every Definition it certified is recorded ok\n", project.ReviewFile)
-				}
-				if removed > 0 {
-					fmt.Fprintf(c.Stdout, "record: removed the retired %s (%d files), which the record replaces\n", run.ResultsDir, removed)
-				}
-				fmt.Fprintln(c.Stdout, "Commit the change when you like.")
-			}
-		}
 		switch {
 		case proj.lockCode != OK:
 			fmt.Fprintln(c.Stdout, "lock: not rewritten; the manifest has errors, fix them first")
@@ -370,9 +319,6 @@ func (c CLI) update(ctx context.Context, args []string) (int, error) {
 		case proj.lock:
 			fmt.Fprintf(c.Stdout, "lock: rewritten; read the change of %s before you commit it\n", project.LockFile)
 		}
-	}
-	if proj.ws != nil {
-		c.noteRetiredSkills(proj.ws)
 	}
 	c.warnPath()
 	if proj.lockCode != OK || (check && stale) {
@@ -418,10 +364,6 @@ func (c CLI) version(ctx context.Context, args []string) (int, error) {
 		fmt.Fprintf(c.Stdout, "project: unreadable: %v\n", err)
 	case proj.ws == nil:
 		fmt.Fprintf(c.Stdout, "project: none here (%s)\n", proj.why)
-	case proj.spec.Moved:
-		fmt.Fprintf(c.Stdout, "project: out of date: the spec is still in %s; run markitect update, which moves it to %s\n", project.OldSpecDir, project.SpecDir)
-	case proj.spec.Lines > 0:
-		fmt.Fprintf(c.Stdout, "project: out of date: the record names files in %s; run markitect update, which renames them to %s\n", project.OldSpecDir, project.SpecDir)
 	case proj.stale():
 		fmt.Fprintf(c.Stdout, "project: out of date (%d files%s); run markitect update\n", len(proj.files), lockNote(proj.lock))
 	default:
@@ -436,57 +378,6 @@ func lockNote(lock bool) string {
 		return " and the lock"
 	}
 	return ""
-}
-
-// retiredSkills are the skills an earlier markitect installed that one of today's
-// replaced, with its successor. update removes them, but never touches AGENTS.md,
-// which an earlier init wrote naming them.
-var retiredSkills = []struct{ name, by string }{
-	{"markitect-start", "markitect-architect"},
-	{"markitect-extract", "markitect-architect"},
-	{"markitect-modeling", "markitect-architect"},
-	{"markitect-design", "markitect-architect"},
-}
-
-// noteRetiredSkills says when the project's instruction file names a skill that
-// is gone, or the folder an earlier markitect kept the spec in, so that its
-// sessions are not pointed at nothing.
-func (c CLI) noteRetiredSkills(ws Workspace) {
-	data, err := ws.Read(instructionsFile)
-	if err != nil {
-		return
-	}
-	for _, s := range retiredSkills {
-		if strings.Contains(string(data), s.name) {
-			fmt.Fprintf(c.Stdout, "note: %s names the skill %s, which %s replaced; change that line\n", instructionsFile, s.name, s.by)
-		}
-	}
-	// V1's manifest .markitect/model.yaml is another file, not the folder.
-	if strings.Contains(strings.ReplaceAll(string(data), project.OldSpecDir+".yaml", ""), project.OldSpecDir) {
-		fmt.Fprintf(c.Stdout, "note: %s names %s, where an earlier markitect kept the spec; it is %s now: change that line\n", instructionsFile, project.OldSpecDir, project.SpecDir)
-	}
-}
-
-// reportSpecMove says what the move of the spec from the folder an earlier
-// markitect kept it in did or, with check, would do; commit says to end with the
-// note to commit.
-func (c CLI) reportSpecMove(mv run.SpecMove, check, commit bool) {
-	switch {
-	case check && mv.Moved:
-		fmt.Fprintf(c.Stdout, "spec: still in %s, where an earlier markitect kept it; markitect update moves it to %s and keeps the record\n", project.OldSpecDir, project.SpecDir)
-	case check:
-		fmt.Fprintf(c.Stdout, "record: %d %s of %s %s evidence in %s; markitect update renames it to %s\n", mv.Lines, plural(mv.Lines, "line", "lines"), project.ReviewFile, plural(mv.Lines, "names", "name"), project.OldSpecDir, project.SpecDir)
-	default:
-		if mv.Moved {
-			fmt.Fprintf(c.Stdout, "spec: moved %s to %s\n", project.OldSpecDir, project.SpecDir)
-		}
-		if mv.Lines > 0 {
-			fmt.Fprintf(c.Stdout, "record: renamed the evidence in %s in %d %s of %s\n", project.OldSpecDir, mv.Lines, plural(mv.Lines, "line", "lines"), project.ReviewFile)
-		}
-		if commit {
-			fmt.Fprintln(c.Stdout, "Commit the change when you like.")
-		}
-	}
 }
 
 // staleNotice prints the one line that says a project's skills and agents come

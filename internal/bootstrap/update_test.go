@@ -40,32 +40,6 @@ func wantAll(t *testing.T, got string, want ...string) {
 	}
 }
 
-// The hooks of 0.25.2 and before call markitect by name, which fails where the
-// hook's shell finds none, as with the plugin alone; update puts the current ones
-// in their place, and init leaves a project with them as it is.
-func TestUpdateReplacesTheBareHooks(t *testing.T) {
-	emptyHome(t)
-	r := newFolder(t)
-	mustRun(t, r.Dir, "init")
-	settings := read(t, r.Dir, ".claude/settings.json")
-	bare := strings.ReplaceAll(settings, projectHook, "markitect hook pretool")
-	if bare == settings {
-		t.Fatalf("init wrote no current hook:\n%s", settings)
-	}
-	r.Write(".claude/settings.json", bare)
-	code, out, _ := run(t, r.Dir, "update", "--check", "--files")
-	if code != 1 || !strings.Contains(out, ".claude/settings.json") {
-		t.Fatalf("update --check = %d\n%s", code, out)
-	}
-	mustRun(t, r.Dir, "update", "--files")
-	if got := read(t, r.Dir, ".claude/settings.json"); got != settings {
-		t.Fatalf("update left:\n%s\nwant:\n%s", got, settings)
-	}
-	if out := mustRun(t, r.Dir, "init"); strings.Contains(out, "added the hooks") || read(t, r.Dir, ".claude/settings.json") != settings {
-		t.Fatalf("init again:\n%s", out)
-	}
-}
-
 // update puts a project made by an older markitect right: it rewrites the skills,
 // agents and hook that differ and removes the ones the binary no longer ships,
 // commits nothing, and touches nothing of the owner's.
@@ -82,7 +56,7 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	r.Write(".claude/settings.json", `{
   "permissions": {"allow": ["Bash(go test *)"]},
   "hooks": {"PreToolUse": [
-    {"matcher": "Bash", "hooks": [{"type": "command", "if": "Bash(markitect answer*)", "command": "markitect hook pretool"}]},
+    {"matcher": "Bash", "hooks": [{"type": "command", "if": "Bash(markitect answer*)", "command": "`+projectHook+`"}]},
     {"matcher": "Edit", "hooks": [{"type": "command", "command": "my-own-check"}]}
   ]}
 }
@@ -120,8 +94,7 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(r.Dir, ".claude", "skills", "markitect-retired", "SKILL.md")); !os.IsNotExist(err) {
 		t.Fatalf("the retired skill stayed: %v", err)
 	}
-	// It never changes AGENTS.md, and says when it names a skill that is gone.
-	wantAll(t, out, "note: AGENTS.md names the skill markitect-design, which markitect-architect replaced")
+	// It never changes AGENTS.md.
 	if read(t, r.Dir, "AGENTS.md") != "# Mine\n\nA change starts in the spec, designed with the `markitect-design` skill.\n" || read(t, r.Dir, ".markitect/spec/project.md") != spec {
 		t.Fatal("update changed a file of the owner's")
 	}
@@ -134,133 +107,6 @@ func TestUpdateBringsAProjectInLine(t *testing.T) {
 	}
 }
 
-// update moves the spec from .markitect/model/, where an earlier markitect kept
-// it, to .markitect/spec/, and the record keeps every verdict, also one whose
-// evidence is a file of the spec. Until then check names the move and init
-// refuses; a second spec beside the first is refused.
-func TestUpdateMovesTheSpecFolder(t *testing.T) {
-	emptyHome(t)
-	r := newFolder(t)
-	mustRun(t, r.Dir, "init", "--name", "Demo")
-	r.Write(".markitect/spec/members/member.md", "---\nkind: std/Concept\n---\n# Member\n\nA person who borrows.\n")
-	r.Write(".markitect/registry.md", read(t, r.Dir, ".markitect/registry.md")+"| `README.md` | [[project]] | Overview |\n")
-	r.Write(".markitect/registry/members.md", "---\npaths: [src/members/**]\n---\n# Registry: members\n\n| File | Realizes | Why |\n|---|---|---|\n| `src/members/member.go` | [[members/member]] | The type |\n")
-	r.Write("README.md", "# Demo\n")
-	r.Write("src/members/member.go", "package members\n")
-	verifyAll(t, r.Dir)
-	_, out, _ := run(t, r.Dir, "status", "--all")
-	item := ""
-	for _, line := range strings.Split(out, "\n") {
-		if strings.HasPrefix(line, "members/member@") {
-			item = line
-		}
-	}
-	mustRun(t, r.Dir, "mark", item, "ok", "-e", ".markitect/spec/members/member.md:5", "-e", "src/members/member.go:1")
-	record := read(t, r.Dir, ".markitect/review.sum")
-	wantAll(t, record, `"evidence:.markitect/spec/members/member.md":"sha256:`)
-
-	// The project as an earlier markitect left it.
-	if err := os.Rename(filepath.Join(r.Dir, ".markitect", "spec"), filepath.Join(r.Dir, ".markitect", "model")); err != nil {
-		t.Fatal(err)
-	}
-	r.Write(".markitect/review.sum", strings.ReplaceAll(record, ".markitect/spec/", ".markitect/model/"))
-	r.Write("AGENTS.md", strings.ReplaceAll(read(t, r.Dir, "AGENTS.md"), ".markitect/spec/", ".markitect/model/"))
-	if code, out, _ := run(t, r.Dir, "check"); code != 1 || !strings.HasPrefix(out, ".markitect/model: project.model: an earlier markitect kept the spec here; markitect update moves it to .markitect/spec\n1 error: 1 in the spec") {
-		t.Fatalf("check before the move: %d\n%s", code, out)
-	}
-	before := snapshot(t, r.Dir)
-	if code, out, errOut := run(t, r.Dir, "init"); code != 2 || out != "" || !strings.Contains(errOut, "run markitect update, which moves it to .markitect/spec") {
-		t.Fatalf("init before the move: %d\n%s%s", code, out, errOut)
-	}
-	wantAll(t, mustRun(t, r.Dir, "version"), "project: out of date: the spec is still in .markitect/model; run markitect update")
-	code, out, _ := run(t, r.Dir, "update", "--check")
-	if code != 1 || !strings.Contains(out, "spec: still in .markitect/model, where an earlier markitect kept it; markitect update moves it to .markitect/spec and keeps the record") {
-		t.Fatalf("update --check: %d\n%s", code, out)
-	}
-	if diff := changed(before, snapshot(t, r.Dir)); len(diff) > 0 {
-		t.Fatalf("init or update --check changed something: %v", diff)
-	}
-
-	out = mustRun(t, r.Dir, "update")
-	wantAll(t, out, "spec: moved .markitect/model to .markitect/spec\n", "record: renamed the evidence in .markitect/model in 1 line of .markitect/review.sum\n",
-		"note: AGENTS.md names .markitect/model, where an earlier markitect kept the spec; it is .markitect/spec now")
-	if read(t, r.Dir, ".markitect/review.sum") != record {
-		t.Fatalf("the record is not the one verified:\n%s", read(t, r.Dir, ".markitect/review.sum"))
-	}
-	if code, out, _ := run(t, r.Dir, "status"); code != 0 || !strings.Contains(out, "Nothing to verify") {
-		t.Fatalf("a verdict was lost in the move: %d\n%s", code, out)
-	}
-	// A second update finds nothing to move.
-	if out := mustRun(t, r.Dir, "update"); !strings.Contains(out, "project: up to date") || strings.Contains(out, "spec:") || strings.Contains(out, "record:") {
-		t.Fatalf("a second update:\n%s", out)
-	}
-
-	// A second spec beside the moved one is refused, and nothing changes.
-	r.Write(".markitect/model/members/member.md", "---\nkind: std/Concept\n---\n# Member\n\nAn older text.\n")
-	before = snapshot(t, r.Dir)
-	if code, out, errOut := run(t, r.Dir, "update"); code != 2 || !strings.Contains(errOut, "both .markitect/model and .markitect/spec hold files") {
-		t.Fatalf("update with two specs: %d\n%s%s", code, out, errOut)
-	}
-	if diff := changed(before, snapshot(t, r.Dir)); len(diff) > 0 {
-		t.Fatalf("the refusal changed something: %v", diff)
-	}
-}
-
-// The agents' model an earlier manifest names moves to the project's harness
-// configuration (DEC-103): update moves it, keeps a model the configuration
-// already sets, and writes the agents' files from it. A model that was never a
-// name is dropped, as it was ignored.
-func TestTheManifestsModelMovesToTheHarnessConfiguration(t *testing.T) {
-	emptyHome(t)
-	r := newFolder(t)
-	mustRun(t, r.Dir, "init")
-	wantAll(t, read(t, r.Dir, ".claude/agents/markitect-builder.md"), "\nmodel: sonnet\neffort: high\n")
-	if strings.Contains(read(t, r.Dir, ".markitect/manifest.yaml"), "model") {
-		t.Fatal("a new manifest still speaks of the model")
-	}
-	r.Write(".markitect/manifest.yaml", "# The Libraries this project uses, with their versions. Run markitect tidy after a change.\n# model, optional, names the model Markitect's agents use; without it they use sonnet.\n# markitect update writes it into their agent files.\nlibraries:\n  std: 1.0.0\nmodel: opus\n")
-	r.Write(".markitect/harness.yaml", "agents:\n  reviewer:\n    model: haiku\n")
-	if code, out, _ := run(t, r.Dir, "check"); code != 1 || !strings.Contains(out, "manifest.model") {
-		t.Fatalf("check said nothing of the model: %d\n%s", code, out)
-	}
-	code, out, _ := run(t, r.Dir, "update", "--check", "--files")
-	if code != 1 || !strings.Contains(out, "manifest: names the agents' model") || strings.Contains(out, "lock: not rewritten") {
-		t.Fatalf("update --check: %d\n%s", code, out)
-	}
-	mustRun(t, r.Dir, "tidy")
-	out = mustRun(t, r.Dir, "update", "--files")
-	wantAll(t, out, "manifest: moved the agents' model to .markitect/harness.yaml")
-	if got := read(t, r.Dir, ".markitect/manifest.yaml"); got != "# The Libraries this project uses, with their versions. Run markitect tidy after a change.\nlibraries:\n  std: 1.0.0\n" {
-		t.Fatalf("the manifest: %q", got)
-	}
-	for agent, model := range map[string]string{"builder": "opus", "architect": "opus", "auditor": "opus", "reviewer": "haiku"} {
-		wantAll(t, read(t, r.Dir, ".claude/agents/markitect-"+agent+".md"), "\nmodel: "+model+"\n")
-	}
-	mustRun(t, r.Dir, "check")
-	if out := mustRun(t, r.Dir, "update", "--files"); !strings.Contains(out, "project: up to date") {
-		t.Fatalf("a second update:\n%s", out)
-	}
-
-	// init moves it too, when it runs again on an earlier project.
-	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.0.0\nmodel: haiku\n")
-	if err := os.Remove(filepath.Join(r.Dir, ".markitect", "harness.yaml")); err != nil {
-		t.Fatal(err)
-	}
-	out = mustRun(t, r.Dir, "init")
-	wantAll(t, out, "moved the agents' model from .markitect/manifest.yaml to .markitect/harness.yaml")
-	wantAll(t, read(t, r.Dir, ".claude/agents/markitect-reviewer.md"), "\nmodel: haiku\n")
-
-	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.0.0\nmodel: \"opus; rm -rf /\"\n")
-	mustRun(t, r.Dir, "update", "--files")
-	if got := read(t, r.Dir, ".markitect/manifest.yaml"); strings.Contains(got, "model") {
-		t.Fatalf("the bad model stayed: %q", got)
-	}
-	if strings.Contains(read(t, r.Dir, ".claude/agents/markitect-builder.md"), "rm -rf") {
-		t.Fatal("the bad model reached an agent file")
-	}
-}
-
-// A checkout may hold a file with CRLF; that is the same file.
 func TestUpdateIgnoresLineEndings(t *testing.T) {
 	emptyHome(t)
 	r := newFolder(t)

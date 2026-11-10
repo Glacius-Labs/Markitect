@@ -9,8 +9,6 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"go.yaml.in/yaml/v3"
-
 	"github.com/Glacius-Labs/Markitect/internal/harness"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/skills"
@@ -344,92 +342,4 @@ func (c CLI) noteWorkflow(ws Workspace, user bool, name, path string) {
 	if !strings.Contains(slashed, ".claude/workflows/") {
 		fmt.Fprintf(c.Stdout, "note: Claude Code starts a saved workflow by name only from .claude/workflows/ or ~/.claude/workflows/; put %s there, as %s.js with meta.name %q\n", path, name, name)
 	}
-}
-
-// Comment lines an earlier manifest template wrote about the agents' model.
-var oldManifestModelLines = []string{
-	"# model, optional, names the model Markitect's agents use; without it they use sonnet.",
-	"# markitect update writes it into their agent files.",
-}
-
-// moveManifestModel moves the agents' model that an earlier manifest names into
-// the project's harness configuration (DEC-103), as the model of every role the
-// configuration does not set yet, and removes it from the manifest. It returns
-// the configuration as it is then, and the files it changed, or would change
-// when dry. A model that was never a valid name is dropped, as it was ignored.
-func moveManifestModel(ws Workspace, proj harness.File, dry bool) (harness.File, []string, error) {
-	data, err := ws.Read(project.ManifestFile)
-	if err != nil {
-		return proj, nil, nil
-	}
-	var doc yaml.Node
-	if yaml.Unmarshal(data, &doc) != nil || len(doc.Content) == 0 || doc.Content[0].Kind != yaml.MappingNode {
-		return proj, nil, nil
-	}
-	top := doc.Content[0]
-	var key, value *yaml.Node
-	for i := 0; i+1 < len(top.Content); i += 2 {
-		if top.Content[i].Value == "model" {
-			key, value = top.Content[i], top.Content[i+1]
-		}
-	}
-	if key == nil || value.Kind != yaml.ScalarNode || value.Line != key.Line {
-		return proj, nil, nil
-	}
-	lines := strings.SplitAfter(string(data), "\n")
-	var kept []string
-	for i, line := range lines {
-		bare := strings.TrimRight(line, "\r\n")
-		if i == key.Line-1 {
-			continue
-		}
-		dropped := false
-		for _, old := range oldManifestModelLines {
-			if bare == old {
-				dropped = true
-			}
-		}
-		if !dropped {
-			kept = append(kept, line)
-		}
-	}
-	changed := []string{project.ManifestFile}
-	model := strings.TrimSpace(value.Value)
-	if harness.Check("agents.builder.model", model) == nil {
-		set := proj.Values()
-		if len(set) == 0 {
-			if data, _ := proj.Bytes(); len(data) == 0 {
-				proj = harness.New(projectHarnessHead)
-			}
-		}
-		moved := false
-		for _, role := range harness.Roles {
-			k := "agents." + role + ".model"
-			if _, ok := set[k]; !ok {
-				if err := proj.Set(k, model); err != nil {
-					return proj, nil, err
-				}
-				moved = true
-			}
-		}
-		if moved {
-			changed = append(changed, project.HarnessFile)
-		}
-	}
-	if dry {
-		return proj, changed, nil
-	}
-	if err := ws.Write(project.ManifestFile, []byte(strings.Join(kept, ""))); err != nil {
-		return proj, nil, err
-	}
-	if len(changed) > 1 {
-		out, err := proj.Bytes()
-		if err != nil {
-			return proj, nil, err
-		}
-		if err := ws.Write(project.HarnessFile, out); err != nil {
-			return proj, nil, err
-		}
-	}
-	return proj, changed, nil
 }

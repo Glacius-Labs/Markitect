@@ -33,9 +33,8 @@ var smokeModel = map[string]string{
 
 // modelCommands drives the packaged CLI over a small project in a plain folder,
 // with no Git: init, check, tidy, doc, list and vet; status and mark that
-// verify every Definition; status after a change of the spec; the retired
-// commands of the work; and the refusal of a model that does not compile. It
-// starts no agent.
+// verify every Definition; status after a change of the spec; and the refusal of
+// a model that does not compile. It starts no agent.
 func (s *smoke) modelCommands() error {
 	repo := filepath.Join(s.work, "model-commands")
 	if err := os.MkdirAll(repo, 0o755); err != nil {
@@ -116,7 +115,7 @@ func (s *smoke) modelCommands() error {
 		return fmt.Errorf("the record is not as expected:\n%s", tail(readFile(repo, ".markitect/review.sum")))
 	}
 
-	// M2's change: the loan limit drops from five to three. Only the Rule itself
+	// A change of the spec: the loan limit drops from five to three. Only the Rule itself
 	// is to verify again: nothing links to it, and no file changed.
 	limit := filepath.Join(repo, ".markitect", "spec", "loan-limit.md")
 	if err := os.WriteFile(limit, []byte(strings.Replace(smokeModel[".markitect/spec/loan-limit.md"], "`5`", "`3`", 1)), 0o644); err != nil {
@@ -129,12 +128,6 @@ func (s *smoke) modelCommands() error {
 		return err
 	}
 
-	// For one release, the retired commands of the work say to run update.
-	for _, retired := range []string{"checklist", "gate"} {
-		if out, err := markitect(retired); err != nil || !strings.Contains(out, "run markitect update") {
-			return fmt.Errorf("the retired %s does not point to update: %v\n%s", retired, err, tail(out))
-		}
-	}
 	if err := os.WriteFile(filepath.Join(repo, ".markitect", "spec", "broken.md"), []byte("no front matter\n"), 0o644); err != nil {
 		return err
 	}
@@ -144,7 +137,7 @@ func (s *smoke) modelCommands() error {
 	if out, err := markitect("status"); err == nil || !strings.Contains(out, "no list until it compiles") {
 		return fmt.Errorf("status listed over a model that does not compile: %s", tail(out))
 	}
-	for _, retired := range []string{"apply", "verify", "submit", "stop", "impact", "lint", "refs", "graph", "lock"} {
+	for _, retired := range []string{"apply", "verify", "submit", "stop", "impact", "lint", "refs", "graph", "lock", "checklist", "answer", "gate"} {
 		if _, err := markitect(retired); err == nil {
 			return fmt.Errorf("the retired %s command was accepted", retired)
 		}

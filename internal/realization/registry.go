@@ -68,15 +68,14 @@ type Entry struct {
 
 // Stale is realization the model or the repository no longer supports: a
 // link to a Definition that is gone, an entry for a file that is gone, or the
-// page of a Package that is gone. It is no compile error; impact makes it a
-// checklist item of the Manager that must clean it up, and lint warns.
+// page of a Package that is gone. Account reports none as a diagnostic;
+// project.Load makes each an error.
 type Stale struct {
-	Code     string `json:"code"`     // stale.definition, stale.file or stale.page
-	Package  string `json:"package"`  // the Manager that must clean it up
-	PageFile string `json:"pageFile"` // the registry page that holds it
-	Line     int    `json:"line,omitempty"`
-	File     string `json:"file,omitempty"`   // the registered file
-	Target   string `json:"target,omitempty"` // the missing Definition
+	Code     string // stale.definition, stale.file or stale.page
+	PageFile string // the registry page that holds it
+	Line     int
+	File     string // the registered file
+	Target   string // the missing Definition
 }
 
 // Account parses the registry pages and the ignore file and accounts every repository
@@ -233,7 +232,7 @@ func (a *accountant) resolve(src PageFile, raw model.RawLink, entry *Entry) (str
 	case a.reg.Pages[src.Package].Orphaned:
 		// The whole page is stale; its links need no item of their own.
 	default:
-		a.reg.Stale = append(a.reg.Stale, Stale{Code: "stale.definition", Package: src.Package, PageFile: src.File, Line: raw.Line, File: entry.File, Target: target})
+		a.reg.Stale = append(a.reg.Stale, Stale{Code: "stale.definition", PageFile: src.File, Line: raw.Line, File: entry.File, Target: target})
 	}
 	return "", false
 }
@@ -360,7 +359,7 @@ func (a *accountant) checkEntries(visible map[string]bool) {
 	for _, pkg := range a.sortedAllPages() {
 		page := a.reg.Pages[pkg]
 		if page.Orphaned {
-			a.reg.Stale = append(a.reg.Stale, Stale{Code: "stale.page", Package: model.RootPackage, PageFile: page.File})
+			a.reg.Stale = append(a.reg.Stale, Stale{Code: "stale.page", PageFile: page.File})
 		}
 		for _, e := range page.Entries {
 			switch {
@@ -369,7 +368,7 @@ func (a *accountant) checkEntries(visible map[string]bool) {
 			case !visible[e.File] && a.in.GitIgnored != nil && a.in.GitIgnored(e.File):
 				a.diags.Add("registry.git_ignored", e.PageFile, e.Line, "%s is ignored by Git, so agents never see it; remove the entry or stop ignoring the file", e.File)
 			case !visible[e.File]:
-				a.reg.Stale = append(a.reg.Stale, Stale{Code: "stale.file", Package: livePackage(page), PageFile: e.PageFile, Line: e.Line, File: e.File})
+				a.reg.Stale = append(a.reg.Stale, Stale{Code: "stale.file", PageFile: e.PageFile, Line: e.Line, File: e.File})
 			case a.reg.Ignored[e.File]:
 				a.diags.Add("registry.ignored_file", e.PageFile, e.Line, "%s is also in the ignore file; a file is either registered or ignored", e.File)
 			case page.Orphaned:
@@ -389,7 +388,7 @@ func (a *accountant) checkEntries(visible map[string]bool) {
 	for _, e := range orphaned {
 		if a.reg.Entries[e.File] == nil {
 			a.staleOnly[e.File] = true
-			a.reg.Stale = append(a.reg.Stale, Stale{Code: "stale.page", Package: a.reg.Owner[e.File], PageFile: e.PageFile, Line: e.Line, File: e.File})
+			a.reg.Stale = append(a.reg.Stale, Stale{Code: "stale.page", PageFile: e.PageFile, Line: e.Line, File: e.File})
 		}
 	}
 }
@@ -413,13 +412,4 @@ func sourceLine(doc model.Page, line int) string {
 		return lines[i]
 	}
 	return ""
-}
-
-// livePackage is the Manager that cleans up a page's stale entries: its own
-// Package, or Root when that Package no longer exists.
-func livePackage(page *Page) string {
-	if page.Orphaned {
-		return model.RootPackage
-	}
-	return page.Package
 }
