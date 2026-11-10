@@ -129,7 +129,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 - The tool makes no repository, commits nothing, keeps no branches, lands nothing and reads no history. Agents and people do every Git step.
 - It reads the project by walking its folder, skipping what the project's `.gitignore` files exclude, read as plain text.
-- So it cannot guarantee that what is committed is what was verified. `status` on any checkout shows what differs from the record, and a CI job can refuse it. Markitect's own release tooling still packages its source from Git; that is not part of the product.
+- So it cannot guarantee that what is committed is what was verified. `status` on any checkout shows what differs from the record, and a CI job can refuse it.
 
 <a id="dec-027-strict-links-with-an-optional-optimizer"></a>
 
@@ -204,7 +204,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 ### DEC-095 Releases, a plugin and a binary that updates itself
 
-- A tag `vX.Y.Z` on a commit of Main whose source and plugin version are `X.Y.Z` publishes binaries for Linux, macOS and Windows on amd64 and arm64, a checksums file and the source bundle as a GitHub release. Between releases the source says `-dev`. The retired versions 0.1.0 to 0.14.1 stay unused.
+- A tag `vX.Y.Z` on a commit of Main whose source and plugin version are `X.Y.Z` publishes binaries for Linux, macOS and Windows on amd64 and arm64, a checksums file and a provenance file as a GitHub release. Between releases the source says `-dev`. The retired versions 0.1.0 to 0.14.1 stay unused.
 - `plugin/` is the Claude Code plugin `markitect@glacius-labs`, listed in the marketplace repository `Glacius-Labs/Claude-Plugins`, which pins it to a release. Its launcher fetches the binary of its own version, so a plugin update is a binary update. The plugin works only in Claude Code, not on claude.ai or in Cowork.
 - `markitect update` installs the newest release over the binary, then refreshes the personal skill and a project's harness and lock. It commits nothing, never touches the spec, and is the only use of the network.
 - The download is checked against checksums of the same release, which guards against a damaged file, not against a release by someone who controls the repository.

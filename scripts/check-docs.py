@@ -38,7 +38,7 @@ DEFAULT_DOCUMENTS = (
     "docs/guides/good-spec.md",
     "docs/guides/project-workflow.md",
     "internal/run/README.md",
-    "packaging/README.md",
+    "docs/releasing.md",
 )
 
 
