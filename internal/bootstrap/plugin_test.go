@@ -472,10 +472,14 @@ func TestGuardHooksStartTheLauncherOnlyForTheirCalls(t *testing.T) {
 			guarded: []string{shell("markitect mark fees/fee@0a1b2c ok -e src/fees.go"), shell("markitect.exe mark fees/fee@0a1b2c ok"), shell("cd . && MARKITECT  mark x@0a1b2c ok")},
 		},
 		{
-			others: []string{edit("", "/p/.markitect/spec/x.md"), edit("markitect-builder", "/p/src/fees.go"), edit("general-purpose", "/p/src/fees.go"), shell("markitect mark x@0a1b2c ok")},
+			others: []string{edit("", "/p/.markitect/spec/x.md"), edit("markitect-builder", "/p/src/fees.go"), edit("general-purpose", "/p/src/fees.go"), shell("markitect mark x@0a1b2c ok"),
+				edit("markitect-builder", "/p/.claude/worktrees/agent-a1/src/hooks/check.go"), edit("markitect-builder", "/p/src/rules/go.md")},
 			guarded: []string{edit("markitect-builder", "/p/.markitect/spec/x.md"), edit("general-purpose", `C:\\p\\.markitect\\review.sum`), edit("markitect-builder", `C:\\p\\.MARKITECT\\review.sum`), edit("markitect-architect", "/p/src/fees.go"), edit("markitect-auditor", "/p/notes.md"),
 				edit("markitect-builder", "/p/.claude/settings.json"), edit("markitect-builder", `C:\\p\\.claude\\settings.local.json`), edit("general-purpose", "/p/AGENTS.md"), edit("markitect-builder", "/p/CLAUDE.md"),
-				edit("markitect-builder", "/p/.claude/agents/markitect-reviewer.md"), edit("markitect-builder", `C:\\p\\.agents\\skills\\markitect-architect\\SKILL.md`)},
+				edit("markitect-builder", "/p/.claude/agents/markitect-reviewer.md"), edit("markitect-builder", `C:\\p\\.agents\\skills\\markitect-architect\\SKILL.md`),
+				edit("general-purpose", `C:\\p\\.claude\\skills\\markitect-build\\SKILL.md`), edit("general-purpose", "/p/.claude/workflows/markitect-parallel.js"),
+				edit("markitect-builder", "/p/CLAUDE.local.md"), edit("markitect-builder", "/p/.claude/hooks/check.sh"), edit("general-purpose", `C:\\p\\.Claude\\Hooks\\check.sh`),
+				edit("markitect-builder", "/p/.claude/rules/go.md"), edit("markitect-builder", `C:\\p\\.claude\\rules\\go\\style.md`), edit("markitect-architect", "/p/.markitect/.gitattributes")},
 		},
 		{
 			others:  []string{start("", "markitect-builder"), start("general-purpose", "Explore"), start("general-purpose", "")},
@@ -504,10 +508,13 @@ func TestGuardHooksStartTheLauncherOnlyForTheirCalls(t *testing.T) {
 		if entries, _ := os.ReadDir(data); len(entries) != 0 {
 			t.Fatalf("hook %d wrote %v for calls it does not guard", i, entries)
 		}
+		// A launcher that cannot run does not stop the call, as the project's hook
+		// does not where it finds no markitect: exit 1 is an error Claude Code shows
+		// and goes on from, where exit 2 would refuse the call.
 		for _, input := range cases[i].guarded {
 			out, code := runHook(t, command, root, data, project, unreachable, input)
-			if code != 2 || !strings.Contains(out, "cannot download") {
-				t.Fatalf("hook %d before %s: exit %d, want the launcher to have run and failed to download\n%s", i, input, code, out)
+			if code != 1 || !strings.Contains(out, "cannot download") {
+				t.Fatalf("hook %d before %s: exit %d, want the launcher to have run, failed to download and let the call through\n%s", i, input, code, out)
 			}
 		}
 	}

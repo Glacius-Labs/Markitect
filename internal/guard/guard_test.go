@@ -41,14 +41,20 @@ func TestGuardLetsOnlyTheReviewerRecord(t *testing.T) {
 		`bash -c "markitect mark fees/fee@0a1b2c ok"`,
 		"markitect.exe mark fees/fee@0a1b2c ok",
 		"MARKITECT Mark fees/fee@0a1b2c ok",
+		"/usr/local/bin/markitect mark fees/fee@0a1b2c ok",
+		"./markitect mark fees/fee@0a1b2c ok",
+		`& "C:\Tools\markitect.exe" mark fees/fee@0a1b2c ok`,
+		"markitect.cmd mark fees/fee@0a1b2c ok",
 	} {
 		has(t, call("a1", guard.BuilderAgent, command), `"permissionDecision":"deny"`, guard.ReviewerAgent)
 		has(t, call("", "", command), `"permissionDecision":"deny"`)
-		if out := call("a2", guard.ReviewerAgent, command); out != "" {
-			t.Fatalf("refused the reviewer %q: %s", command, out)
+		for _, reviewer := range []string{guard.ReviewerAgent, "Markitect-Reviewer"} {
+			if out := call("a2", reviewer, command); out != "" {
+				t.Fatalf("refused %s %q: %s", reviewer, command, out)
+			}
 		}
 	}
-	for _, command := range []string{"markitect status", "markitect status --all", "go test ./...", "cat .claude/agents/markitect-reviewer.md", "echo markitect marked", "markitect markdown x"} {
+	for _, command := range []string{"markitect status", "markitect status --all", "go test ./...", "cat .claude/agents/markitect-reviewer.md", "echo markitect marked", "markitect markdown x", "cat docs/markitect-mark.md", "markitect.cmd status"} {
 		if out := call("a1", guard.BuilderAgent, command); out != "" {
 			t.Fatalf("refused %q: %s", command, out)
 		}
@@ -61,7 +67,8 @@ func TestGuardLetsOnlyTheReviewerRecord(t *testing.T) {
 // A subagent writes only what its role may (DEC-100): the builder, and any other
 // subagent, code and the registry pages; the architect the spec and the registry
 // pages; the reviewer and the auditor nothing; nobody the record, which mark
-// writes. The owner's own session is free.
+// writes, its Git attributes, which init writes, or a file that steers the
+// agents. The owner's own session is free.
 func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 	call := func(agentID, agent, tool, key, file string) string {
 		return string(guard.Guard(hookInput(t, map[string]any{
@@ -79,6 +86,7 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 			// Any other file of Markitect's folder is the spec's to settle.
 			"/p/.markitect/other/fee.md",
 			"/p/.markitect/registry/notes.txt",
+			"/p/.markitect/spec/.gitattributes",
 		},
 		"registry": {
 			"/p/.markitect/registry.md",
@@ -86,6 +94,7 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 			`C:\p\.markitect\registry\members\loans.md`,
 		},
 		"record": {"/p/.markitect/review.sum", `C:\p\.MARKITECT\review.sum`},
+		"setup":  {"/p/.markitect/.gitattributes", `C:\p\.Markitect\.gitattributes`},
 		"harness": {
 			"/p/.claude/settings.json",
 			`C:\p\.claude\settings.local.json`,
@@ -98,7 +107,11 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 			"/p/.claude/worktrees/agent-a1/.claude/settings.json",
 			"/p/AGENTS.md",
 			"/p/CLAUDE.md",
+			"/p/CLAUDE.local.md",
 			"/p/docs/AGENTS.md",
+			"/p/.claude/hooks/check.sh",
+			`C:\p\.claude\rules\go\style.md`,
+			"/p/.claude/worktrees/agent-a1/.claude/hooks/check.sh",
 		},
 		"code": {
 			"/p/src/fees.go",
@@ -111,6 +124,10 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 			"/p/.claude/commands/settings.json",
 			"/p/docs/agents-guide.md",
 			"/p/docs/agents.md",
+			"/p/docs/claude.local.md",
+			"/p/src/hooks/check.sh",
+			"/p/rules/go.md",
+			"/p/.gitattributes",
 		},
 	}
 	may := map[string]map[string]bool{
@@ -143,6 +160,7 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 	has(t, call("a1", guard.BuilderAgent, "Edit", "file_path", "/p/.markitect/spec/fee.md"), "the registry pages")
 	has(t, call("a1", guard.BuilderAgent, "Edit", "file_path", "/p/.markitect/review.sum"), "markitect mark")
 	has(t, call("a1", guard.BuilderAgent, "Edit", "file_path", "/p/.claude/settings.json"), "steers the agents")
+	has(t, call("a1", guard.ArchitectAgent, "Edit", "file_path", "/p/.markitect/.gitattributes"), "init and update")
 	has(t, call("a1", guard.ArchitectAgent, "Write", "file_path", "/p/.markitect/harness.yaml"), "steers the agents")
 	has(t, call("a1", guard.ArchitectAgent, "Edit", "file_path", "/p/src/fees.go"), "the builder writes")
 	has(t, call("a1", guard.AuditorAgent, "Edit", "file_path", "/p/src/fees.go"), "changes no file")
@@ -207,31 +225,74 @@ func TestGuardHoldsWhoStartsWhom(t *testing.T) {
 }
 
 func TestHasGuard(t *testing.T) {
-	group := func(matcher, rule string) string {
-		return `{"matcher": "` + matcher + `", "hooks": [{"type": "command", "if": "` + rule + `", "command": "` + guard.HookCommand + `"}]}`
+	group := func(matcher string, rules ...string) string {
+		var handlers []string
+		for _, rule := range rules {
+			handlers = append(handlers, `{"type": "command", "if": "`+rule+`", "command": "`+guard.HookCommand+`"}`)
+		}
+		return `{"matcher": "` + matcher + `", "hooks": [` + strings.Join(handlers, ", ") + `]}`
 	}
 	settings := func(groups ...string) string {
 		return `{"hooks": {"PreToolUse": [` + strings.Join(groups, ", ") + `]}}`
 	}
+	bash, powershell := guard.MarkRule("Bash"), guard.MarkRule("PowerShell")
+	shells, edits, agents := group(guard.ShellTools, bash, powershell), group(guard.EditTools, ""), group(guard.AgentTools, "")
 	for s, want := range map[string]bool{
-		settings(group("Bash", guard.MarkRule), group(guard.EditTools, ""), group(guard.AgentTools, "")): true,
-		settings(group("", "")): true,
-		settings(group("Bash", ""), group("Write|Edit|NotebookEdit|MultiEdit|Task|Agent|Workflow", "")):                                                         true,
-		settings(group("Bash", guard.MarkRule), group(guard.EditTools, ""), group("Agent|Task", "")):                                                            false,
-		settings(group("Bash", guard.MarkRule), group(guard.EditTools, "")):                                                                                     false,
-		settings(group("Bash", guard.MarkRule), group(guard.EditTools, ""), group("Agent", "")):                                                                 false,
-		settings(group("Bash", guard.MarkRule)):                                                                                                                 false,
-		settings(group(guard.EditTools, ""), group(guard.AgentTools, "")):                                                                                       false,
-		settings(group("Bash", guard.MarkRule), group("Edit|Write", ""), group(guard.AgentTools, "")):                                                           false,
-		settings(group("Bash", "Bash(markitect status*)"), group(guard.EditTools, ""), group(guard.AgentTools, "")):                                             false,
-		settings(group("Bash", guard.MarkRule), group(guard.EditTools, ""), group(guard.AgentTools, "Agent(markitect-*)")):                                      false,
-		`{"hooks": {"PostToolUse": [` + group("", "") + `]}}`:                                                                                                   false,
-		`{"note": "` + guard.HookCommand + `"}`:                                                                                                                 false,
-		strings.ReplaceAll(settings(group("Bash", guard.MarkRule), group(guard.EditTools, ""), group(guard.AgentTools, "")), guard.HookCommand, "my-own-check"): false,
+		settings(shells, edits, agents): true,
+		settings(group("", "")):         true,
+		settings(group("*", "")):        true,
+		settings(group("Bash", bash), group("PowerShell", powershell), edits, agents):                              true,
+		settings(group("Bash|PowerShell", ""), group("Write|Edit|NotebookEdit|MultiEdit|Task|Agent|Workflow", "")): true,
+		// Before the Bash tool only, a verdict recorded through PowerShell gets past.
+		settings(group("Bash", bash), edits, agents):                 false,
+		settings(group(guard.ShellTools, bash), edits, agents):       false,
+		settings(group(guard.ShellTools, bash, bash), edits, agents): false,
+		settings(group("*", bash, powershell)):                       false,
+		settings(shells, edits, group("Agent|Task", "")):             false,
+		settings(shells, edits):                                      false,
+		settings(shells, edits, group("Agent", "")):                  false,
+		settings(shells):        false,
+		settings(edits, agents): false,
+		settings(shells, group("Edit|Write", ""), agents):                                       false,
+		settings(group(guard.ShellTools, "Bash(markitect status*)", powershell), edits, agents): false,
+		settings(shells, edits, group(guard.AgentTools, "Agent(markitect-*)")):                  false,
+		`{"hooks": {"PostToolUse": [` + group("", "") + `]}}`:                                   false,
+		`{"note": "` + guard.HookCommand + `"}`:                                                 false,
+		strings.ReplaceAll(settings(shells, edits, agents), guard.HookCommand, "my-own-check"):  false,
 		"not json": false,
 	} {
 		if got := guard.HasGuard([]byte(s)); got != want {
 			t.Errorf("%s: %v", s, got)
 		}
+	}
+}
+
+// The guard takes the place of the hooks any earlier markitect wrote, whatever
+// stood before the call in them, and keeps the owner's own.
+func TestGuardedHooksReplaceAnEarlierGuard(t *testing.T) {
+	var settings map[string]any
+	if err := json.Unmarshal([]byte(`{"hooks": {"PreToolUse": [
+		{"matcher": "Bash", "hooks": [{"type": "command", "command": "markitect hook pretool"}]},
+		{"matcher": "Edit|Write", "hooks": [{"type": "command", "command": "command -v markitect >/dev/null 2>&1 || exit 0; MARKITECT_HOOK=project markitect hook pretool"}]},
+		{"matcher": "Bash", "hooks": [{"type": "command", "command": "my-own-check"}, {"type": "command", "command": "markitect hook pretool"}]},
+		{"matcher": "Write", "hooks": [{"type": "command", "command": "echo markitect hook pretool ran"}]}
+	]}}`), &settings); err != nil {
+		t.Fatal(err)
+	}
+	hooks, why := guard.GuardedHooks(settings)
+	if why != "" {
+		t.Fatal(why)
+	}
+	settings["hooks"] = hooks
+	out, err := json.Marshal(settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pre := hooks["PreToolUse"].([]any); len(pre) != 5 {
+		t.Fatalf("want the owner's two groups and the guard's three:\n%s", out)
+	}
+	has(t, string(out), "my-own-check", "echo markitect hook pretool ran", guard.MarkRule("PowerShell"))
+	if strings.Contains(string(out), "MARKITECT_HOOK") || !guard.HasGuard(out) {
+		t.Fatalf("%s", out)
 	}
 }
