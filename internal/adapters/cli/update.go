@@ -442,9 +442,10 @@ func lockNote(lock bool) string {
 // replaced, with its successor. update removes them, but never touches AGENTS.md,
 // which an earlier init wrote naming them.
 var retiredSkills = []struct{ name, by string }{
-	{"markitect-start", "markitect-design"},
-	{"markitect-extract", "markitect-design"},
-	{"markitect-modeling", "markitect-design"},
+	{"markitect-start", "markitect-architect"},
+	{"markitect-extract", "markitect-architect"},
+	{"markitect-modeling", "markitect-architect"},
+	{"markitect-design", "markitect-architect"},
 }
 
 // noteRetiredSkills says when the project's instruction file names a skill that

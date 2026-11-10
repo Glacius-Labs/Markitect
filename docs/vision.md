@@ -86,7 +86,7 @@ Trust and overview are rebuilt on the spec:
 - The core stays clean. Projects define their own Kinds and so form their own vocabulary; Libraries supply common Kinds, so that no project reinvents them.
 - The compiler checks structural correctness from the core alone. Meaning is judged by agents: the reviewer judges the code against the spec, and the auditor judges the spec itself.
 - The spec carries the structure that keeps software changeable, after Conway's law, Clean Architecture, clean code and modularity: Packages are modules, and links go up the tree or sideways towards stability, never down.
-- People decide intent and answer for the spec. Agents write it in conversation through the design skill, which asks first when something is open.
+- People decide intent and answer for the spec. Agents write it in conversation through the architect skill, which asks first when something is open.
 
 **Design against drift.** A compiler checks structure. It cannot see that the same fact stands in several places, and such places move apart with every change until it is unclear again what should be. Code has the same problem and manages it through design. Links are declared dependencies, so the same design principles apply to the spec. Clean code holds that good code reads like well-written prose. Markitect asks the reverse: prose that is built like clean code.
 

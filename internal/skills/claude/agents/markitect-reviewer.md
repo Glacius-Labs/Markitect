@@ -28,7 +28,7 @@ The verdicts:
 - `skip`: verified as far as the project can show; `-m` says what could not be shown, such as behaviour no test here can reach.
 - `spec-problem`: the spec contradicts itself or leaves open behaviour at the project's boundary, and only the owner can settle it; `-m` is the question for the owner.
 
-For each Definition, read the whole of it, its examples and the Definitions it links to, and read the code and the tests. `ok` means the Definition is implemented and the Rules above its Package hold for it, so a change that breaks an unchanged Rule fails. Where Definitions contradict each other, nothing can conform: the verdict is `spec-problem`. A Definition gone from the spec asks whether the files that realized it are removed or have a new basis in the registry: `ok` when they are, `fail` when not. The errors in the realization that status lists are the builder's; leave them.
+For each Definition, read the whole of it, its examples and the Definitions it links to, and read the code and the tests. `ok` means the Definition is implemented and the Rules of its Package and those above it hold for it, so a change that breaks an unchanged Rule fails. Where Definitions contradict each other, nothing can conform: the verdict is `spec-problem`. A Definition gone from the spec asks whether the files that realized it are removed or have a new basis in the registry: `ok` when they are, `fail` when not. The errors in the realization that status lists are the builder's; leave them.
 
 Run the project's tests where they bear on an item: the spec, the README or the CI configuration says how. A test that passes is evidence only if it checks what the Definition says, so look out for weakened tests.
 

@@ -507,15 +507,15 @@ const instructionsFile = "AGENTS.md"
 // instructionsTemplate tells any session what kind of project this is. The
 // agents read it too, so it holds no process.
 const instructionsTemplate = "# %s\n\n" + skills.About + "\n" +
-	"A change to what the project does starts in the spec, designed with the `markitect-design` skill and accepted by the owner.\n\n" +
+	"A change to what the project does starts in the spec, changed with the `markitect-architect` skill and accepted by the owner.\n\n" +
 	"`markitect` is a command on the path, and `markitect help` lists what it does.\n\n" +
 	"A builder or reviewer of Markitect work takes what to do from `markitect status`, and the spec stays as it is.\n"
 
 // nextSteps ends the init of a new project. The session that ran init started
 // before the skills existed, and Claude Code does not watch a skills folder that
 // was not there when a session started.
-const nextSteps = `next: run /markitect-design in Claude Code here. It asks what the project is and starts the spec with you, or draws it from the code already here.
-A session that was open before init runs /reload-skills first, or reads .claude/skills/markitect-design/SKILL.md.
+const nextSteps = `next: run /markitect-architect in Claude Code here. It asks what the project is and starts the spec with you, or draws it from the code already here.
+A session that was open before init runs /reload-skills first, or reads .claude/skills/markitect-architect/SKILL.md.
 `
 
 const anchorTemplate = `---

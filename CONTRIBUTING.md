@@ -86,7 +86,7 @@ Local checks and the independent review are the basis for a merge, and CI is opt
 2. **Get one independent review of the complete diff,** by someone who did not write it: a person, or a fresh agent that has not seen your reasoning. Fix what it finds, and review again if the fixes are substantial.
 3. **Merge the reviewed head:** with a merge commit and the head matched, `gh pr merge NUMBER --merge --match-head-commit SHA`, without bypassing branch protection. Then read Main back.
 
-**Real agent runs.** The skills `/markitect-build`, `/markitect-review`, `/markitect-cleanup`, `/markitect-bughunt` and `/markitect-audit`, and the routines, start real agents. Run them only on a committed test project, in your own Claude Code session or a worktree of that project. Before a run, name the project and its source commit, the limits, when to abort and the cleanup; after it, report what happened, failures included, in the PR it informs. The tool's commands start no agent and run anywhere.
+**Real agent runs.** The skills `/markitect-architect`, `/markitect-build`, `/markitect-review`, `/markitect-cleanup`, `/markitect-bughunt` and `/markitect-audit`, and the routines, start real agents. Run them only on a committed test project, in your own Claude Code session or a worktree of that project. Before a run, name the project and its source commit, the limits, when to abort and the cleanup; after it, report what happened, failures included, in the PR it informs. The tool's commands start no agent and run anywhere.
 
 **Releases** follow the [release operations](packaging/README.md#release-operations) ([DEC-095](docs/decisions.md#dec-095-releases-a-plugin-and-a-binary-that-updates-itself)). There is no deployment.
 

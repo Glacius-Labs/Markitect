@@ -101,7 +101,7 @@ A registry entry that names a deleted Definition (`stale.definition`), a missing
 
 All take `--repo DIR`; `check`, `vet`, `list`, `doc`, `status` and `mark` take `--json`, which prints one document with `format_version` and `kind`. Diagnostics read `file:line: code: message`. Exit 0 ok, 1 found something, 2 could not run. The commands are flat, as Go's are.
 
-| Command | Use while modeling |
+| Command | Use while you work on the spec |
 |---|---|
 | `init [--name TITLE]` | Once per project: manifest, lock, project anchor, registry page, `AGENTS.md`, `CLAUDE.md`, skills and harness. Makes no repository and commits nothing. Never changes an existing spec file. |
 | `check` | Compile: errors only. A project with nothing registered, where the only errors are `definition.unused`, passes and says that nothing is built yet. |

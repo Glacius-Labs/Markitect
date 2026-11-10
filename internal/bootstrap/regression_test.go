@@ -30,12 +30,12 @@ func TestInitAgainUpdatesSkills(t *testing.T) {
 	r := newFolder(t)
 	r.Write(".markitect/ignore", "# Legal text\nLICENSE\n")
 	r.Write(".claude/skills/markitect-retired/SKILL.md", "an old skill\n")
-	r.Write(".claude/skills/markitect-design/old-notes.md", "an old file\n")
-	r.Write(".claude/skills/markitect-start/SKILL.md", "a skill merged into markitect-design\n")
-	r.Write(".agents/skills/markitect-extract/SKILL.md", "a skill merged into markitect-design\n")
+	r.Write(".claude/skills/markitect-architect/old-notes.md", "an old file\n")
+	r.Write(".claude/skills/markitect-start/SKILL.md", "a skill merged into markitect-architect\n")
+	r.Write(".agents/skills/markitect-extract/SKILL.md", "a skill merged into markitect-architect\n")
 	r.Write(".claude/skills/my-own-skill/SKILL.md", "the user's own skill\n")
 	mustRun(t, r.Dir, "init")
-	for _, gone := range []string{".claude/skills/markitect-retired/SKILL.md", ".claude/skills/markitect-design/old-notes.md", ".claude/skills/markitect-start/SKILL.md", ".agents/skills/markitect-extract/SKILL.md"} {
+	for _, gone := range []string{".claude/skills/markitect-retired/SKILL.md", ".claude/skills/markitect-architect/old-notes.md", ".claude/skills/markitect-start/SKILL.md", ".agents/skills/markitect-extract/SKILL.md"} {
 		if _, err := os.Stat(filepath.Join(r.Dir, filepath.FromSlash(gone))); !os.IsNotExist(err) {
 			t.Errorf("%s was not removed", gone)
 		}
@@ -55,8 +55,8 @@ func TestInitWritesTheInstructionsAndNoEmptyFiles(t *testing.T) {
 	if !strings.Contains(read(t, r.Dir, "AGENTS.md"), "# Lending library") || read(t, r.Dir, "CLAUDE.md") != "@AGENTS.md\n" {
 		t.Fatal("the instruction files are wrong")
 	}
-	for _, skill := range []string{".claude/skills/markitect-design/SKILL.md", ".agents/skills/markitect-design/SKILL.md"} {
-		if !strings.Contains(read(t, r.Dir, skill), "markitect-design") {
+	for _, skill := range []string{".claude/skills/markitect-architect/SKILL.md", ".agents/skills/markitect-architect/SKILL.md"} {
+		if !strings.Contains(read(t, r.Dir, skill), "markitect-architect") {
 			t.Fatalf("%s is not installed", skill)
 		}
 	}
@@ -65,7 +65,7 @@ func TestInitWritesTheInstructionsAndNoEmptyFiles(t *testing.T) {
 			t.Errorf("init wrote %s", none)
 		}
 	}
-	if !strings.Contains(out, "/markitect-design") {
+	if !strings.Contains(out, "/markitect-architect") {
 		t.Fatalf("no next step:\n%s", out)
 	}
 	if out := mustRun(t, r.Dir, "check", "--spec"); !strings.HasPrefix(out, "ok:") {

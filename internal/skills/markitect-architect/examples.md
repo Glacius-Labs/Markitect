@@ -106,7 +106,7 @@ A person registered with the library. Only a member can borrow books.
 - A member is identified by its [[members/member-id|member identifier]].
 ```
 
-`spec/members/member-id.md` is the member's identity, a Definition of its own: other Packages name a member by it without relying on the rest of what a member is. The member and its identity link each other, which the language allows inside one Package.
+`spec/members/member-id.md` is the member's identity, a Definition of its own: other Packages name a member by it without relying on the rest of what a member is. The member and its identity link each other, which the spec allows inside one Package.
 
 ```markdown
 ---

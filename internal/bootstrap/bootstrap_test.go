@@ -57,12 +57,12 @@ func TestCommandsEndToEnd(t *testing.T) {
 
 	out := mustRun(t, r.Dir, "init", "--name", "Lending library")
 	noRepository(t, r.Dir)
-	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/spec/project.md", "wrote .markitect/lock.yaml: std 1.0.0", "installed the skills markitect-design"} {
+	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/spec/project.md", "wrote .markitect/lock.yaml: std 1.0.0", "installed the skills markitect-architect"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("init output lacks %q:\n%s", want, out)
 		}
 	}
-	if !strings.Contains(read(t, r.Dir, ".claude/skills/markitect-design/SKILL.md"), "markitect-design") || !strings.Contains(read(t, r.Dir, ".agents/skills/markitect-design/reference.md"), "model form") {
+	if !strings.Contains(read(t, r.Dir, ".claude/skills/markitect-architect/SKILL.md"), "markitect-architect") || !strings.Contains(read(t, r.Dir, ".agents/skills/markitect-architect/reference.md"), "model form") {
 		t.Fatal("skills not installed")
 	}
 	if !strings.Contains(read(t, r.Dir, ".markitect/spec/project.md"), "# Lending library") {
@@ -294,7 +294,7 @@ func TestInstallWritesThePersonalSkill(t *testing.T) {
 		t.Fatal(err)
 	}
 	skill := string(data)
-	for _, want := range []string{"name: markitect\n", "A Markitect project has one spec", "no need to look for it", "markitect-design", "/reload-skills", "markitect update", "claude plugin marketplace add Glacius-Labs/Claude-Plugins", "claude plugin install markitect@glacius-labs", "github.com/Glacius-Labs/Markitect/releases"} {
+	for _, want := range []string{"name: markitect\n", "A Markitect project has one spec", "no need to look for it", "markitect-architect", "/reload-skills", "markitect update", "claude plugin marketplace add Glacius-Labs/Claude-Plugins", "claude plugin install markitect@glacius-labs", "github.com/Glacius-Labs/Markitect/releases"} {
 		if !strings.Contains(skill, want) {
 			t.Errorf("the skill lacks %q:\n%s", want, skill)
 		}
@@ -610,8 +610,8 @@ func TestInitInstallsTheHarness(t *testing.T) {
 			t.Errorf("the %s skill: only the owner starts it = %t, want %t", skill, got, ownerOnly)
 		}
 	}
-	if strings.Contains(read(t, r.Dir, ".claude/skills/markitect-design/SKILL.md"), "disable-model-invocation") {
-		t.Error("Claude may not start the design skill")
+	if strings.Contains(read(t, r.Dir, ".claude/skills/markitect-architect/SKILL.md"), "disable-model-invocation") {
+		t.Error("Claude may not start the architect skill")
 	}
 	// A routine's prompt is the frame with the setup's four values and one
 	// routine's work, which holds no value of its own to fill in.
