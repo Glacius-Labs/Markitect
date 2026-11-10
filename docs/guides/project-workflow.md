@@ -34,7 +34,7 @@ The first spec of an existing project states what is as what should be ([DEC-105
 
 The draft is finished when a build would change nothing. So, with your word, the session commits the draft on its branch and runs `/markitect-review --all`, which reads the whole project once more. Where a Definition does not hold, the session corrects the spec if the spec misread the project, and reviews again what that put back on the list. You get the spec with two lists:
 
-- **What `status` still lists:** places where the project contradicts itself, such as its documentation against a script. Say which side holds before you run `/markitect-build`, which repairs every `fail` toward the spec as it stands. The spec then states that side, and if the other side is a defect, it stays on the list and `/markitect-build` repairs it.
+- **What `status` still lists:** places where the project contradicts itself, such as its documentation against a script, and behaviour the reviewer found that the spec leaves out, with the session's proposal to keep it free. Say which side holds, and whether it stays free, before you run `/markitect-build`, which repairs every `fail` toward the spec as it stands. The spec then states that side, and if the other side is a defect, it stays on the list and `/markitect-build` repairs it.
 - **What the spec leaves unstated:** behaviour that nothing in the project states and that looks like an accident. Say for each whether it is intended. If it is, it enters the spec. If it is a defect, the spec states what should be instead, and `/markitect-build` repairs it.
 
 The session also names what the reviewer could not show, which the record holds as `skip`.
