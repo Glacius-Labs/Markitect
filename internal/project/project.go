@@ -295,9 +295,18 @@ func (p *Project) loadManifest(read func(string) ([]byte, bool), present map[str
 	manifest, errs := spec.ParseManifest(ManifestFile, data)
 	*ds = append(*ds, errs...)
 	named := map[string]bool{}
+	otherVersion := false
 	for _, ref := range manifest.Libraries {
 		named[ref.Name] = true
 		lib, code, reason := LibrarySource(ref, local)
+		if code == "library.version" {
+			// The Library is the shipped one all the same, so that its Kinds
+			// resolve and the one error stands alone; the lock is not compared
+			// until the manifest names the version.
+			ds.Add(code, ManifestFile, ref.Line, "%s", reason)
+			otherVersion = true
+			lib, code, _ = LibrarySource(spec.LibraryRef{Name: ref.Name, Version: libraries.Version}, local)
+		}
 		if code != "" {
 			ds.Add(code, ManifestFile, ref.Line, "%s", reason)
 			continue
@@ -321,7 +330,9 @@ func (p *Project) loadManifest(read func(string) ([]byte, bool), present map[str
 		*ds = append(*ds, errs...)
 		if len(errs) == 0 {
 			p.Lock = lock
-			*ds = append(*ds, spec.VerifyLock(LockFile, lock, p.Libraries)...)
+			if !otherVersion {
+				*ds = append(*ds, spec.VerifyLock(LockFile, lock, p.Libraries)...)
+			}
 		}
 	}
 }
@@ -335,7 +346,7 @@ func LibrarySource(ref spec.LibraryRef, local map[string][]spec.File) (spec.Libr
 			return spec.LibrarySource{}, "library.reserved", fmt.Sprintf("%s is a standard Library that ships with markitect; remove %s/%s", ref.Name, LibraryDir, ref.Name)
 		}
 		if ref.Version != libraries.Version {
-			return spec.LibrarySource{}, "library.version", fmt.Sprintf("this markitect ships %s %s, not %s", ref.Name, libraries.Version, ref.Version)
+			return spec.LibrarySource{}, "library.version", fmt.Sprintf("this markitect ships %s %s, not %s; markitect tidy names %s in the manifest and writes the lock, or name it there by hand", ref.Name, libraries.Version, ref.Version, libraries.Version)
 		}
 		lib := spec.LibrarySource{Name: ref.Name, Version: ref.Version, Dir: "markitect:" + ref.Name}
 		for _, f := range files {

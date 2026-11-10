@@ -1,13 +1,13 @@
 ---
 name: markitect-architect
-description: Use to architect a project in Markdown with its owner - to start a new project, to draw a first spec from an existing project that has none, or to create, change, extend or review the spec (the Markdown Definitions under .markitect/spec/), place a Definition in the right Package, fix a markitect check error or judge the spec's quality. Also when someone wants to set up Markitect in a folder. It finds out which of these the folder needs.
+description: Use to architect a project in Markdown with its owner - to start a new project, to draw a first spec from an existing project that has none, or to create, change or extend the spec (the Markdown Definitions under .markitect/spec/), place a Definition in the right Package or fix a markitect check error. Also when someone wants to set up Markitect in a folder. It finds out which of these the folder needs.
 ---
 
 # Architecting the project
 
 A Markitect spec is typed documentation: Markdown files in `.markitect/spec/` that state what the project is and must do, the way good documentation would. Each file is a Definition of some Kind; folders are Packages; a link names its target by path. `markitect check` compiles the structure. The agents that build the spec never change it.
 
-Read [reference.md](reference.md) for the form, the Kinds, the commands and the error codes, and [examples.md](examples.md) for a spec that compiles. The full guide to the spec is `docs/guides/spec-language.md` in the Markitect repository.
+Read [reference.md](reference.md) for the form, the Kinds, the commands and the error codes, and [examples.md](examples.md) for a spec that compiles.
 
 ## Which situation
 
@@ -51,14 +51,14 @@ Then replace the placeholder in `project.md` with what the project is, for whom,
 
 The project as it is becomes the spec: read what is, and state it as what should be, the way a good maintainer would document it: what the project is, which areas it has, what callers rely on. The first spec is finished when a build would change nothing, so a reviewer verifies it against the project before you hand it over. You also write the registry, so every file has one owner. You change only `.markitect/`; the project stays as it is.
 
-1. **Read the project,** every artifact and not only the code: the README and documentation, the entry points, the folder structure and what imports what, the tests, the scripts, the build, CI and deployment files, the configuration. Documentation and tests show what the authors intend; code and scripts show what exists. Add `rest: 1.0.0` or `cli: 1.0.0` to the manifest when the project has such interfaces, then run `markitect tidy`.
+1. **Read the project,** every artifact and not only the code: the README and documentation, the entry points, the folder structure and what imports what, the tests, the scripts, the build, CI and deployment files, the configuration. Documentation and tests show what the authors intend; code and scripts show what exists. Add `rest: 1.1.0` or `cli: 1.1.0` to the manifest when the project has such interfaces, then run `markitect tidy`.
 2. **Ask of each artifact what it holds that should also be in the spec,** not what it holds that the spec does not say, which would make the spec a transcription. There are three answers, and most of what a file holds gets one of the last two.
    - **State it with its values** when a caller relies on the value: inputs and their validation, returned and stored data shapes, status and exit codes, stored data and its order, and whatever the documentation or a recorded decision states as intended.
    - **State the obligation without its values** when the project must do it but nobody depends on how exactly: that a request times out, not after how many seconds.
    - **Leave it** when a caller can observe it but cannot reasonably depend on it: message wording, generated identifier formats, which failure is reported when several apply, field order, and all internal structure, names, wiring and algorithms.
 3. **Do not invent intent.** Where the project contradicts itself, such as its documentation against a script, or where a rule seems to hold only by habit, ask the owner which one the spec should state. Where the project does something that nothing in it states and that looks accidental or wrong, do not write it down as intended: leave it unstated and keep it on a list for the owner.
 4. **Choose Packages from the project's real areas:** a folder or module with one responsibility, a clear boundary and its own tests, usually one level under the root. Prefer few; do not split what always changes together. Root holds the anchor, the layout and build conventions as Rules, the architecture, shared Kinds, and the files that serve everything. The spec has no cycles: if the code has one, ask the owner which direction to state. Propose the cut and stop for the owner's answer.
-5. **Write the Definitions,** Root first, then one Package at a time, running `markitect check` after each.
+5. **Write the Definitions,** Root first, then one Package at a time, running `markitect check --spec` after each.
 6. **Write the registry.** `markitect check` names every file still unaccounted for (`file.unregistered`), so its output is your to-do list. One page per Package (`.markitect/registry/<package path>.md`) with `paths` that claim its code, tests and documentation; Root's page (`.markitect/registry.md`) lists what no one claims. List every file in its owner's table with the Definitions it realizes (tests too) and a short reason; a file that serves several Packages belongs to their lowest common parent. A file that realizes nothing is where to ask the question of step 2 once more. Files that belong to no Package, such as the license, generated or vendored files and lock files, go into `.markitect/ignore`, one pattern per line. Never ignore real source or documentation to make `check` pass.
 7. **Have it verified.** Tell the owner that a reviewer now reads the whole project once more. With their word, which covers the later rounds too, commit the draft on its branch, so that the record follows the spec it verified, and run `/markitect-review --all`. In a folder without Git, commit nothing. Then settle each Definition `markitect status` still lists:
    - **The spec misread the project:** nothing in the project states what the Definition says, and what is looks intended. Correct the spec to what is.
@@ -77,14 +77,14 @@ On a large project, the architect agent can draw one Package at a time, Root fir
 [ ] 1 Read the requirements or the discussion; ask the owner about every open point
 [ ] 2 Packages and dependency directions agreed with the owner
 [ ] 3 Each statement mapped to a planned Definition (none left over, none invented)
-[ ] 4 Definitions written; markitect check passes
+[ ] 4 Definitions written; markitect check --spec passes
 [ ] 5 markitect vet, doc, list --deps, status read; warnings fixed or justified
 [ ] 6 Diff handed to the owner
 ```
 
 Use the tools while you work, not only at the end:
 
-- `markitect check` after every few files. It prints every error as `file:line: code: message`; fix the first ones and run it again. `markitect check --spec` looks only at the spec, which is what a change of the spec asks.
+- `markitect check --spec` after every few files. It looks only at the spec, which is what a change of the spec asks, and prints every error as `file:line: code: message`; fix the first ones and run it again. Plain `markitect check` also lists what the project does not realize yet, which is the build's work and not an error of your change.
 - `markitect doc TARGET` before you rename, move or delete a Definition: it shows who links to it and which files realize it.
 - `markitect list --deps` when you add a link between Packages: it shows the new dependency and the links behind it.
 - `markitect vet` at the end: coupling, size, hubs. Fix each warning or give one line why it stays. Its last line counts its notes; `markitect vet --strict` lists them. Link each unlinked mention the Definition relies on, and leave the ones that are ordinary words.
@@ -144,7 +144,7 @@ A visitor becomes a [[members/member]] by giving a name and an email.
 | `lock.mismatch`, `lock.missing` | Run `markitect tidy` after a manifest or Library change and put `lock.yaml` in the diff. |
 | `file.unregistered` and other `registry.*` | A file is on no registry page and not in the ignore file, or a page is wrong. See the registry section of [reference.md](reference.md). |
 
-Every other code is listed in [reference.md](reference.md). A cycle or unresolved link usually hides other errors: fix and run `check` again.
+Every other code is listed in [reference.md](reference.md). A cycle or unresolved link usually hides other errors: fix and run `check --spec` again.
 
 ## Red flags
 
@@ -156,13 +156,13 @@ Every other code is listed in [reference.md](reference.md). A cycle or unresolve
 | "The spec doesn't say this yet, so I'll add it." | Ask whether it should be in the spec. Most of what a file holds should not. |
 | "I'll describe how it works inside." | Leave algorithms and data structures to the agents. |
 | "This rule needs a few exceptions." | Split it into several Rules. |
-| "Package A just needs one link to B's Definition." | Check `list --deps`: does it close a cycle, or add a ninth dependency? |
+| "Package A just needs one link to B's Definition." | Check `list --deps`: does it close a cycle, or add a sixth dependency, where `vet` warns? |
 | "The vet warning is cosmetic." | Fix it, or write one line why it stays. |
-| "It compiled earlier." | Run `check` again on the final tree. |
+| "It compiled earlier." | Run `check --spec` again on the final tree. |
 
 ## Hand over
 
-Report to the owner in a few lines: the diff; the output of `check` (its summary line) and of `vet` (warnings fixed or justified); the list `status` prints, so the owner sees what the change makes the agents do; and any point the owner chose to leave open. Leave the work as a diff; commit only if the owner asks. Go through it with the owner when they would rather talk it through than read it. Change it until they accept it.
+Report to the owner in a few lines: the diff; the output of `check --spec`, or of plain `check` for a first spec drawn from a project (its summary line), and of `vet` (warnings fixed or justified); the list `status` prints, so the owner sees what the change makes the agents do; and any point the owner chose to leave open. Leave the work as a diff; commit only if the owner asks. Go through it with the owner when they would rather talk it through than read it. Change it until they accept it.
 
 Deleting or renaming a Definition leaves registry entries that name it. That is stale realization, an error of the realization rather than the spec's: `check` lists it apart, and the next build cleans it up. Say so; do not edit the registry pages in a change of the spec, which the builder keeps (only drawing the spec from the project writes them).
 

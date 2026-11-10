@@ -42,6 +42,7 @@ func (c CLI) refreshProject(repo string, dry bool) (projectState, error) {
 	r, err := setup.Refresh(ws, user, dry)
 	if !dry {
 		c.say(r.Said)
+		c.sayNamed(r.Named)
 	}
 	if err != nil {
 		return st, err

@@ -52,7 +52,7 @@ Core offers one thing: the Definition `Kind`. A Kind is a Definition whose `kind
 
 A Library is a folder of Kind Definitions, one `<Name>.md` file each at its top level (`library.file`, `library.not_a_kind`, `library.internal`); a Library's name follows the same rules as other names (`library.name`). A Library Definition may link only to Libraries the manifest names and to `Kind`. No Kind has a special meaning to Markitect.
 
-The standard Libraries ship inside the binary at version 1.0.0:
+The standard Libraries ship inside the binary at version 1.1.0:
 
 | Library | Kinds |
 |---|---|
@@ -67,11 +67,11 @@ Every project uses `std`. A project writes its own Kinds for anything else, one 
 ```yaml
 # .markitect/manifest.yaml
 libraries:
-  std: 1.0.0
-  rest: 1.0.0
+  std: 1.1.0
+  rest: 1.1.0
 ```
 
-The manifest names each Library with its version and nothing else (`manifest.syntax`, `manifest.missing`). A standard Library must have the version this binary ships (`library.version`), and no project folder may replace it (`library.reserved`). Any other named Library must exist under `.markitect/libraries/` (`library.missing`), and every Library folder there must be named (`library.undeclared`).
+The manifest names each Library with its version and nothing else (`manifest.syntax`, `manifest.missing`). A standard Library must have the version this binary ships (`library.version`), and no project folder may replace it (`library.reserved`). A version names one content: when a Kind of a standard Library changes, the version of the standard Libraries moves, and `markitect tidy` and `markitect update` name the new one in the manifest before they write the lock. Any other named Library must exist under `.markitect/libraries/` (`library.missing`), and every Library folder there must be named (`library.undeclared`).
 
 `markitect tidy` brings `.markitect/lock.yaml` in line with the manifest, as `go mod tidy` does: it writes each Library's version and the SHA-256 digest of its files. `check` only reads the lock. It refuses a Library whose version or content does not match the lock, and a lock entry the manifest does not name (`lock.mismatch`, `lock.missing`, `lock.syntax`), and says to run `markitect tidy`. `init` and `update` keep the lock current. A new markitect binary whose standard Libraries changed therefore needs a new lock, which shows the change in review.
 
@@ -201,7 +201,7 @@ The fields of each document:
 | `markitect version` | Prints the build, then whether the personal skill and the project in `--repo` are up to date, out of date or (the personal skill) not installed. Changes nothing. |
 | `markitect init [--name TITLE]` | Writes what is missing: the manifest with `std`, the project anchor `spec/project.md` if the spec folder is empty, Root's registry page, the lock, `AGENTS.md` and a `CLAUDE.md` that imports it. Installs or updates the skills in `.claude/skills/` and `.agents/skills/`, the harness (the build, review, cleanup, bughunt, audit, schedule and config skills, the builder, reviewer, architect and auditor agents with the model and effort of the harness configuration, the parallel workflow `.claude/workflows/markitect-parallel.js`, and in `.claude/settings.json` the hooks and `worktree.baseRef: "head"` unless the settings name a base), `.markitect/.gitattributes` and, unless a line already ignores it, `.claude/worktrees/` in `.gitignore`. In a folder of a project it works on that project. It makes no repository and commits nothing, and prints what Markitect is, with a tip when the personal skill is missing or old. Never changes an existing spec file, `AGENTS.md` or `CLAUDE.md`, and never writes to the home folder. |
 | `markitect check [--spec]` | Compiles the project and prints every error as a diagnostic, the spec's first and then the realization's, and one summary line: `ok: N Definitions in M Packages, K files accounted`; the sentence for a project where [nothing is built yet](#the-realization-record); or `N errors: X in the spec, for the owner to settle; Y in the realization, so spec and code do not match yet, which /markitect-build settles`. Exit 1 when there is an error. `--spec` looks only at the spec. |
-| `markitect tidy` | Brings the lock in line with the manifest and the Libraries it names, as `go mod tidy` does. The lock's header reads "Written by markitect tidy from the manifest". |
+| `markitect tidy` | Brings the lock in line with the manifest and the Libraries it names, as `go mod tidy` does. Where the manifest names another version of a standard Library than this binary ships, it names the shipped one there first, and says so. The lock's header reads "Written by markitect tidy from the manifest". |
 | `markitect vet [--strict]` | Analyses the spec's design: coupling, size, hubs, and as notes unlinked mentions, statements, placement and hotspots ([the warnings and notes](#vet-warnings-and-notes)). Prints its warnings as diagnostic lines, then one line that counts its notes, such as `notes: 12 unlinked mentions in 5 Definitions, 3 more against or beyond the Package structure, 1 other note; markitect vet --strict lists them`, and nothing when there is neither. `--strict` prints the notes as diagnostic lines instead of that line. Exit 1 only with `--strict` and a warning; notes never change it. |
 | `markitect list [--deps]` | Each Package by name (`Root` for the root) with its Definitions below it as `  ID: Title (Kind)`. With `--deps` the Package line adds `(Ca n, Ce n, instability x.xx, abstractness x.xx, distance x.xx)`, information only, and is followed by `  depends on P: A links B; C is of Kind D`, and a Definition by the links it makes, `    links X, Y`. |
 | `markitect doc TARGET` | A Definition: `ID: Title (Kind)`, its Package and file (or its Library), its text without front matter, what it links to, what links to it (`  FROM (link\|kind), FILE:LINE`), the files that realize it (`  FILE, PAGE:LINE`) and its record (`Record: ID@FP, STATE`, with the changes or the reason). A Package: its parent, registry page and paths, the Packages below it, its public Definitions and, apart, its internal ones, what links to it and its files. `doc Root` or `doc .` shows Root. Exit 1 for a target that is neither. |

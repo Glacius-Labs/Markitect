@@ -1,6 +1,6 @@
 # Example: a lending library
 
-A small Go service that lends books to members over REST. This example compiles with `markitect check`. The spec has Root and two Packages, `members` and `catalog`.
+A small Go service that lends books to members over REST. It compiles as written, and the outputs shown are what the tools print. To stay short it leaves out returning a book. The spec has Root and two Packages, `members` and `catalog`.
 
 ## The repository
 
@@ -14,8 +14,8 @@ internal/catalog/{book.go, loans.go, loans_test.go}
   manifest.yaml  lock.yaml  ignore  registry.md
   registry/{members.md, catalog.md}
   spec/
-    project.md  layout.md  error-body.md  Policy.md
-    members/{member, member-id, loan-limit, open-loan-count, register-member, post-members}.md
+    project.md  layout.md  error-body.md
+    members/{member, member-id, email, loan-limit, register-member, post-members}.md
     catalog/{book, borrow-book, post-loans}.md
 ```
 
@@ -23,11 +23,11 @@ internal/catalog/{book.go, loans.go, loans_test.go}
 
 ```yaml
 libraries:
-  std: 1.0.0
-  rest: 1.0.0
+  std: 1.1.0
+  rest: 1.1.0
 ```
 
-## Root: anchor, Rules, a project Kind
+## Root: anchor and Rules
 
 Root holds what binds the whole project. The anchor names the Packages by link and says what is out of scope.
 
@@ -49,7 +49,7 @@ Staff and members use it through a REST interface. It is written in Go.
 Out of scope: payments, reminders and reservations.
 ```
 
-`spec/layout.md` is a layout convention, so a Rule at Root. `spec/error-body.md` is a Rule both Packages' Endpoints follow, so it sits at their common parent.
+`spec/error-body.md` is a Rule both Packages' Endpoints follow, so it sits at their common parent.
 
 ```markdown
 ---
@@ -59,6 +59,8 @@ kind: std/Rule
 
 Every refusal of the REST interface answers with a 4xx status and the JSON body `{"error": "<code>"}`, where `<code>` is the lower-case code named by the Endpoint, such as `limit_reached`. The body carries nothing else.
 ```
+
+`spec/layout.md` is a layout convention, so a Rule at Root.
 
 ```markdown
 ---
@@ -71,25 +73,11 @@ Go code lives under `internal/<package>/` with its tests in the same folder as `
 Tests run with `go test ./...`.
 ```
 
-No Library Kind fits a tunable limit, so the project defines one. `spec/Policy.md` is a Kind (`kind: Kind`); it sits at Root because `members` uses it today and others may later.
-
-```markdown
----
-kind: Kind
----
-# Policy
-
-A Policy Definition states one tunable limit of the lending service.
-
-- Name the limit and give its value in backticks.
-- Say who it applies to and what a caller observes when it is reached: the refusal code in backticks.
-- Say why the value was chosen only when the reason helps a reader apply it to a case it does not name.
-- Leave how the limit is enforced to the realization.
-```
+The project needs no Kind of its own. A project Kind earns its place when several Definitions share a form that no Library Kind gives; one limit is a Rule.
 
 ## Package members
 
-Concepts, the member's identity, a Feature, an Endpoint, the project Kind in use and one internal Definition. Links are full paths even inside the Package.
+Concepts, the member's identity, a value rule that is internal, a Rule only this Package follows, a Feature and an Endpoint. Links are full paths even inside the Package.
 
 `spec/members/member.md` (after the cycle below is fixed)
 
@@ -99,10 +87,10 @@ kind: std/Concept
 ---
 # Member
 
-A person registered with the library. Only a member can borrow books.
+A person registered with the library.
 
-- A member has a `name` and an `email`, which is unique among members.
-- A member is `active` or `suspended`. A suspended member keeps their data but cannot borrow.
+- A member has a `name` and an [[members/email|email]], which no other member has.
+- A member is `active` or `suspended`. A suspended member keeps their data.
 - A member is identified by its [[members/member-id|member identifier]].
 ```
 
@@ -117,30 +105,30 @@ kind: std/Concept
 The identifier of a [[members/member]]: an opaque string the library issues at registration, which never changes and is never reused.
 ```
 
-`spec/members/loan-limit.md` uses the project Kind. `spec/members/open-loan-count.md` is `internal: true`: the loan limit builds on it, other Packages must not.
+`spec/members/loan-limit.md` is a Rule of this Package. It states the limit and nothing about what happens when it is reached: the Feature that refuses says that, once.
 
 ```markdown
 ---
-kind: Policy
+kind: std/Rule
 ---
 # Loan limit
 
-A [[members/member]] may hold at most `3` books at once, counted as in [[members/open-loan-count]]. A fourth loan is refused with `limit_reached`.
-
-The limit applies to every member alike.
+A [[members/member]] may hold at most `3` books at once. The limit applies to every member alike.
 ```
+
+`spec/members/email.md` is a value rule of the project's own, stated once, in the only Package that uses it. It is `internal: true`: registering builds on it, other Packages must not.
 
 ```markdown
 ---
 kind: std/Concept
 internal: true
 ---
-# Open loan count
+# Email
 
-The number of books a [[members/member]] has borrowed and not yet returned. A book that is overdue still counts.
+An email address. It is valid when it holds an `@`, and two emails are the same when they differ only in upper and lower case.
 ```
 
-`spec/members/register-member.md` is a Feature; `spec/members/post-members.md` exposes it as a REST Endpoint and links the Feature and the Root Rule.
+`spec/members/register-member.md` is a Feature.
 
 ```markdown
 ---
@@ -151,9 +139,11 @@ kind: std/Feature
 A visitor becomes a [[members/member]] by giving a name and an email.
 
 - The new member is `active`.
-- An email that another member already has is refused with `email_taken`.
-- A missing name or an email without an `@` is refused with `invalid_member`.
+- An [[members/email|email]] that another member already has is refused with `email_taken`.
+- A missing name or an email that is not valid is refused with `invalid_member`.
 ```
+
+`spec/members/post-members.md` exposes it as a REST Endpoint and links the Feature and the Root Rule.
 
 ```markdown
 ---
@@ -188,7 +178,7 @@ A title the library owns, with one physical copy.
 
 The book names its holder by the member's identity: a new field of the member does not concern the book. Borrowing relies on the member's status, so it links the member itself.
 
-`spec/catalog/borrow-book.md` (the Feature) and `spec/catalog/post-loans.md` (its Endpoint):
+`spec/catalog/borrow-book.md` is the Feature.
 
 ```markdown
 ---
@@ -201,8 +191,11 @@ An `active` [[members/member]] takes an `available` [[catalog/book]] home.
 - The book becomes `borrowed` and is held by the member.
 - A suspended member is refused with `member_suspended`.
 - A book that is already `borrowed` is refused with `book_unavailable`.
+- A member or a book the library does not know is refused with `not_found`.
 - A member who has reached the [[members/loan-limit]] is refused with `limit_reached`.
 ```
+
+`spec/catalog/post-loans.md` is its Endpoint.
 
 ```markdown
 ---
@@ -213,8 +206,8 @@ kind: rest/Endpoint
 Exposes [[catalog/borrow-book]] over HTTP.
 
 - Request: the JSON body `{"member": "<member id>", "isbn": "<isbn>"}`, where `member` is a [[members/member-id|member identifier]].
-- `201`: the loan as `{"member": "...", "isbn": "...", "dueDate": "YYYY-MM-DD"}`.
-- `403` with `member_suspended` or `limit_reached`, and `409` with `book_unavailable`, as in [[catalog/borrow-book]], in the body described by [[error-body]].
+- `201` with the body `{"member": "...", "isbn": "..."}`.
+- `403` with `member_suspended` or `limit_reached`, `404` with `not_found` and `409` with `book_unavailable`, as in [[catalog/borrow-book]], in the body described by [[error-body]].
 ```
 
 ## A cycle, and its fix
@@ -225,7 +218,7 @@ Suppose the first draft of `members/member.md` also said, as its last bullet, `T
 .markitect/spec/catalog/book.md:9: package.cycle: the Packages catalog, members depend on each other in a cycle: catalog/book links [[members/member-id]]; members/member links [[catalog/book]]. Move the shared concept into a common parent, or invert one dependency
 ```
 
-Moving `Book` or `Member` up to Root would not make sense here, so invert the dependency: `catalog` is the side that needs members, so `members` states nothing about books. Delete that bullet. `catalog/book` keeps its link, and `markitect list --deps` shows one dependency, `catalog` on `members`.
+Moving `Book` or `Member` up to Root would not make sense here, so invert the dependency: `catalog` is the side that needs members, so `members` links nothing in `catalog`. Delete that bullet. `catalog/book` keeps its link, and `markitect list --deps` shows one dependency, `catalog` on `members`.
 
 ## Registry pages and the ignore file
 
@@ -259,7 +252,7 @@ paths:
 
 | File | Realizes | Why |
 |---|---|---|
-| `internal/members/member.go` | [[members/member]] [[members/member-id]] [[members/register-member]] [[members/loan-limit]] [[members/open-loan-count]] | Member type, registration and the loan limit |
+| `internal/members/member.go` | [[members/member]] [[members/member-id]] [[members/email]] [[members/register-member]] [[members/loan-limit]] | Member type, registration and the loan limit |
 | `internal/members/http.go` | [[members/post-members]] [[error-body]] | The `POST /members` handler |
 | `internal/members/member_test.go` | [[members/member]] [[members/register-member]] [[members/loan-limit]] | Tests |
 ```
@@ -291,27 +284,33 @@ LICENSE
 
 ```text
 $ markitect check
-ok: 13 Definitions in 3 Packages, 10 files accounted
+ok: 12 Definitions in 3 Packages, 10 files accounted
 ```
 
-`markitect vet` shows no warnings. After the limit in `loan-limit.md` changes from `3` to `5`, `markitect status` lists `loan-limit` and `catalog/borrow-book`, the one Definition that links to it, each with the files the registry names for it, such as `internal/members/member.go` and `internal/catalog/loans.go`. The member and the count do not link back to the limit, so they stay off the list.
+`markitect vet` shows no warnings. After the limit in `loan-limit.md` changes from `3` to `5`, `markitect status` lists `members/loan-limit` and `catalog/borrow-book`, the one Definition that links to it, each with the files the registry names for it, such as `internal/members/member.go` and `internal/catalog/loans.go`. The member does not link back to the limit, so it stays off the list.
 
 ## Other errors you will meet
 
+The anchor gains the line `Staff lend books with [[catalog/post-loans]].`:
+
 ```text
-project.md:14: link.downward: Root links down to catalog/post-loans inside its child Package catalog ...
+.markitect/spec/project.md:15: link.downward: Root links down to catalog/post-loans inside its child Package catalog; a parent may name a child Package but not a Definition inside it (move the shared concept up, or let the child link to a need stated here)
 ```
 
 The anchor may name the Package, `[[catalog]]`, not a Definition inside it.
 
+`catalog/borrow-book` gains the bullet `- The receipt goes to the member's [[members/email]].`:
+
 ```text
-catalog/post-loans.md:11: link.internal: members/open-loan-count is internal to members; only members and the Packages below it may link to it
+.markitect/spec/catalog/borrow-book.md:13: link.internal: members/email is internal to members; only members and the Packages below it may link to it
 ```
 
 Describe the need in `catalog`'s own words, or make the Definition public if other Packages should build on it.
 
+The page of `catalog` gains the row ``| `internal/members/http.go` | [[members/post-members]] | The handler |``, and a file `newfile.txt` appears that no page lists:
+
 ```text
-registry/catalog.md:12: registry.wrong_owner: internal/members/http.go is owned by members, so it belongs on .markitect/registry/members.md
+.markitect/registry/catalog.md:12: registry.wrong_owner: internal/members/http.go is owned by members, so it belongs on .markitect/registry/members.md
 newfile.txt: file.unregistered: neither registered nor ignored: list it on .markitect/registry.md, the page of its owner Root, or add it to the ignore file
 ```
 

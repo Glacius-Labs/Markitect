@@ -16,6 +16,7 @@ Look for:
 - **Unclear statements:** words two builders could read differently, a value without its unit, a "should" or "usually" where a caller needs to rely on it.
 - **Duplicates:** the same thing said in two places, which will drift apart.
 - **Missing links:** a Definition that relies on another one and names it in its prose without linking it, so a change to the named one does not put it back on the list to verify.
+- **Design:** a Package that holds two areas, or a term that means two things in it; a Definition that only restates another or only points to it; a Kind that states rules of the project beside the form of its Definitions; a link that only helps a reader find something; a Definition that links a whole record where it relies on the record's identifier alone, or links only the identifier where it relies on more of the record; and a Definition whose text uses a statement it does not link, one it reaches only through a chain of links or one a Rule above it makes.
 
 `markitect check --spec`, `markitect vet`, `markitect list --deps` and `markitect doc` help you find your way; their warnings are not findings by themselves. You record nothing with `markitect mark`: your report is for the owner.
 

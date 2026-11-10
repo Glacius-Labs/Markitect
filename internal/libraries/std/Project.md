@@ -3,7 +3,7 @@ kind: Kind
 ---
 # Project
 
-A Project Definition is the project's anchor: what the project is, for whom, and what it deliberately does not do. It sits in the model's root folder, the Root Package, so that every Manager reads it.
+A Project Definition is the project's anchor: what the project is, for whom, and what it deliberately does not do. It sits in the spec folder itself, the Root Package, so it reaches the whole project.
 
 Write it as the opening page of good documentation:
 
