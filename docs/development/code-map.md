@@ -8,7 +8,7 @@ The page is generated from the rule table in [rules.go](../../internal/tooling/a
 go test ./internal/tooling/architecture -run TestCodeMapPage -update
 ```
 
-`TestRepositoryArchitecture` checks every production, test and platform file against the table: a package imports only the layers its own layer lists and the named exceptions, only test files import a test-only layer, and a standalone layer imports no Markitect package. Every Go package needs exactly one row, an existing owning document and one package doc comment. The source packager accepts exactly the table's packages below `cmd/` and `internal/`. [Architecture](../architecture.md#layers) describes the layers.
+`TestRepositoryArchitecture` checks every production, test and platform file against the table: a package imports only the layers its own layer lists and the named exceptions, only test files import a test-only layer, and a standalone layer imports no Markitect package. Every Go package needs exactly one row, an existing owning document and one package doc comment. [Architecture](../architecture.md#layers) describes the layers.
 
 ## Layers
 
@@ -21,23 +21,19 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `project` | Loads and checks a project's Markitect folder from the files of a project folder. | `spec`, `assets`, `harness`, `domain` | 1 |
 | `service` | Questions about a loaded project: what it holds, what depends on what, and vet. | `spec`, `assets`, `domain`, `project` | 1 |
 | `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, status, mark and the hook. | `spec`, `assets`, `domain`, `project` | 1 |
-| `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete project-folder, command-line and release adapters; no adapter imports another. | `spec`, `assets`, `harness`, `domain`, `project`, `service`, `run`, `build` | 3 |
+| `adapter` | Concrete project-folder, command-line and update adapters; no adapter imports another. | `spec`, `assets`, `harness`, `domain`, `project`, `service`, `run`, `build` | 3 |
 | `composition` | Constructs the command line with its adapters. | `spec`, `project`, `service`, `run`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
-| `maintenance` | The import gate and release packaging, separate from product execution. | `guardedwrite` | 2 |
-| `maintenance-command` | Release maintenance entrypoint. | `maintenance`, `build` | 1 |
+| `maintenance` | The import gate and the code map, separate from product execution. | nothing | 1 |
 | `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 1 |
-| `standalone` | Consumer bootstrap and source smoke. It imports no Markitect package, not even from tests. | nothing | 2 |
+| `standalone` | The command smoke. It imports no Markitect package, not even from tests. | nothing | 1 |
 
 ## Exceptions
 
 | From | To | Files | Reason |
 |---|---|---|---|
-| `internal/tooling/release` | `internal/tooling/architecture` | all | The packager takes its source roots from this table. |
 | `internal/run` | `internal/adapters/folder` | tests only | The record is tested on real folders. |
-| `internal/tooling/release` | `internal/buildinfo` | tests only | Tests compare the packaged notices with the embedded ones. |
 
 ## Spec language
 
@@ -82,17 +78,11 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|
 | `internal/run` | Package run is the record of what was verified (DEC-099): for each Definition, .markitect/review.sum holds the inputs at which a reviewer last verified it, modelled on Go's test cache. | [internal/run/README.md](../../internal/run/README.md) |
 
-## Guarded write
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/guardedwrite` | Package guardedwrite applies selected working-tree changes only while the repository, branch, HEAD and captured file bytes are unchanged. | [docs/architecture.md#distribution](../architecture.md#distribution) |
-
 ## Build data
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/buildinfo` | Package buildinfo owns the version and the upstream license notices shared by product and release tools. | [docs/architecture.md#distribution](../architecture.md#distribution) |
+| `internal/buildinfo` | Package buildinfo owns the version of this build and the upstream license notices that `markitect version` and `markitect licenses` print. | [docs/architecture.md#distribution](../architecture.md#distribution) |
 
 ## Adapters
 
@@ -119,13 +109,6 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/tooling/architecture` | Package architecture holds the repository's one architecture rule table and enforces it without compiling the inspected code: every production, test and platform-specific file imports only what its package's layer allows. | [docs/architecture.md#layers](../architecture.md#layers) |
-| `internal/tooling/release` | Package release builds a portable, reproducible Markitect source archive and a source-bound bundle, and installs a verified bundle into a consumer. | [docs/architecture.md#distribution](../architecture.md#distribution) |
-
-## Maintenance command
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `cmd/markitect-release` | Command markitect-release prepares local Markitect distributions: source packaging, bundling and bundle installation, plus the version and license notices. | [docs/architecture.md#distribution](../architecture.md#distribution) |
 
 ## Test support
 
@@ -137,5 +120,4 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `packaging/bootstrap` | run-markitect.go is copied into a consumer repository and invoked with `go run .markitect/bootstrap/run.go ...`. | [packaging/README.md](../../packaging/README.md) |
-| `tools/smoke` | Command smoke checks Markitect's packaged distribution end to end. | [docs/architecture.md#distribution](../architecture.md#distribution) |
+| `tools/smoke` | Command smoke builds markitect from the repository and drives its commands over a small project with exact assertions. | [docs/architecture.md#distribution](../architecture.md#distribution) |

@@ -44,26 +44,6 @@ func TestCodeMapPage(t *testing.T) {
 	}
 }
 
-func TestSourceRootsAreTheProductTreePackages(t *testing.T) {
-	roots := Table.SourceRoots()
-	seen := map[string]bool{}
-	for _, root := range roots {
-		seen[root] = true
-		if !strings.HasPrefix(root, "cmd/") && !strings.HasPrefix(root, "internal/") {
-			t.Errorf("source root outside cmd/ and internal/: %s", root)
-		}
-	}
-	for _, p := range Table.Packages {
-		inTree := strings.HasPrefix(p.Path, "cmd/") || strings.HasPrefix(p.Path, "internal/")
-		if inTree != seen[p.Path] {
-			t.Errorf("%s: source root %v, product tree %v", p.Path, seen[p.Path], inTree)
-		}
-	}
-	if !seen["cmd/markitect"] || !seen["internal/testkit"] || seen["packaging/bootstrap"] || seen["tools/smoke"] {
-		t.Errorf("source roots: %v", roots)
-	}
-}
-
 func TestPackagesFollowGoListRules(t *testing.T) {
 	root := t.TempDir()
 	write := func(name, content string) {
@@ -171,18 +151,18 @@ func TestSummariesNeedExactlyOneDocComment(t *testing.T) {
 func TestRenderCodeMapLinksFromPageDirectory(t *testing.T) {
 	root := t.TempDir()
 	writeFixture(t, root, map[string]string{
-		"internal/spec/m.go":            "// Package spec checks.\npackage spec\n",
-		"cmd/markitect/main.go":         "// Command markitect runs.\npackage main\n",
-		"internal/tooling/release/r.go": "// Package release builds.\npackage release\n",
-		"internal/buildinfo/b.go":       "// Package buildinfo knows the version.\npackage buildinfo\n",
+		"internal/spec/m.go":                 "// Package spec checks.\npackage spec\n",
+		"cmd/markitect/main.go":              "// Command markitect runs.\npackage main\n",
+		"internal/tooling/architecture/r.go": "// Package architecture checks.\npackage architecture\n",
+		"internal/buildinfo/b.go":            "// Package buildinfo knows the version.\npackage buildinfo\n",
 	})
 	rules := Rules{Layers: Table.Layers, Packages: []Package{
 		{"internal/spec", "spec", "docs/architecture.md#go"},
 		{"internal/buildinfo", "build", "docs/development/other.md"},
 		{"cmd/markitect", "command", "CONTRIBUTING.md"},
-		{"internal/tooling/release", "maintenance", "internal/tooling/release/README.md"},
+		{"internal/tooling/architecture", "maintenance", "internal/tooling/architecture/README.md"},
 	}, Exceptions: []Exception{
-		{From: "internal/tooling/release", To: "internal/buildinfo", TestOnly: true, Reason: "Tests read the notices."},
+		{From: "internal/tooling/architecture", To: "internal/buildinfo", TestOnly: true, Reason: "Tests read the notices."},
 		{From: "cmd/markitect", To: "internal/spec", Reason: "A fixture edge."},
 	}}
 	data, err := rules.RenderCodeMap(root)
@@ -194,11 +174,11 @@ func TestRenderCodeMapLinksFromPageDirectory(t *testing.T) {
 		"| `internal/spec` | Package spec checks. | [docs/architecture.md#go](../architecture.md#go) |",
 		"| `cmd/markitect` | Command markitect runs. | [CONTRIBUTING.md](../../CONTRIBUTING.md) |",
 		"| `internal/buildinfo` | Package buildinfo knows the version. | [docs/development/other.md](other.md) |",
-		"| `internal/tooling/release` | Package release builds. | [internal/tooling/release/README.md](../../internal/tooling/release/README.md) |",
+		"| `internal/tooling/architecture` | Package architecture checks. | [internal/tooling/architecture/README.md](../../internal/tooling/architecture/README.md) |",
 		"| `spec` | The spec language over supplied bytes: Definitions, Kinds, links, visibility, cycles, manifest and lock. | nothing | 1 |",
 		"| `command` | Thin entrypoints to product composition. | `composition` | 1 |",
 		"| `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 0 |",
-		"| `cmd/markitect` | `internal/spec` | all | A fixture edge. |\n| `internal/tooling/release` | `internal/buildinfo` | tests only | Tests read the notices. |",
+		"| `cmd/markitect` | `internal/spec` | all | A fixture edge. |\n| `internal/tooling/architecture` | `internal/buildinfo` | tests only | Tests read the notices. |",
 		"[rules.go](../../internal/tooling/architecture/rules.go)",
 		"[Architecture](../architecture.md#layers)",
 		CodeMapUpdate,

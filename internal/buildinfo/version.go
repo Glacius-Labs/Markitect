@@ -1,5 +1,5 @@
-// Package buildinfo owns the version and the upstream license notices shared
-// by product and release tools.
+// Package buildinfo owns the version of this build and the upstream license
+// notices that `markitect version` and `markitect licenses` print.
 package buildinfo
 
 import (
@@ -9,7 +9,7 @@ import (
 
 // version is the source version. A release commit sets the version it releases
 // and the plugin's version with it; the commit after it sets the next development
-// version, such as 0.16.0-dev (packaging/README.md, release operations). The
+// version, such as 0.16.0-dev (docs/releasing.md). The
 // retired versions 0.1.0 to 0.14.1 are never reused.
 var version = "0.26.0-dev"
 

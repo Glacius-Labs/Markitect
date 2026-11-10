@@ -1,59 +1,11 @@
 package main
 
 import (
-	"archive/zip"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
-
-func writeZip(t *testing.T, entries map[string]string) string {
-	t.Helper()
-	path := filepath.Join(t.TempDir(), "source.zip")
-	file, err := os.Create(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	writer := zip.NewWriter(file)
-	for name, content := range entries {
-		entry, err := writer.Create(name)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if _, err := entry.Write([]byte(content)); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if err := writer.Close(); err != nil {
-		t.Fatal(err)
-	}
-	if err := file.Close(); err != nil {
-		t.Fatal(err)
-	}
-	return path
-}
-
-func TestUnzipExtractsNestedFiles(t *testing.T) {
-	target := t.TempDir()
-	if err := unzip(writeZip(t, map[string]string{"cmd/markitect/main.go": "package main\n", "go.mod": "module x\n"}), target); err != nil {
-		t.Fatal(err)
-	}
-	if err := requirePresent(target, "cmd/markitect/main.go", "go.mod"); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestUnzipRefusesEntriesOutsideTheTarget(t *testing.T) {
-	target := filepath.Join(t.TempDir(), "target")
-	err := unzip(writeZip(t, map[string]string{"../escaped.txt": "x"}), target)
-	if err == nil || !strings.Contains(err.Error(), "leaves the target") {
-		t.Fatalf("unzip accepted an escaping entry: %v", err)
-	}
-	if _, statErr := os.Stat(filepath.Join(filepath.Dir(target), "escaped.txt")); statErr == nil {
-		t.Fatal("the escaping entry was written")
-	}
-}
 
 func TestPresenceCheck(t *testing.T) {
 	root := t.TempDir()
