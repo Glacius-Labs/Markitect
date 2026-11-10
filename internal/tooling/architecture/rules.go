@@ -62,7 +62,7 @@ var Table = Rules{
 		{Name: "setup", Title: "Project setup", Meaning: "What Markitect writes into a project: its first files, the skills and the harness, the settings, the Git attributes, the ignore line and the lock.", Imports: []string{"spec", "assets", "harness", "project", "guard"}},
 		{Name: "build", Title: "Build data", Meaning: "Version identity and embedded license notices."},
 		{Name: "adapter", Title: "Adapters", Meaning: "Concrete project-folder, command-line and update adapters; no adapter imports another.", Imports: []string{"spec", "assets", "harness", "domain", "project", "service", "run", "guard", "setup", "build"}},
-		{Name: "composition", Title: "Composition", Meaning: "Constructs the command line with its adapters.", Imports: []string{"spec", "project", "service", "run", "guard", "setup", "adapter"}},
+		{Name: "composition", Title: "Composition", Meaning: "Constructs the command line with its adapters.", Imports: []string{"spec", "project", "service", "run", "adapter"}},
 		{Name: "command", Title: "Product commands", Meaning: "Thin entrypoints to product composition.", Imports: []string{"composition"}},
 		{Name: "maintenance", Title: "Maintenance", Meaning: "The import gate and the code map, separate from product execution."},
 		{Name: "test-support", Title: "Test support", Meaning: "Hermetic fixtures.", TestOnly: true, Standalone: true},

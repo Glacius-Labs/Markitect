@@ -25,7 +25,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `setup` | What Markitect writes into a project: its first files, the skills and the harness, the settings, the Git attributes, the ignore line and the lock. | `spec`, `assets`, `harness`, `project`, `guard` | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
 | `adapter` | Concrete project-folder, command-line and update adapters; no adapter imports another. | `spec`, `assets`, `harness`, `domain`, `project`, `service`, `run`, `guard`, `setup`, `build` | 3 |
-| `composition` | Constructs the command line with its adapters. | `spec`, `project`, `service`, `run`, `guard`, `setup`, `adapter` | 1 |
+| `composition` | Constructs the command line with its adapters. | `spec`, `project`, `service`, `run`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `maintenance` | The import gate and the code map, separate from product execution. | nothing | 1 |
 | `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 1 |
