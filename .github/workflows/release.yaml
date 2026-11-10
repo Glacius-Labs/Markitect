@@ -1,14 +1,13 @@
 name: Release
 
 # A release is a tag vX.Y.Z on a commit of main whose source version, and whose
-# plugin version, are X.Y.Z. The tag builds the binaries for six systems, their
-# checksums and the source bundle, publishes them as a GitHub release, and then
-# checks the published release the way a user reaches it: through the plugin's
-# launcher and through markitect update.
+# plugin version, are X.Y.Z. The tag builds the binaries for six systems and
+# their checksums, publishes them as a GitHub release, and then checks the
+# published release the way a user reaches it: through the plugin's launcher and
+# through markitect update.
 #
 # A manual run is a dry run: it runs the gates and builds and checks every asset,
-# skips what belongs to a tag, and publishes no release. (Run on main, it also
-# starts the source-artifact job of ci.yaml, which is not a release.)
+# skips what belongs to a tag, and publishes no release.
 #
 # A version with a pre-release part (v0.16.0-rc.1) is published as a pre-release,
 # which GitHub never names as the latest release, so markitect update ignores it.
@@ -34,13 +33,12 @@ jobs:
       contents: read
 
   preflight:
-    name: Validate release source and build bundle
+    name: Validate release source
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     outputs:
       tag: ${{ steps.release.outputs.tag }}
       version: ${{ steps.release.outputs.version }}
-      bundle_sha256: ${{ steps.release.outputs.bundle_sha256 }}
     steps:
       - name: Check out tagged source and history
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -53,7 +51,7 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Validate tag, source version, plugin version, main ancestry, and build bundle
+      - name: Validate tag, source version, plugin version, and main ancestry
         id: release
         shell: bash
         env:
@@ -62,8 +60,12 @@ jobs:
           SOURCE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          # "Markitect 0.15.0 (linux/amd64)"
-          source_version="$(go run ./cmd/markitect-release version | awk '{print $2}')"
+          # The first line of `markitect version` is "markitect 0.26.0-dev". Read all
+          # of the output before taking its first line, as below.
+          reported="$(go run -buildvcs=false ./cmd/markitect version --repo "$RUNNER_TEMP")"
+          reported="${reported%%$'\n'*}"
+          read -r _ source_version _ <<< "$reported"
+          source_version="${source_version%%+*}"
           [[ "$source_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || { echo "could not read the source version from Markitect: $source_version" >&2; exit 1; }
           TAG="v$source_version"
           if [[ "$REF_TYPE" == tag ]]; then
@@ -80,12 +82,8 @@ jobs:
           plugin_version="$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' plugin/.claude-plugin/plugin.json | head -n 1)"
           [[ "$plugin_version" == "$source_version" ]] || { echo "the plugin names version $plugin_version, not $source_version; the source and the plugin always say the same" >&2; exit 1; }
 
-          bundle_path="$RUNNER_TEMP/markitect-$TAG-bundle.zip"
-          go run ./cmd/markitect-release bundle --repo . --revision "$SOURCE_SHA" --output "$bundle_path"
-          bundle_sha256="$(sha256sum "$bundle_path" | cut -d ' ' -f 1)"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$source_version" >> "$GITHUB_OUTPUT"
-          echo "bundle_sha256=$bundle_sha256" >> "$GITHUB_OUTPUT"
 
       - name: Confirm current remote tag resolves to the workflow source commit
         if: ${{ github.ref_type == 'tag' }}
@@ -114,34 +112,11 @@ jobs:
           remote_tag_commit="$(resolve_remote_tag_commit)"
           [[ "$remote_tag_commit" == "$SOURCE_SHA" ]] || { echo "current remote release tag no longer resolves to the workflow source commit" >&2; exit 1; }
 
-  bundle-smoke:
-    name: Bundle install smoke
-    needs:
-      - quality
-      - preflight
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - name: Check out tagged source and history
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: go.mod
-
-      - name: Install the bundle and smoke the installed distribution
-        run: go run ./tools/smoke bundle -repo . -work "${{ runner.temp }}/smoke" -revision "${{ github.sha }}" -expect-sha256 "${{ needs.preflight.outputs.bundle_sha256 }}"
-
   assemble:
     name: Build and retain exact-source release assets
     needs:
       - quality
       - preflight
-      - bundle-smoke
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -149,7 +124,6 @@ jobs:
     env:
       TAG: ${{ needs.preflight.outputs.tag }}
       VERSION: ${{ needs.preflight.outputs.version }}
-      EXPECTED_BUNDLE_SHA256: ${{ needs.preflight.outputs.bundle_sha256 }}
     steps:
       - name: Check out exact tagged source and history
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -162,7 +136,7 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Build bundle, binaries for six systems, checksums, and provenance YAML
+      - name: Build binaries for six systems, checksums, and provenance YAML
         shell: bash
         env:
           REF_TYPE: ${{ github.ref_type }}
@@ -173,19 +147,19 @@ jobs:
             [[ "$(git rev-parse "refs/tags/$TAG^{commit}")" == "$SOURCE_SHA" ]] || { echo "release tag moved away from the workflow source commit" >&2; exit 1; }
             git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "release source commit is no longer contained in origin/main" >&2; exit 1; }
           fi
-          [[ "$(go run ./cmd/markitect-release version | awk '{print $2}')" == "$VERSION" ]] || { echo "release source version changed" >&2; exit 1; }
+          # Read all of the output before taking its first line, as below.
+          source_line="$(go run -buildvcs=false ./cmd/markitect version --repo "$RUNNER_TEMP")"
+          source_line="${source_line%%$'\n'*}"
+          read -r _ source_version _ <<< "$source_line"
+          [[ "${source_version%%+*}" == "$VERSION" ]] || { echo "release source version changed" >&2; exit 1; }
 
           out="$RUNNER_TEMP/markitect-release-$GITHUB_SHA"
           mkdir -p "$out"
-          bundle="$out/markitect-$TAG-bundle.zip"
-          go run ./cmd/markitect-release bundle --repo . --revision "$SOURCE_SHA" --output "$bundle"
-          bundle_sha256="$(sha256sum "$bundle" | cut -d ' ' -f 1)"
-          [[ "$bundle_sha256" == "$EXPECTED_BUNDLE_SHA256" ]] || { echo "release bundle differs from the bundle the install smoke tested" >&2; exit 1; }
 
           # The names are the contract with markitect update and the plugin's launcher
           # (internal/adapters/upgrade, plugin/bin/markitect).
           ldflags="-s -w -X github.com/Glacius-Labs/Markitect/internal/buildinfo.version=$VERSION -X github.com/Glacius-Labs/Markitect/internal/buildinfo.injectedRevision=$SOURCE_SHA"
-          names=("$(basename "$bundle")")
+          names=()
           for platform in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
             goos="${platform%/*}"
             goarch="${platform#*/}"
@@ -283,10 +257,9 @@ jobs:
         run: |
           set -euo pipefail
           cd assets
-          # Exactly the files the release promises: the bundle, six binaries, the
-          # checksums and the provenance. Nothing else is published.
+          # Exactly the files the release promises: six binaries, the checksums and
+          # the provenance. Nothing else is published.
           expected=(
-            "markitect-$TAG-bundle.zip"
             "markitect-$TAG-linux-amd64" "markitect-$TAG-linux-arm64"
             "markitect-$TAG-darwin-amd64" "markitect-$TAG-darwin-arm64"
             "markitect-$TAG-windows-amd64.exe" "markitect-$TAG-windows-arm64.exe"

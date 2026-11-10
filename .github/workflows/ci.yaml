@@ -57,9 +57,6 @@ jobs:
       - name: Build
         run: go build ./...
 
-      - name: Verify modules
-        run: go mod verify
-
       - name: Check Go formatting
         shell: bash
         run: |
@@ -69,7 +66,7 @@ jobs:
       - name: Check diff whitespace
         run: git diff --check
 
-      - name: Smoke the packaged distribution
+      - name: Smoke the commands
         run: go run ./tools/smoke -repo . -work "${{ runner.temp }}/smoke"
 
       - name: Test repository scripts
@@ -132,40 +129,3 @@ jobs:
             ${{ runner.temp }}/go-test-report.txt
           if-no-files-found: warn
           retention-days: 14
-
-  publish-source-artifact:
-    name: Publish main source artifact
-    needs:
-      - quality
-      - race
-    if: ${{ success() && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 90
-    steps:
-      - name: Check out source
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: go.mod
-
-      - name: Package pinned source and bootstrap files
-        shell: bash
-        run: |
-          package_dir="$RUNNER_TEMP/markitect-source-$GITHUB_SHA"
-          go run ./cmd/markitect-release package --repo . --output "$package_dir"
-          mkdir -p "$package_dir/.markitect/bootstrap"
-          cp packaging/bootstrap/run-markitect.go "$package_dir/.markitect/bootstrap/run.go"
-          cp packaging/bootstrap/run-markitect_test.go "$package_dir/.markitect/bootstrap/run_test.go"
-
-      - name: Upload commit-scoped source artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          include-hidden-files: true
-          name: markitect-source-${{ github.sha }}
-          path: ${{ runner.temp }}/markitect-source-${{ github.sha }}/
-          if-no-files-found: error
-          retention-days: 7

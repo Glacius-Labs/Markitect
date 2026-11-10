@@ -22,7 +22,7 @@ The default driver needs Claude Code on the user's own login: its agents are sub
 
 ## Layers
 
-All Go packages use one root module. One rule table in [`internal/tooling/architecture/rules.go`](../internal/tooling/architecture/rules.go) gives every package a layer and its owning document, lists which layers each layer may import and names the few exceptions. The [import gate](#import-gate) enforces it, and the generated [code map](development/code-map.md) shows the table. The source packager accepts exactly the table's packages below `cmd/` and `internal/`.
+All Go packages use one root module. One rule table in [`internal/tooling/architecture/rules.go`](../internal/tooling/architecture/rules.go) gives every package a layer and its owning document, lists which layers each layer may import and names the few exceptions. The [import gate](#import-gate) enforces it, and the generated [code map](development/code-map.md) shows the table.
 
 | Responsibility | Packages | Depends on |
 | --- | --- | --- |
@@ -33,13 +33,13 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 | Loading and checking a project's `.markitect/` folder from one set of files | `internal/project` | Spec language, the built-in files, the harness configuration, realization; its own `Repository` port |
 | What a project holds and who links to what, the Package graph, vet | `internal/analysis` | Project and the packages below it |
 | The record: the inputs of each Definition, `review.sum`, `status`, `mark` and the hook | `internal/run` | Project and the packages below it |
-| Project-folder, command-line and release adapters; no adapter imports another | `internal/adapters/folder`, `internal/adapters/cli`, `internal/adapters/upgrade` | Their inward consumers and build data |
+| Project-folder, command-line and update adapters; no adapter imports another | `internal/adapters/folder`, `internal/adapters/cli`, `internal/adapters/upgrade` | Their inward consumers and build data |
 | Composition | `internal/bootstrap` | The adapters and the record |
 | Entrypoints | `cmd/markitect` | Bootstrap |
-| Guarded working-tree writes for bundle installation; version and license notices | `internal/guardedwrite`, `internal/buildinfo` | No other Markitect package |
-| Maintenance | `internal/tooling/*`, `cmd/markitect-release` | The guarded writer and build data; separate from product execution |
+| Version and license notices | `internal/buildinfo` | No other Markitect package |
+| Maintenance: the import gate and the code map | `internal/tooling/architecture` | No other Markitect package; separate from product execution |
 | Test support, test files only | `internal/testkit` | No Markitect package |
-| Standalone: consumer bootstrap and source smoke | `packaging/bootstrap`, `tools/smoke` | No Markitect package |
+| Standalone: the command smoke | `tools/smoke` | No Markitect package |
 
 The pure packages (`spec`, `realization`, `analysis`) read no files and start no process; their callers hand them bytes. `spec` and `realization` return every error as a diagnostic with a code, which the [spec language guide](guides/spec-language.md) lists.
 
@@ -55,25 +55,24 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 ### Adding, changing or removing a package
 
-A new package root needs an actual consumer and a distinct responsibility. Land each contract with a caller and a concrete implementation, never as an interface-only wave. Add, move or remove the package's row in the rule table, give it a package doc comment and regenerate the code map. Source packaging takes its roots from the same table; update its data selection and tests for a new embedded asset. Keep one root module and reject nested modules. Delete obsolete source, commands and gates together ([DEC-032](decisions.md#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)). Producers own value types; consumers own ports.
+A new package root needs an actual consumer and a distinct responsibility. Land each contract with a caller and a concrete implementation, never as an interface-only wave. Add, move or remove the package's row in the rule table, give it a package doc comment and regenerate the code map. Keep one root module and reject nested modules. Delete obsolete source, commands and gates together ([DEC-032](decisions.md#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)). Producers own value types; consumers own ports.
 
 ## Distribution
 
-Source packaging, bundling and guarded installation are independent maintenance services. A release is a tag `vX.Y.Z` that the [release workflow](../.github/workflows/release.yaml) turns into a GitHub release: binaries for six systems, their checksums, the source bundle and a provenance file ([DEC-095](decisions.md#dec-095-releases-a-plugin-and-a-binary-that-updates-itself); [release operations](../packaging/README.md#release-operations)). Between releases Main's source declares a development version such as `0.0.0-dev` (`internal/buildinfo`, which also compares versions: `Newer`, `IsDev`); the retired versions `0.1.0` to `0.14.1` are never reused, and a release sets its own. `internal/adapters/upgrade` is the one package that uses the network: for `markitect update` it finds the newest tag, downloads the binary for the system, checks it against the release's checksums and replaces the running executable. The Claude Code plugin in `plugin/`, listed by the marketplace repository [Claude-Plugins](https://github.com/Glacius-Labs/Claude-Plugins) at the tag of a release, fetches the same binary through its launcher; a test has the launcher fetch the file names that the updater uses, and the workflow builds files under those names. `markitect version` adds the source revision: the VCS revision of a build in a checkout, marked `-modified` for a changed tree, or the commit in the module's pseudo-version for `go install github.com/Glacius-Labs/Markitect/cmd/markitect@main`. Source archives use the root `cmd/` and `internal/` layout and include the Markdown of the standard Libraries and skills and the script of the parallel workflow, which the binary embeds. The maintenance-only `release.Input` keeps fixed source files, modes and commit provenance for packaging and installation. The source smoke packages the source, tests the standalone bootstrap and drives the commands over a small project; it publishes nothing and starts no agent. See [distribution](../packaging/README.md) and its [release operations](../packaging/README.md#release-operations).
+A release is a tag `vX.Y.Z` that the [release workflow](../.github/workflows/release.yaml) turns into a GitHub release: binaries for six systems, their checksums and a provenance file ([DEC-095](decisions.md#dec-095-releases-a-plugin-and-a-binary-that-updates-itself); [releasing](releasing.md)). Between releases Main's source declares a development version such as `0.0.0-dev` (`internal/buildinfo`, which also compares versions: `Newer`, `IsDev`); the retired versions `0.1.0` to `0.14.1` are never reused, and a release sets its own. `internal/adapters/upgrade` is the one package that uses the network: for `markitect update` it finds the newest tag, downloads the binary for the system, checks it against the release's checksums and replaces the running executable. The Claude Code plugin in `plugin/`, listed by the marketplace repository [Claude-Plugins](https://github.com/Glacius-Labs/Claude-Plugins) at the tag of a release, fetches the same binary through its launcher; a test has the launcher fetch the file names that the updater uses, and the workflow builds files under those names. `markitect version` adds the source revision: the VCS revision of a build in a checkout, marked `-modified` for a changed tree, or the commit in the module's pseudo-version for `go install github.com/Glacius-Labs/Markitect/cmd/markitect@main`. The command smoke, `tools/smoke`, builds `markitect` from the repository and drives its commands over a small project; it publishes nothing and starts no agent.
 
 ## Repository layout
 
-One Go module at the root. Go keeps `cmd/` and `internal/` there, and the source packager refuses a `src/` layout and nested modules.
+One Go module at the root, with `cmd/` and `internal/` below it.
 
 | Path | Holds |
 |---|---|
-| `cmd/` | Go entrypoints: `markitect`, the CLI that ships, and `markitect-release`, the maintenance command |
-| `internal/` | The product's and the maintenance services' Go packages, including the standard Libraries (`internal/libraries`) and the skills and agents (`internal/skills`) that the binary embeds; the [code map](development/code-map.md) lists every package |
+| `cmd/` | The Go entrypoint `markitect`, the CLI that ships |
+| `internal/` | The Go packages, including the standard Libraries (`internal/libraries`) and the skills and agents (`internal/skills`) that the binary embeds; the [code map](development/code-map.md) lists every package |
 | `plugin/` | The Claude Code plugin `markitect`, with its launcher, hooks and skill |
-| `packaging/` | The consumer bootstrap and the [distribution guide](../packaging/README.md) |
-| `tools/` | Independent tools that import no product code: the packaged-source smoke |
+| `tools/` | Independent tools that import no product code: the command smoke |
 | `scripts/` | Maintainer scripts: the documentation link check and the CI test and flake reports |
 | `docs/` | This documentation |
 | `.github/` | The CI, release and flake-report workflows, all started by hand or by a tag |
 
-The architecture gate fails on a Go package without a row in the rule table, the source packager on unknown roots inside `cmd/` and `internal/`, and `scripts/check-docs.py` on broken local links.
+The architecture gate fails on a Go package without a row in the rule table, and `scripts/check-docs.py` on broken local links.

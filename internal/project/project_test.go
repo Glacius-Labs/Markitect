@@ -57,7 +57,6 @@ func valid(t *testing.T) memRepo {
 		IgnoreFile:                     "# Legal text\nLICENSE\n",
 		ReviewFile:                     "",
 		AttributesFile:                 Attributes,
-		Dir + "/tool/lock.yaml":        "installed tool\n",
 		"README.md":                    "# Demo\n",
 		"src/member.go":                "package members\n",
 		"LICENSE":                      "MIT\n",
@@ -111,10 +110,14 @@ func TestLoadUnknownOwnFiles(t *testing.T) {
 	r.files[RegistryDir+"/members.yaml"] = "x"
 	r.files[Dir+"/drafts/members.md"] = "x"
 	r.files[Dir+"/results/gate.json"] = "{}"
+	r.files[Dir+"/tool/lock.yaml"] = "x"
+	r.files[Dir+"/bootstrap/run.go"] = "x"
 	p := load(t, r)
 	expect(t, p.Errors, "project.file", ".markitect/notes.txt")
 	expect(t, p.Errors, "project.file", ".markitect/drafts/members.md")
 	expect(t, p.Errors, "project.file", ".markitect/results/gate.json")
+	expect(t, p.Errors, "project.file", ".markitect/tool/lock.yaml")
+	expect(t, p.Errors, "project.file", ".markitect/bootstrap/run.go")
 	expect(t, p.Errors, "registry.page", ".markitect/registry/members.yaml")
 }
 

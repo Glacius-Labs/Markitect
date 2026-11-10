@@ -47,8 +47,8 @@ type Rules struct {
 	Exceptions []Exception
 }
 
-// Table is the repository's one architecture rule table. The import gate, the
-// generated code map and the source packager's roots all derive from it.
+// Table is the repository's one architecture rule table. The import gate and the
+// generated code map derive from it.
 var Table = Rules{
 	Layers: []Layer{
 		{Name: "spec", Title: "Spec language", Meaning: "The spec language over supplied bytes: Definitions, Kinds, links, visibility, cycles, manifest and lock."},
@@ -58,15 +58,13 @@ var Table = Rules{
 		{Name: "project", Title: "Project", Meaning: "Loads and checks a project's Markitect folder from the files of a project folder.", Imports: []string{"spec", "assets", "harness", "domain"}},
 		{Name: "service", Title: "Analysis", Meaning: "Questions about a loaded project: what it holds, what depends on what, and vet.", Imports: []string{"spec", "assets", "domain", "project"}},
 		{Name: "run", Title: "The record", Meaning: "The record of what was verified, without Git: the inputs of each Definition, review.sum, status, mark and the hook.", Imports: []string{"spec", "assets", "domain", "project"}},
-		{Name: "guardedwrite", Title: "Guarded write", Meaning: "Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots."},
 		{Name: "build", Title: "Build data", Meaning: "Version identity and embedded license notices."},
-		{Name: "adapter", Title: "Adapters", Meaning: "Concrete project-folder, command-line and release adapters; no adapter imports another.", Imports: []string{"spec", "assets", "harness", "domain", "project", "service", "run", "build"}},
+		{Name: "adapter", Title: "Adapters", Meaning: "Concrete project-folder, command-line and update adapters; no adapter imports another.", Imports: []string{"spec", "assets", "harness", "domain", "project", "service", "run", "build"}},
 		{Name: "composition", Title: "Composition", Meaning: "Constructs the command line with its adapters.", Imports: []string{"spec", "project", "service", "run", "adapter"}},
 		{Name: "command", Title: "Product commands", Meaning: "Thin entrypoints to product composition.", Imports: []string{"composition"}},
-		{Name: "maintenance", Title: "Maintenance", Meaning: "The import gate and release packaging, separate from product execution.", Imports: []string{"guardedwrite"}},
-		{Name: "maintenance-command", Title: "Maintenance command", Meaning: "Release maintenance entrypoint.", Imports: []string{"maintenance", "build"}},
+		{Name: "maintenance", Title: "Maintenance", Meaning: "The import gate and the code map, separate from product execution."},
 		{Name: "test-support", Title: "Test support", Meaning: "Hermetic fixtures.", TestOnly: true, Standalone: true},
-		{Name: "standalone", Title: "Standalone tools", Meaning: "Consumer bootstrap and source smoke.", Standalone: true},
+		{Name: "standalone", Title: "Standalone tools", Meaning: "The command smoke.", Standalone: true},
 	},
 	Packages: []Package{
 		{"internal/spec", "spec", "docs/guides/spec-language.md#definitions"},
@@ -77,7 +75,6 @@ var Table = Rules{
 		{"internal/project", "project", "docs/guides/spec-language.md#the-projects-markitect-folder"},
 		{"internal/analysis", "service", "docs/guides/spec-language.md#vet-warnings-and-notes"},
 		{"internal/run", "run", "internal/run/README.md"},
-		{"internal/guardedwrite", "guardedwrite", "docs/architecture.md#distribution"},
 		{"internal/buildinfo", "build", "docs/architecture.md#distribution"},
 		{"internal/adapters/cli", "adapter", "docs/guides/spec-language.md#commands"},
 		{"internal/adapters/folder", "adapter", "internal/run/README.md#the-folder"},
@@ -85,29 +82,12 @@ var Table = Rules{
 		{"internal/bootstrap", "composition", "docs/architecture.md#product-flow"},
 		{"cmd/markitect", "command", "docs/guides/spec-language.md#commands"},
 		{"internal/tooling/architecture", "maintenance", "docs/architecture.md#layers"},
-		{"internal/tooling/release", "maintenance", "docs/architecture.md#distribution"},
-		{"cmd/markitect-release", "maintenance-command", "docs/architecture.md#distribution"},
 		{"internal/testkit", "test-support", "docs/architecture.md#layers"},
-		{"packaging/bootstrap", "standalone", "packaging/README.md"},
 		{"tools/smoke", "standalone", "docs/architecture.md#distribution"},
 	},
 	Exceptions: []Exception{
-		{From: "internal/tooling/release", To: "internal/tooling/architecture", Reason: "The packager takes its source roots from this table."},
-		{From: "internal/tooling/release", To: "internal/buildinfo", TestOnly: true, Reason: "Tests compare the packaged notices with the embedded ones."},
 		{From: "internal/run", To: "internal/adapters/folder", TestOnly: true, Reason: "The record is tested on real folders."},
 	},
-}
-
-// SourceRoots returns the packages below cmd/ and internal/, the only roots a
-// source archive may contain.
-func (r Rules) SourceRoots() []string {
-	var roots []string
-	for _, p := range r.Packages {
-		if strings.HasPrefix(p.Path, "cmd/") || strings.HasPrefix(p.Path, "internal/") {
-			roots = append(roots, p.Path)
-		}
-	}
-	return roots
 }
 
 func (r Rules) layer(name string) (Layer, bool) {

@@ -16,8 +16,8 @@ Product code and tests that handle a project's `.markitect/` folder use fixtures
 | New item | Place | Also |
 |---|---|---|
 | Go package | `internal/<responsibility>/` | A row in the architecture rule table, a package doc comment, and the code map regenerated ([architecture](docs/architecture.md#adding-changing-or-removing-a-package)) |
-| Shipped command | `cmd/<name>/` | A row in the rule table, and the smoke's build list |
-| File the binary embeds | Inside the embedding package, such as `internal/libraries/` | The source packager's data selection and its tests |
+| Shipped command | `cmd/<name>/` | A row in the rule table |
+| File the binary embeds | Inside the embedding package, such as `internal/libraries/` | |
 | Fixture of one package | `<package>/testdata/` | |
 | Check that must not import product code | `tools/` | A CI step |
 | Maintainer script | `scripts/` | Its tests beside it |
@@ -33,7 +33,7 @@ Product code and tests that handle a project's `.markitect/` folder use fixtures
 | Using Markitect on a project | [Project workflow](docs/guides/project-workflow.md) |
 | Packages, layers and the repository layout | [Architecture](docs/architecture.md) and the generated [code map](docs/development/code-map.md) |
 | The record, `status`, `mark` and the hook | [The record](internal/run/README.md) |
-| Releases | [Packaging and distribution](packaging/README.md) |
+| Releases | [Releasing](docs/releasing.md) |
 | Where Main is and what comes next | [Roadmap](docs/roadmap.md) |
 | Where earlier concepts and records are | [History](docs/history.md) |
 | How Markitect is developed | This page |
@@ -54,7 +54,7 @@ Run the checks the change calls for, and record their results in the PR.
 - **Documentation only:** `python -B scripts/check-docs.py`, which checks the local links and anchors of the maintained pages (name other pages as arguments), and `git diff --check`.
 - **Go code:** `gofmt` on the changed files, `go vet ./...` and the tests of the changed packages. `go test ./internal/tooling/...` whenever a package, a doc comment or an owning page moves. The commands build for Windows too, so a change to code they reach also runs `GOOS=windows go vet ./...`.
 - **The code map** after a change of the rule table or a package doc comment: `go test ./internal/tooling/architecture -run TestCodeMapPage -update`.
-- **The packaged source** in a fresh, empty folder outside the repository: `go run ./tools/smoke -repo . -work ABSOLUTE_EMPTY_FOLDER`. It packages and builds the source, tests the standalone bootstrap and drives the packaged CLI over a small project. It starts no agent.
+- **The command smoke** in a fresh, empty folder outside the repository: `go run ./tools/smoke -repo . -work ABSOLUTE_EMPTY_FOLDER`. It builds `markitect` from the repository and drives its commands over a small project. It starts no agent.
 
 The full set, as CI runs it:
 
@@ -78,7 +78,7 @@ CI runs on Linux only, with quality checks and the race detector, in about five 
 gh workflow run ci.yaml --ref BRANCH
 ```
 
-Local checks and the independent review are the basis for a merge, and CI is optional for ordinary changes. When you run it, run it on the reviewed head and merge only when it is green. The product's tests need no Git and run in about a minute on Windows too; only the release tooling's tests start Git.
+Local checks and the independent review are the basis for a merge, and CI is optional for ordinary changes. When you run it, run it on the reviewed head and merge only when it is green. The tests run in about a minute on Windows too; Git is started only by one test of `init` and by the test support's own tests.
 
 ## Review and land
 
@@ -88,7 +88,7 @@ Local checks and the independent review are the basis for a merge, and CI is opt
 
 **Real agent runs.** The skills `/markitect-architect`, `/markitect-build`, `/markitect-review`, `/markitect-cleanup`, `/markitect-bughunt` and `/markitect-audit`, and the routines, start real agents. Run them only on a committed test project, in your own Claude Code session or a worktree of that project. Before a run, name the project and its source commit, the limits, when to abort and the cleanup; after it, report what happened, failures included, in the PR it informs. The tool's commands start no agent and run anywhere.
 
-**Releases** follow the [release operations](packaging/README.md#release-operations) ([DEC-095](docs/decisions.md#dec-095-releases-a-plugin-and-a-binary-that-updates-itself)). There is no deployment.
+**Releases** follow [Releasing](docs/releasing.md) ([DEC-095](docs/decisions.md#dec-095-releases-a-plugin-and-a-binary-that-updates-itself)). There is no deployment.
 
 ## Reporting
 

@@ -48,10 +48,17 @@ func NewRepo(t testing.TB) *Repo {
 	return r
 }
 
-// Git runs git in the repository like the package function Git.
+// Git runs git in the repository and returns its trimmed standard output. It
+// fails the test with git's standard error when git fails. Git runs without
+// the global and system configuration of the machine and without inherited
+// GIT_* variables.
 func (r *Repo) Git(args ...string) string {
 	r.t.Helper()
-	return Git(r.t, r.Dir, args...)
+	out, err := runGit(r.Dir, nil, args...)
+	if err != nil {
+		r.t.Fatalf("git %s: %v", strings.Join(args, " "), err)
+	}
+	return out
 }
 
 // Write writes a file relative to the repository root, creating parent
@@ -80,23 +87,9 @@ func (r *Repo) Commit(message string) string {
 	return r.Git("rev-parse", "HEAD")
 }
 
-// Git runs git in dir and returns its trimmed standard output. It fails the
-// test with git's standard error when git fails. Git runs without the global
-// and system configuration of the machine and without inherited GIT_*
-// variables. Use it for directories that are not a Repo, such as clones, bare
-// remotes and linked worktrees.
-func Git(t testing.TB, dir string, args ...string) string {
-	t.Helper()
-	out, err := runGit(dir, nil, args...)
-	if err != nil {
-		t.Fatalf("git %s: %v", strings.Join(args, " "), err)
-	}
-	return out
-}
-
 func runGit(dir string, extraEnv []string, args ...string) (string, error) {
 	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
-	cmd.Env = append(GitEnv(), extraEnv...)
+	cmd.Env = append(gitEnv(), extraEnv...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	if err := cmd.Run(); err != nil {
@@ -105,10 +98,9 @@ func runGit(dir string, extraEnv []string, args ...string) (string, error) {
 	return strings.TrimSpace(stdout.String()), nil
 }
 
-// GitEnv returns the current environment without GIT_* variables and with
-// the global and system Git configuration turned off. Use it for git
-// processes a test starts itself.
-func GitEnv() []string {
+// gitEnv returns the current environment without GIT_* variables and with the
+// global and system Git configuration turned off.
+func gitEnv() []string {
 	env := make([]string, 0, len(os.Environ())+3)
 	for _, entry := range os.Environ() {
 		name, _, _ := strings.Cut(entry, "=")

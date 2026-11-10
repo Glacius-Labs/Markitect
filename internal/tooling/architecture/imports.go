@@ -71,7 +71,7 @@ func (r Rules) Check(edges []Edge) []Violation {
 }
 
 // Inspect returns one classifying edge for every Go file below cmd/,
-// internal/, tools/, examples/ and packaging/, and one edge for each of its
+// internal/, tools/ and examples/, and one edge for each of its
 // imports of a Markitect package.
 func Inspect(root string) ([]Edge, error) {
 	var edges []Edge
@@ -101,7 +101,7 @@ func Inspect(root string) ([]Edge, error) {
 			return err
 		}
 		rel = filepath.ToSlash(rel)
-		if !strings.HasPrefix(rel, "cmd/") && !strings.HasPrefix(rel, "internal/") && !strings.HasPrefix(rel, "tools/") && !strings.HasPrefix(rel, "examples/") && !strings.HasPrefix(rel, "packaging/") {
+		if !strings.HasPrefix(rel, "cmd/") && !strings.HasPrefix(rel, "internal/") && !strings.HasPrefix(rel, "tools/") && !strings.HasPrefix(rel, "examples/") {
 			return nil
 		}
 		packagePath := filepath.ToSlash(filepath.Dir(rel))

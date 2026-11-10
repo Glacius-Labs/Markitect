@@ -209,10 +209,8 @@ func Load(repo Repository) (*Project, error) {
 			}
 		case first == "libraries" && strings.Contains(rest, "/"):
 			libraryFiles = append(libraryFiles, f)
-		case first == "tool", first == "bootstrap":
-			// the installed tool; accounted for here.
 		default:
-			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the harness configuration %s, the registry, the spec, Libraries, the record %s with its %s, and the installed tool", Dir, HarnessFile, ReviewFile, AttributesFile)
+			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the harness configuration %s, the registry, the spec, Libraries and the record %s with its %s", Dir, HarnessFile, ReviewFile, AttributesFile)
 		}
 	}
 	local := map[string][]spec.File{}

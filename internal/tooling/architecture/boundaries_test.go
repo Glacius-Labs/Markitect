@@ -82,10 +82,6 @@ func TestLayerDirections(t *testing.T) {
 		{"internal/bootstrap", "internal/adapters/cli", both},
 		{"internal/bootstrap", "internal/adapters/folder", both},
 		{"cmd/markitect", "internal/bootstrap", both},
-		{"cmd/markitect-release", "internal/tooling/release", both},
-		{"cmd/markitect-release", "internal/buildinfo", both},
-		{"internal/tooling/release", "internal/guardedwrite", both},
-		{"internal/tooling/release", "internal/tooling/architecture", both},
 
 		// Foundations never import outward.
 		{"internal/spec", "internal/realization", none},
@@ -100,23 +96,16 @@ func TestLayerDirections(t *testing.T) {
 		// Adapters do not import each other, nor the agent side.
 		{"internal/adapters/cli", "internal/adapters/folder", none},
 		{"internal/adapters/folder", "internal/adapters/cli", none},
-		{"internal/adapters/cli", "internal/guardedwrite", none},
-		{"internal/adapters/cli", "internal/tooling/release", none},
 		// Entrypoints stay thin.
-		{"internal/bootstrap", "internal/tooling/release", none},
 		{"cmd/markitect", "internal/adapters/cli", none},
 		{"cmd/markitect", "internal/spec", none},
-		{"cmd/markitect-release", "internal/bootstrap", none},
 		// Maintenance stays apart from the product.
-		{"internal/tooling/release", "internal/spec", none},
-		{"internal/tooling/architecture", "internal/tooling/release", none},
-		{"internal/guardedwrite", "internal/spec", none},
-		{"internal/guardedwrite", "internal/tooling/release", none},
-		{"packaging/bootstrap", "internal/spec", none},
+		{"internal/tooling/architecture", "internal/spec", none},
+		{"tools/smoke", "internal/spec", none},
 		{"tools/smoke", "internal/bootstrap", none},
 
 		// Test composition only.
-		{"internal/tooling/release", "internal/buildinfo", testOnly},
+		{"internal/run", "internal/adapters/folder", testOnly},
 		{"internal/spec", "internal/testkit", testOnly},
 		{"internal/adapters/folder", "internal/testkit", testOnly},
 	} {
@@ -178,7 +167,7 @@ func TestTestkitOnlyInTests(t *testing.T) {
 		{"internal/spec/m_test.go", "package spec\nimport _ \"" + ModulePath + "internal/testkit\"\n", ""},
 		{"internal/testkit/k.go", "package testkit\nimport _ \"" + ModulePath + "internal/spec\"\n", "layer test-support may not import Markitect packages"},
 		{"internal/testkit/k_test.go", "package testkit\nimport _ \"" + ModulePath + "internal/spec\"\n", "layer test-support may not import Markitect packages"},
-		{"packaging/bootstrap/b_test.go", "package main\nimport _ \"" + ModulePath + "internal/testkit\"\n", "layer standalone may not import Markitect packages"},
+		{"tools/smoke/b_test.go", "package main\nimport _ \"" + ModulePath + "internal/testkit\"\n", "layer standalone may not import Markitect packages"},
 	} {
 		t.Run(tc.file, func(t *testing.T) {
 			root := t.TempDir()
@@ -186,10 +175,10 @@ func TestTestkitOnlyInTests(t *testing.T) {
 				"README.md":                    "# Owner\n",
 				"internal/spec/producer.go":    "package spec\n",
 				"internal/testkit/producer.go": "package testkit\n",
-				"packaging/bootstrap/run.go":   "package main\n",
+				"tools/smoke/main.go":          "package main\n",
 				tc.file:                        tc.content,
 			})
-			got, err := fixtureRules(t, "internal/spec", "internal/testkit", "packaging/bootstrap").CheckRepository(root)
+			got, err := fixtureRules(t, "internal/spec", "internal/testkit", "tools/smoke").CheckRepository(root)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -349,7 +338,7 @@ func TestSelfImportsRequireExternalTests(t *testing.T) {
 }
 
 func TestProductNestedModulesCannotHidePackages(t *testing.T) {
-	for _, name := range []string{"internal/spec/go.mod", "cmd/markitect/go.mod", "internal/tooling/release/go.mod"} {
+	for _, name := range []string{"internal/spec/go.mod", "cmd/markitect/go.mod", "internal/tooling/architecture/go.mod"} {
 		root := t.TempDir()
 		writeFixture(t, root, map[string]string{name: "module hidden\n"})
 		if _, err := Packages(root); err == nil || !strings.Contains(err.Error(), "nested Go module") {

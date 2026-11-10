@@ -7,12 +7,14 @@ import (
 	"strings"
 )
 
+// version checks that the first line of `markitect version` names a version.
 func (s *smoke) version() error {
-	out, err := s.run(s.repo, nil, s.tool("markitect"), "version")
+	out, err := s.run(s.work, nil, s.tool("markitect"), "version")
 	if err != nil {
 		return err
 	}
-	if version := strings.TrimSpace(strings.TrimPrefix(out, "markitect ")); version == "" || version == strings.TrimSpace(out) {
+	first, _, _ := strings.Cut(out, "\n")
+	if fields := strings.Fields(first); len(fields) != 2 || fields[0] != "markitect" {
 		return fmt.Errorf("unexpected version output: %q", out)
 	}
 	return nil
@@ -31,7 +33,7 @@ var smokeSpec = map[string]string{
 	"src/catalog/copy.go":               "package catalog\n",
 }
 
-// specCommands drives the packaged CLI over a small project in a plain folder,
+// specCommands drives the built CLI over a small project in a plain folder,
 // with no Git: init, check, tidy, doc, list and vet; status and mark that
 // verify every Definition; status after a change of the spec; and the refusal of
 // a spec that does not compile. It starts no agent.
