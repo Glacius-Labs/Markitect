@@ -2,7 +2,7 @@ name: CI
 
 on:
   # Development policy: full validation is explicitly requested, not a merge wait.
-  # CI is Linux only (owner decision of 27 October 2026); no job waits for Windows.
+  # CI is Linux only (DEC-077 in docs/decisions.md); no job waits for Windows.
   workflow_dispatch:
   workflow_call:
 

@@ -2,7 +2,7 @@
 // agents: who links to a Definition, the Package dependency graph, and the
 // warnings and notes of vet, which analyse the spec's design like code.
 //
-// The commands are described in docs/guides/model-language.md.
+// The commands are described in docs/guides/spec-language.md.
 package analysis
 
 import (

@@ -3,7 +3,7 @@
 // Libraries, spec and registry.
 // Every command that reads the spec starts from a loaded Project.
 //
-// The layout is described in docs/guides/model-language.md.
+// The layout is described in docs/guides/spec-language.md.
 package project
 
 import (

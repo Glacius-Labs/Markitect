@@ -5,12 +5,12 @@ body:
   - type: markdown
     attributes:
       value: |
-        Markitect is a provider-independent authoring and structure-validation tool. See [the architecture](https://github.com/Glacius-Labs/Markitect/blob/main/docs/architecture.md) and [roadmap](https://github.com/Glacius-Labs/Markitect/blob/main/docs/implementation-plan.md) before proposing a change.
+        Markitect is a programming language for documentation, with delegated realization. See [the concept](https://github.com/Glacius-Labs/Markitect/blob/main/docs/concept.md), [the decisions](https://github.com/Glacius-Labs/Markitect/blob/main/docs/decisions.md) and [the roadmap](https://github.com/Glacius-Labs/Markitect/blob/main/docs/roadmap.md) before proposing a change.
   - type: textarea
     id: problem
     attributes:
       label: Problem to solve
-      description: Describe the concrete authoring, validation, or review problem.
+      description: Describe the concrete problem with writing, checking or realizing a spec.
     validations:
       required: true
   - type: textarea
@@ -24,7 +24,7 @@ body:
     id: boundaries
     attributes:
       label: Product boundaries
-      description: Note effects on deterministic behavior, explicit dependencies, fixed-snapshot evidence, or adopting-repository ownership.
+      description: Note effects on the spec language, the record of what was verified, the agents' rights or a project's own files.
       render: markdown
   - type: textarea
     id: alternatives

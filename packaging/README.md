@@ -1,14 +1,14 @@
 # Packaging and distribution
 
-The owner retired the old Project/Domain releases and binary downloads on 17 October 2026. Releases of the new product start with `0.15.0` ([DEC-095](../docs/concepts/register.md#dec-095-releases-a-plugin-and-a-binary-that-updates-itself)); see [release operations](#release-operations). The Git tags of the old releases no longer exist on GitHub; the commit behind each is recorded in the [retired release mapping](../docs/validation/retired-releases-20261017.json), and the 18 retired release versions `v0.1.0` to `v0.14.1` must not be reused. [Release identities, asset digests and attestations](../docs/validation/distribution-retirement-20261017.md) are retained. Use [current source](../README.md#quick-start), the [project workflow](../docs/guides/project-workflow.md) and the [delivery plan](../docs/implementation-plan.md).
+Releases start with `0.15.0` ([DEC-095](../docs/decisions.md#dec-095-releases-a-plugin-and-a-binary-that-updates-itself)); see [release operations](#release-operations). The 18 versions `v0.1.0` to `v0.14.1` belong to retired releases of an earlier product and must not be reused; their tags no longer exist, and the commit behind each is in the [retired release mapping](https://github.com/Glacius-Labs/Markitect/blob/d0c23a31efc928e95f3acc0633deb01a5f887884/docs/validation/retired-releases-20261017.json).
 
 ## What lives here
 
-`packaging/` holds what ships besides the binary: `bootstrap/` (the consumer bootstrap `run-markitect.go` that release bundles copy into `.markitect/bootstrap/run.go`, with its test) and this guide. The standard Libraries and the agent skills are built into the binary ([`internal/libraries`](../internal/libraries/), [`internal/skills`](../internal/skills/)), and `markitect init` installs the skills. V1's Linux runner image was removed with step T1; its recipe is at the [base commit](https://github.com/Glacius-Labs/Markitect/blob/f23c2e12d9833efa61e5e65c90018016423abe74/packaging/runner/Dockerfile).
+`packaging/` holds what ships besides the binary: `bootstrap/` (the consumer bootstrap `run-markitect.go` that release bundles copy into `.markitect/bootstrap/run.go`, with its test) and this guide. The standard Libraries and the agent skills are built into the binary ([`internal/libraries`](../internal/libraries/), [`internal/skills`](../internal/skills/)), and `markitect init` installs the skills.
 
 ## Current source release tooling
 
-Independent `markitect-release` commands prepare local distributions. They do not publish, download an old release, run a provider or establish Apply readiness.
+Independent `markitect-release` commands prepare local distributions. They do not publish, download a release or run an agent.
 
 ```powershell
 go run ./cmd/markitect-release package --repo . --output ABSENT_DIRECTORY
@@ -32,7 +32,7 @@ go test ./packaging/bootstrap/run-markitect.go ./packaging/bootstrap/run-markite
 
 ## Runtime requirements
 
-Use Git and the Go version in `go.mod`. Packaging or installation is not a runtime or Apply demonstration.
+Use Git and the Go version in `go.mod`.
 
 ## Release operations
 
@@ -40,17 +40,13 @@ A release is a tag `vX.Y.Z` on a commit of `main`. The [release workflow](../.gi
 
 To cut a release:
 
-1. In one change, set `version` in `internal/buildinfo/version.go` and `version` in `plugin/.claude-plugin/plugin.json` to `X.Y.Z`. The source and the plugin always say the same: a test refuses a difference, and the workflow checks it again. Never reuse a version of the [retired releases](../docs/validation/retired-releases-20261017.json). Review it, run the checks of [CONTRIBUTING](../CONTRIBUTING.md#verify-a-change) and merge it.
+1. In one change, set `version` in `internal/buildinfo/version.go` and `version` in `plugin/.claude-plugin/plugin.json` to `X.Y.Z`. The source and the plugin always say the same: a test refuses a difference, and the workflow checks it again. Never reuse a retired version, `0.1.0` to `0.14.1`. Review it, run the checks of [CONTRIBUTING](../CONTRIBUTING.md#check-a-change) and merge it.
 2. Tag the merge commit `vX.Y.Z` and push the tag. The workflow does the rest; it publishes only when every check passed. Wait until its last job, the check of the published release, is green: a release that fails it is marked as a pre-release.
 3. Point the catalog at it. The marketplace `glacius-labs` is the repository [Claude-Plugins](https://github.com/Glacius-Labs/Claude-Plugins), and its entry for `markitect` pins the plugin to a tag and to the commit of that tag. In a clone of it run `python3 scripts/pin.py markitect vX.Y.Z` and `python3 scripts/check_marketplace.py`, commit and push; the check also runs there in CI and refuses a pin that does not match a published release with a plugin of that version. Until then, users keep the previous release.
 4. In a following change, set both versions to the next development version (`X.Y+1.0-dev`). The launcher of a development plugin refuses to fetch anything, and nobody installs one, since the catalog pins tags.
 
-The binary is not signed. `markitect update` and the launcher check the download against the checksums of the same release, which guards against a damaged or swapped file, and the connection is HTTPS to GitHub. [Artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifacts/using-artifact-attestations-to-establish-provenance-for-builds) would add that a binary was built by this workflow. Local packaging with `markitect-release` does not publish. The [archive index](../docs/archive.md) lists the pinned pre-reset commits behind the retired releases. The old download-based benchmark and WinGet validation workflow are retired with their fixtures and manifests. Dated release evidence keeps its original source and environment scope in the archived [production assessment](https://github.com/Glacius-Labs/Markitect/blob/e6d9b94a64c2083ee1487414a728a520a87def03/docs/validation/production-assessment.md).
+The binary is not signed. `markitect update` and the launcher check the download against the checksums of the same release, which guards against a damaged or swapped file, and the connection is HTTPS to GitHub. [Artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifacts/using-artifact-attestations-to-establish-provenance-for-builds) would add that a binary was built by this workflow. Local packaging with `markitect-release` does not publish.
 
-A public release needs the owner's release instruction (given on 6 November 2026, [DEC-095](../docs/concepts/register.md#dec-095-releases-a-plugin-and-a-binary-that-updates-itself)), a fresh version tag, a clean reviewed full commit on `main`, passing source and Linux gates, a bundle, the binaries, provenance, the exact workflow, run and attempt identity, and matching bundle, provenance and asset digests. The release workflow checks all of that on the tagged commit before it publishes, and the publish job rechecks the assets and the remote tag. The earlier GitHub-release and WinGet publisher stays in Git history; the workflow publishes with `gh release create` and replaces it. A release that fails the check after it is public is marked as a pre-release, so `markitect update` does not offer it. Never overwrite a tag or asset, and never reuse a historical tag or a retired version. Required historical release evidence and the named archive refs are kept. Release pages and downloads are retired only on the owner's explicit instruction; retired releases keep their recorded source and asset identities and attestations without implying availability.
+A public release needs a fresh version tag, a clean reviewed full commit on `main`, passing source and Linux gates, a bundle, the binaries, provenance, the exact workflow, run and attempt identity, and matching bundle, provenance and asset digests. The release workflow checks all of that on the tagged commit before it publishes, and the publish job rechecks the assets and the remote tag. The workflow publishes with `gh release create`. A release that fails the check after it is public is marked as a pre-release, so `markitect update` does not offer it. Never overwrite a tag or asset, and never reuse a historical tag or a retired version. Release pages and downloads are retired only on the product owner's explicit instruction.
 
-CI transport is bounded: Go test artifacts remain for 14 days to support the flake report; commit-scoped source archives remain for 7 days. Named evidence, failed diagnostics and artifacts needed by current work are excluded from manual historical cleanup. Durable summaries, public attestations and source references belong in Git; temporary artifact URLs are not a permanent evidence store. [CONTRIBUTING](../CONTRIBUTING.md#verify-a-change) owns source gates.
-
-## Historical content-package command
-
-The old product, bootstrap formats, download walkthroughs and `markitect package` command remain at [the pre-retirement guide](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/integration/README.md), pinned by the archive ref `archive/pre-reset-1f4a1ede`. They are historical contracts, not another active command surface.
+CI transport is bounded: Go test artifacts remain for 14 days to support the flake report; commit-scoped source archives remain for 7 days. Named evidence, failed diagnostics and artifacts needed by current work are excluded from manual historical cleanup. Durable summaries, public attestations and source references belong in Git; temporary artifact URLs are not a permanent evidence store. [CONTRIBUTING](../CONTRIBUTING.md#check-a-change) owns source gates.

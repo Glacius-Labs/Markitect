@@ -1,26 +1,12 @@
 ## Change
 
-<!-- Concrete problem and resulting behavior. -->
+<!-- What changed and why. -->
 
-## Assignment and scope
+## Checks
 
-- Package/slice ID:
-- Fixed base SHA:
-- Owned paths and required contracts:
-- Integration dependencies / shared-file agreement:
+<!-- The checks you ran on the head of this PR, with their results. See CONTRIBUTING.md. -->
 
-<!-- docs/implementation-plan.md owns the current delivery split. -->
-
-## Validation
-
-<!-- Give exact source/head and actual results. Preserve failures and limits. -->
-
-- Focused checks:
-- Required integration checks:
-- Independent review:
-- Canonical sources/generated outputs updated when affected:
-- Remaining evidence gaps:
-
-## Decisions and remaining work
-
-<!-- Questions outside existing authority, or none. Source checks are not release/provider/method acceptance. -->
+- Local checks:
+- Independent review of the complete diff:
+- Pages and generated files updated where affected:
+- Not verified:

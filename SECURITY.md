@@ -8,7 +8,7 @@ Do not report a vulnerability in a public issue or pull request, or include secr
 
 ## Scope
 
-Reports should identify a security issue in Markitect itself or its published distribution. Markitect executes Project-declared checks with the caller's local authority; those commands are project inputs and are not sandboxed by Markitect. For general usage questions or ordinary bugs, use the channels in [SUPPORT.md](SUPPORT.md).
+Reports should identify a security issue in Markitect itself or its published distribution. Markitect's agents run in the user's own Claude Code session with the user's rights, and the reviewer runs the project's own tests; Markitect sandboxes neither, and its hook guards against mistakes, not against intent. For general usage questions or ordinary bugs, use the channels in [SUPPORT.md](SUPPORT.md).
 
 ## Updates
 

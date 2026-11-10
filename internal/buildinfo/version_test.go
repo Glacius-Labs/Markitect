@@ -38,7 +38,7 @@ func TestBuildAddsTheSourceRevision(t *testing.T) {
 	}
 }
 
-// The 18 versions retired on 17 October 2026 (docs/validation/retired-releases-20261017.json).
+// The 18 versions retired on 17 October 2026.
 var retired = []string{
 	"0.1.0", "0.2.0", "0.3.0", "0.3.1", "0.4.0", "0.4.1", "0.5.0", "0.6.0", "0.7.0",
 	"0.8.0", "0.8.1", "0.9.0", "0.9.1", "0.10.0", "0.11.0", "0.12.0", "0.13.0", "0.14.1",
