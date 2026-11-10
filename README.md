@@ -1,3 +1,6 @@
+> [!NOTE]
+> **Archive of concept 1.0 (V1).** This branch keeps Markitect as it stood on Main from 24 to 28 October 2026, while concept 1.0 was the target. Its code and documentation describe that concept and are no longer maintained. [Main](https://github.com/Glacius-Labs/Markitect) holds the current concept.
+
 <h1>
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/markitect-wordmark-dark.svg">
