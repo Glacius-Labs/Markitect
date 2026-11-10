@@ -21,7 +21,7 @@ Make one clean and simple version work reliably on Sonnet ([DEC-009](decisions.m
 
 **The way of working:**
 
-1. A person designs or changes the spec in an ordinary Claude Code session, with the design skill, reads the Markdown diff and commits it.
+1. A person designs or changes the spec in an ordinary Claude Code session, with the design skill, reads the Markdown diff or goes through it with the agent, and commits it.
 2. The person runs the build skill. Agents started by the person's own session apply the spec as it stands, in a worktree of their own, so the person can go on designing. They ask nothing about the spec, and nobody has to watch.
 3. The spec stays as it was while they work: the hook keeps the agents that build out of it.
 4. When `markitect status` lists nothing, the session commits the work with the record of what was verified and brings it to the person's branch. The person reads the verdicts when they want to, and answers only when the spec has a problem.
