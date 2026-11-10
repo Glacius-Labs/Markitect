@@ -9,10 +9,11 @@ This page owns the package contracts and the repository layout. The [spec langua
 `cmd/markitect → internal/bootstrap → CLI adapter → Project → analysis`.
 
 - `cmd/markitect` only calls `bootstrap.Run`. Bootstrap constructs the CLI with the folder adapter, the engine of the record and the releases `update` installs.
-- The CLI adapter (`internal/adapters/cli`) parses the arguments, opens the project folder through its own `Folders` port and renders Markdown or JSON. It calls Project to load and check the project, and analysis for `list`, `doc` and `vet`. `init`, `update` and `tidy` write through the same port.
+- The CLI adapter (`internal/adapters/cli`) parses the arguments, opens the project folder through its own `Folders` port and renders Markdown or JSON. It calls Project to load and check the project, analysis for `list`, `doc` and `vet`, and setup for what `init`, `update`, `tidy` and `config` write into a project, and prints what setup did. It reads and writes the files in the user's home folder itself: the personal skill, the user's `harness.yaml` and Claude Code's own folder.
 - The folder adapter (`internal/adapters/folder`) implements that port without Git: the project folder is the nearest one with the manifest, and its files are what a walk finds without what its `.gitignore` files exclude, read as text.
 - Project (`internal/project`) reads one set of files through its `Repository` port, so the same load runs over any set of files, with the folder adapter's walk of the project folder as the one in use. It parses the manifest and lock, takes the standard Libraries from the binary and other Libraries from `.markitect/libraries/`, compiles the spec in `.markitect/spec/` and accounts for every file. A project with compile errors still loads as far as its files allow, so `list`, `doc` and `vet` can run over it.
 - Analysis (`internal/analysis`) answers questions about a loaded project: what it holds, who links to what, what depends on what, and the warnings of vet.
+- Setup (`internal/setup`) is what Markitect writes into a project: the first files of a new one, the skills and the harness with its agents rendered from the harness configuration, the hooks of [the agents' rights](../internal/guard/README.md) and the worktree base in `.claude/settings.json`, `.markitect/.gitattributes`, the ignore line for Claude Code's worktrees and the lock ([what `init` writes](guides/project-workflow.md#1-set-up-the-project)). It writes through its own `Folder` port, which the folder adapter satisfies, prints nothing and returns what it did. A dry run of the same code tells `update --check` and `version` what is out of date.
 
 None of these commands starts an agent, and none needs credentials. The [commands](guides/spec-language.md#commands) section gives their options and exit codes.
 
@@ -34,6 +35,7 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 | What a project holds and who links to what, the Package graph, vet | `internal/analysis` | Project and the packages below it |
 | The record: the inputs of each Definition, `review.sum`, `status` and `mark` | `internal/run` | Project and the packages below it |
 | The agents' rights: which role may write what and start whom, the hook that holds them and its entries in a project's settings | `internal/guard` | Project, for the layout of `.markitect/` |
+| What Markitect writes into a project: its first files, the skills and the harness, the hooks and worktree base in its settings, the Git attributes, the ignore line and the lock | `internal/setup` | Spec language, the built-in files, the harness configuration, Project and the agents' rights; its own `Folder` port |
 | Project-folder, command-line and update adapters; no adapter imports another | `internal/adapters/folder`, `internal/adapters/cli`, `internal/adapters/upgrade` | Their inward consumers and build data |
 | Composition | `internal/bootstrap` | The adapters and the record |
 | Entrypoints | `cmd/markitect` | Bootstrap |

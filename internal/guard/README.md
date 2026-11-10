@@ -1,6 +1,6 @@
 # The agents' rights
 
-`internal/guard` holds the rights of the four roles ([DEC-100](../../docs/decisions.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)): which role may write what and start whom, the hook that holds them before a tool call, and the hook's entries in a project's `.claude/settings.json`. It reads no files and no environment: the command line reads the hook's input, the settings and the plugin's files and hands it their bytes.
+`internal/guard` holds the rights of the four roles ([DEC-100](../../docs/decisions.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)): which role may write what and start whom, the hook that holds them before a tool call, and the hook's entries in a project's `.claude/settings.json`, which `internal/setup` writes. It reads no files and no environment: the command line reads the hook's input, the settings and the plugin's files and hands it their bytes.
 
 ## The hook
 

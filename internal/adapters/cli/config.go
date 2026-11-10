@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,21 +10,8 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/harness"
 	"github.com/Glacius-Labs/Markitect/internal/project"
-	"github.com/Glacius-Labs/Markitect/internal/skills"
+	"github.com/Glacius-Labs/Markitect/internal/setup"
 )
-
-// userDir is the folder of the user's own Markitect files in the home folder.
-const userDir = ".markitect"
-
-// userHarnessFile is the user's harness configuration, which holds what applies
-// to all of the user's projects and is committed with none (DEC-103).
-func userHarnessFile() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(home, userDir, harness.FileName), nil
-}
 
 // Comments a new configuration file starts with.
 const (
@@ -39,43 +25,6 @@ const (
 # value in force and where it comes from.`
 )
 
-// readUserHarness reads the user's configuration; a missing file is an empty one.
-func readUserHarness() (harness.File, string, error) {
-	file, err := userHarnessFile()
-	if err != nil {
-		return harness.File{}, "", err
-	}
-	data, err := os.ReadFile(file)
-	if errors.Is(err, os.ErrNotExist) {
-		return harness.File{}, file, nil
-	}
-	if err != nil {
-		return harness.File{}, file, err
-	}
-	f, err := harness.Parse(data)
-	if err != nil {
-		return harness.File{}, file, fmt.Errorf("%s: %w", file, err)
-	}
-	return f, file, nil
-}
-
-// readProjectHarness reads a project's configuration; a missing file is an empty
-// one.
-func readProjectHarness(ws Workspace) (harness.File, error) {
-	if ws == nil || !ws.Exists(project.HarnessFile) {
-		return harness.File{}, nil
-	}
-	data, err := ws.Read(project.HarnessFile)
-	if err != nil {
-		return harness.File{}, err
-	}
-	f, err := harness.Parse(data)
-	if err != nil {
-		return harness.File{}, fmt.Errorf("%s: %w", project.HarnessFile, err)
-	}
-	return f, nil
-}
-
 // harnessConfig is the configuration in force for a project, or for none when ws
 // is nil.
 func harnessConfig(ws Workspace) (harness.Config, error) {
@@ -83,38 +32,11 @@ func harnessConfig(ws Workspace) (harness.Config, error) {
 	if err != nil {
 		return harness.Config{}, err
 	}
-	proj, err := readProjectHarness(ws)
+	proj, err := setup.ReadHarness(ws)
 	if err != nil {
 		return harness.Config{}, err
 	}
 	return harness.Resolve(user, proj), nil
-}
-
-// renderHarness returns the harness as a project gets it: its agents with the
-// model and effort the configuration gives their role.
-func renderHarness(cfg harness.Config) []skills.File {
-	files := skills.Harness()
-	for i, f := range files {
-		if role, ok := harness.RoleOf(f.Path); ok {
-			files[i].Data = cfg.RenderAgent(role, f.Data)
-		}
-	}
-	return files
-}
-
-// writeAgents writes the agents' files of a project from the configuration and
-// returns the files that changed.
-func writeAgents(ws Workspace, cfg harness.Config) ([]string, error) {
-	r := &refresher{Workspace: ws}
-	for _, f := range renderHarness(cfg) {
-		if _, ok := harness.RoleOf(f.Path); !ok {
-			continue
-		}
-		if err := r.Write(f.Path, f.Data); err != nil {
-			return nil, err
-		}
-	}
-	return r.files, nil
 }
 
 const configUsage = `usage:
@@ -254,7 +176,7 @@ func (c CLI) configChange(ws Workspace, user bool, key, value string, unset bool
 	if !user && ws == nil {
 		return Misused, fmt.Errorf("no folder here or above holds %s: run it in a project, or with --user for all of your projects", project.ManifestFile)
 	}
-	projFile, err := readProjectHarness(ws)
+	projFile, err := setup.ReadHarness(ws)
 	if err != nil {
 		return Misused, err
 	}
@@ -310,7 +232,7 @@ func (c CLI) configChange(ws Workspace, user bool, key, value string, unset bool
 	if ws == nil {
 		return OK, nil
 	}
-	changed, err := writeAgents(ws, cfg)
+	changed, err := setup.WriteAgents(ws, cfg)
 	if err != nil {
 		return Misused, err
 	}

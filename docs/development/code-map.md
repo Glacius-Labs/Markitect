@@ -22,9 +22,10 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `service` | Questions about a loaded project: what it holds, what depends on what, and vet. | `spec`, `assets`, `domain`, `project` | 1 |
 | `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, status and mark. | `spec`, `assets`, `domain`, `project` | 1 |
 | `guard` | Which role may write what and start whom, the hook that holds it and its entries in a project's settings, over supplied bytes. | `project` | 1 |
+| `setup` | What Markitect writes into a project: its first files, the skills and the harness, the settings, the Git attributes, the ignore line and the lock. | `spec`, `assets`, `harness`, `project`, `guard` | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete project-folder, command-line and update adapters; no adapter imports another. | `spec`, `assets`, `harness`, `domain`, `project`, `service`, `run`, `guard`, `build` | 3 |
-| `composition` | Constructs the command line with its adapters. | `spec`, `project`, `service`, `run`, `guard`, `adapter` | 1 |
+| `adapter` | Concrete project-folder, command-line and update adapters; no adapter imports another. | `spec`, `assets`, `harness`, `domain`, `project`, `service`, `run`, `guard`, `setup`, `build` | 3 |
+| `composition` | Constructs the command line with its adapters. | `spec`, `project`, `service`, `run`, `guard`, `setup`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `maintenance` | The import gate and the code map, separate from product execution. | nothing | 1 |
 | `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 1 |
@@ -84,6 +85,12 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/guard` | Package guard holds the agents' rights: which role may write what and start whom, the hook that holds them before a tool call (DEC-100), and its entries in a project's Claude Code settings. | [internal/guard/README.md](../../internal/guard/README.md) |
+
+## Project setup
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/setup` | Package setup is what Markitect writes into a project: the first files of a new one, the skills and the harness with its agents rendered from the harness configuration, the hooks and the worktree base in Claude Code's settings, the record's Git attributes, the ignore line for Claude Code's worktrees and the lock. | [docs/guides/project-workflow.md#1-set-up-the-project](../guides/project-workflow.md#1-set-up-the-project) |
 
 ## Build data
 
