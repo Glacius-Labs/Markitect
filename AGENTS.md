@@ -14,7 +14,7 @@ Markitect is a programming language for documentation, with delegated realizatio
 
 - Markitect itself has no spec. `.markitect/` in code and tests belongs to a target project and is handled with fixtures.
 - Fix a failure in how agents work with Markitect in the tool contract, not with more prompt text ([DEC-051](docs/decisions.md#dec-051-agents-get-tasks-not-process)).
-- The `/markitect-*` skills and the routines start real agents: run them only on a committed test project, bounded, as CONTRIBUTING says.
+- `/markitect-build`, `/markitect-review`, `/markitect-cleanup`, `/markitect-bughunt`, `/markitect-audit` and the routines start real agents: run them only on a committed test project, bounded, as CONTRIBUTING says.
 - Documentation is in English and describes only the current state, with one concept and no quotes.
 
-The [README](README.md#documentation) lists every guide, and the [roadmap](docs/roadmap.md) the current steps.
+[CONTRIBUTING](CONTRIBUTING.md#where-things-go) names the page for every topic, and the [roadmap](docs/roadmap.md) the current steps.

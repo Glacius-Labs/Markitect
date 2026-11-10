@@ -42,9 +42,10 @@ Product code and tests that handle a project's `.markitect/` folder use fixtures
 
 - Write in English ([DEC-069](docs/decisions.md#dec-069-documentation-is-written-in-english)).
 - One page per topic. Link to it instead of repeating it.
-- Main holds only the current state ([DEC-071](docs/decisions.md#dec-071-main-holds-only-the-current-state)): no history, no dated records, no quotes, and one concept without version names. A page that relies on a dated result says it in one sentence and links the record at a full commit SHA. What a real run showed goes into its PR.
+- Main holds only the current state ([DEC-071](docs/decisions.md#dec-071-main-holds-only-the-current-state)): no history, no dated records, no quotes, and one concept without version names. A page that relies on a dated result says it in one sentence and links its record: the PR that reported it, or a file at a full commit SHA. What a real run showed goes into its PR.
 - A new decision gets the next free number in the [decisions](docs/decisions.md), and the concept changes with it in the same change.
 - Generated pages, such as the code map, are regenerated from their source, never edited.
+- A new maintained page goes into `DEFAULT_DOCUMENTS` in [`scripts/check-docs.py`](scripts/check-docs.py), so that its links are checked.
 
 ## Check a change
 
@@ -62,11 +63,16 @@ go mod verify
 go test ./... -count=1 -timeout=20m
 go vet ./...
 go build ./...
+gofmt -l $(git ls-files '*.go')
+git diff --check
+go run ./tools/smoke -repo . -work ABSOLUTE_EMPTY_FOLDER
 python -B -m unittest discover -s scripts -p test_*.py
 python -B scripts/check-docs.py
 ```
 
-CI runs on Linux only, with quality checks and the race detector, in about five minutes. It starts only by hand:
+CI also runs the tests with the race detector.
+
+CI runs on Linux only, with quality checks and the race detector, in about five minutes ([DEC-077](docs/decisions.md#dec-077-linux-ci-run-on-request)). It starts by hand, and the release workflow runs it for every tag:
 
 ```text
 gh workflow run ci.yaml --ref BRANCH
@@ -80,7 +86,7 @@ Local checks and the independent review are the basis for a merge, and CI is opt
 2. **Get one independent review of the complete diff,** by someone who did not write it: a person, or a fresh agent that has not seen your reasoning. Fix what it finds, and review again if the fixes are substantial.
 3. **Merge the reviewed head:** with a merge commit and the head matched, `gh pr merge NUMBER --merge --match-head-commit SHA`, without bypassing branch protection. Then read Main back.
 
-**Real agent runs.** The skills `/markitect-build`, `/markitect-review`, `/markitect-cleanup`, `/markitect-bughunt` and `/markitect-audit`, and the routines, start real agents. Run them only on a committed test project, in your own Claude Code session or a worktree of that project. Before a run, name the project, the limits and the cleanup; after it, report what happened, failures included, in the PR it informs. The tool's commands start no agent and run anywhere.
+**Real agent runs.** The skills `/markitect-build`, `/markitect-review`, `/markitect-cleanup`, `/markitect-bughunt` and `/markitect-audit`, and the routines, start real agents. Run them only on a committed test project, in your own Claude Code session or a worktree of that project. Before a run, name the project and its source commit, the limits, when to abort and the cleanup; after it, report what happened, failures included, in the PR it informs. The tool's commands start no agent and run anywhere.
 
 **Releases** follow the [release operations](packaging/README.md#release-operations) ([DEC-095](docs/decisions.md#dec-095-releases-a-plugin-and-a-binary-that-updates-itself)). There is no deployment.
 

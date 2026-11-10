@@ -5,7 +5,8 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - This page lists only what holds. A decision changes only through a new decision: it takes the next free number, and the entries it replaces leave the page in the same change. Git keeps every earlier wording.
 - Only the product owner adds or changes a decision. An agent's proposal enters as an open question and stays one until the owner decides.
 - Do not reopen a decision without new evidence. With such evidence, add an open question that cites it and leave the decision as it is.
-- An entry keeps its ID, and the IDs it absorbed keep an anchor on it, so old references still land.
+- An entry keeps its ID, and the IDs it absorbed keep an anchor on it, unless the anchor names a retired design.
+- If another page differs from a decision, the decision holds: correct the page.
 
 ## Purpose
 
@@ -48,7 +49,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - The method is judged apart from any runtime: a failure of Markitect's own tool is a product finding, a harness or environment failure a limit of the measurement.
 - The method has not yet been tested over a long series of changes. The [concept](concept.md#13-what-is-shown-and-what-is-not) says what is shown and what is not.
 
-<a id="dec-014-compatibility-does-not-drive-decisions"></a><a id="dec-016-a-clean-stable-testable-main-and-uniform-structure-first"></a>
+<a id="dec-014-compatibility-does-not-drive-decisions"></a><a id="dec-016-a-clean-stable-testable-main-and-uniform-structure-first"></a><a id="dec-038-learn-through-complete-workflows"></a>
 
 ### DEC-032 Quality, simplicity and stability over effort and compatibility
 
@@ -56,6 +57,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - Choose the clean design even when it is more work. Add no aliases, adapters or legacy paths. Delete what is obsolete, source, tests and documents together.
 - Main stays clean, stable and testable: tests check Markitect itself, not provider or environment quirks, and the repository has a uniform structure.
 - Simpler is more robust, and simplicity is earned through insight. Markitect works with Claude Code's own features rather than building machinery around them.
+- A substantial redesign names the new observation behind it and the result that would show it is better, and asks first whether a mechanism is needed at all or something simpler would do.
 
 ### DEC-098 One concept describes the product
 
@@ -109,7 +111,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
   - a Package's surface is its visibility: what is not `internal: true` is what it publishes, and the spec does not list it again;
   - a module names the modules it uses by Package, `[[members]]`.
 - `doc PACKAGE` shows a Package's public Definitions apart from its internal ones, and every Definition that `list` and `doc` show carries `internal` in their JSON.
-- Link keywords such as `id` and `part` come back only on new evidence: a real spec whose surface must differ from its visibility, or whose identity Definitions, measured over its history, cost more than the re-verification they save ([OQ-015](#open-questions) is the one point left open).
+- Link keywords such as `id` and `part` were weighed and not chosen; they are added only on new evidence: a real spec whose surface must differ from its visibility, or whose identity Definitions, measured over its history, cost more than the re-verification they save ([OQ-015](#open-questions) is the one point left open).
 - [What makes a good spec](guides/good-spec.md#every-link-is-a-relation) states the patterns. On the archived Makerspace specs they put 113 items on the list instead of 133 over eight change steps, and 354 instead of 468 on a project five times as large, with no needed item lost ([measurements](https://github.com/Glacius-Labs/Markitect/blob/d0c23a31efc928e95f3acc0633deb01a5f887884/docs/validation/spec-relations-20261108.md)).
 
 ## The tool
@@ -154,17 +156,17 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 ### DEC-100 Skills are named after the activity, agents after the role
 
-- The skills are `markitect-design`, `/markitect-build`, `/markitect-review`, `/markitect-cleanup`, `/markitect-bughunt`, `/markitect-audit`, `/markitect-schedule` and `/markitect-config`. Only the person starts build, cleanup, bughunt and schedule; Claude may start design, review, audit and config. A skill only names the agent and its task; the agents hold their tasks and verdict words in their own files.
-- Four roles in a 2×2 of rights, held by a hook for subagents; the person's own session stays free but does not record. The **builder** writes code and the registry pages, not the spec, and may start only the reviewer. The **reviewer** changes nothing and is the only one that records with `mark`. The **architect** writes the spec, the registry pages and the ignore file, not code, and hands its questions back. The **auditor** reads only and reports. No subagent writes the record or what steers the agents.
+- The skills are `markitect-design`, `/markitect-build`, `/markitect-review`, `/markitect-cleanup`, `/markitect-bughunt`, `/markitect-audit`, `/markitect-schedule` and `/markitect-config`. Only the owner starts build, cleanup, bughunt and schedule; Claude may start design, review, audit and config. A skill only names the agent and its task; the agents hold their tasks and verdict words in their own files.
+- Four roles in a 2×2 of rights, held by a hook for subagents; the owner's own session stays free but does not record. The **builder** writes code and the registry pages, not the spec, and may start only the reviewer. The **reviewer** changes nothing and is the only one that records with `mark`. The **architect** writes the spec, the registry pages and the ignore file, not code, and hands its questions back. The **auditor** reads only and reports. No subagent writes the record or what steers the agents.
 - What any agent notices goes into the record as `fail` or `spec-problem`, and nowhere else.
 - Loops have no limit on rounds, but stop when the list of `status` has not got shorter for three rounds in a row. A long list may run in parallel, one builder, reviewer or auditor per Package with a Package-scoped task ([DEC-103](#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)).
-- The builder works in a worktree of its own, so the person can go on designing; its work comes back by a merge. Routines work on a branch of their own and land only when they leave nothing worse.
+- The builder works in a worktree of its own, so the owner can go on designing; its work comes back by a merge. Routines work on a branch of their own and land only when they leave nothing worse.
 
 <a id="dec-051-agents-get-tasks-the-orchestrator-owns-the-process"></a>
 
 ### DEC-051 Agents get tasks, not process
 
-- An agent gets a clear task and an answer format. Order, limits, acceptance and routing to the person are not explained to agents in prompt text.
+- An agent gets a clear task and an answer format. Order, limits, acceptance and routing to the owner are not explained to agents in prompt text.
 - A failure in how agents work with Markitect is fixed in the tool contract, not with more prompt text. Since the tool steers no process, the agents' own files hold their task and answer format, and skills hold no steps an agent must remember.
 
 ## Driver and configuration
@@ -208,12 +210,14 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 ## How Markitect itself is developed
 
-<a id="dec-076-markitect-is-developed-as-a-regular-software-project"></a><a id="dec-020-markitect-uses-any-library-that-helps"></a>
+<a id="dec-076-markitect-is-developed-as-a-regular-software-project"></a><a id="dec-020-markitect-uses-any-library-that-helps"></a><a id="dec-070-parallel-writers-where-useful"></a><a id="dec-077-linux-ci-run-on-request"></a><a id="dec-077-development-pace-and-linux-first-execution"></a>
 
 ### DEC-076 Markitect is developed as an ordinary software project
 
 - Markitect's own repository keeps no spec of itself: agentic coding, tests and ordinary documentation, with one page per topic. Target projects keep their spec under `.markitect/`; product code and tests that handle it use fixtures.
 - Markitect uses any library that helps; the architecture gate restricts only imports between its own packages.
+- Sessions work in parallel where their files do not overlap; shared files have one writer at a time.
+- CI runs on Linux only, with the race detector, started on request. Markitect's own tests run on Linux; for users, Windows is a main path ([DEC-094](#dec-094-the-users-own-session-runs-the-agents-natively)).
 - [CONTRIBUTING](../CONTRIBUTING.md) is the development process.
 
 ### DEC-069 Documentation is written in English
@@ -225,7 +229,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 ### DEC-071 Main holds only the current state
 
 - Main's documentation describes what holds today, as one concept, and quotes no one. Superseded designs, plans, decisions and dated records leave Main in the change that supersedes them; Git keeps them, and each earlier concept has an archive branch ([history](history.md)).
-- A page that relies on a dated result says it in one sentence and links the record at a full commit SHA.
+- A page that relies on a dated result says it in one sentence and links its record: the PR that reported it, or a file at a full commit SHA.
 
 ## Open questions
 

@@ -11,7 +11,7 @@ Read this section first, then [Founding intent](#founding-intent) and [Common mi
 - Code, tests, configuration and documentation are realizations of the spec. Where they differ from it, the spec is right.
 - A deterministic tool, the `markitect` program, checks and analyses the spec as a compiler and a linter check code, and keeps a record of what was verified. Agents realize the spec and verify the result.
 
-Coding moves from languages such as Go, C# or Python towards documentation and meaning. What matters in code stays as relevant there: architecture, consistency, cleanliness, an overview of the project without reading its code, and knowing what should be as against what is.
+Markitect expects coding to move from languages such as Go, C# or Python towards documentation and meaning. What matters in code stays as relevant there: architecture, consistency, cleanliness, an overview of the project without reading its code, and knowing what should be as against what is.
 
 > **Humans architect the system of work. AI performs the work. Markitect keeps them aligned.**
 

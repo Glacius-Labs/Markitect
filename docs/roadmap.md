@@ -14,7 +14,7 @@ The latest release, 0.25.3, carries the whole concept on Claude Code: the spec l
 | 2. Try it | Markitect is used on a real project, an existing one drawn into a spec, and on a small project with planted defects, including a weakened test that served as evidence and a builder's edit of the spec. For the parallel strategy, a fixture of a few Packages is built in parallel, with one planted bug and one planted contradiction | The planted defects are caught or their misses are explained, and what the runs showed is in their PRs |
 | 3. Make it reliable | The 5× Makerspace project's eight change steps on Sonnet, with their hidden cases, which are kept at [`b8fd2c94`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools). Failures are fixed in the tool contract, not with more prompt text ([DEC-051](decisions.md#dec-051-agents-get-tasks-not-process)) | Two clean passes in a row: every step ends with nothing left to verify without the owner, every hidden case passes, and no refusal of the hook was overridden. Whether that is the finish line is open ([OQ-014](decisions.md#open-questions)) |
 
-Before step 3, read the nine finished launches of an earlier reviewing test at the 5× size. They lie outside the repository, unread, and may say at no new cost whether one reviewer catches known bugs at that size.
+Before step 3, read the nine finished launches of an earlier reviewing test at the 5× size. They are in `%LOCALAPPDATA%\markitect-test1` on the maintainer's machine, not in the repository, and unread; they may say at no new cost whether one reviewer catches known bugs at that size.
 
 ## Later
 

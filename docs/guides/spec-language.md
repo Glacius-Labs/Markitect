@@ -173,7 +173,7 @@ All commands take `--repo DIR`, a folder of the project (default: the current fo
 
 As in Go's tools:
 
-- **Diagnostics** are one line each, `file:line: code: message`. `check` prints only diagnostics and one summary line, `vet` its warnings and one line that counts its notes (with `--strict`, the notes as diagnostics instead), and `status` prints the errors in the realization as diagnostics.
+- **Diagnostics** are one line each, `file:line: code: message`. Codes that start with `model.` concern the spec, which the code still calls the model. `check` prints only diagnostics and one summary line, `vet` its warnings and one line that counts its notes (with `--strict`, the notes as diagnostics instead), and `status` prints the errors in the realization as diagnostics.
 - **`--json`** prints one document that starts with `format_version` (1) and `kind`, the command's name. A diagnostic in it is an object with `severity` (`error`, `warning` or `note`), `code`, `message`, `file` and `line`.
 - **Exit codes:** 0 when all is well; 1 when the command did its job and found something (errors of `check`, items of `status`, a refused `mark`, warnings of `vet` with `--strict`, a `doc` target that is neither a Definition nor a Package); 2 when it could not run (a usage error, no project). Notes, such as a `skip` or an outdated harness, never change the exit code.
 
