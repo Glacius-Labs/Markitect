@@ -667,6 +667,23 @@ func TestStatusAndMarkThroughTheCommandLine(t *testing.T) {
 	}
 	item := strings.Fields(out[strings.Index(out, "project@"):])[0]
 
+	// Limited to a Package, status prints that Package's part, and --json names
+	// the Package; one the spec does not have is a usage error.
+	if code, out, _ := run(t, r.Dir, "status", "--package", "Root"); code != 1 || !strings.Contains(out, "To verify in Package Root (1 of 1 Definition)") || !strings.Contains(out, item) {
+		t.Fatalf("status --package Root: %d\n%s", code, out)
+	}
+	var limited struct {
+		Package string
+		Clean   bool
+		Items   []struct{ Definition string }
+	}
+	if code, out, _ := run(t, r.Dir, "status", "--package", "Root", "--json"); code != 1 || json.Unmarshal([]byte(out), &limited) != nil || limited.Package != "Root" || limited.Clean || len(limited.Items) != 1 {
+		t.Fatalf("status --package Root --json: %d\n%s", code, out)
+	}
+	if code, _, errOut := run(t, r.Dir, "status", "--package", "nowhere"); code != 2 || !strings.Contains(errOut, `no Package "nowhere"`) {
+		t.Fatalf("status --package nowhere: %d %s", code, errOut)
+	}
+
 	for _, args := range [][]string{
 		{"mark", item, "maybe"},
 		{"mark", "project"},

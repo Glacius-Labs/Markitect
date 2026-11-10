@@ -64,6 +64,14 @@ type Status struct {
 	// Packages it depends on, sorted by name: what a driver needs to plan work
 	// per Package in the order of their dependencies (DEC-103).
 	Packages []PackageItems
+	// Package names the one Package the list is limited to, if any: Items,
+	// Skipped and Definitions are then that Package's, and Errors and Unreadable
+	// are empty.
+	Package string
+	// ErrorsElsewhere and UnreadableElsewhere count what a list limited to a
+	// Package leaves out, since it belongs to no Package: the errors in the
+	// realization and the lines of the record markitect cannot read.
+	ErrorsElsewhere, UnreadableElsewhere int
 }
 
 // PackageItems is one Package with the items of status whose Definition lies
@@ -84,7 +92,8 @@ type PackageItems struct {
 }
 
 // Clean says whether nothing is to verify: the project compiles and every
-// Definition is verified at its current inputs. Notes do not count.
+// Definition is verified at its current inputs. Notes do not count. For a list
+// limited to a Package it says so of that Package's Definitions.
 func (s Status) Clean() bool {
 	return len(s.SpecErrors) == 0 && len(s.Items) == 0 && len(s.Errors) == 0 && len(s.Unreadable) == 0
 }
@@ -94,6 +103,9 @@ type StatusRequest struct {
 	Dir string
 	// All lists every Definition, to verify everything again.
 	All bool
+	// Package limits the list to the items whose Definition lies directly in the
+	// Package of that name, as a strand of a parallel run works on them.
+	Package string
 }
 
 // Status says what is to verify in the folder, and changes nothing.
@@ -119,7 +131,44 @@ func (e *Engine) Status(_ context.Context, req StatusRequest) (Status, error) {
 	if err != nil {
 		return Status{}, err
 	}
-	return f.status(ParseRecord(data), req.All)
+	st, err := f.status(ParseRecord(data), req.All)
+	if err != nil || req.Package == "" {
+		return st, err
+	}
+	return st.only(req.Package)
+}
+
+// only limits status to the Package of a name: to the items and notes whose
+// Definition lies directly in it. The errors in the realization and the lines
+// of the record markitect cannot read belong to no Package, so it leaves them
+// out and counts them. A spec with errors has no list to limit.
+func (s Status) only(name string) (Status, error) {
+	s.Package = name
+	if len(s.SpecErrors) > 0 {
+		return s, nil
+	}
+	known := false
+	for _, p := range s.Packages {
+		if p.Package == name {
+			known, s.Definitions = true, p.Definitions
+		}
+	}
+	if !known {
+		return Status{}, fmt.Errorf("%w: the spec has no Package %q; markitect list names them, and the one at the top is %s", ErrUsage, name, spec.PackageName(spec.RootPackage))
+	}
+	in := func(items []Item) []Item {
+		var out []Item
+		for _, it := range items {
+			if spec.PackageName(spec.ParentOf(it.Definition)) == name {
+				out = append(out, it)
+			}
+		}
+		return out
+	}
+	s.Items, s.Skipped = in(s.Items), in(s.Skipped)
+	s.ErrorsElsewhere, s.Errors = len(s.Errors), nil
+	s.UnreadableElsewhere, s.Unreadable = len(s.Unreadable), nil
+	return s, nil
 }
 
 // view is the folder's inputs and its record, settled per Definition.
@@ -269,7 +318,7 @@ func (s Status) Text() string {
 		}
 	}
 	if len(s.Items) > 0 {
-		fmt.Fprintf(&b, "To verify (%d of %d %s):\n\n", len(s.Items), s.Definitions, plural(s.Definitions, "Definition", "Definitions"))
+		fmt.Fprintf(&b, "To verify%s (%d of %d %s):\n\n", s.inPackage(), len(s.Items), s.Definitions, plural(s.Definitions, "Definition", "Definitions"))
 		for _, it := range s.Items {
 			b.WriteString(it.text())
 		}
@@ -304,9 +353,27 @@ func (s Status) Text() string {
 		if b.Len() > 0 {
 			b.WriteString("\n")
 		}
-		fmt.Fprintf(&b, "Nothing to verify: the spec compiles, and %s verified at %s current inputs.\n", every(s.Definitions), plural(s.Definitions, "its", "their"))
+		fmt.Fprintf(&b, "Nothing to verify%s: the spec compiles, and %s verified at %s current inputs.\n", s.inPackage(), every(s.Definitions), plural(s.Definitions, "its", "their"))
+	}
+	if n := s.ErrorsElsewhere + s.UnreadableElsewhere; n > 0 {
+		var parts []string
+		if e := s.ErrorsElsewhere; e > 0 {
+			parts = append(parts, fmt.Sprintf("%d %s in the realization", e, plural(e, "error", "errors")))
+		}
+		if u := s.UnreadableElsewhere; u > 0 {
+			parts = append(parts, fmt.Sprintf("%d %s of the record that markitect cannot read", u, plural(u, "line", "lines")))
+		}
+		fmt.Fprintf(&b, "\nNot listed: %s, which %s to no Package; markitect status lists %s.\n", strings.Join(parts, " and "), plural(n, "belongs", "belong"), plural(n, "it", "them"))
 	}
 	return b.String()
+}
+
+// inPackage names the Package a list is limited to, for a heading.
+func (s Status) inPackage() string {
+	if s.Package == "" {
+		return ""
+	}
+	return " in Package " + s.Package
 }
 
 func every(n int) string {

@@ -196,6 +196,68 @@ func TestStatusCountsItemsPerPackage(t *testing.T) {
 	}
 }
 
+// status limited to a Package lists the items whose Definition lies directly in
+// it, Root's by its name, so that a strand of a parallel run asks the tool for
+// its part and does not work it out. The errors in the realization belong to no
+// Package: it leaves them out and says how many there are. A Package verified is
+// clean though others are not, and a Package the spec does not have is a usage
+// error.
+func TestStatusOfOnePackage(t *testing.T) {
+	p := newPlain(t)
+	p.write("src/unlisted.go", "package src\n")
+	whole := p.status(false)
+	if len(whole.Errors) != 1 {
+		t.Fatalf("want one error in the realization:\n%s", whole.Text())
+	}
+	of := func(name string, all bool) run.Status {
+		t.Helper()
+		st, err := p.engine.Status(context.Background(), run.StatusRequest{Dir: p.dir, All: all, Package: name})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return st
+	}
+	for name, want := range map[string]string{"Root": "loan-limit,project", "catalog": "catalog/book", "members": "members/member", "members/loans": "members/loans/loan"} {
+		st := of(name, false)
+		n := strings.Count(want, ",") + 1
+		if listed(st) != want || st.Definitions != n || st.Package != name || len(st.Errors) != 0 || st.ErrorsElsewhere != 1 || len(st.Packages) != len(whole.Packages) || st.Clean() {
+			t.Errorf("%s: %+v", name, st)
+		}
+		has(t, st.Text(), "To verify in Package "+name+" (", "Not listed: 1 error in the realization, which belongs to no Package; markitect status lists it.")
+		if strings.Contains(st.Text(), "src/unlisted.go") {
+			t.Errorf("%s lists the errors in the realization:\n%s", name, st.Text())
+		}
+	}
+	it := of("catalog", false).Items[0]
+	if text, ok := p.review(it.Definition, run.VerdictOK, it.Fingerprint, []string{"src/catalog/book.go:1"}, ""); !ok {
+		t.Fatal(text)
+	}
+	st := of("catalog", false)
+	if !st.Clean() || p.status(false).Clean() {
+		t.Fatalf("after verifying the Package:\n%s", st.Text())
+	}
+	has(t, st.Text(), "Nothing to verify in Package catalog: the spec compiles, and its one Definition is verified at its current inputs.", "Not listed: 1 error")
+	if all := of("catalog", true); listed(all) != "catalog/book" || all.Items[0].State != run.StateOK {
+		t.Fatalf("--all in a Package:\n%s", all.Text())
+	}
+	// A line of the record markitect cannot read belongs to no Package either:
+	// the Package stays clean, and the whole list names the line.
+	p.write(project.ReviewFile, p.read(project.ReviewFile)+"not a line\n")
+	st = of("catalog", false)
+	if !st.Clean() || len(st.Unreadable) != 0 || st.UnreadableElsewhere != 1 || len(p.status(false).Unreadable) != 1 {
+		t.Fatalf("with an unreadable line:\n%s", st.Text())
+	}
+	has(t, st.Text(), "Nothing to verify in Package catalog", "Not listed: 1 error in the realization and 1 line of the record that markitect cannot read, which belong to no Package; markitect status lists them.")
+	if _, err := p.engine.Status(context.Background(), run.StatusRequest{Dir: p.dir, Package: "loans"}); !errors.Is(err, run.ErrUsage) || !strings.Contains(err.Error(), `no Package "loans"`) {
+		t.Fatalf("a Package the spec does not have: %v", err)
+	}
+	// A spec with errors has no list to limit, whatever Package is asked for.
+	broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 1.0.0\n", project.SpecDir + "/x.md": "no front matter\n"})
+	if st, err := broken.engine.Status(context.Background(), run.StatusRequest{Dir: broken.dir, Package: "nowhere"}); err != nil || len(st.SpecErrors) == 0 {
+		t.Fatalf("a spec with errors: %v\n%s", err, st.Text())
+	}
+}
+
 // What is to verify is what a change touches at distance 0 and 1.
 func TestWhatAChangeReaches(t *testing.T) {
 	cases := []struct {

@@ -9,8 +9,8 @@ You verify that the project in this folder matches its spec, and you change noth
 
 The message that starts you names your task:
 
-- **Verify** (the default): verify each item `markitect status` lists, or every Definition with `markitect status --all` when you were asked to verify everything. If the message names a Package, verify only the items whose Definition lies directly in it: its path is the Package's, a `/` and a name; a Definition of Root has no `/`. Other reviewers take the other Packages.
-- **Hunt bugs:** look beyond the list. Read the code and the tests against the spec, Package by Package, for behaviour that breaks a Definition, a case a Definition states that the code misses, and a test that checks nothing. Record each bug you find as `fail` on the Definition it breaks, with where it is and why. A bug at the project's boundary that no Definition covers is a `spec-problem` on the nearest Definition, with the question for the owner. `markitect status --all` prints every Definition with the item to record it on. If the message names a Package, hunt only in it; other reviewers take the other Packages. End when you have read what the spec covers; the builder repairs what you found.
+- **Verify** (the default): verify each item `markitect status` lists, or every Definition with `markitect status --all` when you were asked to verify everything. If the message names a Package, verify only the items `markitect status --package P` lists, with `--all` too when you were asked to verify everything. Other reviewers take the other Packages.
+- **Hunt bugs:** look beyond the list. Read the code and the tests against the spec, Package by Package, for behaviour that breaks a Definition, a case a Definition states that the code misses, and a test that checks nothing. Record each bug you find as `fail` on the Definition it breaks, with where it is and why. A bug at the project's boundary that no Definition covers is a `spec-problem` on the nearest Definition, with the question for the owner. `markitect status --all` prints every Definition with the item to record it on. If the message names a Package, hunt only in it, where `markitect status --all --package P` prints its Definitions; other reviewers take the other Packages. End when you have read what the spec covers; the builder repairs what you found.
 
 `markitect status` prints each item as `DEFINITION@FINGERPRINT`. Record your verdict on it with that item, as in:
 
@@ -19,7 +19,7 @@ The message that starts you names your task:
 
 - Each `-e` names one piece of evidence, a file of the project as `path:line` or `path`.
 - `-m` says why, on one line.
-- `--cases N --covered M` count while you mark, on every verdict, `fail` included: N is how many distinct cases, conditions and exceptions the Definition demands, and M how many of them your evidence demonstrates. Count them, do not rate them, as in `markitect mark fees/waiver@3f9a1c ok -e src/fees.go:40 -e tests/fees_test.go:12 --cases 7 --covered 5`.
+- `--cases N --covered M` count while you mark, on an `ok` and a `skip`: N is how many distinct cases, conditions and exceptions the Definition demands, and M how many of them your evidence demonstrates. Count them, do not rate them, as in `markitect mark fees/waiver@3f9a1c ok -e src/fees.go:40 -e tests/fees_test.go:12 --cases 7 --covered 5`.
 
 The verdicts:
 

@@ -21,7 +21,8 @@ const body = `return (async () => {\n${src.replace("export const meta", "const m
 // work uncommitted), idle (that builder changes nothing), conflict (that
 // strand's merge conflicts), forget (the merge step leaves that strand out of
 // its answer), wrongBranch (that builder commits but names a branch that does
-// not exist), lose (the nth merge returns nothing), loseStatus.
+// not exist), lose (the nth merge returns nothing), loseStatus, unreadable (the
+// record holds a line markitect cannot read, which is on no Package's list).
 function world(spec) {
   const pk = structuredClone(spec.packages)
   const committed = new Set()
@@ -30,6 +31,7 @@ function world(spec) {
   let merges = 0
   let swing = 0
   const status = () => ({
+    clean: !spec.specErrors && !spec.unreadable && realization === 0 && Object.values(pk).every((p) => p.items === 0),
     spec_errors: spec.specErrors || 0,
     realization_errors: realization,
     in_worktree: spec.inWorktree !== false,
@@ -346,6 +348,23 @@ for (const bad of [{}, { mode: "deploy" }, { mode: "cleanup" }, undefined]) {
   const sizes = logs(calls).filter((l) => l.includes("wave")).map((l) => l.split(": ")[1].split(", ").length)
   assert.deepStrictEqual(sizes, [8, 8, 3])
   assert.strictEqual(result.stopped, "empty")
+}
+
+// Empty is what status calls clean: with nothing on any Package's list but a
+// line of the record markitect cannot read, the run does not report that the
+// work is done, in any mode.
+{
+  const s = { packages: { Root: { defs: 1, items: 0, deps: [] }, a: { defs: 2, items: 1, deps: [] } }, unreadable: true }
+  const { result } = await run(build, world(s))
+  assert(result.stopped.startsWith("record-unreadable"), result.stopped)
+  assert.strictEqual(result.rounds, 1)
+  const done = { packages: { Root: { defs: 1, items: 0, deps: [] } }, unreadable: true }
+  for (const args of [build, { mode: "review" }, { mode: "bughunt", into: "main" }]) {
+    const { result } = await run(args, world(structuredClone(done)))
+    assert(result.stopped.startsWith("record-unreadable"), `${args.mode}: ${result.stopped}`)
+  }
+  const cleaned = await run({ mode: "cleanup", into: "main" }, world(structuredClone(done)))
+  assert.strictEqual(cleaned.result.stopped, "cleaned")
 }
 
 // A spec with errors stops before any work.

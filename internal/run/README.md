@@ -53,7 +53,7 @@ The record is a record, not a proof: a line written by hand shows in the diff, a
 
 ## status
 
-`markitect status [--all]` reads the folder and the record and changes nothing. It lists:
+`markitect status [--all] [--package P]` reads the folder and the record and changes nothing. It lists:
 
 - every Definition with a changed input or no record, with which inputs changed: `changed: self, file:src/x.go (new), evidence:tests/x_test.go (gone)`;
 - every Definition recorded `fail` or `spec-problem` at its inputs as they are, with why; a changed one also says what was recorded before;
@@ -63,6 +63,8 @@ The record is a record, not a proof: a line written by hand shows in the diff, a
 - the lines of the record it cannot read, each as a diagnostic `.markitect/review.sum:LINE: record.unreadable: …`.
 
 Each item is printed as `DEFINITION@FINGERPRINT`, which the reviewer copies into `mark`, and names where to look: the Definition's file, its row files and the evidence of its last line. A Definition recorded `skip` is a note. A spec with errors gives no list: there is none until it compiles. `--all` lists every Definition, to verify everything again.
+
+`--package P` limits the list to the items whose Definition lies directly in the Package of that name, `Root` for the one at the top. A strand of a [parallel run](../../docs/concept.md#10-drivers) asks for its part this way. The errors in the realization and the lines of the record it cannot read belong to no Package, so it leaves them out and says how many there are. It then exits 0 when nothing is to verify in that Package, whatever the others hold. A Package the spec does not have is a usage error.
 
 It exits 0 when it lists nothing: then the project compiles and every Definition is verified at its current inputs. It exits 1 when it lists something, and so with `--all` whenever the spec has a Definition. Notes never change the exit code, a `skip` or the note on standard error that the project's harness comes from another markitect alike. It looks at no network: whether a newer binary exists is `update --check`'s question.
 
@@ -76,7 +78,7 @@ markitect mark loans/renewal@81be07 fail -e src/renew.go:30 -m "allows a fourth 
 ```
 
 - `ok` names at least one piece of evidence with `-e`; `fail`, `skip` and `spec-problem` say why with `-m`, kept on one line.
-- `--cases N` and `--covered M` are counts the reviewer may give with any verdict: N cases, conditions and exceptions the Definition demands, M of them demonstrated by its evidence. M needs N and is at most N; both are 0 or more. They go on the line as `cases` and `covered`.
+- `--cases N` and `--covered M` are counts `mark` takes with any verdict, and the reviewer gives with an `ok` and a `skip`: N cases, conditions and exceptions the Definition demands, M of them demonstrated by its evidence. M needs N and is at most N; both are 0 or more. They go on the line as `cases` and `covered`.
 - Evidence is `path` or `path:line`, also `path:line-line` and `path:line:col`. A trailing note in parentheses, such as a test name, is dropped, not stored; a note without them is refused, since `-m` holds the reason. Each file must be a file of the folder, named from the project folder; its hash becomes an input when the verdict is recorded.
 - It refuses, records nothing and exits 1 when the inputs differ from the fingerprint, as when a builder edited a file beside the reviewer or the reviewer's own test run changed one; when evidence is not a file of the folder; when the Definition is unknown; when the spec has errors; or when the record has a line it cannot read. A command it cannot read exits 2.
 - A gone Definition is marked `ok` when its files are removed or have a new basis, which removes its line, or `fail` when not; `skip` is refused.
