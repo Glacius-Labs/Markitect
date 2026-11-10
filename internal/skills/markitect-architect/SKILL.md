@@ -1,13 +1,13 @@
 ---
-name: markitect-design
-description: Use to design a Markitect spec with the owner - to start a new project, to draw a first spec from a code base that has none, or to create, change, extend or review the spec (the Markdown Definitions under .markitect/spec/), place a Definition in the right Package, fix a markitect check error or judge the spec's quality. Also when someone wants to set up Markitect in a folder. It finds out which of these the folder needs.
+name: markitect-architect
+description: Use to architect a project in Markdown with its owner - to start a new project, to draw a first spec from a code base that has none, or to create, change, extend or review the spec (the Markdown Definitions under .markitect/spec/), place a Definition in the right Package, fix a markitect check error or judge the spec's quality. Also when someone wants to set up Markitect in a folder. It finds out which of these the folder needs.
 ---
 
-# Designing the spec
+# Architecting the project
 
 A Markitect spec is typed documentation: Markdown files in `.markitect/spec/` that state what the project is and must do, the way good documentation would. Each file is a Definition of some Kind; folders are Packages; a link names its target by path. `markitect check` compiles the structure. The agents that build the spec never change it.
 
-Read [reference.md](reference.md) for the form, the Kinds, the commands and the error codes, and [examples.md](examples.md) for a spec that compiles. The full language guide is `docs/guides/model-language.md` in the Markitect repository.
+Read [reference.md](reference.md) for the form, the Kinds, the commands and the error codes, and [examples.md](examples.md) for a spec that compiles. The full guide to the spec is `docs/guides/spec-language.md` in the Markitect repository.
 
 ## Which situation
 
@@ -27,6 +27,18 @@ The owner accepts every change of the spec. You propose; the owner reads the Mar
 - Two statements that contradict each other, or one you cannot write without guessing, go back to the owner as a question.
 
 Ask one question at a time, in plain words, and say why you ask when it isn't obvious. Skip what the owner has already said. When they are unsure, offer a suggestion and let them accept or change it.
+
+## Who writes
+
+The `markitect-architect` agent writes the spec, and you talk with the owner. For every change under `.markitect/`, start that agent with what to write: the change, one Package or the whole first spec, the Packages the owner agreed and all the owner's answers so far. For a small change, give it the exact wording. It follows this skill, writes only under `.markitect/`, decides nothing the owner left open and hands its questions back in its report. Take the questions to the owner, then continue the agent or start it again with all the answers so far, and read its diff before you hand it over. Wherever this skill says to write, replace or register something under `.markitect/`, the architect does it.
+
+If you are the `markitect-architect` agent, your agent file says how you use this skill; skip the paragraph above.
+
+If you cannot start the `markitect-architect` agent:
+
+- Under a coding agent other than Claude Code, write the spec yourself as this skill says.
+- In Claude Code, a session may not know the agent yet when `markitect init` ran in it: ask the owner to start a new session.
+- If you are a subagent yourself, change nothing and say in your report what should change.
 
 ## Start a project
 
@@ -53,7 +65,7 @@ Read the repository and write the spec a good maintainer would document: what th
 6. **Write the registry.** `markitect check` names every file still unaccounted for (`file.unregistered`), so its output is your to-do list. One page per Package (`.markitect/registry/<package path>.md`) with `paths` that claim its code, tests and documentation; Root's page (`.markitect/registry.md`) lists what no one claims. List every file in its owner's table with the Definitions it realizes (tests too) and a short reason; a file that serves several Packages belongs to their lowest common parent. Files that belong to no Package, such as the license, generated or vendored files and lock files, go into `.markitect/ignore`, one pattern per line. Never ignore real source or documentation to make `check` pass.
 7. **Hand over** as [below](#hand-over), adding the Packages you chose and why, what you left free on purpose, each point where code and documentation disagreed with the owner's answer, and the ignored files.
 
-A large code base can be drafted by the `markitect-architect` agent, if this project has it: start it with what to draft (a Package, or the whole first spec), the Packages the owner agreed and the owner's answers so far. It writes only under `.markitect/`, decides nothing the owner leaves open and hands its questions back to you. Take them to the owner, give the architect the answers in a new start, and review its draft before you hand it over.
+On a large code base, have the architect draw one Package at a time, Root first.
 
 ## Change the spec
 

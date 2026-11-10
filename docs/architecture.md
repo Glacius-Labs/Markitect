@@ -27,7 +27,7 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 | Responsibility | Packages | Depends on |
 | --- | --- | --- |
 | Spec language: Definitions, Kinds, links, visibility, cycles, manifest and lock, over supplied bytes | `internal/model` | No other Markitect package |
-| Files built into the binary: the standard Libraries `std`, `rest` and `cli`, the design skill, and the harness of the work: its skills, agents, routine prompts and the parallel workflow | `internal/libraries`, `internal/skills` | No other Markitect package |
+| Files built into the binary: the standard Libraries `std`, `rest` and `cli`, the architect skill, and the harness of the work: its skills, agents, routine prompts and the parallel workflow | `internal/libraries`, `internal/skills` | No other Markitect package |
 | The harness configuration: `harness.yaml` at user and project level, resolved key by key, and the agents' front matter rendered from it | `internal/harness` | No other Markitect package |
 | Registry pages, ownership by path pattern, file accounting and stale realization | `internal/realization` | Model |
 | Loading and checking a project's `.markitect/` folder from one set of files | `internal/project` | Model, the built-in files, the harness configuration, realization; its own `Repository` port |
