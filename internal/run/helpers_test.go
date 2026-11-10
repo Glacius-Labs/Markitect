@@ -37,7 +37,7 @@ func library() map[string]string {
 		project.LockFile:                          string(spec.RenderLock([]spec.LibrarySource{std})),
 		".claude/agents/markitect-reviewer.md":    "---\nname: markitect-reviewer\n---\nReview.\n",
 		".claude/agents/markitect-builder.md":     "---\nname: markitect-builder\n---\nBuild.\n",
-		".claude/settings.json":                   `{"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "command -v markitect >/dev/null 2>&1 || exit 0; MARKITECT_HOOK=project markitect hook pretool"}]}]}}` + "\n",
+		".claude/settings.json":                   `{"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "command -v markitect >/dev/null 2>&1 || exit 0; markitect hook pretool"}]}]}}` + "\n",
 		m + "project.md":                          def("std/Project", "Library", "Parts: [[members]], [[catalog]]."),
 		m + "loan-limit.md":                       def("std/Rule", "Loan limit", "At most `5` open loans."),
 		m + "members/member.md":                   def("std/Concept", "Member", "A person."),

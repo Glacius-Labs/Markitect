@@ -30,40 +30,50 @@ func readPreToolUse(data []byte) (preToolUse, bool) {
 	return s.Hooks.PreToolUse, true
 }
 
-// HasGuard says whether settings run HookCommand before a shell command that
-// records a verdict, before every tool that writes a file and before every tool
-// that starts an agent; a mention elsewhere does not count. A handler without a
-// rule runs before every call of its tools, and so covers them.
+// HasGuard says whether settings run HookCommand before a command of every
+// shell tool that records a verdict, before every tool that writes a file and
+// before every tool that starts an agent; a mention elsewhere does not count. A
+// handler without a rule runs before every call of its tools, and so covers
+// them; one with another rule than the tool's MarkRule covers nothing.
 func HasGuard(settings []byte) bool {
 	pre, ok := readPreToolUse(settings)
 	if !ok {
 		return false
 	}
-	mark, covered := false, map[string]bool{}
-	for _, m := range pre {
-		tools := map[string]bool{}
-		all := m.Matcher == "" || m.Matcher == "*"
-		for _, t := range strings.Split(m.Matcher, "|") {
-			tools[strings.TrimSpace(t)] = true
-		}
-		for _, h := range m.Hooks {
+	shells, others := strings.Split(ShellTools, "|"), guardedTools()
+	covered := map[string]bool{}
+	for _, group := range pre {
+		for _, h := range group.Hooks {
 			if h.Type != "command" || strings.TrimSpace(h.Command) != HookCommand {
 				continue
 			}
-			if (all || tools["Bash"]) && (h.If == "" || h.If == MarkRule) {
-				mark = true
+			for _, t := range shells {
+				if matches(group.Matcher, t) && (h.If == "" || h.If == MarkRule(t)) {
+					covered[t] = true
+				}
 			}
-			if h.If != "" {
-				continue
-			}
-			for _, t := range guardedTools() {
-				if all || tools[t] {
+			for _, t := range others {
+				if matches(group.Matcher, t) && h.If == "" {
 					covered[t] = true
 				}
 			}
 		}
 	}
-	return mark && len(covered) == len(guardedTools())
+	return len(covered) == len(shells)+len(others)
+}
+
+// matches says whether a group's matcher names a tool: by its name in a list, or
+// as every tool, with * or nothing.
+func matches(matcher, tool string) bool {
+	if matcher == "" || matcher == "*" {
+		return true
+	}
+	for _, t := range strings.Split(matcher, "|") {
+		if strings.TrimSpace(t) == tool {
+			return true
+		}
+	}
+	return false
 }
 
 // guardedTools are the tools the hook runs before on every call.
@@ -71,54 +81,30 @@ func guardedTools() []string {
 	return append(strings.Split(EditTools, "|"), strings.Split(AgentTools, "|")...)
 }
 
-// GuardsEveryTool says whether a plugin's hooks run the guard before the shell
-// and before every tool that writes a file or starts an agent. An older plugin,
-// whose hooks ran it only before some of them, does not count.
-func GuardsEveryTool(data []byte) bool {
-	pre, ok := readPreToolUse(data)
-	if !ok {
-		return false
-	}
-	covered := map[string]bool{}
-	for _, group := range pre {
-		guards := false
-		for _, hook := range group.Hooks {
-			guards = guards || strings.Contains(hook.Command, "hook pretool")
-		}
-		if !guards {
-			continue
-		}
-		for _, tool := range strings.Split(group.Matcher, "|") {
-			covered[strings.TrimSpace(tool)] = true
-		}
-	}
-	for _, tool := range strings.Split("Bash|"+EditTools+"|"+AgentTools, "|") {
-		if !covered[tool] {
-			return false
-		}
-	}
-	return true
-}
-
 // guardHooks hold the rights of the four roles (DEC-100): only the reviewer
 // records verdicts, so that the agent that built does not verify its own work; a
 // subagent writes only what its role may; and the builder starts only the
-// reviewer. The first runs only before a shell command that records, the second
+// reviewer. The first group runs only before a shell command that records, with
+// one handler for each shell tool, since a rule names one tool; the second runs
 // before every tool that writes a file, the third before every tool that starts
 // an agent. Each runs in bash, as the plugin's do, since its command is a shell
 // command, also on Windows.
 func guardHooks() []any {
-	hook := func(rule string) []any {
+	hook := func(rule string) map[string]any {
 		h := map[string]any{"type": "command", "shell": "bash", "command": HookCommand}
 		if rule != "" {
 			h["if"] = rule
 		}
-		return []any{h}
+		return h
+	}
+	var marks []any
+	for _, tool := range strings.Split(ShellTools, "|") {
+		marks = append(marks, hook(MarkRule(tool)))
 	}
 	return []any{
-		map[string]any{"matcher": "Bash", "hooks": hook(MarkRule)},
-		map[string]any{"matcher": EditTools, "hooks": hook("")},
-		map[string]any{"matcher": AgentTools, "hooks": hook("")},
+		map[string]any{"matcher": ShellTools, "hooks": marks},
+		map[string]any{"matcher": EditTools, "hooks": []any{hook("")}},
+		map[string]any{"matcher": AgentTools, "hooks": []any{hook("")}},
 	}
 }
 
@@ -147,8 +133,9 @@ func GuardedHooks(settings map[string]any) (map[string]any, string) {
 	return hooks, ""
 }
 
-// ownGuard says whether a PreToolUse entry is one an earlier markitect wrote: a
-// group whose every hook runs HookCommand. The current one replaces it.
+// ownGuard says whether a PreToolUse entry is one a markitect wrote: a group
+// whose every hook ends in the call of the hook, whatever comes before it. The
+// current one replaces it.
 func ownGuard(entry any) bool {
 	group, ok := entry.(map[string]any)
 	if !ok {
@@ -160,7 +147,10 @@ func ownGuard(entry any) bool {
 	}
 	for _, h := range hooks {
 		hook, ok := h.(map[string]any)
-		if !ok || hook["command"] != HookCommand {
+		if !ok {
+			return false
+		}
+		if command, _ := hook["command"].(string); !strings.HasSuffix(strings.TrimSpace(command), hookCall) {
 			return false
 		}
 	}

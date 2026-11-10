@@ -95,9 +95,10 @@ func TestPluginShimHasWindowsLineEndings(t *testing.T) {
 // waits for it, so that the first command finds it. The others name the launcher:
 // one more at the start of a session, in the background, one before shell
 // commands, one before every tool that writes a file and one before every tool
-// that starts an agent, as init writes them into a project's settings. The plugin's hooks filter in their own shell, without regard
-// to case, rather than with Claude Code's rule, so that markitect.exe mark reaches
-// the guard too.
+// that starts an agent, as init writes them into a project's settings. The one
+// before shell commands runs before the PowerShell tool too. The plugin's hooks
+// filter in their own shell, without regard to case, rather than with Claude
+// Code's rule, so that markitect.exe mark reaches the guard too.
 func TestPluginHooksRunTheLauncher(t *testing.T) {
 	var h struct {
 		Hooks map[string][]struct {
@@ -113,7 +114,7 @@ func TestPluginHooksRunTheLauncher(t *testing.T) {
 	const launcher, path = "${CLAUDE_PLUGIN_ROOT}/bin/markitect", "${CLAUDE_PLUGIN_ROOT}/hooks/path.sh"
 	want := map[string][]group{
 		"SessionStart": {{"", "", path}, {"startup|resume", "", launcher}},
-		"PreToolUse":   {{"Bash", "", launcher}, {guard.EditTools, "", launcher}, {guard.AgentTools, "", launcher}},
+		"PreToolUse":   {{guard.ShellTools, "", launcher}, {guard.EditTools, "", launcher}, {guard.AgentTools, "", launcher}},
 	}
 	for event, groups := range want {
 		got := h.Hooks[event]

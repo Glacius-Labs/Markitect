@@ -428,7 +428,7 @@ func TestHookLetsOnlyTheReviewerRecord(t *testing.T) {
 }
 
 // projectHook is the hook init writes into the project's settings.
-const projectHook = "command -v markitect >/dev/null 2>&1 || exit 0; MARKITECT_HOOK=project markitect hook pretool"
+const projectHook = "command -v markitect >/dev/null 2>&1 || exit 0; markitect hook pretool"
 
 // The project's hook runs the markitect its shell finds, with the input of the
 // call, and does nothing where it finds none: with the plugin alone a hook sees
@@ -456,95 +456,15 @@ func TestProjectHookRunsOnlyAMarkitectItFinds(t *testing.T) {
 		t.Fatalf("without a markitect: exit %d\n%s", code, out)
 	}
 	bin := testkit.TempDir(t)
-	stub := "#!/bin/sh\nIFS= read -r line\nprintf '%s|%s|%s' \"$*\" \"$MARKITECT_HOOK\" \"$line\"\n"
+	stub := "#!/bin/sh\nIFS= read -r line\nprintf '%s|%s' \"$*\" \"$line\"\n"
 	if err := os.WriteFile(filepath.Join(bin, "markitect"), []byte(stub), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if out, code := hook(bin); code != 0 || out != "hook pretool|project|"+input {
+	if out, code := hook(bin); code != 0 || out != "hook pretool|"+input {
 		t.Fatalf("with a markitect: exit %d\n%s", code, out)
 	}
 }
 
-// Called by the project's hook, markitect leaves the guard to the plugin where
-// the plugin guards too, so that it runs once: where the last of the settings
-// that names the plugin enables it, and Claude Code's record lists it as
-// installed with hooks that run the guard. Anything less, and it guards; so does
-// it when the plugin's own hook calls it.
-func TestHookLeavesTheGuardToThePlugin(t *testing.T) {
-	const enable, disable = `{"enabledPlugins": {"markitect@glacius-labs": true}}`, `{"enabledPlugins": {"markitect@glacius-labs": false}}`
-	group := func(matcher string) string {
-		return `{"matcher": "` + matcher + `", "hooks": [{"command": "printf '%s' \"$input\" | sh \"${CLAUDE_PLUGIN_ROOT}/bin/markitect\" hook pretool"}]}`
-	}
-	hooks := func(groups ...string) string {
-		return `{"hooks": {"PreToolUse": [` + strings.Join(groups, ", ") + `]}}`
-	}
-	// The plugin's hooks as they are, and as 0.18.0 had them, before one shell
-	// command only.
-	guardHooks, oldHooks := hooks(group("Bash"), group("Edit|Write|MultiEdit|NotebookEdit"), group("Agent|Task|Workflow")), hooks(group("Bash"))
-	for name, c := range map[string]struct {
-		user, project, local, hooks string
-		installed, fromPlugin       bool
-		oneInstall                  bool
-		refused                     bool
-	}{
-		"enabled and installed":              {user: enable, hooks: guardHooks, installed: true},
-		"enabled in the project":             {project: enable, hooks: guardHooks, installed: true},
-		"disabled by the user, enabled here": {user: disable, project: enable, hooks: guardHooks, installed: true},
-		"recorded as one install":            {user: enable, hooks: guardHooks, installed: true, oneInstall: true},
-		"called by the plugin's hook":        {user: enable, hooks: guardHooks, installed: true, fromPlugin: true, refused: true},
-		"not enabled":                        {hooks: guardHooks, installed: true, refused: true},
-		"disabled in the local settings":     {user: enable, local: disable, hooks: guardHooks, installed: true, refused: true},
-		"enabled, not installed":             {user: enable, refused: true},
-		"installed without guard hooks":      {user: enable, hooks: `{"hooks": {}}`, installed: true, refused: true},
-		"an older plugin, before shell only": {user: enable, hooks: oldHooks, installed: true, refused: true},
-		"a plugin without the Workflow hook": {user: enable, hooks: hooks(group("Bash"), group("Edit|Write|MultiEdit|NotebookEdit"), group("Agent|Task")), installed: true, refused: true},
-	} {
-		t.Run(name, func(t *testing.T) {
-			config, project, plugin := testkit.TempDir(t), testkit.TempDir(t), testkit.TempDir(t)
-			t.Setenv("CLAUDE_CONFIG_DIR", config)
-			t.Setenv("CLAUDE_PROJECT_DIR", project)
-			if c.fromPlugin {
-				t.Setenv("MARKITECT_HOOK", "")
-			} else {
-				t.Setenv("MARKITECT_HOOK", "project")
-			}
-			write := func(file, content string) {
-				if content == "" {
-					return
-				}
-				if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
-					t.Fatal(err)
-				}
-				if err := os.WriteFile(file, []byte(content), 0o644); err != nil {
-					t.Fatal(err)
-				}
-			}
-			write(filepath.Join(config, "settings.json"), c.user)
-			write(filepath.Join(project, ".claude", "settings.json"), c.project)
-			write(filepath.Join(project, ".claude", "settings.local.json"), c.local)
-			write(filepath.Join(plugin, "hooks", "hooks.json"), c.hooks)
-			if c.installed {
-				var installs any = []any{map[string]any{"scope": "user", "installPath": plugin, "version": "0.25.3"}}
-				if c.oneInstall {
-					installs = map[string]any{"installPath": plugin}
-				}
-				record, _ := json.Marshal(map[string]any{"version": 2, "plugins": map[string]any{"markitect@glacius-labs": installs}})
-				write(filepath.Join(config, "plugins", "installed_plugins.json"), string(record))
-			}
-			input := `{"agent_id":"a1","agent_type":"markitect-builder","tool_name":"Edit","tool_input":{"file_path":"/p/.markitect/review.sum"}}`
-			var out, errOut bytes.Buffer
-			if code := newCLI(strings.NewReader(input), &out, &errOut).Run(context.Background(), []string{"hook", "pretool"}); code != 0 {
-				t.Fatalf("hook exit %d: %s", code, errOut.String())
-			}
-			if refused := strings.Contains(out.String(), `"permissionDecision":"deny"`); refused != c.refused {
-				t.Fatalf("refused = %v, want %v: %s", refused, c.refused, out.String())
-			}
-		})
-	}
-}
-
-// init installs the harness with the hooks, and the record's Git attributes, and
-// makes no repository and no commit.
 // init has Git ignore the worktrees Claude Code makes in the project's folder,
 // once, keeping what the ignore file holds and its line endings; update adds the
 // line where it is missing.
@@ -586,6 +506,8 @@ func TestInitIgnoresClaudeCodesWorktrees(t *testing.T) {
 	}
 }
 
+// init installs the harness with the hooks, and the record's Git attributes, and
+// makes no repository and no commit.
 func TestInitInstallsTheHarness(t *testing.T) {
 	r := newFolder(t)
 	out := mustRun(t, r.Dir, "init", "--name", "Demo")
@@ -648,8 +570,9 @@ func TestInitInstallsTheHarness(t *testing.T) {
 	if err := json.Unmarshal([]byte(read(t, r.Dir, ".claude/settings.json")), &settings); err != nil {
 		t.Fatal(err)
 	}
-	if pre := settings.Hooks["PreToolUse"]; len(pre) != 3 || pre[0].Matcher != "Bash" || len(pre[0].Hooks) != 1 ||
+	if pre := settings.Hooks["PreToolUse"]; len(pre) != 3 || pre[0].Matcher != "Bash|PowerShell" || len(pre[0].Hooks) != 2 ||
 		pre[0].Hooks[0].Command != projectHook || pre[0].Hooks[0].If != "Bash(markitect mark*)" ||
+		pre[0].Hooks[1].Command != projectHook || pre[0].Hooks[1].If != "PowerShell(markitect mark*)" || pre[0].Hooks[1].Shell != "bash" ||
 		pre[1].Matcher != "Edit|Write|MultiEdit|NotebookEdit" || len(pre[1].Hooks) != 1 ||
 		pre[1].Hooks[0].Command != projectHook || pre[1].Hooks[0].If != "" ||
 		pre[2].Matcher != "Agent|Task|Workflow" || len(pre[2].Hooks) != 1 ||
