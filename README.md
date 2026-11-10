@@ -35,7 +35,7 @@ When agents build most of a project, two things go missing that used to come wit
 
 The usual fixes fall short. Extra sessions that hunt for bugs or check that everything fits have nothing to measure against. More rules and skills are more to maintain and more to overlook. What is missing is a standing statement of what the project should be. Prompts, tickets and most specs describe one change and go stale once it is made.
 
-Markitect supplies that statement: the spec, one place you own, where what is written is binding. It is typed prose in Markdown: Definitions of a Kind, in Packages, with links that work like imports. The `markitect` tool checks it as a compiler checks code. Agents build code, tests, configuration and documentation from it, and a fresh agent verifies every Definition a change reaches.
+Markitect supplies that statement: the spec, one place you own, where what is written is binding. It is typed prose in Markdown: Definitions of a Kind, in Packages, with links that work like imports. Markitect works like building to a plan. The spec is the plan: the `markitect` tool checks its structure, agents build code, tests, configuration and documentation to it, and a fresh agent verifies every Definition a change reaches against it.
 
 Markitect builds on requirements traceability, architecture metrics and the conventions of Go's tools, and it works with Claude Code's own skills, subagents, hooks and worktrees. The [vision](docs/vision.md#why-markitect-exists) gives the full reasoning.
 
