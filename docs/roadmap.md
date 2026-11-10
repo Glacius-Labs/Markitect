@@ -4,7 +4,7 @@ Where Main is, what comes next and what may come later. The [concept](concept.md
 
 ## Where Main is
 
-The latest release, 0.25.3, carries the whole concept on Claude Code: the spec language with `check`, `tidy`, `vet`, `list` and `doc`; the record with `status` and `mark`; the eight skills and four agents whose rights a hook holds; the strategies with the shipped parallel workflow and `harness.yaml`; and releases with the Claude Code plugin and `markitect update`. All of it is covered by tests, and small real runs have passed ([concept, §13](concept.md#13-what-is-shown-and-what-is-not)).
+The latest release, 0.25.3, carries the whole concept on Claude Code: the spec with `check`, `tidy`, `vet`, `list` and `doc`; the record with `status` and `mark`; the eight skills and four agents whose rights a hook holds; the strategies with the shipped parallel workflow and `harness.yaml`; and releases with the Claude Code plugin and `markitect update`. All of it is covered by tests, and small real runs have passed ([concept, §13](concept.md#13-what-is-shown-and-what-is-not)).
 
 ## Current steps
 
@@ -21,6 +21,7 @@ Before step 3, read the nine finished launches of an earlier reviewing test at t
 Agreed directions that are not scheduled.
 
 - **The rest of the rename.** The code still says "model" where it means the spec, as in the package `internal/model` and diagnostic codes such as `model.name`; it becomes "spec", with no compatibility kept.
+- **A routine that audits the spec.** Cleanup, bug hunt and a full review run as routines, and the audit of the spec runs only when the owner or Claude starts it. A scheduled audit reads the spec regularly and tells the owner what is contradictory, missing, unclear or duplicated.
 - **More skills and checks.** `security` and `improve` skills, and a CI check with `markitect status` that ships with Markitect.
 - **Observed code dependencies widen what `status` lists.** The spec's links do not contain the code's own calls, imports and shared types. Optional, language-specific tools could observe them and widen the list, never narrow it ([OQ-001](decisions.md#open-questions)). Until then, `/markitect-review --all` is the safety net.
 - **More spec-quality signals.** `vet`'s zone and risk measures once real records exist; files that realize unusually many Definitions; and the size of a spec change against the code change it causes. Like `vet`, findings and recommendations, never gates.
@@ -32,7 +33,7 @@ Agreed directions that are not scheduled.
 
 Recorded, not planned: detailed planning waits until a usable, stable version exists ([DEC-084](decisions.md#dec-084-continuous-work-runs-outside-the-tool-and-autonomy-grows-in-steps)).
 
-- **A cockpit with a personal AI,** and a project organization in which people model, set rules and develop ideas while agents keep the project realized and tidy; a conversational agent that searches the project, proposes spec changes and shows what matters.
+- **A cockpit with a personal AI,** and a project organization in which people architect, set rules and develop ideas while agents keep the project realized and tidy; a conversational agent that searches the project, proposes spec changes and shows what matters.
 - **Government:** agents maintain the spec within explicit mandates, with people briefed and asked only about what matters; departments such as security or architecture raise objections on spec changes. It must keep the spec's quality high.
 - **The project seen from every side:** a project is something different for each of its stakeholders, and no single role holds every view, so a description of a whole project may be the sum of its views rather than one objective definition. As a tomograph turns around a body, agents would go around the project one perspective at a time, such as architecture, security, operation, schedule and benefit, and the views together give the picture. It may answer what a spec must contain to describe a project, and give people their overview.
 - **Views of the spec:** reports, visualizations or dashboards that show a spec's structure and what a change did to it, so that a person keeps the overview without reading every Definition.

@@ -103,7 +103,7 @@ Markitect does not try to make agents infallible. It changes the structure they 
 | **A list computed from the spec.** `status` lists every Definition whose text, Kind, links, files or evidence changed since a reviewer verified it, and each listed Definition needs a verdict. | An agent deciding from memory which files might be relevant |
 | **Roles with bounded rights.** The builder writes code and the registry pages, not the spec; the reviewer changes nothing and alone records; the architect writes the spec, not code; the auditor only reads and reports. A hook holds these rights for subagents. | One agent that writes, judges and records its own work |
 | **Independent review with fresh context.** The reviewer takes its list from `status`, reads each Definition, the Definitions it links to and the code, runs the project's tests where they bear on an item, and treats what the builder tells it as claims to check. | Self-review in the same thread, or one generic pull-request review |
-| **Rules in the way.** A Rule reaches every Package below the one that defines it, an `ok` means the Rules above hold for that Definition, and a changed Rule is back on the list with every Definition that links to it. | Rules in a long instruction file that are overlooked when nothing forces the agent to see them |
+| **Rules in the way.** A Rule reaches every Package below the one that defines it, an `ok` means the Rules of its Package and those above it held for that Definition when it was verified, and a changed Rule is back on the list with every Definition that links to it. | Rules in a long instruction file that are overlooked when nothing forces the agent to see them |
 | **Verdicts bound to what was read.** `mark` refuses a verdict when an input changed since `status` printed the item, the evidence must exist and is hashed, and the record is committed with the work. A later change puts what it touches back on the list, so `markitect status` in CI shows what is not verified. | Approving a pull request because its pipeline is green |
 
 Two claims stay apart ([DEC-003](decisions.md#dec-003-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)): *nothing in the spec's scope is overlooked* can be computed for declared links and file accounting; *everything is realized correctly* can only be supported by evidence. Tests belong to the realization: agents write them, so they can be as wrong as the code.
@@ -113,7 +113,7 @@ Two claims stay apart ([DEC-003](decisions.md#dec-003-the-compiler-is-a-borrowed
 | Role | Responsibility |
 |---|---|
 | People | Decide what should exist and why; choose concepts, architecture, boundaries, rules and processes; define the agents' freedom and the project's acceptance policy; settle every `spec-problem`. |
-| Markitect | Compile the spec, account for every file, say which Definitions are to verify because an input changed, record each verdict at the state the reviewer read, and keep agents from recording their own work or changing the spec. It starts no agent, steers no work and uses no Git. |
+| Markitect | Compile the spec, account for every file, say which Definitions are to verify because an input changed, record each verdict at the state the reviewer read, and keep the agents that build from changing the spec, and every agent but the reviewer from recording. It starts no agent, steers no work and uses no Git. |
 | Agents | Draft spec changes for people to accept, realize the spec, review the result and record verdicts with evidence, and raise what only people can settle. An agent's report is not a person's approval. |
 
 A real change of intent changes the spec first. When intent is unchanged, a bug or a stale file is repaired against the same spec; no artificial spec edit is needed. The target human role is specification and engineering judgment, not being a permanent agent scheduler, prompt supervisor or reader of every routine diff. Whether that work can actually be reduced is what Markitect has to show.
@@ -128,7 +128,7 @@ Target outcomes, each to be validated; none is an established result.
 - Software becomes understandable: the spec states what the system does and should do, and people can reason over it without reading the code.
 - Order pays off: structure and careful definition are rewarded instead of turning into endless cleanup.
 - Capable mid-tier models, such as Sonnet, do most of the delegated work; Haiku counts if it proves sufficient. Lower cost is a possible benefit, not the purpose.
-- People concentrate on deciding and modeling. Their review moves from code diffs to spec changes and `spec-problem`s, while the code reliably reflects the spec. A fresh reviewer stays part of the method, and a project's own acceptance policy still applies.
+- People concentrate on architecture. Their review moves from code diffs to spec changes and `spec-problem`s, while the code reliably reflects the spec. A fresh reviewer stays part of the method, and a project's own acceptance policy still applies.
 
 The intended end state is **spec → AI realizes and independently reviews it → people rely on the result without routinely reviewing code diffs**. This is a target to earn through evidence, not a claim that Markitect has achieved it.
 
