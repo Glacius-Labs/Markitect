@@ -128,20 +128,20 @@ func TestEnsureSettings(t *testing.T) {
 		has    []string
 		hooks  int
 	}{
-		"none":         {"", []string{addedHooks, setBase}, []string{`"baseRef": "head"`}, 3},
-		"kept":         {"{\n  \"permissions\": {\"allow\": [\"Bash(go test *)\"]},\n  \"cleanupPeriodDays\": 12345678901234567890\n}\n", []string{addedHooks, setBase}, []string{"Bash(go test *)", "12345678901234567890"}, 3},
-		"owner's base": {`{"worktree": {"baseRef": "fresh", "sparsePaths": ["src"]}}`, []string{addedHooks}, []string{`"baseRef": "fresh"`, "sparsePaths"}, 3},
-		"earlier hook": {old, []string{addedHooks, setBase}, nil, 3},
-		"a mention":    {`{"hooks": {"PostToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "markitect hook pretool"}]}]}}`, []string{addedHooks, setBase}, []string{"PostToolUse"}, 3},
+		"none":         {"", []string{addedHooks, setBase}, []string{`"baseRef": "head"`}, 4},
+		"kept":         {"{\n  \"permissions\": {\"allow\": [\"Bash(go test *)\"]},\n  \"cleanupPeriodDays\": 12345678901234567890\n}\n", []string{addedHooks, setBase}, []string{"Bash(go test *)", "12345678901234567890"}, 4},
+		"owner's base": {`{"worktree": {"baseRef": "fresh", "sparsePaths": ["src"]}}`, []string{addedHooks}, []string{`"baseRef": "fresh"`, "sparsePaths"}, 4},
+		"earlier hook": {old, []string{addedHooks, setBase}, nil, 4},
+		"a mention":    {`{"hooks": {"PostToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "markitect hook pretool"}]}]}}`, []string{addedHooks, setBase}, []string{"PostToolUse"}, 4},
 		"hooks not a map": {`{"hooks": ["something"]}`, []string{
-			`left the hooks in .claude/settings.json as they are, because they are not an object; add the hooks by hand: "` + strings.ReplaceAll(guard.HookCommand, `"`, `\"`) + `" before Bash for Bash(markitect mark*), before Edit|Write|MultiEdit|NotebookEdit and before Agent|Task|Workflow`,
+			`left the hooks in .claude/settings.json as they are, because they are not an object; add the hooks by hand: "` + strings.ReplaceAll(guard.HookCommand, `"`, `\"`) + `" before Bash for Bash(markitect mark*), before PowerShell for PowerShell(markitect mark*), before Edit|Write|MultiEdit|NotebookEdit and before Agent|Task|Workflow`,
 			setBase,
 		}, []string{`"something"`, `"baseRef": "head"`}, 0},
 		// What it left comes first, then what it wrote.
 		"worktree not a map": {`{"worktree": "x"}`, []string{
 			`left worktree in .claude/settings.json as it is, because it is not an object; set worktree.baseRef to "head" by hand`,
 			addedHooks,
-		}, []string{`"worktree": "x"`}, 3},
+		}, []string{`"worktree": "x"`}, 4},
 	} {
 		t.Run(name, func(t *testing.T) {
 			m := memory{}

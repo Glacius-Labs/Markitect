@@ -28,18 +28,23 @@ const (
 // them that runs Guard. The agents are subagents of the owner's own session, so
 // the hook has to be in the project's settings. It calls markitect only where its
 // shell finds it, which is a binary on the PATH: a hook does not see the
-// plugin's bin/, and the plugin's own hooks guard there. It names itself in
-// HookEnv, so that a binary leaves the guard to the plugin where both would run
-// it.
+// plugin's bin/, and the plugin's own hooks guard there. Where both find a
+// markitect, the guard runs twice and says the same.
 const (
 	SettingsFile = ".claude/settings.json"
-	HookCommand  = "command -v markitect >/dev/null 2>&1 || exit 0; " + HookEnv + "=project markitect hook pretool"
-	HookEnv      = "MARKITECT_HOOK"
+	HookCommand  = "command -v markitect >/dev/null 2>&1 || exit 0; " + hookCall
+	hookCall     = "markitect hook pretool"
 )
 
-// MarkRule is the permission rule that starts the hook before a shell command
-// that records a verdict.
-const MarkRule = "Bash(markitect mark*)"
+// ShellTools are the tools that run a shell command, as the matcher of the hook
+// before a command that records a verdict. Claude Code has a PowerShell tool
+// beside Bash on Windows.
+const ShellTools = "Bash|PowerShell"
+
+// MarkRule is the permission rule that starts the hook before a command of a
+// shell tool that records a verdict. Claude Code starts the hook when a command
+// of the line begins with it, also after leading assignments.
+func MarkRule(tool string) string { return tool + "(markitect mark*)" }
 
 // EditTools are the tools that write files, and AgentTools the tools that start
 // agents, as the matchers of the hooks that hold the roles' rights. Claude Code
@@ -97,8 +102,10 @@ func (r rights) may(start string) bool {
 	return false
 }
 
-// markCommand finds a call of markitect mark in a shell command.
-var markCommand = regexp.MustCompile(`(?i)(^|[\s;&|("'` + "`" + `])markitect(\.exe)?\s+mark(\s|$)`)
+// markCommand finds a call of markitect mark in a shell command, also where the
+// command names the binary by a path, in quotes, or as the plugin's
+// markitect.cmd.
+var markCommand = regexp.MustCompile(`(?i)(^|[\s;&|("'/\\` + "`" + `])markitect(\.exe|\.cmd)?["']?\s+mark(\s|$)`)
 
 // Guard is the project's hook before a tool call. It holds the rights of the
 // four roles (DEC-100), and guards the record and the spec, not the process:
@@ -127,7 +134,7 @@ func Guard(input []byte) []byte {
 	if json.Unmarshal(input, &in) != nil {
 		return nil
 	}
-	if command, ok := in.ToolInput["command"].(string); ok && markCommand.MatchString(command) && in.AgentType != ReviewerAgent {
+	if command, ok := in.ToolInput["command"].(string); ok && markCommand.MatchString(command) && !strings.EqualFold(in.AgentType, ReviewerAgent) {
 		return deny(fmt.Sprintf("Only the %s agent records verdicts, so the agent that built does not verify its own work. Start it, and it verifies and records.", ReviewerAgent))
 	}
 	if in.AgentID == "" {
@@ -185,8 +192,10 @@ func writeRefusal(agent string, r rights, file string) string {
 	switch kindOf(file) {
 	case recordFile:
 		return fmt.Sprintf("%s is written only by markitect mark, which the %s agent runs.", file, ReviewerAgent)
+	case setupFile:
+		return fmt.Sprintf("%s is written only by markitect init and update; no agent changes it.", file)
 	case harnessFile:
-		return fmt.Sprintf("%s steers the agents: Markitect's skills, agents, workflows, settings and harness configuration and the project's instruction files are the owner's, and no agent changes them. Say what should change.", file)
+		return fmt.Sprintf("%s steers the agents: Claude Code's settings, hooks and rules, Markitect's skills, agents, workflows and harness configuration and the project's instruction files are the owner's, and no agent changes them. Say what should change.", file)
 	case registryPage:
 		if r.registry {
 			return ""
@@ -215,12 +224,14 @@ const (
 	specFile
 	registryPage
 	recordFile
+	setupFile
 	harnessFile
 )
 
 // kindOf says what kind of file a path names, whatever folder it starts from:
-// one in Markitect's folder of a project is a registry page, the record or the
-// spec; one that steers the agents is the harness; any other is code.
+// one in Markitect's folder of a project is a registry page, the record, the
+// record's Git attributes, which init writes, or the spec; one that steers the
+// agents is the harness; any other is code.
 func kindOf(file string) int {
 	segments := strings.Split(path.Clean(strings.ReplaceAll(file, `\`, "/")), "/")
 	for i, s := range segments {
@@ -232,6 +243,8 @@ func kindOf(file string) int {
 		switch {
 		case lower == strings.ToLower(project.ReviewFile):
 			return recordFile
+		case lower == strings.ToLower(project.AttributesFile):
+			return setupFile
 		case lower == strings.ToLower(project.HarnessFile):
 			return harnessFile
 		case lower == strings.ToLower(project.RootPage), strings.HasPrefix(lower, registry) && strings.HasSuffix(lower, ".md"):
@@ -246,19 +259,22 @@ func kindOf(file string) int {
 }
 
 // steersAgents says whether a path names a file that steers the agents (DEC-100):
-// Claude Code's project settings, which hold the hook, Markitect's skills, agents
-// and workflows, and the instruction files agents read by themselves. A builder
-// whose work comes back by itself must not change them, since nobody reads that
-// diff. The harness configuration in Markitect's folder is one too (DEC-103).
+// Claude Code's project settings, which hold the hook, the hook scripts and rules
+// beside them, Markitect's skills, agents and workflows, and the instruction
+// files agents read by themselves. A builder whose work comes back by itself
+// must not change them, since nobody reads that diff. The harness configuration
+// in Markitect's folder is one too (DEC-103).
 func steersAgents(segments []string) bool {
 	n := len(segments)
-	if base := segments[n-1]; base == "AGENTS.md" || base == "CLAUDE.md" {
+	if base := segments[n-1]; base == "AGENTS.md" || base == "CLAUDE.md" || base == "CLAUDE.local.md" {
 		return true
 	}
 	for i := 0; i+1 < n; i++ {
 		dir, next := strings.ToLower(segments[i]), strings.ToLower(segments[i+1])
 		switch {
 		case dir == ".claude" && i+2 == n && (next == "settings.json" || next == "settings.local.json"):
+			return true
+		case dir == ".claude" && (next == "hooks" || next == "rules") && i+2 < n:
 			return true
 		case (dir == ".claude" || dir == ".agents") && (next == "agents" || next == "skills" || next == "workflows") && i+2 < n &&
 			strings.HasPrefix(strings.ToLower(segments[i+2]), "markitect-"):

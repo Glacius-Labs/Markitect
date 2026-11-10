@@ -24,7 +24,11 @@ const worktreeBase = "head"
 // lines to say, in order, also when it fails.
 func EnsureSettings(f Folder) ([]string, error) {
 	settings := map[string]any{}
-	addHooks := fmt.Sprintf("add the hooks by hand: %q before Bash for %s, before %s and before %s", guard.HookCommand, guard.MarkRule, guard.EditTools, guard.AgentTools)
+	var marks []string
+	for _, tool := range strings.Split(guard.ShellTools, "|") {
+		marks = append(marks, fmt.Sprintf("before %s for %s", tool, guard.MarkRule(tool)))
+	}
+	addHooks := fmt.Sprintf("add the hooks by hand: %q %s, before %s and before %s", guard.HookCommand, strings.Join(marks, ", "), guard.EditTools, guard.AgentTools)
 	setBase := fmt.Sprintf("set worktree.baseRef to %q by hand", worktreeBase)
 	lacks := func(why string) []string {
 		return []string{fmt.Sprintf("left %s as it is, %s; %s, and %s", guard.SettingsFile, why, addHooks, setBase)}
