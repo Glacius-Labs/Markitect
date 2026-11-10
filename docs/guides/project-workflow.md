@@ -47,7 +47,7 @@ README.md: file.unregistered: neither registered nor ignored: list it on .markit
 1 error: 0 in the spec, for the owner to settle; 1 in the realization, so spec and code do not match yet, which /markitect-build settles
 ```
 
-`/markitect-design` drafts a first spec from the code with you and registers the files with the Definitions they build. From then on, `/markitect-review --all` verifies every Definition and records where the code deviates, and `/markitect-build` repairs it.
+That is expected: `/markitect-design` registers the files as it draws the first spec ([§2](#2-write-the-spec)). From then on, `/markitect-review --all` verifies every Definition and records where the code deviates, and `/markitect-build` repairs it.
 
 ## 5. Vet and look around
 

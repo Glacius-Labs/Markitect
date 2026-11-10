@@ -28,19 +28,17 @@
 </p>
 
 > [!IMPORTANT]
-> **Early access.** The latest release covers the whole way of working on Claude Code and is covered by tests. Real runs on real projects are only beginning, and commands, files and skills may still change. Try it on a small project you can throw away, read the [limits](#limits), and tell us in [Issues](https://github.com/Glacius-Labs/Markitect/issues) what worked and what broke.
-
-**You write the spec. Agents build it. Markitect checks the spec like code and records, per Definition, what a fresh agent verified, so you know what is built as specified without reading every diff.**
+> **Early access.** The latest release runs the whole way of working on Claude Code, with tests. Real runs on real projects are only beginning, and commands, files and skills may still change. Try it on a small project you can throw away, read the [limits](#limits), and tell us in [Issues](https://github.com/Glacius-Labs/Markitect/issues) what worked and what broke.
 
 ## Why Markitect
 
 When agents build most of a project, two things go missing that used to come with writing and reviewing the code yourself: trust that the code is what you meant, and an overview of how the project stands. Reading everything again would bring both back and make you the bottleneck.
 
-Extra sessions that hunt for bugs or check that everything fits have nothing to measure against. Rules and skills are more artifacts to maintain and more to overlook. What is missing is a standing statement of what the project should be. Prompts, tickets and most specs describe one change and go stale once it is made.
+The usual fixes fall short. Extra sessions that hunt for bugs or check that everything fits have nothing to measure against. More rules and skills are more to maintain and more to overlook. What is missing is a standing statement of what the project should be. Prompts, tickets and most specs describe one change and go stale once it is made.
 
 Markitect supplies that statement: the spec, one place you own, where what is written is binding. It is typed prose in Markdown: Definitions of a Kind, in Packages, with links that work like imports. The `markitect` tool checks it as a compiler checks code. Agents build code, tests, configuration and documentation from it, and a fresh agent verifies every Definition a change reaches.
 
-Markitect builds on proven practice: requirements traceability as in IBM DOORS and Polarion, architecture metrics for the spec's design, and the conventions of Go's tools. It works with Claude Code's own skills, subagents, hooks and worktrees. The tool itself starts no agent and uses no Git. The [vision](docs/vision.md#why-markitect-exists) gives the full reasoning.
+Markitect builds on requirements traceability, architecture metrics and the conventions of Go's tools, and it works with Claude Code's own skills, subagents, hooks and worktrees. The [vision](docs/vision.md#why-markitect-exists) gives the full reasoning.
 
 ## Quick start
 
@@ -53,8 +51,8 @@ claude plugin install markitect@glacius-labs
 
 For a new project, make an empty folder, run `git init` in it and open Claude Code there.
 
-1. **Set it up.** Ask Claude to set up Markitect. It runs `markitect init`, which writes `.markitect/` with the first page of the spec, the skills, the four agents and the hook that holds their rights. It commits nothing.
-2. **Design the spec.** Run `/markitect-design`. It asks what the project is, one question at a time, and writes the spec with you. Read the Markdown diff, or go through it with the agent, and commit it together with what `init` wrote.
+1. **Set it up.** Ask Claude to set up Markitect. It runs `markitect init`, which writes `.markitect/` with the first page of the spec, `AGENTS.md` and `CLAUDE.md`, and in `.claude/` the skills, the four agents and the hooks that hold their rights. It commits nothing. If Claude Code's sandbox blocks the plugin's first download, let that call run outside it.
+2. **Design the spec.** Run `/markitect-design`. If the session does not offer it yet, run `/reload-skills` or start a new session. It asks what the project is, one question at a time, and writes the spec with you. Read the Markdown diff, or go through it with the agent, and commit it together with what `init` wrote.
 3. **Build it.** Run `/markitect-build`. Your session starts a builder in a worktree of its own, and a fresh reviewer verifies each Definition. When nothing is left to verify, your session commits the work with its record and merges it into your branch. It pushes nothing.
 
 In a repository that already has code, `/markitect-design` drafts a first spec from the code with you. The [project workflow](docs/guides/project-workflow.md) covers every step, option and error.
@@ -68,9 +66,9 @@ In a repository that already has code, `/markitect-design` drafts a first spec f
 5. **The builder repairs what failed** and has it verified again. It stops when the list has not got shorter for three rounds.
 6. **Nothing left.** Your session commits the work with the record and merges it into your branch.
 
-The record, `.markitect/review.sum`, works like Go's test cache: a verdict holds until one of its inputs changes, so a later change puts back on the list only what it reaches. Every file of the project is registered to the Definitions it builds, or explicitly ignored.
+The record, `.markitect/review.sum`, works like Go's test cache: a verdict holds until one of its inputs changes, so a later change puts back on the list only what it reaches. Every file of the project is listed with the Definitions it builds, or explicitly ignored.
 
-The other skills work from the same list and roles: `/markitect-review`, `/markitect-cleanup`, `/markitect-bughunt`, `/markitect-audit` for the spec itself, `/markitect-schedule` for routines and `/markitect-config` for models and strategies. No `markitect` command starts an agent or uses Git. The [concept](docs/concept.md) describes the skills and the four roles, and the [spec language guide](docs/guides/spec-language.md#commands) every command.
+Other skills review, clean up, hunt bugs, audit the spec, set up routines and configure the agents. No `markitect` command starts an agent or uses Git. The [concept](docs/concept.md) describes the skills and the four roles, and the [spec language guide](docs/guides/spec-language.md#commands) lists every command.
 
 ## Example: one rule changes
 
@@ -101,7 +99,7 @@ Markitect needs Claude Code. Pick one way to get the `markitect` command:
 - **A binary** from the [releases](https://github.com/Glacius-Labs/Markitect/releases). Check it against the checksums file, name it `markitect` and put it on your `PATH`. Then run `markitect install` once, so that a Claude Code session in any folder knows what Markitect is.
 - **From source,** with Go 1.27.1 or newer: `go install github.com/Glacius-Labs/Markitect/cmd/markitect@main`, then `markitect install`.
 
-`markitect update` installs the newest release over a downloaded binary and brings a project's skills, agents, hooks and lock in line. It commits nothing.
+`markitect update` installs the newest release over a downloaded binary and brings a project's skills, agents, hooks and lock in line. It commits nothing. With the plugin, update the plugin, then run `markitect update` in the project; it leaves the plugin's binary alone.
 
 ## Status
 
@@ -110,11 +108,9 @@ Markitect is built, released and covered by tests. An earlier form of the build 
 ### Limits
 
 - **Claude Code only.** Another provider comes once Claude's version is reliable.
-- **Few real runs.** Expect rough edges.
 - **Your machine, your rights.** The agents run in your own Claude Code session with your permissions, so they may stop to ask. Don't let them read untrusted input, such as issue text or web pages, without an isolated machine with limited rights around them.
 - **No spending or time limit.** A build runs until nothing is left to verify, or until three rounds in a row leave the list no shorter. You stop it.
 - **Verified is not proven.** An empty `markitect status` means a fresh agent judged every Definition against the spec, with evidence. It is complete for the declared links only, and a verdict can be wrong.
-- **Things will change.** Compatibility is not promised while Markitect is early.
 
 ## Documentation
 
@@ -127,8 +123,6 @@ Markitect is built, released and covered by tests. An earlier form of the build 
 | [Vision](docs/vision.md) | Why Markitect exists and what it leaves to people |
 | [Decisions](docs/decisions.md) | What holds today, and the open questions |
 | [Roadmap](docs/roadmap.md) | Where Main is and what comes next |
-| [Architecture](docs/architecture.md) | Packages, layers and the repository layout |
-| [History](docs/history.md) | Where earlier concepts are kept |
 
 ## Contributing
 
