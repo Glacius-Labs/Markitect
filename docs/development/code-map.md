@@ -43,14 +43,14 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/model` | Package model compiles the canonical model of concept 2.0 from explicitly supplied Markdown files: Definitions with front matter, Packages as folders, Libraries of Kinds, links by path, visibility and the Package dependency graph. | [docs/guides/model-language.md#definitions](../guides/model-language.md#definitions) |
+| `internal/model` | Package model compiles the spec from explicitly supplied Markdown files: Definitions with front matter, Packages as folders, Libraries of Kinds, links by path, visibility and the Package dependency graph. | [docs/guides/spec-language.md#definitions](../guides/spec-language.md#definitions) |
 
 ## Built-in files
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/libraries` | Package libraries holds the standard Libraries that ship inside the markitect binary: std, rest and cli, each a folder of Kind Definitions. | [docs/guides/model-language.md#kinds-and-libraries](../guides/model-language.md#kinds-and-libraries) |
-| `internal/skills` | Package skills holds what ships inside the markitect binary for agents: the design skill, which markitect init installs where coding agents look for skills, and the harness of the work for Claude Code: its skills, its four agents and the prompts of its routines (DEC-100), and the workflow of the parallel strategy (DEC-103). | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `internal/libraries` | Package libraries holds the standard Libraries that ship inside the markitect binary: std, rest and cli, each a folder of Kind Definitions. | [docs/guides/spec-language.md#kinds-and-libraries](../guides/spec-language.md#kinds-and-libraries) |
+| `internal/skills` | Package skills holds what ships inside the markitect binary for agents: the design skill, which markitect init installs where coding agents look for skills, and the harness of the work for Claude Code: its skills, its four agents and the prompts of its routines (DEC-100), and the workflow of the parallel strategy (DEC-103). | [docs/guides/spec-language.md#commands](../guides/spec-language.md#commands) |
 
 ## Harness configuration
 
@@ -62,19 +62,19 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/realization` | Package realization checks the realization record beside the model: one registry page per Package with the path patterns it owns and the files it realizes, and the ignore file. | [docs/guides/model-language.md#the-realization-record](../guides/model-language.md#the-realization-record) |
+| `internal/realization` | Package realization checks the realization record beside the model: one registry page per Package with the path patterns it owns and the files it realizes, and the ignore file. | [docs/guides/spec-language.md#the-realization-record](../guides/spec-language.md#the-realization-record) |
 
 ## Project
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/project` | Package project loads a project's Markitect folder from a set of files, the project folder or a copy of its spec, and checks it as a whole: manifest, lock, Libraries, spec and registry. | [docs/guides/model-language.md#the-projects-markitect-folder](../guides/model-language.md#the-projects-markitect-folder) |
+| `internal/project` | Package project loads a project's Markitect folder from a set of files, the project folder or a copy of its spec, and checks it as a whole: manifest, lock, Libraries, spec and registry. | [docs/guides/spec-language.md#the-projects-markitect-folder](../guides/spec-language.md#the-projects-markitect-folder) |
 
 ## Analysis
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/analysis` | Package analysis answers questions about a loaded project without starting agents: who links to a Definition, the Package dependency graph, and the warnings and notes of vet, which analyse the spec's design like code. | [docs/guides/model-language.md#vet-warnings-and-notes](../guides/model-language.md#vet-warnings-and-notes) |
+| `internal/analysis` | Package analysis answers questions about a loaded project without starting agents: who links to a Definition, the Package dependency graph, and the warnings and notes of vet, which analyse the spec's design like code. | [docs/guides/spec-language.md#vet-warnings-and-notes](../guides/spec-language.md#vet-warnings-and-notes) |
 
 ## The record
 
@@ -98,7 +98,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/adapters/cli` | Package cli is the markitect command line: install, update, init and tidy; check, vet, list and doc over the spec; status and mark over the record of what was verified (DEC-099); config over the harness configuration (DEC-103); the hook; version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `internal/adapters/cli` | Package cli is the markitect command line: install, update, init and tidy; check, vet, list and doc over the spec; status and mark over the record of what was verified (DEC-099); config over the harness configuration (DEC-103); the hook; version and licenses. | [docs/guides/spec-language.md#commands](../guides/spec-language.md#commands) |
 | `internal/adapters/folder` | Package folder reads and writes a project folder without Git (DEC-097): it walks the folder and skips what the project's .gitignore files exclude, read as plain text, nested ones included. | [internal/run/README.md#the-folder](../../internal/run/README.md#the-folder) |
 | `internal/adapters/upgrade` | Package upgrade finds the newest Markitect release, downloads the binary for this platform, checks it against the release's checksums and replaces the running executable. | [docs/guides/project-workflow.md#8-keep-it-current](../guides/project-workflow.md#8-keep-it-current) |
 
@@ -112,7 +112,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `cmd/markitect` | Command markitect is the Markitect command line: install, update, init, tidy, check, vet, list, doc, status, mark, version and licenses. | [docs/guides/model-language.md#commands](../guides/model-language.md#commands) |
+| `cmd/markitect` | Command markitect is the Markitect command line: install, update, init, tidy, check, vet, list, doc, status, mark, version and licenses. | [docs/guides/spec-language.md#commands](../guides/spec-language.md#commands) |
 
 ## Maintenance
 

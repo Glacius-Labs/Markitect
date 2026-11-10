@@ -3,5 +3,5 @@
 // realizes, and the ignore file. It gives every repository file exactly one
 // owning Package and reports files that are neither registered nor ignored.
 //
-// The record is described in docs/guides/model-language.md.
+// The record is described in docs/guides/spec-language.md.
 package realization

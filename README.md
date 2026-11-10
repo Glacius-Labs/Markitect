@@ -98,7 +98,7 @@ Markitect itself starts no agent, steers no work and uses no Git. It computes an
 
 ## Skills and roles
 
-Skills are named after the activity, agents after the role ([DEC-100](docs/concepts/register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)).
+Skills are named after the activity, agents after the role ([DEC-100](docs/decisions.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)).
 
 | Skill | Who starts it | Does |
 | --- | --- | --- |
@@ -109,7 +109,7 @@ Skills are named after the activity, agents after the role ([DEC-100](docs/conce
 | `/markitect-bughunt` | You | The reviewer hunts for bugs beyond the list and records them, the builder repairs them, and the reviewer verifies again |
 | `/markitect-audit` | You, or Claude | The auditor reads the spec fresh for contradictions, gaps, unclear and duplicated statements, and reports to you |
 | `/markitect-schedule` | You | Sets up cleanup, bug hunts and a full review as routines through Claude Code's own scheduling. Each routine works on a branch of its own and lands only when it leaves nothing worse |
-| `/markitect-config` | You, or Claude | Changes the agents' model and effort and each skill's strategy, for this project or for all of yours, with `markitect config` ([DEC-103](docs/concepts/register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)) |
+| `/markitect-config` | You, or Claude | Changes the agents' model and effort and each skill's strategy, for this project or for all of yours, with `markitect config` ([DEC-103](docs/decisions.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)) |
 
 Four agents, in a 2×2 of rights that a hook holds for subagents. Your own session stays free to change anything, but it does not record verdicts either:
 
@@ -139,7 +139,7 @@ None of these starts an agent or uses Git. With `--json`, `check`, `vet`, `list`
 | `markitect install` | Writes the personal skill once per machine, so that a Claude Code session in any folder knows what Markitect is |
 | `markitect version` | The build, and whether the personal skill and the current project match it |
 
-`markitect licenses` prints the third-party notices. The [model language guide](docs/guides/model-language.md#commands) has every flag and diagnostic.
+`markitect licenses` prints the third-party notices. The [spec language guide](docs/guides/spec-language.md#commands) has every flag and diagnostic.
 
 ## Install and set up
 
@@ -155,7 +155,7 @@ Markitect needs Claude Code; the tool itself uses no Git, and your session commi
 
 The skills and agents call `markitect` by name, so the folder of the binary must be on your `PATH`; `version`, `init`, `install` and `update` warn when it is not.
 
-To upgrade, run `markitect update`. It installs the newest release over the binary, then lets the new binary bring what Markitect wrote earlier in line: the personal skill and, in a project, the skills, agents, hooks and lock that `init` wrote, and the record of a project from 0.20.0, written from its newest certificate. It commits nothing; read the change of the lock before you commit it. `markitect update --check` only reports. A binary the plugin brought is updated with the plugin instead, and a build from source is replaced only with `markitect update --force`.
+To upgrade, run `markitect update`. It installs the newest release over the binary, then lets the new binary bring what Markitect wrote earlier in line: the personal skill and, in a project, the skills, agents, hooks and lock that `init` wrote, and what an older project still needs moved. It commits nothing; read the change of the lock before you commit it. `markitect update --check` only reports. A binary the plugin brought is updated with the plugin instead, and a build from source is replaced only with `markitect update --force`.
 
 ### Set up a project
 
@@ -238,27 +238,26 @@ A project keeps all of it under `.markitect/`:
 └── .gitattributes    # merges the record by keeping both sides
 ```
 
-The [model language guide](docs/guides/model-language.md) gives the exact format and every diagnostic.
+The [spec language guide](docs/guides/spec-language.md) gives the exact format and every diagnostic.
 
 ## Status
 
-Markitect is in early access: it is built, released and covered by tests, and real runs on real projects are the next step. Main carries [concept 4.0](docs/concepts/v4-concept.md), the one concept; the [delivery plan](docs/implementation-plan.md) holds the current step.
+Markitect is in early access: it is built, released and covered by tests, and real runs on real projects are the next step. Main carries the [concept](docs/concept.md); the [roadmap](docs/roadmap.md) holds the next steps.
 
 | Area | State |
 | --- | --- |
-| The spec language and the commands `init`, `check`, `tidy`, `vet`, `list` and `doc` | Available; `vet`'s hubs, notes and hotspots since 0.23.0 ([DEC-102](docs/concepts/register.md#dec-102-what-vet-measures)) |
-| Work with `/markitect-build` and `/markitect-review`, over `status`, `mark` and the record | Available on Claude Code since 0.21.0, covered by tests. The flow before it was tried on three changes of one project ([trials](docs/validation/lean-trials-20261107.md)) |
-| The skills `/markitect-design`, `/markitect-cleanup`, `/markitect-bughunt`, `/markitect-audit` and `/markitect-schedule`, the four roles and the build in a worktree of its own | Available on Claude Code since 0.22.0, covered by tests only ([DEC-100](docs/concepts/register.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)) |
-| The strategies, the parallel workflow, `harness.yaml`, `markitect config` and `/markitect-config` | Available since 0.24.0, fixed in 0.25.2; covered by tests, the workflow by a test against stub agents; on 8 November two real runs on 6 Definitions passed, the second on the released 0.25.2, none yet on a long list ([DEC-103](docs/concepts/register.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)) |
-| A real run with planted defects, then reliability on Sonnet over a series of changes | Next ([delivery plan](docs/implementation-plan.md#current-steps)) |
-| Codex | Not yet: it needs subagents with their own agent files and a hook that names the agent |
+| The spec language and the commands `init`, `check`, `tidy`, `vet`, `list` and `doc` | Available, covered by tests |
+| Work with `/markitect-build` and `/markitect-review`, over `status`, `mark` and the record | Available on Claude Code, covered by tests; an earlier form of the flow passed three small real changes |
+| The skills `/markitect-design`, `/markitect-cleanup`, `/markitect-bughunt`, `/markitect-audit` and `/markitect-schedule`, the four roles and the build in a worktree of its own | Available on Claude Code, covered by tests only |
+| The strategies, the parallel workflow, `harness.yaml`, `markitect config` and `/markitect-config` | Available, covered by tests; the parallel workflow passed two real runs on a project of 6 Definitions, none yet on a long list |
+| A real project, planted defects, then reliability on Sonnet over a series of changes | Next ([roadmap](docs/roadmap.md#current-steps)) |
 | Release | On GitHub, with the Claude Code plugin ([install](#install)) |
 
 ### Limits
 
-- **Claude Code only.** Codex comes once Claude's version is reliable.
+- **Claude Code only.** Another provider comes once Claude's version is reliable.
 - **Few real runs.** The record, the skills and the roles are covered by tests; real runs on real projects have only begun. Expect rough edges.
-- **Your machine, your rights.** The agents run in your own Claude Code session, with your permissions and your session's permission mode, so they may stop to ask. Don't let them read untrusted input, such as issue text or web pages, without a container or a restricted machine around them.
+- **Your machine, your rights.** The agents run in your own Claude Code session, with your permissions and your session's permission mode, so they may stop to ask. Don't let them read untrusted input, such as issue text or web pages, without an isolated machine with limited rights around them.
 - **No spending or time limit.** A build runs until nothing is left to verify, or until three rounds in a row leave the list no shorter. You stop it.
 - **Verified is not proven.** An empty `markitect status` means a fresh agent judged every Definition against the spec, with evidence. It is complete for the declared links only, and a verdict can be wrong.
 - **Things will change.** Commands, files and skills may change between releases. `markitect update` brings a project along where it can, but compatibility is not promised while Markitect is early.
@@ -294,9 +293,9 @@ The agents that build don't: a hook refuses their edits under `.markitect/`, exc
 </details>
 
 <details>
-<summary><b>Does Markitect run Git, containers or background sessions?</b></summary>
+<summary><b>Does Markitect run Git or background sessions?</b></summary>
 
-The tool uses no Git, no container and no network except for `markitect update`. Your own Claude Code session starts the agents and makes every commit and merge. The exception is the routines you set up with `/markitect-schedule`: they run as scheduled tasks of the desktop app or as cloud routines, work on a branch of their own, and land on the source branch by a push when that branch tracks a remote; a cloud routine that cannot land pushes its own branch so the work is not lost. Nothing else is pushed.
+The tool uses no Git and no network except for `markitect update`. Your own Claude Code session starts the agents and makes every commit and merge. The exception is the routines you set up with `/markitect-schedule`: they run as scheduled tasks of the desktop app or as cloud routines, work on a branch of their own, and land on the source branch by a push when that branch tracks a remote; a cloud routine that cannot land pushes its own branch so the work is not lost. Nothing else is pushed.
 
 </details>
 
@@ -312,18 +311,18 @@ Markitect = Markdown + Architect. The idea grew out of a project documented in M
 | Guide | Covers |
 | --- | --- |
 | [Project workflow](docs/guides/project-workflow.md) | Using Markitect on a project, command by command, with troubleshooting |
-| [Model language](docs/guides/model-language.md) | Definitions, Kinds, Libraries, links, the registry and every diagnostic |
+| [Spec language](docs/guides/spec-language.md) | Definitions, Kinds, Libraries, links, the registry, the commands and every diagnostic |
 | [What makes a good spec](docs/guides/good-spec.md) | Placement, coupling, stability and size: designing a spec like code |
-| [Concept 4.0](docs/concepts/v4-concept.md) | The one description of the product: the spec, the tool, the record, the skills and the harness, and how sure each guarantee is |
-| [Vision](docs/vision.md) | What Markitect is, what it builds on, what it promises and what it leaves to people |
-| [Decisions in force](docs/concepts/register.md) | The owner's decisions that hold today, about thirty of them |
-| [Architecture](docs/architecture.md) | Packages, layers and the product flow |
-| [Delivery plan](docs/implementation-plan.md) | What is built and what comes next |
-| [Documentation map](docs/README.md) | Everything else |
+| [Concept](docs/concept.md) | The one description of the product: the spec, the tool, the record, the skills and the harness, and how sure each guarantee is |
+| [Vision](docs/vision.md) | Why Markitect exists, what it builds on, what it promises and what it leaves to people |
+| [Decisions](docs/decisions.md) | The decisions that hold today, and the open questions |
+| [Roadmap](docs/roadmap.md) | Where Main is and what comes next |
+| [Architecture](docs/architecture.md) | Packages, layers, the product flow and the repository layout |
+| [History](docs/history.md) | Where earlier concepts and records are kept |
 
 ## Contributing
 
-Markitect is developed as an ordinary Go project, with tests and documentation. [CONTRIBUTING.md](CONTRIBUTING.md) has the checks, the import boundaries and the review rules. Report defects and propose changes in [GitHub Issues](https://github.com/Glacius-Labs/Markitect/issues); [SUPPORT.md](SUPPORT.md) says where questions go. Report vulnerabilities privately, as [SECURITY.md](SECURITY.md) describes.
+Markitect is developed as an ordinary Go project, with tests and documentation. [CONTRIBUTING.md](CONTRIBUTING.md) says how to make, check, review and land a change. Report defects and propose changes in [GitHub Issues](https://github.com/Glacius-Labs/Markitect/issues); [SUPPORT.md](SUPPORT.md) says where questions go. Report vulnerabilities privately, as [SECURITY.md](SECURITY.md) describes.
 
 ## License
 

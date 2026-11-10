@@ -1,79 +1,89 @@
-# Development
+# Contributing
 
-Main implements [concept 4.0](docs/concepts/v4-concept.md), the target ([DEC-098](docs/concepts/register.md#dec-098-concept-40-is-the-one-concept)); the [delivery plan](docs/implementation-plan.md) holds the current step. The [project workflow](docs/guides/project-workflow.md) describes the commands, which run on Windows, Linux and macOS; the tests and CI run on Linux ([DEC-077](docs/concepts/register.md#dec-077-linux-ci-run-on-request)). [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations. Source availability does not establish native runtime qualification. Markitect itself is developed as an ordinary software project without a canonical self-model ([DEC-076](docs/concepts/register.md#dec-076-markitect-is-developed-as-an-ordinary-software-project)).
+Markitect is a small Go tool with a Claude Code plugin, developed as an ordinary project: agentic coding, tests and ordinary documentation, with no spec of itself ([DEC-076](docs/decisions.md#dec-076-markitect-is-developed-as-an-ordinary-software-project)). This page is the whole development process: how to make, check, review and land a change, and where things go.
 
-## Ownership and layout
+## Make a change
 
-All maintained Go code belongs to one root module. `cmd/markitect` delegates to `internal/bootstrap`, which constructs the CLI adapter with the folder adapter and the record. `internal/model` and `internal/realization` compile the model and the realization record from supplied bytes, `internal/project` loads a project from one set of files, and `internal/analysis` answers questions about it; none of them reads files or starts processes itself. `internal/guardedwrite` guards bundle installation. Independent maintenance services have explicit `internal/tooling/` responsibilities; that parent grants no general import exemption.
+1. **Start clean.** Work in a worktree of your own, from the current `origin/main`, on a branch with a prefix such as `dev/`, `fix/` or `docs/`. Check the folder, the branch and the base commit before you write. Never use `git stash`: it is shared by every worktree. Set work aside with a commit instead.
+2. **Find the owner.** Each Go package has one row in the [code map](docs/development/code-map.md) with the page that owns its behavior, and each topic has one page ([below](#where-things-go)). Change the behavior, its tests and its page together.
+3. **Keep it simple.** Choose the clean design even when it is more work, add no aliases or compatibility paths, and delete what is obsolete together with its tests and pages ([DEC-032](docs/decisions.md#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)). Fix a failure in how agents work with Markitect in the tool contract, not with more prompt text ([DEC-051](docs/decisions.md#dec-051-agents-get-tasks-not-process)).
+4. **Work in parallel only apart.** Several sessions may work at once when their files do not overlap. Shared files, such as `go.mod`, the [architecture rule table](internal/tooling/architecture/rules.go) and generated pages, have one writer at a time.
 
-One rule table in [`internal/tooling/architecture/rules.go`](internal/tooling/architecture/rules.go) gives every package its layer and allowed imports; the [architecture](docs/architecture.md#layers) explains it and the generated [code map](docs/development/code-map.md) lists every package. Shared hermetic `internal/testkit` is test-only and imports no Markitect package. The standalone bootstrap in `packaging/bootstrap` and source smoke in `tools/smoke` import no product package.
+Product code and tests that handle a project's `.markitect/` folder use fixtures, never this repository's own files.
 
-Intent lives in ordinary documentation, one canonical page per topic ([documentation maintenance](docs/development/documentation.md)); a change updates that page together with the code. Target projects keep `.markitect/`; product code and tests that handle it use fixtures, never this repository's own files.
+## Where things go
 
-## Verify a change
+| New item | Place | Also |
+|---|---|---|
+| Go package | `internal/<responsibility>/` | A row in the architecture rule table, a package doc comment, and the code map regenerated ([architecture](docs/architecture.md#adding-changing-or-removing-a-package)) |
+| Shipped command | `cmd/<name>/` | A row in the rule table, and the smoke's build list |
+| File the binary embeds | Inside the embedding package, such as `internal/libraries/` | The source packager's data selection and its tests |
+| Fixture of one package | `<package>/testdata/` | |
+| Check that must not import product code | `tools/` | A CI step |
+| Maintainer script | `scripts/` | Its tests beside it |
+| Documentation | The page that owns the topic, below | |
 
-Use Git and Go from `go.mod`. Run meaningful local checks for the actual change. During development, automatic PR, Main-push and scheduled CI are paused; full CI remains available by manual dispatch and to the release workflow. Independent review and focused local checks are the default merge basis under the [delivery plan](docs/implementation-plan.md#integration). Do not repeat unrelated full suites for unchanged source. Do not edit sources while a gate runs, and await each running Go process before another Go command in the same worktree.
+| Topic | Page |
+|---|---|
+| Why Markitect exists | [Vision](docs/vision.md) |
+| The product as a whole | [Concept](docs/concept.md) |
+| Decisions in force and open questions | [Decisions](docs/decisions.md) |
+| The spec language, the `.markitect/` layout and the commands | [Spec language](docs/guides/spec-language.md) |
+| Designing a good spec | [What makes a good spec](docs/guides/good-spec.md) |
+| Using Markitect on a project | [Project workflow](docs/guides/project-workflow.md) |
+| Packages, layers and the repository layout | [Architecture](docs/architecture.md) and the generated [code map](docs/development/code-map.md) |
+| The record, `status`, `mark` and the hook | [The record](internal/run/README.md) |
+| Releases | [Packaging and distribution](packaging/README.md) |
+| Where Main is and what comes next | [Roadmap](docs/roadmap.md) |
+| Where earlier concepts and records are | [History](docs/history.md) |
+| How Markitect is developed | This page |
 
-For prose-only changes, check links in the changed pages with `python -B scripts/check-docs.py PATH...` and run `git diff --check`. For code or control changes, run the relevant tests and validators; broaden validation when the changed contract or a concrete failure calls for it. Record actual results and limitations in the PR.
+**Rules for documentation.**
 
-The full pipeline runs Linux quality checks and the race detector in about five minutes. CI has no Windows job, but the model commands still build for Windows: a change to code they reach also runs `GOOS=windows go vet ./...`.
+- Write in English ([DEC-069](docs/decisions.md#dec-069-documentation-is-written-in-english)).
+- One page per topic. Link to it instead of repeating it.
+- Main holds only the current state ([DEC-071](docs/decisions.md#dec-071-main-holds-only-the-current-state)): no history, no dated records, no quotes, and one concept without version names. A page that relies on a dated result says it in one sentence and links the record at a full commit SHA. What a real run showed goes into its PR.
+- A new decision gets the next free number in the [decisions](docs/decisions.md), and the concept changes with it in the same change.
+- Generated pages, such as the code map, are regenerated from their source, never edited.
 
-```text
-gh workflow run ci.yaml --ref BRANCH
-```
+## Check a change
 
-Manual CI is optional for ordinary development merges. When explicitly required for an assignment, assess its result on the exact reviewed head and resolve relevant failures before integration. The Flake report is also manual. Release-owned calls retain their full validation. The commands below remain available for local or full validation:
+Run the checks the change calls for, and record their results in the PR.
+
+- **Documentation only:** `python -B scripts/check-docs.py`, which checks the local links and anchors of the maintained pages (name other pages as arguments), and `git diff --check`.
+- **Go code:** `gofmt` on the changed files, `go vet ./...` and the tests of the changed packages. `go test ./internal/tooling/...` whenever a package, a doc comment or an owning page moves. The commands build for Windows too, so a change to code they reach also runs `GOOS=windows go vet ./...`.
+- **The code map** after a change of the rule table or a package doc comment: `go test ./internal/tooling/architecture -run TestCodeMapPage -update`.
+- **The packaged source** in a fresh, empty folder outside the repository: `go run ./tools/smoke -repo . -work ABSOLUTE_EMPTY_FOLDER`. It packages and builds the source, tests the standalone bootstrap and drives the packaged CLI over a small project. It starts no agent.
+
+The full set, as CI runs it:
 
 ```text
 go mod verify
 go test ./... -count=1 -timeout=20m
 go vet ./...
 go build ./...
-go test ./internal/tooling/architecture
 python -B -m unittest discover -s scripts -p test_*.py
 python -B scripts/check-docs.py
 ```
 
-Broad Go suites run in Linux CI by manual dispatch (above). The product's tests run on plain folders and need no Git, so since 0.20.0 the whole Go suite takes about a minute on Windows too; only the release tooling's tests start Git, which is slow there ([earlier measurement](https://github.com/Glacius-Labs/Markitect/blob/d85e0fa1302ec95d1c82c6d2c088bf2ff34b6557/docs/validation/windows-test-time-20261028.md): about 50 minutes while the Run's tests used Git).
-
-Run `gofmt` on changed Go files and `git diff --check`. CI checks module checksums, tests with and without the race detector, vet, build, tracked Go formatting, every production/test/platform import against the architecture rule table, the packaged-source smoke, repository scripts and maintained documentation links. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
-
-Regenerate the code map when the rule table or a package doc comment changes:
+CI runs on Linux only, with quality checks and the race detector, in about five minutes. It starts only by hand:
 
 ```text
-go test ./internal/tooling/architecture -run TestCodeMapPage -update
+gh workflow run ci.yaml --ref BRANCH
 ```
 
-Run the packaged source smoke in a fresh external work directory:
+Local checks and the independent review are the basis for a merge, and CI is optional for ordinary changes. When you run it, run it on the reviewed head and merge only when it is green. The product's tests need no Git and run in about a minute on Windows too; only the release tooling's tests start Git.
 
-```text
-go run ./tools/smoke -repo . -work ABSOLUTE_EMPTY_EXTERNAL_DIRECTORY
-```
+## Review and land
 
-It packages and builds root-layout source, tests the standalone bootstrap and drives the packaged CLI over a small project in a plain folder: `init`, `check`, `tidy`, `doc`, `list --deps`, `vet --strict` and `check --json` with its envelope, `status` and `mark` that verify every Definition, `status` after a change of the spec, and the refusal of a model that does not compile and of the retired commands `lint`, `refs`, `graph` and `lock`; it checks that the retired `checklist`, `answer` and `gate` say to run `markitect update`. It starts no agent or container, so it establishes no provider or release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
+1. **Open a focused PR:** what changed and why, the checks you ran with their results, and what is not verified. Tests and smokes show that the code works; they are not a real agent run or a release.
+2. **Get one independent review of the complete diff,** by someone who did not write it: a person, or a fresh agent that has not seen your reasoning. Fix what it finds, and review again if the fixes are substantial.
+3. **Merge the reviewed head:** with a merge commit and the head matched, `gh pr merge NUMBER --merge --match-head-commit SHA`, without bypassing branch protection. Then read Main back.
 
-## Pull requests and parallel work
+**Real agent runs.** The skills `/markitect-build`, `/markitect-review`, `/markitect-cleanup`, `/markitect-bughunt` and `/markitect-audit`, and the routines, start real agents. Run them only on a committed test project, in your own Claude Code session or a worktree of that project. Before a run, name the project, the limits and the cleanup; after it, report what happened, failures included, in the PR it informs. The tool's commands start no agent and run anywhere.
 
-The [delivery plan](docs/implementation-plan.md) owns current scopes, dependencies, path reservations and integration order, and the [working method](docs/development/working-method.md) governs design learning and owner orientation. This section owns execution inside an assigned package. Candidate progress and checks live in the package's chat and PR; there is no separate backlog or dashboard.
+**Releases** follow the [release operations](packaging/README.md#release-operations) ([DEC-095](docs/decisions.md#dec-095-releases-a-plugin-and-a-binary-that-updates-itself)). There is no deployment.
 
-### Assignment
+## Reporting
 
-Read [AGENTS.md](AGENTS.md), the plan and the technical contract. Verify checkout, branch, full SHA and dirty state before edits. Use the coordinator's exact integrated base and one assigned non-protected branch and isolated worktree per writer. Preserve unrelated work; never stash across worktrees, reset another checkout or force-push reviewed heads.
-
-One chat owns one bounded package or API slice and its tests. The dispatch lists paths, inputs, acceptance and dependency gates. Subagents are permitted within that scope. Unresolved shared semantics block dependent implementation; independent work can proceed. No model or provider claim replaces actual verification.
-
-### Shared files and contracts
-
-Shared contracts and dependencies need explicit coordination. The coordinator owns root dependencies and the plan; the plan's [work streams](docs/implementation-plan.md#work-streams) assign exclusive scopes, and everything else stays with the coordinator. Others request a concrete change, with intended behavior, consumer and cases, rather than editing a shared file. Two chats cannot own the same contract, generated output or helper.
-
-Producers own value types; consumers own ports. Add no global types or interface package and no duplicate definitions to unblock an adapter; [Architecture](docs/architecture.md#adding-changing-or-removing-a-package) states how packages are added. Tests and fixtures live with their package. An external dependency needs the coordinator's agreement and an exact pin; root module changes have one writer.
-
-### Integration
-
-Run focused checks and inspect the actual changed files; preserve failures and unknowns with their exact source identity. Open a focused PR with the package, scope, contracts, base and head and the validation, and distinguish implemented behavior from scaffolding or proposed APIs. Regenerate generated views from their sources.
-
-Before integration, obtain independent complete-diff review, run relevant local checks and resolve findings. Freeze the exact reviewed head. The delivering chat merges directly with a merge commit and `--match-head-commit`, without waiting for hosted CI by default, as the plan's [integration rules](docs/implementation-plan.md#integration) state; recompose only for conflicts or substantive overlap and renew relevant review/checks after a changed candidate. If an assignment explicitly requires manual CI, bind it to that head and wait in the background. Preserve failed observations and distinguish local from hosted evidence. A source package is not a real Agent run, a successful Library Apply, a release or human acceptance: publication, provider runs, studies and owner acceptance need separate scope, finite authority and evidence.
-
-## Release work
-
-The [distribution guide](packaging/README.md#release-operations) owns release operations. The maintenance entrypoint is `cmd/markitect-release`. Source packages retain the root license, embedded [notices](internal/buildinfo/notices.md), the embedded Libraries and skills, and required test data. Use an external build cache when needed; Gitignore does not filter the complete product census. A source version does not establish a published or accepted release.
+Report defects and propose changes in [GitHub Issues](https://github.com/Glacius-Labs/Markitect/issues); [SUPPORT.md](SUPPORT.md) says where questions go, and [SECURITY.md](SECURITY.md) how to report a vulnerability privately.

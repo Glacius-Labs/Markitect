@@ -11,7 +11,7 @@ body:
     attributes:
       label: Markitect version
       description: Include the release or source revision, and how Markitect was installed.
-      placeholder: v0.4.0
+      placeholder: 0.25.3, plugin
     validations:
       required: true
   - type: input
