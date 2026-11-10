@@ -43,13 +43,6 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 	if name == "" {
 		name = filepath.Base(ws.Root())
 	}
-	// A spec where an earlier markitect kept it is moved by update, which also
-	// rewrites the record; init would only start a second, empty spec beside it.
-	if old, err := ws.List(project.OldSpecDir); err != nil {
-		return Misused, err
-	} else if len(old) > 0 {
-		return Misused, fmt.Errorf("this project keeps its spec in %s, where an earlier markitect kept it; run markitect update, which moves it to %s", project.OldSpecDir, project.SpecDir)
-	}
 	created := func(file string) { fmt.Fprintf(c.Stdout, "created %s\n", file) }
 	writeNew := func(file string, data []byte) error {
 		if ws.Exists(file) {
@@ -78,7 +71,6 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 	}
 	if ws.Exists(instructionsFile) {
 		fmt.Fprintf(c.Stdout, "left %s as it is; add that this project has a spec in %s, which is the authority\n", instructionsFile, project.SpecDir)
-		c.noteRetiredSkills(ws)
 	} else if err := writeNew(instructionsFile, []byte(fmt.Sprintf(instructionsTemplate, name))); err != nil {
 		return Misused, err
 	}
@@ -89,17 +81,6 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 		if code, err := c.writeLock(ws); err != nil || code != OK {
 			return code, err
 		}
-	}
-	// An earlier manifest's model for the agents moves to the harness
-	// configuration first, so that the agents get it (DEC-103).
-	proj, err := readProjectHarness(ws)
-	if err != nil {
-		return Misused, err
-	}
-	if _, moved, err := moveManifestModel(ws, proj, false); err != nil {
-		return Misused, err
-	} else if len(moved) > 0 {
-		fmt.Fprintf(c.Stdout, "moved the agents' model from %s to %s\n", project.ManifestFile, project.HarnessFile)
 	}
 	cfg, err := harnessConfig(ws)
 	if err != nil {
@@ -290,8 +271,7 @@ func guardedHooks(settings map[string]any) (map[string]any, string) {
 const worktreeBase = "head"
 
 // ownGuard says whether a PreToolUse entry is one an earlier markitect wrote: a
-// group whose every hook runs HookCommand or the BareHookCommand of 0.25.2 and
-// before. The current one replaces it.
+// group whose every hook runs HookCommand. The current one replaces it.
 func ownGuard(entry any) bool {
 	group, ok := entry.(map[string]any)
 	if !ok {
@@ -303,7 +283,7 @@ func ownGuard(entry any) bool {
 	}
 	for _, h := range hooks {
 		hook, ok := h.(map[string]any)
-		if !ok || (hook["command"] != run.HookCommand && hook["command"] != run.BareHookCommand) {
+		if !ok || hook["command"] != run.HookCommand {
 			return false
 		}
 	}
@@ -451,14 +431,7 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 	if err != nil {
 		return Misused, fmt.Errorf("read the manifest: %w; run markitect init", err)
 	}
-	manifest, parsed := model.ParseManifest(project.ManifestFile, data)
-	// An earlier manifest's model is no matter of the lock: update moves it.
-	var ds model.Diagnostics
-	for _, d := range parsed {
-		if d.Code != model.CodeManifestModel {
-			ds = append(ds, d)
-		}
-	}
+	manifest, ds := model.ParseManifest(project.ManifestFile, data)
 	// The same files the walk finds, as check reads them.
 	files, err := ws.Files()
 	if err != nil {

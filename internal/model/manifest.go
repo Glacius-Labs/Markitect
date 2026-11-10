@@ -37,10 +37,6 @@ type Lock struct {
 
 var version = regexp.MustCompile(`^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`)
 
-// CodeManifestModel marks a manifest that names the agents' model, which the
-// harness configuration holds since DEC-103.
-const CodeManifestModel = "manifest.model"
-
 // ParseManifest reads a manifest. file names it in diagnostics.
 func ParseManifest(file string, data []byte) (Manifest, Diagnostics) {
 	var ds Diagnostics
@@ -51,12 +47,7 @@ func ParseManifest(file string, data []byte) (Manifest, Diagnostics) {
 		return m, ds
 	}
 	for key, node := range top {
-		switch key {
-		case "libraries":
-		case "model":
-			// An earlier manifest named the agents' model here (DEC-103).
-			ds.Add(CodeManifestModel, file, node.Line, "the agents' model is set in .markitect/harness.yaml now; markitect update moves it there")
-		default:
+		if key != "libraries" {
 			ds.Add("manifest.syntax", file, node.Line, "unknown key %q: the manifest holds only libraries", key)
 		}
 	}

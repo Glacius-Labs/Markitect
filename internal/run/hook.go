@@ -31,10 +31,6 @@ const (
 	HookEnv      = "MARKITECT_HOOK"
 )
 
-// BareHookCommand is the hook an earlier markitect wrote, which failed with exit
-// 127 where the shell finds no markitect.
-const BareHookCommand = "markitect hook pretool"
-
 // MarkRule is the permission rule that starts the hook before a shell command
 // that records a verdict.
 const MarkRule = "Bash(markitect mark*)"

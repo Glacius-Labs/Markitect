@@ -350,10 +350,3 @@ func TestVetNoPaths(t *testing.T) {
 		}
 	}
 }
-
-// A change reports everything it could reach, with distance and reason, and only
-// the first step is on a checklist.
-// A registry row that drops a link still reaches the Definition it dropped, on a
-// changed file and on an unchanged one.
-// Rows that reach one Definition give their reasons in one order, so that the
-// same change gives the same impact and the same prompt.

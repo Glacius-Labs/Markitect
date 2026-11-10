@@ -196,7 +196,7 @@ func TestStatusCountsItemsPerPackage(t *testing.T) {
 	}
 }
 
-// What is to verify is what concept 4.0's checklist reached at distance 0 and 1.
+// What is to verify is what a change touches at distance 0 and 1.
 func TestWhatAChangeReaches(t *testing.T) {
 	cases := []struct {
 		name   string

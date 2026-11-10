@@ -13,15 +13,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-// record is the engine of status and mark, which read the project folder and
-// its record (DEC-099).
-func (c CLI) record() (*run.Engine, error) {
-	if c.Record == nil {
-		return nil, errors.New("this build reads no record")
-	}
-	return c.Record, nil
-}
-
 // status says what is to verify, and changes nothing. Exit 1 means it found
 // something: an item, an error in the spec or the realization, or a line of the
 // record it cannot read; notes, such as a skip, never change the exit code. With
@@ -36,11 +27,7 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 	} else if len(positional) != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
-	e, err := c.record()
-	if err != nil {
-		return Misused, err
-	}
-	st, err := e.Status(ctx, run.StatusRequest{Dir: o.repo, All: all})
+	st, err := c.Record.Status(ctx, run.StatusRequest{Dir: o.repo, All: all})
 	if err != nil {
 		return Misused, err
 	}
@@ -142,11 +129,7 @@ func (c CLI) mark(ctx context.Context, args []string) (int, error) {
 		return Misused, fmt.Errorf("names the item, DEFINITION@FINGERPRINT as status prints it, and the verdict; give each piece of evidence with -e and why with -m\nusage: %s", markUsage)
 	}
 	req.Item, req.Verdict = positional[0], positional[1]
-	e, err := c.record()
-	if err != nil {
-		return Misused, err
-	}
-	text, recorded, err := e.Mark(ctx, req)
+	text, recorded, err := c.Record.Mark(ctx, req)
 	if err != nil {
 		if errors.Is(err, run.ErrUsage) {
 			return Misused, fmt.Errorf("%s\nusage: %s", strings.TrimPrefix(err.Error(), run.ErrUsage.Error()+": "), markUsage)
@@ -171,12 +154,6 @@ func (c CLI) mark(ctx context.Context, args []string) (int, error) {
 	}
 	return OK, nil
 }
-
-// retired is what checklist, answer and gate say for one release (DEC-099,
-// decision 7): on standard output and with exit 0, so that an old project's skill,
-// which reads what its command printed, tells the session what to do instead of
-// failing silently.
-const retired = "markitect %s is gone: since 0.21, markitect records what was verified in .markitect/review.sum, and markitect status says what is left to verify. This project's skills and agents come from an older markitect. Stop, and run markitect update: it installs the /markitect-build and /markitect-review skills and writes the record from the newest certificate.\n"
 
 // hook is what the project's hook and the plugin's call before a tool call. It
 // reads the provider's input on standard input and always exits 0: a problem of

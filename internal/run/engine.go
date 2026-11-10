@@ -37,9 +37,6 @@ type folder struct {
 
 // readFolder reads and loads the project folder that holds dir.
 func (e *Engine) readFolder(dir string) (*folder, error) {
-	if e.Folder == nil {
-		return nil, errors.New("this build reads no project folder")
-	}
 	root, err := e.Folder.Root(dir)
 	if err != nil {
 		return nil, err

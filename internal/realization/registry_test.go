@@ -191,13 +191,13 @@ func TestAccountStale(t *testing.T) {
 	}
 	var got []string
 	for _, s := range reg.Stale {
-		got = append(got, s.Code+" "+s.Package+" "+s.File+" "+s.Target)
+		got = append(got, s.Code+" "+s.File+" "+s.Target)
 	}
 	want := []string{
-		"stale.page   ",              // the orphaned page itself, for Root
-		"stale.page  src/gone/g.go ", // its file, now Root's
-		"stale.definition members src/members/m.go members/removed",
-		"stale.file members src/members/deleted.go ",
+		"stale.page  ",              // the orphaned page itself
+		"stale.page src/gone/g.go ", // its file, now Root's
+		"stale.definition src/members/m.go members/removed",
+		"stale.file src/members/deleted.go ",
 	}
 	if strings.Join(got, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("stale:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))

@@ -65,7 +65,7 @@ Usage:
   markitect status [--repo DIR] [--json] [--all]  what is to verify: each Definition with a changed input or no record,
                                                   with what changed, where to look and its fingerprint; --all lists
                                                   every Definition, to verify everything again
-  markitect mark   [--repo DIR] [--json] DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m "WHY"]
+  markitect mark   [--repo DIR] [--json] DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m "WHY"] [--cases N [--covered M]]
                                                   record a verdict at the state status printed: ok, fail, skip or
                                                   spec-problem; evidence is path:line or path; only the
                                                   markitect-reviewer agent runs it
@@ -98,8 +98,7 @@ type Releases interface {
 // CLI runs one command.
 type CLI struct {
 	Folders Folders
-	// Record is the engine of status and mark. Nil means this build reads no
-	// record.
+	// Record is the engine of status and mark.
 	Record *run.Engine
 	Stdin  io.Reader
 	Stdout io.Writer
@@ -149,8 +148,6 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 		code, err = c.mark(ctx, rest)
 	case "config":
 		code, err = c.config(ctx, rest)
-	case "checklist", "answer", "gate":
-		fmt.Fprintf(c.Stdout, retired, cmd)
 	case "hook":
 		code, err = c.hook(ctx, rest)
 	case "version":

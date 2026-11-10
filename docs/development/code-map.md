@@ -20,7 +20,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `domain` | Registry pages, ownership and file accounting over a compiled model. | `model` | 1 |
 | `project` | Loads and checks a project's Markitect folder from the files of a project folder. | `model`, `assets`, `harness`, `domain` | 1 |
 | `service` | Questions about a loaded project: what it holds, what depends on what, and vet. | `model`, `assets`, `domain`, `project` | 1 |
-| `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, status, mark, the hook and the migration from certificates. | `model`, `assets`, `domain`, `project` | 1 |
+| `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, status, mark and the hook. | `model`, `assets`, `domain`, `project` | 1 |
 | `guardedwrite` | Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots. | nothing | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
 | `adapter` | Concrete project-folder, command-line and release adapters; no adapter imports another. | `model`, `assets`, `harness`, `domain`, `project`, `service`, `run`, `build` | 3 |
@@ -68,7 +68,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/project` | Package project loads a project's Markitect folder from a set of files, the project folder or a copy of its spec, and checks it as a whole: manifest, lock, Libraries, spec and registry. | [docs/guides/spec-language.md#the-projects-markitect-folder](../guides/spec-language.md#the-projects-markitect-folder) |
+| `internal/project` | Package project loads a project's Markitect folder from a set of files, the project folder, and checks it as a whole: manifest, lock, Libraries, spec and registry. | [docs/guides/spec-language.md#the-projects-markitect-folder](../guides/spec-language.md#the-projects-markitect-folder) |
 
 ## Analysis
 

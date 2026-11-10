@@ -1,8 +1,8 @@
 name: Flake report
 
 # Reads the Go test results that CI uploads per run attempt and reports tests
-# that passed and failed on the same commit and OS, plus every failing test
-# (backlog TEST-05). It reruns nothing and never changes a CI verdict.
+# that passed and failed on the same commit and OS, plus every failing test.
+# It reruns nothing and never changes a CI verdict.
 on:
   workflow_dispatch:
     inputs:

@@ -2,7 +2,6 @@ package run
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -99,9 +98,6 @@ type StatusRequest struct {
 
 // Status says what is to verify in the folder, and changes nothing.
 func (e *Engine) Status(_ context.Context, req StatusRequest) (Status, error) {
-	if e.Folder == nil {
-		return Status{}, errors.New("this build reads no project folder")
-	}
 	root, err := e.Folder.Root(req.Dir)
 	if err != nil {
 		return Status{}, err
@@ -232,7 +228,7 @@ func packageItems(m *model.Model, items []Item) []PackageItems {
 		byName[p.Package] = p
 	}
 	for _, it := range items {
-		name := model.PackageName(model.PackageOf(it.Definition))
+		name := model.PackageName(model.ParentOf(it.Definition))
 		p := byName[name]
 		if p == nil {
 			p = &PackageItems{Package: name, DependsOn: []string{}}

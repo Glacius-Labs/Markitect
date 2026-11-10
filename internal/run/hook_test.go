@@ -67,8 +67,8 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 			`C:\p\.markitect\spec\fees\fee.md`,
 			".markitect/registry/../spec/fee.md",
 			"/p/.Markitect/Spec/fee.md",
-			// A spec an earlier markitect kept elsewhere, before update moves it.
-			"/p/.markitect/model/fee.md",
+			// Any other file of Markitect's folder is the spec's to settle.
+			"/p/.markitect/other/fee.md",
 			"/p/.markitect/registry/notes.txt",
 		},
 		"registry": {
@@ -207,18 +207,18 @@ func TestHasGuard(t *testing.T) {
 	for s, want := range map[string]bool{
 		settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group(run.AgentTools, "")): true,
 		settings(group("", "")): true,
-		settings(group("Bash", ""), group("Write|Edit|NotebookEdit|MultiEdit|Task|Agent|Workflow", "")):                                                      true,
-		settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group("Agent|Task", "")):                                                             false,
-		settings(group("Bash", run.MarkRule), group(run.EditTools, "")):                                                                                      false,
-		settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group("Agent", "")):                                                                  false,
-		settings(group("Bash", run.MarkRule)):                                                                                                                false,
-		settings(group(run.EditTools, ""), group(run.AgentTools, "")):                                                                                        false,
-		settings(group("Bash", run.MarkRule), group("Edit|Write", ""), group(run.AgentTools, "")):                                                            false,
-		settings(group("Bash", "Bash(markitect status*)"), group(run.EditTools, ""), group(run.AgentTools, "")):                                              false,
-		settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group(run.AgentTools, "Agent(markitect-*)")):                                         false,
-		`{"hooks": {"PostToolUse": [` + group("", "") + `]}}`:                                                                                                false,
-		`{"note": "` + run.HookCommand + `"}`:                                                                                                                false,
-		strings.ReplaceAll(settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group(run.AgentTools, "")), run.HookCommand, run.BareHookCommand): false,
+		settings(group("Bash", ""), group("Write|Edit|NotebookEdit|MultiEdit|Task|Agent|Workflow", "")):                                                 true,
+		settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group("Agent|Task", "")):                                                        false,
+		settings(group("Bash", run.MarkRule), group(run.EditTools, "")):                                                                                 false,
+		settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group("Agent", "")):                                                             false,
+		settings(group("Bash", run.MarkRule)):                                                                                                           false,
+		settings(group(run.EditTools, ""), group(run.AgentTools, "")):                                                                                   false,
+		settings(group("Bash", run.MarkRule), group("Edit|Write", ""), group(run.AgentTools, "")):                                                       false,
+		settings(group("Bash", "Bash(markitect status*)"), group(run.EditTools, ""), group(run.AgentTools, "")):                                         false,
+		settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group(run.AgentTools, "Agent(markitect-*)")):                                    false,
+		`{"hooks": {"PostToolUse": [` + group("", "") + `]}}`:                                                                                           false,
+		`{"note": "` + run.HookCommand + `"}`:                                                                                                           false,
+		strings.ReplaceAll(settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group(run.AgentTools, "")), run.HookCommand, "my-own-check"): false,
 		"not json": false,
 	} {
 		if got := run.HasGuard([]byte(s)); got != want {

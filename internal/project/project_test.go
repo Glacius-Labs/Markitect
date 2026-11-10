@@ -109,53 +109,13 @@ func TestLoadUnknownOwnFiles(t *testing.T) {
 	r := valid(t)
 	r.files[Dir+"/notes.txt"] = "x"
 	r.files[RegistryDir+"/members.yaml"] = "x"
-	r.files[Dir+"/results/gate-20261106-120000-aaaaaaaa.json"] = "{}"
+	r.files[Dir+"/model/members.md"] = "x"
+	r.files[Dir+"/results/gate.json"] = "{}"
 	p := load(t, r)
 	expect(t, p.Errors, "project.file", ".markitect/notes.txt")
+	expect(t, p.Errors, "project.file", ".markitect/model/members.md")
+	expect(t, p.Errors, "project.file", ".markitect/results/gate.json")
 	expect(t, p.Errors, "registry.page", ".markitect/registry/members.yaml")
-	// The certificates of markitect 0.20 are retired, and update turns them into
-	// the record.
-	expect(t, p.Errors, "project.results", "markitect update")
-}
-
-// A spec where an earlier markitect kept it is one error, which update settles;
-// it compiles where it is, so that nothing else stands in the way. Beside a spec
-// in the new folder, only the new one counts.
-func TestLoadTheOldSpecFolder(t *testing.T) {
-	r := valid(t)
-	for f, data := range r.files {
-		if rest, ok := strings.CutPrefix(f, SpecDir+"/"); ok {
-			delete(r.files, f)
-			r.files[OldSpecDir+"/"+rest] = data
-		}
-	}
-	p := load(t, r)
-	if len(p.Errors) != 1 || p.Errors[0].Code != "project.model" || p.Errors[0].File != OldSpecDir || !strings.Contains(p.Errors[0].Message, "markitect update moves it to .markitect/spec") {
-		t.Fatalf("errors:\n%v", p.Errors)
-	}
-	if d := p.Model.Definitions["members/member"]; d == nil || d.File != OldSpecDir+"/members/member.md" {
-		t.Fatalf("the old spec did not compile where it is: %+v", d)
-	}
-	r.files[SpecDir+"/project.md"] = "---\nkind: std/Project\n---\n# Fresh\n"
-	p = load(t, r)
-	expect(t, p.Errors, "project.model", "markitect update")
-	if p.Model.Definitions["members/member"] != nil || p.Model.Definitions["project"].File != SpecDir+"/project.md" {
-		t.Fatal("beside a spec in the new folder, the old one counted")
-	}
-}
-
-func TestSpecPath(t *testing.T) {
-	for in, want := range map[string]string{
-		".markitect/model/members/member.md:3": ".markitect/spec/members/member.md:3",
-		".markitect/model.yaml":                ".markitect/model.yaml",
-		".markitect/registry/model/x.md":       ".markitect/registry/model/x.md",
-		"src/.markitect/model/x.md":            "src/.markitect/model/x.md",
-		".markitect/spec/x.md":                 ".markitect/spec/x.md",
-	} {
-		if got := SpecPath(in); got != want {
-			t.Errorf("SpecPath(%q) = %q, want %q", in, got, want)
-		}
-	}
 }
 
 func TestLoadMissingControlFiles(t *testing.T) {
@@ -260,14 +220,14 @@ func TestNothingBuilt(t *testing.T) {
 	}
 }
 
-// The agents' model moved from the manifest to the harness configuration
-// (DEC-103): an earlier manifest that names it says where it went.
-func TestTheModelMovedToTheHarnessConfiguration(t *testing.T) {
+// The manifest holds only the Libraries; the agents' model is set in the harness
+// configuration.
+func TestTheManifestHoldsOnlyLibraries(t *testing.T) {
 	r := valid(t)
-	r.files[ManifestFile] = "libraries:\n  std: 1.0.0\nmodel: opus\n"
-	expect(t, load(t, r).Errors, "manifest.model", "markitect update moves it")
-	r.files[ManifestFile] = "libraries:\n  std: 1.0.0\neffort: max\n"
-	expect(t, load(t, r).Errors, "manifest.syntax", `unknown key "effort"`)
+	for _, key := range []string{"model: opus", "effort: max"} {
+		r.files[ManifestFile] = "libraries:\n  std: 1.0.0\n" + key + "\n"
+		expect(t, load(t, r).Errors, "manifest.syntax", "unknown key")
+	}
 }
 
 // The harness configuration belongs to the layout, and one the tool cannot read

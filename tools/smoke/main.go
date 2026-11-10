@@ -3,7 +3,7 @@
 // tests the standalone bootstrap, builds the command-line tools from the
 // packaged source and drives them through fixed scenarios with exact
 // assertions. The same checks run on every operating system, so CI and the
-// release workflow need no shell-specific copies (backlog CI-03).
+// release workflow need no shell-specific copies.
 //
 //	go run ./tools/smoke [source] [-repo DIR] [-work DIR]
 //	go run ./tools/smoke bundle [-repo DIR] [-work DIR] -revision SHA [-expect-sha256 HEX]
@@ -23,7 +23,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -304,10 +303,6 @@ func decode(out string, value any) error {
 	return nil
 }
 
-var digestPattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
-
-func isDigest(value string) bool { return digestPattern.MatchString(value) }
-
 func requireContains(out string, wanted ...string) error {
 	for _, want := range wanted {
 		if !strings.Contains(out, want) {
@@ -321,15 +316,6 @@ func requirePresent(root string, names ...string) error {
 	for _, name := range names {
 		if info, err := os.Stat(filepath.Join(root, filepath.FromSlash(name))); err != nil || !info.Mode().IsRegular() {
 			return fmt.Errorf("%s is missing", name)
-		}
-	}
-	return nil
-}
-
-func requireAbsent(root string, names ...string) error {
-	for _, name := range names {
-		if _, err := os.Lstat(filepath.Join(root, filepath.FromSlash(name))); err == nil {
-			return fmt.Errorf("%s exists", name)
 		}
 	}
 	return nil

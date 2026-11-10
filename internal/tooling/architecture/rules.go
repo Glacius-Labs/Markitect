@@ -57,7 +57,7 @@ var Table = Rules{
 		{Name: "domain", Title: "Realization record", Meaning: "Registry pages, ownership and file accounting over a compiled model.", Imports: []string{"model"}},
 		{Name: "project", Title: "Project", Meaning: "Loads and checks a project's Markitect folder from the files of a project folder.", Imports: []string{"model", "assets", "harness", "domain"}},
 		{Name: "service", Title: "Analysis", Meaning: "Questions about a loaded project: what it holds, what depends on what, and vet.", Imports: []string{"model", "assets", "domain", "project"}},
-		{Name: "run", Title: "The record", Meaning: "The record of what was verified, without Git: the inputs of each Definition, review.sum, status, mark, the hook and the migration from certificates.", Imports: []string{"model", "assets", "domain", "project"}},
+		{Name: "run", Title: "The record", Meaning: "The record of what was verified, without Git: the inputs of each Definition, review.sum, status, mark and the hook.", Imports: []string{"model", "assets", "domain", "project"}},
 		{Name: "guardedwrite", Title: "Guarded write", Meaning: "Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots."},
 		{Name: "build", Title: "Build data", Meaning: "Version identity and embedded license notices."},
 		{Name: "adapter", Title: "Adapters", Meaning: "Concrete project-folder, command-line and release adapters; no adapter imports another.", Imports: []string{"model", "assets", "harness", "domain", "project", "service", "run", "build"}},

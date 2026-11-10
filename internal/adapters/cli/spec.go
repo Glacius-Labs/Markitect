@@ -366,7 +366,7 @@ func (c CLI) docDefinition(ctx context.Context, o options, p *project.Project, d
 		}
 		dd.LinkedFrom = append(dd.LinkedFrom, r)
 	}
-	if d.InModel() && c.Record != nil {
+	if d.InModel() {
 		if st, err := c.Record.Status(ctx, run.StatusRequest{Dir: o.repo, All: true}); err == nil {
 			for _, it := range st.Items {
 				if it.Definition != d.ID {
