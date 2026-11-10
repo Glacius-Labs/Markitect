@@ -1,6 +1,6 @@
 # Markitect agent entrypoint
 
-Markitect is a programming language for documentation, with delegated realization ([DEC-101](docs/decisions.md#dec-101-markitect-is-a-programming-language-for-documentation)). People maintain one typed spec of their project. The `markitect` tool checks and analyses it like code and records what was verified; agents started by the user's own Claude Code session realize it and verify it.
+With Markitect, people architect their project in Markdown ([DEC-101](docs/decisions.md#dec-101-people-architect-their-project-in-markdown)). They maintain one typed spec of it. The `markitect` tool checks and analyses it like code and records what was verified; agents started by the user's own Claude Code session realize it and verify it.
 
 **Before you assess or change the product's direction,** read, in this order:
 

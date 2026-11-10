@@ -6,7 +6,7 @@ This page says why Markitect exists, where its trust comes from and what it leav
 
 Read this section first, then [Why Markitect exists](#why-markitect-exists), [Founding intent](#founding-intent) and [Common misreadings](#common-misreadings).
 
-**What it is: a programming language for documentation** ([DEC-101](decisions.md#dec-101-markitect-is-a-programming-language-for-documentation)).
+**What it is: a way to architect a project in Markdown** ([DEC-101](decisions.md#dec-101-people-architect-their-project-in-markdown)).
 - People maintain one authoritative place per project: the spec. It is typed prose: Markdown Definitions, each of a Kind, organized in Packages, with links that work like imports. It states the project's concepts, rules, boundaries, interfaces, architecture and way of working, as far as good documentation of the project would.
 - Code, tests, configuration and documentation are realizations of the spec. Where they differ from it, the spec is right.
 - A deterministic tool, the `markitect` program, checks and analyses the spec as a compiler and a linter check code, and keeps a record of what was verified. Agents realize the spec and verify the result.
@@ -160,7 +160,7 @@ Check an assessment against this table before treating one of these as a finding
 
 | Misreading | Correct reading |
 |---|---|
-| Markitect is a linter or context tool for AI instructions such as rules, skills and `AGENTS.md`. | That is where the name comes from. Markitect is a programming language for documentation of the whole project, with delegated realization. Agent instructions are one kind of realization among many. |
+| Markitect is a linter or context tool for AI instructions such as rules, skills and `AGENTS.md`. | That is where the name comes from. With Markitect, people architect the whole project in Markdown, and agents realize it. Agent instructions are one kind of realization among many. |
 | Markitect is a new, unproven formalism. | It builds on proven practice: requirements traceability with suspect links, architecture metrics and Go's conventions. What is new is that the traceability is plain, typed text checked deterministically, that agents realize the spec and gather the evidence, and that the record works like Go's test cache. |
 | The deterministic parts are the product, and agent work is scope creep. | Delegated realization is the purpose, and the tool supports it ([DEC-001](decisions.md#dec-001-delegated-realization-is-the-purpose)). |
 | Markitect orchestrates or steers the agents. | It checks and analyses the spec, says what is to verify and records verdicts. Who starts which agent, when and how often belongs to the driver: the skills, the person's own session or the person ([DEC-096](decisions.md#dec-096-the-tool-computes-and-checks-a-driver-acts)). |

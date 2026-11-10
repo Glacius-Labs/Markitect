@@ -10,7 +10,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 ## Purpose
 
-### DEC-101 Markitect is a programming language for documentation
+### DEC-101 People architect their project in Markdown
 
 - The spec is typed prose in Packages, with links that work like imports. A deterministic tool checks and analyses it like code, and agents realize and verify it.
 - Code has always been a precise description for a limited but diligent executor. An AI executor is intelligent, but it still has to be told what is meant and what holds, or it guesses. So documentation becomes the programming language, and Markitect makes its authors define what they mean and what holds and connect those statements. What matters in code stays as relevant there: architecture, consistency, cleanliness, an overview without reading the code, and knowing what should be as against what is.

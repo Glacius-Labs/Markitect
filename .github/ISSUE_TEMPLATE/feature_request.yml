@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Markitect is a programming language for documentation, with delegated realization. See [the concept](https://github.com/Glacius-Labs/Markitect/blob/main/docs/concept.md), [the decisions](https://github.com/Glacius-Labs/Markitect/blob/main/docs/decisions.md) and [the roadmap](https://github.com/Glacius-Labs/Markitect/blob/main/docs/roadmap.md) before proposing a change.
+        With Markitect, people architect their project in Markdown, and agents realize it. See [the concept](https://github.com/Glacius-Labs/Markitect/blob/main/docs/concept.md), [the decisions](https://github.com/Glacius-Labs/Markitect/blob/main/docs/decisions.md) and [the roadmap](https://github.com/Glacius-Labs/Markitect/blob/main/docs/roadmap.md) before proposing a change.
   - type: textarea
     id: problem
     attributes:
