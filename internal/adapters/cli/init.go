@@ -153,6 +153,6 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 // nextSteps ends the init of a new project. The session that ran init started
 // before the skills existed, and Claude Code does not watch a skills folder that
 // was not there when a session started.
-const nextSteps = `next: run /markitect-architect in Claude Code here. It asks what the project is and starts the spec with you, or draws it from the code already here.
+const nextSteps = `next: run /markitect-architect in Claude Code here. It asks what the project is and starts the spec with you, or draws it from the project already here.
 A session that was open before init runs /reload-skills first, or reads .claude/skills/markitect-architect/SKILL.md.
 `
