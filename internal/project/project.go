@@ -1,5 +1,5 @@
 // Package project loads a project's Markitect folder from a set of files, the
-// project folder or a copy of its spec, and checks it as a whole: manifest, lock,
+// project folder, and checks it as a whole: manifest, lock,
 // Libraries, spec and registry.
 // Every command that reads the spec starts from a loaded Project.
 //
@@ -79,12 +79,11 @@ func isOwn(file string) bool {
 	return IsHarness(file) || file == ".gitignore" || strings.HasPrefix(strings.ToLower(file), WorktreeDir)
 }
 
-// Repository is one set of a project's files: the project folder, or a copy of its
-// spec.
+// Repository is one set of a project's files, such as the project folder.
 type Repository interface {
 	// Files returns every file of the project, folder-relative with forward
 	// slashes: for a project folder what a walk finds without what its .gitignore
-	// files exclude, and for a copy the files it holds.
+	// files exclude.
 	Files() ([]string, error)
 	Read(file string) ([]byte, error)
 	// GitIgnored reports whether the project's .gitignore files exclude a file.
@@ -155,8 +154,7 @@ func (p *Project) NothingBuilt() bool {
 	return true
 }
 
-// Load reads and checks the project in a set of files: a project folder, or a copy
-// of its spec.
+// Load reads and checks the project in a set of files, such as a project folder.
 func Load(repo Repository) (*Project, error) {
 	files, err := repo.Files()
 	if err != nil {

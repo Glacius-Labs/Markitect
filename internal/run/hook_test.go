@@ -67,8 +67,8 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 			`C:\p\.markitect\spec\fees\fee.md`,
 			".markitect/registry/../spec/fee.md",
 			"/p/.Markitect/Spec/fee.md",
-			// A spec an earlier markitect kept elsewhere, before update moves it.
-			"/p/.markitect/model/fee.md",
+			// Any other file of Markitect's folder is the spec's to settle.
+			"/p/.markitect/other/fee.md",
 			"/p/.markitect/registry/notes.txt",
 		},
 		"registry": {

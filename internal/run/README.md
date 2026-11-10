@@ -4,7 +4,7 @@
 
 | Package | Role |
 | --- | --- |
-| `internal/run` | The record: the inputs of each Definition, `.markitect/review.sum`, `status`, `mark`, the hook, the migration from the certificates of 0.20.0 and the move of the spec folder. |
+| `internal/run` | The record: the inputs of each Definition, `.markitect/review.sum`, `status`, `mark` and the hook. |
 | `internal/adapters/folder` | The walk of the project folder and its `.gitignore` files, for the record and the command line ([below](#the-folder)). |
 | `internal/bootstrap` | Builds the engine for the command line, with the lock of each project's record in the user's cache folder. |
 
@@ -100,21 +100,6 @@ The four agents are files `init` writes, each holding its tasks: the builder (bu
 
 The skills are plain prompts with no injected command, so no exit code can abort them. `/markitect-build`, `/markitect-cleanup` and `/markitect-bughunt` start the builder in a worktree of its own on its task; it runs `status`, does its work, starts the reviewer, and repeats until `status` lists nothing it can settle or only what needs the owner, or three rounds left the list no shorter. The session then commits the work on the worktree's branch and merges it into the owner's branch: build when `status` is empty there, cleanup and bughunt when it lists nothing new. `init` sets `worktree.baseRef` to `"head"` so the worktree starts from the owner's branch, and the tool accounts for Claude Code's worktrees under `.claude/worktrees/` itself. `/markitect-review` starts the reviewer on what `status` lists, or on everything with `--all`; it changes no code, and the session commits the record. Each of these skills runs by its strategy: sequentially as described, or through the parallel workflow `.claude/workflows/markitect-parallel.js`, which works per Package in waves and reads `status --json`, whose `packages` give each Package's items and dependencies. `/markitect-audit` starts the auditor, and `/markitect-schedule` sets up routines through Claude Code's scheduling. The [project workflow](../../docs/guides/project-workflow.md#7-build-and-review) says how to use them.
 
-## The migration
-
-`markitect update` turns a project of 0.20.0 into one with a record. When `.markitect/results/` holds a certificate and the project has no record yet, it writes the record from the newest certificate: newest by base (one that another names as its base is older), then by the time it records. Every Definition of the certified spec is recorded `ok` at the certified state, computed from the spec text and file hashes the certificate holds, with the certificate's pointers as evidence where it has them; a `not shown` answer becomes `skip`. Then it removes the results folder, which no longer belongs to the layout: `check` names a file there as `project.results` until it is gone. A project that already has its record keeps it. `update --check` and `version` count the migration as out of date.
-
-`checklist`, `answer` and `gate` print on standard output, with exit 0, that they are gone and to run `markitect update`, so that an old project's skill does not fail silently.
-
-## The move of the spec folder
-
-An older project keeps its spec in `.markitect/model/`. A project loads a spec there where it is, with one error, `project.model`, that stops every command until `markitect update` moves it ([`MoveSpec`](specmove.go)); `init` refuses until then. `update` does this first, before anything else, and renames the folder to `.markitect/spec/`. A certificate of 0.20.0 names the old folder too, and the migration above reads it as if it named the new one.
-
-The record keeps every verdict. A line is keyed by its Definition's ID, the path below the folder, and its inputs are hashes of content, so the move changes none of them. Only evidence can name a file of the spec, as when a reviewer cites the Definition itself; a `file:` input never does, since a registry row never names a file of `.markitect/`. `update` renames that evidence in place: the key `evidence:.markitect/model/x.md` becomes `evidence:.markitect/spec/x.md` with the same hash, and so does the evidence it lists. Evidence is no part of the fingerprint, so no fingerprint changes. Every other line stays as it is, in its place, also one markitect cannot read. The record is renamed whenever it names the old folder, so a line that a merge brings in from a branch that has not moved yet is renamed by the next `update` too. Like the migration above, the rename takes no lock: `update` is the owner's step, not one beside a running reviewer.
-
-With files in both folders the project has two specs, as when `init` of a newer markitect ran before `update`: `update` refuses, changes nothing and says to keep one. Empty folders count as none. `update --check` and `version` count the move as out of date, and `update` notes when `AGENTS.md`, which it never edits, still names `.markitect/model`.
-
-
 ## Tests
 
-`record_test.go` plays the builder and the reviewer on plain folders without Git while `status` says what is to verify: what a change reaches, the Kind and the Library, the fingerprint and evidence, the verdicts, the counts of cases and the revisions, a gone Definition, merged lines and conflicts, an unreadable line, errors, and parallel reviewers. `migrate_test.go` covers the migration from certificates written as 0.20.0 wrote them, `specmove_test.go` the move of the spec folder with its record and certificates, `hook_test.go` the hook, and `lock_test.go` the lock.
+`record_test.go` plays the builder and the reviewer on plain folders without Git while `status` says what is to verify: what a change reaches, the Kind and the Library, the fingerprint and evidence, the verdicts, the counts of cases and the revisions, a gone Definition, merged lines and conflicts, an unreadable line, errors, and parallel reviewers. `hook_test.go` covers the hook, and `lock_test.go` the lock.
