@@ -79,7 +79,8 @@ func RefreshHarness(f Folder, cfg harness.Config, dry bool) (files, said []strin
 type Refreshed struct {
 	// Files are the skills, agents and settings that differ.
 	Files []string
-	// Said is what the refresh of the settings says.
+	// Said is what the refresh of the settings says. A dry refresh returns it
+	// too, although it wrote nothing, so its caller does not print it.
 	Said []string
 	// Lock says the lock differs.
 	Lock bool
