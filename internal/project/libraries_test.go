@@ -4,11 +4,11 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
-	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
 func TestStandardLibrariesCompile(t *testing.T) {
-	var src model.Source
+	var src spec.Source
 	want := map[string][]string{"std": {"Concept.md", "Decision.md", "Feature.md", "Project.md", "Rule.md"}, "rest": {"Endpoint.md"}, "cli": {"Command.md"}}
 	for _, name := range libraries.Names() {
 		files, ok := libraries.Files(name)
@@ -18,16 +18,16 @@ func TestStandardLibrariesCompile(t *testing.T) {
 		if len(files) != len(want[name]) {
 			t.Fatalf("%s has %d files, want %v", name, len(files), want[name])
 		}
-		lib := model.LibrarySource{Name: name, Version: libraries.Version, Dir: "markitect:" + name}
+		lib := spec.LibrarySource{Name: name, Version: libraries.Version, Dir: "markitect:" + name}
 		for i, f := range files {
 			if f.Path != want[name][i] {
 				t.Fatalf("%s file %d = %s", name, i, f.Path)
 			}
-			lib.Files = append(lib.Files, model.File{Path: f.Path, Data: f.Data})
+			lib.Files = append(lib.Files, spec.File{Path: f.Path, Data: f.Data})
 		}
 		src.Libraries = append(src.Libraries, lib)
 	}
-	if _, ds := model.Compile(src); len(ds) != 0 {
+	if _, ds := spec.Compile(src); len(ds) != 0 {
 		t.Fatalf("standard Libraries do not compile:\n%v", ds)
 	}
 	if _, ok := libraries.Files("nope"); ok {
@@ -49,11 +49,11 @@ func TestStandardLibraryDigests(t *testing.T) {
 	}
 	for _, name := range libraries.Names() {
 		files, _ := libraries.Files(name)
-		var lib []model.File
+		var lib []spec.File
 		for _, f := range files {
-			lib = append(lib, model.File{Path: f.Path, Data: f.Data})
+			lib = append(lib, spec.File{Path: f.Path, Data: f.Data})
 		}
-		if got := model.LibraryDigest(lib); got != want[name] {
+		if got := spec.LibraryDigest(lib); got != want[name] {
 			t.Errorf("%s %s changed: digest %s, pinned %s", name, libraries.Version, got, want[name])
 		}
 	}
@@ -61,11 +61,11 @@ func TestStandardLibraryDigests(t *testing.T) {
 
 func TestStdCompilesAlone(t *testing.T) {
 	files, _ := libraries.Files("std")
-	lib := model.LibrarySource{Name: "std", Version: libraries.Version, Dir: "markitect:std"}
+	lib := spec.LibrarySource{Name: "std", Version: libraries.Version, Dir: "markitect:std"}
 	for _, f := range files {
-		lib.Files = append(lib.Files, model.File{Path: f.Path, Data: f.Data})
+		lib.Files = append(lib.Files, spec.File{Path: f.Path, Data: f.Data})
 	}
-	if _, ds := model.Compile(model.Source{Libraries: []model.LibrarySource{lib}}); len(ds) != 0 {
+	if _, ds := spec.Compile(spec.Source{Libraries: []spec.LibrarySource{lib}}); len(ds) != 0 {
 		t.Fatalf("std needs another Library:\n%v", ds)
 	}
 }

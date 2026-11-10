@@ -71,7 +71,7 @@ func TestLayerDirections(t *testing.T) {
 		from, to string
 		allowed  int
 	}{
-		{"internal/realization", "internal/model", both},
+		{"internal/realization", "internal/spec", both},
 		{"internal/project", "internal/realization", both},
 		{"internal/project", "internal/libraries", both},
 		{"internal/analysis", "internal/project", both},
@@ -88,11 +88,11 @@ func TestLayerDirections(t *testing.T) {
 		{"internal/tooling/release", "internal/tooling/architecture", both},
 
 		// Foundations never import outward.
-		{"internal/model", "internal/realization", none},
-		{"internal/model", "internal/libraries", none},
-		{"internal/model", "internal/bootstrap", none},
-		{"internal/libraries", "internal/model", none},
-		{"internal/skills", "internal/model", none},
+		{"internal/spec", "internal/realization", none},
+		{"internal/spec", "internal/libraries", none},
+		{"internal/spec", "internal/bootstrap", none},
+		{"internal/libraries", "internal/spec", none},
+		{"internal/skills", "internal/spec", none},
 		{"internal/realization", "internal/project", none},
 		{"internal/project", "internal/analysis", none},
 		{"internal/analysis", "internal/adapters/folder", none},
@@ -105,19 +105,19 @@ func TestLayerDirections(t *testing.T) {
 		// Entrypoints stay thin.
 		{"internal/bootstrap", "internal/tooling/release", none},
 		{"cmd/markitect", "internal/adapters/cli", none},
-		{"cmd/markitect", "internal/model", none},
+		{"cmd/markitect", "internal/spec", none},
 		{"cmd/markitect-release", "internal/bootstrap", none},
 		// Maintenance stays apart from the product.
-		{"internal/tooling/release", "internal/model", none},
+		{"internal/tooling/release", "internal/spec", none},
 		{"internal/tooling/architecture", "internal/tooling/release", none},
-		{"internal/guardedwrite", "internal/model", none},
+		{"internal/guardedwrite", "internal/spec", none},
 		{"internal/guardedwrite", "internal/tooling/release", none},
-		{"packaging/bootstrap", "internal/model", none},
+		{"packaging/bootstrap", "internal/spec", none},
 		{"tools/smoke", "internal/bootstrap", none},
 
 		// Test composition only.
 		{"internal/tooling/release", "internal/buildinfo", testOnly},
-		{"internal/model", "internal/testkit", testOnly},
+		{"internal/spec", "internal/testkit", testOnly},
 		{"internal/adapters/folder", "internal/testkit", testOnly},
 	} {
 		for _, test := range []bool{false, true} {
@@ -131,8 +131,8 @@ func TestLayerDirections(t *testing.T) {
 }
 
 func TestUnknownPackagesHaveNoPrivilege(t *testing.T) {
-	for _, unknown := range []string{"src/internal/core", "src/cmd/markitect", "benchmark/runner", "internal/common", "internal/adapters/other", "internal/tooling/other", "internal/modelx", "internal/agentd/frame/sub", "internal/adapters/folder/sub"} {
-		for _, edge := range []Edge{{From: unknown}, {From: "internal/model", To: unknown}, {From: unknown, To: "internal/testkit", Test: true}, {From: "internal/bootstrap", To: unknown, Test: true}} {
+	for _, unknown := range []string{"src/internal/core", "src/cmd/markitect", "benchmark/runner", "internal/common", "internal/adapters/other", "internal/tooling/other", "internal/specx", "internal/agentd/frame/sub", "internal/adapters/folder/sub"} {
+		for _, edge := range []Edge{{From: unknown}, {From: "internal/spec", To: unknown}, {From: unknown, To: "internal/testkit", Test: true}, {From: "internal/bootstrap", To: unknown, Test: true}} {
 			got := Table.Check([]Edge{edge})
 			if len(got) != 1 || !strings.Contains(got[0].Rule, "unclassified package") {
 				t.Errorf("unclassified %v: %v", edge, got)
@@ -147,11 +147,11 @@ func TestForbiddenLayerImportFailsInEveryFile(t *testing.T) {
 			root := t.TempDir()
 			writeFixture(t, root, map[string]string{
 				"README.md":                     "# Owner\n",
-				"internal/model/" + file:        "package model\nimport _ \"" + ModulePath + "internal/analysis\"\n",
+				"internal/spec/" + file:         "package spec\nimport _ \"" + ModulePath + "internal/analysis\"\n",
 				"internal/analysis/producer.go": "package analysis\n",
 			})
-			got, err := fixtureRules(t, "internal/model", "internal/analysis").CheckRepository(root)
-			if err != nil || len(got) != 1 || got[0].Edge.File != "internal/model/"+file || got[0].Edge.Line != 2 || got[0].Rule != "layer model may not import layer service" {
+			got, err := fixtureRules(t, "internal/spec", "internal/analysis").CheckRepository(root)
+			if err != nil || len(got) != 1 || got[0].Edge.File != "internal/spec/"+file || got[0].Edge.Line != 2 || got[0].Rule != "layer spec may not import layer service" {
 				t.Fatalf("%v %v", got, err)
 			}
 		})
@@ -173,23 +173,23 @@ func TestTestkitOnlyInTests(t *testing.T) {
 		file, content string
 		want          string
 	}{
-		{"internal/model/m.go", "package model\nimport _ \"" + ModulePath + "internal/testkit\"\n", "only test files may import internal/testkit"},
-		{"internal/model/m_windows.go", "package model\nimport _ \"" + ModulePath + "internal/testkit\"\n", "only test files may import internal/testkit"},
-		{"internal/model/m_test.go", "package model\nimport _ \"" + ModulePath + "internal/testkit\"\n", ""},
-		{"internal/testkit/k.go", "package testkit\nimport _ \"" + ModulePath + "internal/model\"\n", "layer test-support may not import Markitect packages"},
-		{"internal/testkit/k_test.go", "package testkit\nimport _ \"" + ModulePath + "internal/model\"\n", "layer test-support may not import Markitect packages"},
+		{"internal/spec/m.go", "package spec\nimport _ \"" + ModulePath + "internal/testkit\"\n", "only test files may import internal/testkit"},
+		{"internal/spec/m_windows.go", "package spec\nimport _ \"" + ModulePath + "internal/testkit\"\n", "only test files may import internal/testkit"},
+		{"internal/spec/m_test.go", "package spec\nimport _ \"" + ModulePath + "internal/testkit\"\n", ""},
+		{"internal/testkit/k.go", "package testkit\nimport _ \"" + ModulePath + "internal/spec\"\n", "layer test-support may not import Markitect packages"},
+		{"internal/testkit/k_test.go", "package testkit\nimport _ \"" + ModulePath + "internal/spec\"\n", "layer test-support may not import Markitect packages"},
 		{"packaging/bootstrap/b_test.go", "package main\nimport _ \"" + ModulePath + "internal/testkit\"\n", "layer standalone may not import Markitect packages"},
 	} {
 		t.Run(tc.file, func(t *testing.T) {
 			root := t.TempDir()
 			writeFixture(t, root, map[string]string{
 				"README.md":                    "# Owner\n",
-				"internal/model/producer.go":   "package model\n",
+				"internal/spec/producer.go":    "package spec\n",
 				"internal/testkit/producer.go": "package testkit\n",
 				"packaging/bootstrap/run.go":   "package main\n",
 				tc.file:                        tc.content,
 			})
-			got, err := fixtureRules(t, "internal/model", "internal/testkit", "packaging/bootstrap").CheckRepository(root)
+			got, err := fixtureRules(t, "internal/spec", "internal/testkit", "packaging/bootstrap").CheckRepository(root)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -206,18 +206,18 @@ func TestTestkitOnlyInTests(t *testing.T) {
 
 func TestUnknownPackageFails(t *testing.T) {
 	// A Go package without a row is a repository error, whatever it imports.
-	for _, file := range []string{"internal/extra/x.go", "internal/extra/x_test.go", "internal/model/sub/x_windows.go", "src/internal/core/c.go", "tools/other/o.go"} {
+	for _, file := range []string{"internal/extra/x.go", "internal/extra/x_test.go", "internal/spec/sub/x_windows.go", "src/internal/core/c.go", "tools/other/o.go"} {
 		t.Run(file, func(t *testing.T) {
 			root := t.TempDir()
-			writeFixture(t, root, map[string]string{"README.md": "# Owner\n", "internal/model/m.go": "package model\n", file: "package extra\n"})
-			if _, err := fixtureRules(t, "internal/model").CheckRepository(root); err == nil || !strings.Contains(err.Error(), "missing package "+filepath.ToSlash(filepath.Dir(file))) {
+			writeFixture(t, root, map[string]string{"README.md": "# Owner\n", "internal/spec/m.go": "package spec\n", file: "package extra\n"})
+			if _, err := fixtureRules(t, "internal/spec").CheckRepository(root); err == nil || !strings.Contains(err.Error(), "missing package "+filepath.ToSlash(filepath.Dir(file))) {
 				t.Fatalf("unknown package accepted: %v", err)
 			}
 		})
 	}
 	// An import of a package the table does not classify is a violation.
 	root := t.TempDir()
-	writeFixture(t, root, map[string]string{"README.md": "# Owner\n", "internal/realization/o.go": "package realization\nimport _ \"" + ModulePath + "internal/model\"\n"})
+	writeFixture(t, root, map[string]string{"README.md": "# Owner\n", "internal/realization/o.go": "package realization\nimport _ \"" + ModulePath + "internal/spec\"\n"})
 	got, err := fixtureRules(t, "internal/realization").CheckRepository(root)
 	if err != nil || len(got) != 1 || !strings.Contains(got[0].Rule, "unclassified package") {
 		t.Fatalf("import of an unclassified package accepted: %v %v", got, err)
@@ -229,7 +229,7 @@ func TestBootstrapCompositionAcrossPlatforms(t *testing.T) {
 		{"internal/project", "project"},
 		{"internal/adapters/cli", "cli"},
 		{"internal/adapters/folder", "folder"},
-		{"internal/model", "model"},
+		{"internal/spec", "spec"},
 	} {
 		for _, file := range []string{"fixture_windows_test.go", "fixture_linux_test.go", "fixture_windows.go", "fixture_linux.go"} {
 			t.Run(producer.pkg+"/"+file, func(t *testing.T) {
@@ -256,11 +256,11 @@ func TestInventoryRequiresActualPackagesAndOwners(t *testing.T) {
 		want  string
 	}{
 		{"empty", nil, Rules{Layers: Table.Layers}, ""},
-		{"unmapped test", map[string]string{"internal/model/only_test.go": "package model\n"}, Rules{Layers: Table.Layers}, "missing package internal/model"},
+		{"unmapped test", map[string]string{"internal/spec/only_test.go": "package spec\n"}, Rules{Layers: Table.Layers}, "missing package internal/spec"},
 		{"unmapped platform", map[string]string{"internal/snapshot/only_windows.go": "package snapshot\n"}, Rules{Layers: Table.Layers}, "missing package internal/snapshot"},
-		{"row without package", nil, fixtureRules(t, "internal/model"), "extra row internal/model"},
-		{"absent owner", map[string]string{"internal/model/m.go": "package model\n"}, Rules{Layers: Table.Layers, Packages: []Package{{"internal/model", "model", "docs/absent.md"}}}, "owning document: docs/absent.md does not exist"},
-		{"unknown layer", map[string]string{"internal/model/m.go": "package model\n"}, Rules{Layers: Table.Layers, Packages: []Package{{"internal/model", "future", "README.md"}}}, `unknown layer "future"`},
+		{"row without package", nil, fixtureRules(t, "internal/spec"), "extra row internal/spec"},
+		{"absent owner", map[string]string{"internal/spec/m.go": "package spec\n"}, Rules{Layers: Table.Layers, Packages: []Package{{"internal/spec", "spec", "docs/absent.md"}}}, "owning document: docs/absent.md does not exist"},
+		{"unknown layer", map[string]string{"internal/spec/m.go": "package spec\n"}, Rules{Layers: Table.Layers, Packages: []Package{{"internal/spec", "future", "README.md"}}}, `unknown layer "future"`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := t.TempDir()
@@ -338,10 +338,10 @@ func TestSelfImportsRequireExternalTests(t *testing.T) {
 	for _, tc := range []struct {
 		file, pkg string
 		want      int
-	}{{"p.go", "model", 1}, {"p_test.go", "model", 1}, {"p_test.go", "model_test", 0}} {
+	}{{"p.go", "spec", 1}, {"p_test.go", "spec", 1}, {"p_test.go", "spec_test", 0}} {
 		root := t.TempDir()
-		writeFixture(t, root, map[string]string{"README.md": "# Owner\n", "internal/model/" + tc.file: "package " + tc.pkg + "\nimport _ \"" + ModulePath + "internal/model\"\n"})
-		v, err := fixtureRules(t, "internal/model").CheckRepository(root)
+		writeFixture(t, root, map[string]string{"README.md": "# Owner\n", "internal/spec/" + tc.file: "package " + tc.pkg + "\nimport _ \"" + ModulePath + "internal/spec\"\n"})
+		v, err := fixtureRules(t, "internal/spec").CheckRepository(root)
 		if err != nil || len(v) != tc.want {
 			t.Fatalf("%+v: %v %v", tc, v, err)
 		}
@@ -349,7 +349,7 @@ func TestSelfImportsRequireExternalTests(t *testing.T) {
 }
 
 func TestProductNestedModulesCannotHidePackages(t *testing.T) {
-	for _, name := range []string{"internal/model/go.mod", "cmd/markitect/go.mod", "internal/tooling/release/go.mod"} {
+	for _, name := range []string{"internal/spec/go.mod", "cmd/markitect/go.mod", "internal/tooling/release/go.mod"} {
 		root := t.TempDir()
 		writeFixture(t, root, map[string]string{name: "module hidden\n"})
 		if _, err := Packages(root); err == nil || !strings.Contains(err.Error(), "nested Go module") {
@@ -357,7 +357,7 @@ func TestProductNestedModulesCannotHidePackages(t *testing.T) {
 		}
 	}
 	root := t.TempDir()
-	writeFixture(t, root, map[string]string{"internal/model/testdata/nested/go.mod": "module fixture\n", "internal/model/testdata/nested/a.go": "package fixture\n"})
+	writeFixture(t, root, map[string]string{"internal/spec/testdata/nested/go.mod": "module fixture\n", "internal/spec/testdata/nested/a.go": "package fixture\n"})
 	if p, err := Packages(root); err != nil || len(p) != 0 {
 		t.Fatalf("fixture boundary: %v %v", p, err)
 	}
@@ -370,8 +370,8 @@ func TestInspectSkipsNestedModulesOutsideTheProduct(t *testing.T) {
 		"tools/reference/cmd/x/main.go":   "package main\nimport _ \"reference/internal/y\"\n",
 		"tools/reference/internal/y/y.go": "package y\n",
 		"tools/harness/h.go":              "package harness\n",
-		"internal/model/nested/go.mod":    "module hidden\n",
-		"internal/model/nested/hidden.go": "package hidden\n",
+		"internal/spec/nested/go.mod":     "module hidden\n",
+		"internal/spec/nested/hidden.go":  "package hidden\n",
 	})
 	edges, err := Inspect(root)
 	if err != nil {
@@ -381,7 +381,7 @@ func TestInspectSkipsNestedModulesOutsideTheProduct(t *testing.T) {
 	for _, e := range edges {
 		seen[e.From] = true
 	}
-	if seen["tools/reference/cmd/x"] || seen["tools/reference/internal/y"] || !seen["tools/harness"] || !seen["internal/model/nested"] {
+	if seen["tools/reference/cmd/x"] || seen["tools/reference/internal/y"] || !seen["tools/harness"] || !seen["internal/spec/nested"] {
 		t.Fatalf("inspected packages: %v", seen)
 	}
 }

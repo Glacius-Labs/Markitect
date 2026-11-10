@@ -11,10 +11,10 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/harness"
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
-	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/skills"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
 // SkillDirs are the folders where coding agents look for project skills:
@@ -431,7 +431,7 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 	if err != nil {
 		return Misused, fmt.Errorf("read the manifest: %w; run markitect init", err)
 	}
-	manifest, ds := model.ParseManifest(project.ManifestFile, data)
+	manifest, ds := spec.ParseManifest(project.ManifestFile, data)
 	// The same files the walk finds, as check reads them.
 	files, err := ws.Files()
 	if err != nil {
@@ -441,7 +441,7 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 	if err != nil {
 		return Misused, err
 	}
-	var libs []model.LibrarySource
+	var libs []spec.LibrarySource
 	for _, ref := range manifest.Libraries {
 		lib, code, reason := project.LibrarySource(ref, local)
 		if code != "" {
@@ -456,7 +456,7 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 		}
 		return Failed, nil
 	}
-	if err := ws.Write(project.LockFile, model.RenderLock(libs)); err != nil {
+	if err := ws.Write(project.LockFile, spec.RenderLock(libs)); err != nil {
 		return Misused, err
 	}
 	var names []string

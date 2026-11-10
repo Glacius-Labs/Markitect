@@ -17,7 +17,7 @@ func bundleSnapshot() *Input {
 		"LICENSE":                       []byte("Apache License\r\nVersion 2.0\r\n"),
 		"cmd/markitect/main.go":         []byte("package main\n"),
 		"internal/buildinfo/version.go": []byte("package buildinfo\nvar version = \"1.2.3\"\n"),
-		"internal/model/model.go":       []byte("package core\n"),
+		"internal/spec/spec.go":         []byte("package core\n"),
 		"internal/project/embedded/resources/skill.yaml": []byte("kind: Skill\n"),
 		"packaging/bootstrap/run-markitect.go":           []byte("package main\r\n"),
 		"packaging/bootstrap/run-markitect_test.go":      []byte("package main\r\n"),

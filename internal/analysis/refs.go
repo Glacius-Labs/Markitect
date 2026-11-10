@@ -10,8 +10,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
 // Ref is one place that names a Definition or a Package.
@@ -27,14 +27,14 @@ type Ref struct {
 // such as members/member or std/Rule, or a Package path.
 func Refs(p *project.Project, target string) ([]Ref, error) {
 	target = strings.TrimSuffix(strings.Trim(target, "[]"), ".md")
-	_, isDef := p.Model.Definitions[target]
-	_, isPkg := p.Model.Packages[target]
-	if !isDef && (!isPkg || target == model.RootPackage) {
-		return nil, fmt.Errorf("%q is neither a Definition nor a Package of the model", target)
+	_, isDef := p.Spec.Definitions[target]
+	_, isPkg := p.Spec.Packages[target]
+	if !isDef && (!isPkg || target == spec.RootPackage) {
+		return nil, fmt.Errorf("%q is neither a Definition nor a Package of the spec", target)
 	}
 	var refs []Ref
-	for _, id := range sortedIDs(p.Model) {
-		d := p.Model.Definitions[id]
+	for _, id := range sortedIDs(p.Spec) {
+		d := p.Spec.Definitions[id]
 		for _, l := range d.Links {
 			if l.Target != target {
 				continue
@@ -57,9 +57,9 @@ func Refs(p *project.Project, target string) ([]Ref, error) {
 	return refs, nil
 }
 
-func sortedIDs(m *model.Model) []string {
-	ids := make([]string, 0, len(m.Definitions))
-	for id := range m.Definitions {
+func sortedIDs(sp *spec.Spec) []string {
+	ids := make([]string, 0, len(sp.Definitions))
+	for id := range sp.Definitions {
 		ids = append(ids, id)
 	}
 	sort.Strings(ids)

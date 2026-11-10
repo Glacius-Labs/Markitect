@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
-	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
@@ -29,13 +29,13 @@ func def(kind, title, body string) string {
 // anchor links the Packages.
 func library() map[string]string {
 	files, _ := libraries.Files("std")
-	std := model.LibrarySource{Name: "std", Version: libraries.Version}
+	std := spec.LibrarySource{Name: "std", Version: libraries.Version}
 	for _, f := range files {
-		std.Files = append(std.Files, model.File{Path: f.Path, Data: f.Data})
+		std.Files = append(std.Files, spec.File{Path: f.Path, Data: f.Data})
 	}
 	return map[string]string{
 		project.ManifestFile:                      "libraries:\n  std: 1.0.0\n",
-		project.LockFile:                          string(model.RenderLock([]model.LibrarySource{std})),
+		project.LockFile:                          string(spec.RenderLock([]spec.LibrarySource{std})),
 		".claude/agents/markitect-reviewer.md":    "---\nname: markitect-reviewer\n---\nReview.\n",
 		".claude/agents/markitect-builder.md":     "---\nname: markitect-builder\n---\nBuild.\n",
 		run.SettingsFile:                          `{"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "` + run.HookCommand + `"}]}]}}` + "\n",

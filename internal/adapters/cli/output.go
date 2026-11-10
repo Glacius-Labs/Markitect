@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 
-	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
 // FormatVersion is the version of every JSON document markitect prints with
@@ -44,7 +44,7 @@ type diagnostic struct {
 
 // diagnostics converts a list for a JSON document; never nil, so that the
 // document holds an empty list rather than null.
-func diagnostics(severity string, ds model.Diagnostics) []diagnostic {
+func diagnostics(severity string, ds spec.Diagnostics) []diagnostic {
 	out := []diagnostic{}
 	for _, d := range ds {
 		out = append(out, diagnostic{Severity: severity, Code: d.Code, Message: d.Message, File: d.File, Line: d.Line})

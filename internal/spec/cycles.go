@@ -1,4 +1,4 @@
-package model
+package spec
 
 import (
 	"fmt"
@@ -8,13 +8,13 @@ import (
 
 // Successors returns the Packages p depends on: its explicit edges and its
 // parent, the implicit edge that scope by location creates.
-func (m *Model) Successors(p string) []string {
+func (s *Spec) Successors(p string) []string {
 	var out []string
-	for to := range m.Edges[p] {
+	for to := range s.Edges[p] {
 		out = append(out, to)
 	}
 	if p != RootPackage {
-		if parent := ParentOf(p); m.Edges[p][parent] == nil {
+		if parent := ParentOf(p); s.Edges[p][parent] == nil {
 			out = append(out, parent)
 		}
 	}
@@ -25,12 +25,12 @@ func (m *Model) Successors(p string) []string {
 // checkCycles reports every strongly connected set of Packages as one cycle,
 // with one concrete path through it.
 func (c *compiler) checkCycles() {
-	for _, scc := range c.m.Cycles() {
+	for _, scc := range c.spec.Cycles() {
 		in := map[string]bool{}
 		for _, p := range scc {
 			in[p] = true
 		}
-		steps, file, line := c.m.cyclePath(scc[0], in)
+		steps, file, line := c.spec.cyclePath(scc[0], in)
 		var names []string
 		for _, p := range scc {
 			names = append(names, PackageName(p))
@@ -42,9 +42,9 @@ func (c *compiler) checkCycles() {
 // Cycles returns each set of Packages that depend on each other in a cycle,
 // sorted, in a stable order: the sets package.cycle reports. A cycle may run
 // through the implicit edge from a Package to its parent.
-func (m *Model) Cycles() [][]string {
+func (s *Spec) Cycles() [][]string {
 	var out [][]string
-	for _, scc := range m.components() {
+	for _, scc := range s.components() {
 		if len(scc) > 1 {
 			out = append(out, scc)
 		}
@@ -54,7 +54,7 @@ func (m *Model) Cycles() [][]string {
 
 // components returns the strongly connected components of the Package graph
 // (Tarjan), each sorted, in a stable order.
-func (m *Model) components() [][]string {
+func (s *Spec) components() [][]string {
 	index := map[string]int{}
 	low := map[string]int{}
 	onStack := map[string]bool{}
@@ -67,7 +67,7 @@ func (m *Model) components() [][]string {
 		next++
 		stack = append(stack, v)
 		onStack[v] = true
-		for _, w := range m.Successors(v) {
+		for _, w := range s.Successors(v) {
 			if _, seen := index[w]; !seen {
 				visit(w)
 				low[v] = min(low[v], low[w])
@@ -90,7 +90,7 @@ func (m *Model) components() [][]string {
 			out = append(out, scc)
 		}
 	}
-	for _, p := range m.SortedPackages() {
+	for _, p := range s.SortedPackages() {
 		if _, seen := index[p]; !seen {
 			visit(p)
 		}
@@ -102,7 +102,7 @@ func (m *Model) components() [][]string {
 // cyclePath finds the shortest path from start back to start inside one
 // component and describes each step; it also returns where the first explicit
 // link of the path is written.
-func (m *Model) cyclePath(start string, in map[string]bool) ([]string, string, int) {
+func (s *Spec) cyclePath(start string, in map[string]bool) ([]string, string, int) {
 	prev := map[string]string{}
 	queue := []string{start}
 	seen := map[string]bool{}
@@ -110,7 +110,7 @@ func (m *Model) cyclePath(start string, in map[string]bool) ([]string, string, i
 	for len(queue) > 0 && end == "" {
 		v := queue[0]
 		queue = queue[1:]
-		for _, w := range m.Successors(v) {
+		for _, w := range s.Successors(v) {
 			if !in[w] {
 				continue
 			}
@@ -134,7 +134,7 @@ func (m *Model) cyclePath(start string, in map[string]bool) ([]string, string, i
 	file, line := "", 0
 	for i := 0; i+1 < len(path); i++ {
 		from, to := path[i], path[i+1]
-		uses := m.Edges[from][to]
+		uses := s.Edges[from][to]
 		if len(uses) == 0 {
 			steps = append(steps, fmt.Sprintf("%s lies inside %s", PackageName(from), PackageName(to)))
 			continue

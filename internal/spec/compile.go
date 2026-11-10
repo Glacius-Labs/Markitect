@@ -1,4 +1,4 @@
-package model
+package spec
 
 import (
 	"path"
@@ -15,12 +15,12 @@ its Kind in its front matter; a Kind is itself a Definition whose Kind is
 Kind. Core offers nothing else.
 `
 
-// Compile parses and checks a model with its Libraries. The returned
-// Diagnostics are the compile errors, sorted; the Model is usable for display
+// Compile parses and checks a spec with its Libraries. The returned
+// Diagnostics are the compile errors, sorted; the Spec is usable for display
 // even when there are errors.
-func Compile(src Source) (*Model, Diagnostics) {
+func Compile(src Source) (*Spec, Diagnostics) {
 	c := &compiler{
-		m: &Model{
+		spec: &Spec{
 			Definitions: map[string]*Definition{},
 			Packages:    map[string]*Package{RootPackage: {Path: RootPackage}},
 			Libraries:   map[string]*Library{},
@@ -28,21 +28,21 @@ func Compile(src Source) (*Model, Diagnostics) {
 		},
 		rawKind: map[string]rawKind{},
 	}
-	c.m.Definitions[CoreKind] = &Definition{ID: CoreKind, Library: "core", Kind: CoreKind, Title: CoreKind, File: "core/Kind.md", Data: []byte(coreBody), Words: Words([]byte(coreBody))}
+	c.spec.Definitions[CoreKind] = &Definition{ID: CoreKind, Library: "core", Kind: CoreKind, Title: CoreKind, File: "core/Kind.md", Data: []byte(coreBody), Words: Words([]byte(coreBody))}
 	for _, lib := range src.Libraries {
 		c.loadLibrary(lib)
 	}
-	c.loadModel(src)
+	c.loadSpec(src)
 	c.resolve()
 	c.checkCycles()
-	for _, p := range c.m.Packages {
+	for _, p := range c.spec.Packages {
 		sort.Strings(p.Children)
 		sort.Strings(p.Definitions)
 	}
-	for _, l := range c.m.Libraries {
+	for _, l := range c.spec.Libraries {
 		sort.Strings(l.Definitions)
 	}
-	return c.m, c.diags.Sorted()
+	return c.spec, c.diags.Sorted()
 }
 
 type rawKind struct {
@@ -51,7 +51,7 @@ type rawKind struct {
 }
 
 type compiler struct {
-	m       *Model
+	spec    *Spec
 	diags   Diagnostics
 	rawKind map[string]rawKind // Definition ID -> kind as written
 	raw     map[string][]RawLink
@@ -62,7 +62,7 @@ func (c *compiler) loadLibrary(lib LibrarySource) {
 		c.diags.Add("library.name", lib.Dir, 0, "%q cannot name a Library: use letters, digits, - and _, and not %q", lib.Name, CoreKind)
 		return
 	}
-	c.m.Libraries[lib.Name] = &Library{Name: lib.Name, Version: lib.Version}
+	c.spec.Libraries[lib.Name] = &Library{Name: lib.Name, Version: lib.Version}
 	for _, f := range lib.Files {
 		file := path.Join(lib.Dir, f.Path)
 		name, ok := strings.CutSuffix(f.Path, ".md")
@@ -79,11 +79,11 @@ func (c *compiler) loadLibrary(lib LibrarySource) {
 		if d.Internal {
 			c.diags.Add("library.internal", file, 0, "a Library Definition cannot be internal")
 		}
-		c.m.Libraries[lib.Name].Definitions = append(c.m.Libraries[lib.Name].Definitions, id)
+		c.spec.Libraries[lib.Name].Definitions = append(c.spec.Libraries[lib.Name].Definitions, id)
 	}
 }
 
-func (c *compiler) loadModel(src Source) {
+func (c *compiler) loadSpec(src Source) {
 	// names[parent][lower-case name] collects the spellings and forms (file or
 	// folder) of every entry, to find entries that collide.
 	type entry struct{ name, form string }
@@ -106,11 +106,11 @@ func (c *compiler) loadModel(src Source) {
 		file := path.Join(src.Dir, f.Path)
 		id, isMarkdown := strings.CutSuffix(f.Path, ".md")
 		if !isMarkdown {
-			c.diags.Add("model.file", file, 0, "the spec folder holds only Definitions (.md files) and Package folders")
+			c.diags.Add("spec.file", file, 0, "the spec folder holds only Definitions (.md files) and Package folders")
 			continue
 		}
 		if !ValidPath(id) {
-			c.diags.Add("model.name", file, 0, "%q is not a valid Definition path: every folder and file name starts with a letter or digit and uses only letters, digits, - and _", f.Path)
+			c.diags.Add("spec.name", file, 0, "%q is not a valid Definition path: every folder and file name starts with a letter or digit and uses only letters, digits, - and _", f.Path)
 			continue
 		}
 		segments := strings.Split(id, "/")
@@ -118,19 +118,19 @@ func (c *compiler) loadModel(src Source) {
 		for _, s := range segments[:len(segments)-1] {
 			note(parent, s, "folder")
 			child := strings.TrimPrefix(parent+"/"+s, "/")
-			if _, ok := c.m.Packages[child]; !ok {
-				c.m.Packages[child] = &Package{Path: child, Parent: parent}
-				c.m.Packages[parent].Children = append(c.m.Packages[parent].Children, child)
+			if _, ok := c.spec.Packages[child]; !ok {
+				c.spec.Packages[child] = &Package{Path: child, Parent: parent}
+				c.spec.Packages[parent].Children = append(c.spec.Packages[parent].Children, child)
 			}
 			parent = child
 		}
 		note(parent, segments[len(segments)-1], "file")
-		if _, taken := c.m.Definitions[id]; taken {
+		if _, taken := c.spec.Definitions[id]; taken {
 			what := "a Library Kind"
 			if id == CoreKind {
 				what = "Core's Kind"
 			}
-			c.diags.Add("model.reserved", file, 0, "%s is already the ID of %s; choose another name", id, what)
+			c.diags.Add("spec.reserved", file, 0, "%s is already the ID of %s; choose another name", id, what)
 			continue
 		}
 		d := c.parseDefinition(id, file, f.Data)
@@ -138,7 +138,7 @@ func (c *compiler) loadModel(src Source) {
 			continue
 		}
 		d.Package = parent
-		c.m.Packages[parent].Definitions = append(c.m.Packages[parent].Definitions, id)
+		c.spec.Packages[parent].Definitions = append(c.spec.Packages[parent].Definitions, id)
 	}
 	for parent, byKey := range names {
 		for _, entries := range byKey {
@@ -148,24 +148,24 @@ func (c *compiler) loadModel(src Source) {
 					spelled = append(spelled, e.form+" "+e.name)
 				}
 				sort.Strings(spelled)
-				c.diags.Add("model.collision", path.Join(src.Dir, parent), 0, "%s name the same thing; links could not tell them apart", strings.Join(spelled, " and "))
+				c.diags.Add("spec.collision", path.Join(src.Dir, parent), 0, "%s name the same thing; links could not tell them apart", strings.Join(spelled, " and "))
 			}
 		}
 	}
-	for _, top := range c.m.Packages[RootPackage].Children {
+	for _, top := range c.spec.Packages[RootPackage].Children {
 		c.reserved(src.Dir, top)
 	}
-	for _, id := range c.m.Packages[RootPackage].Definitions {
+	for _, id := range c.spec.Packages[RootPackage].Definitions {
 		c.reserved(src.Dir, id)
 	}
 }
 
 func (c *compiler) reserved(dir, name string) {
 	if name == CoreKind {
-		c.diags.Add("model.reserved", path.Join(dir, name), 0, "%q is Core's Kind; choose another top-level name", name)
+		c.diags.Add("spec.reserved", path.Join(dir, name), 0, "%q is Core's Kind; choose another top-level name", name)
 	}
-	if _, ok := c.m.Libraries[name]; ok {
-		c.diags.Add("model.reserved", path.Join(dir, name), 0, "%q is the name of a Library; links to %s/... would be ambiguous", name, name)
+	if _, ok := c.spec.Libraries[name]; ok {
+		c.diags.Add("spec.reserved", path.Join(dir, name), 0, "%q is the name of a Library; links to %s/... would be ambiguous", name, name)
 	}
 }
 
@@ -178,7 +178,7 @@ func (c *compiler) parseDefinition(id, file string, data []byte) *Definition {
 		// broken file reports one error.
 		c.diags.Add("definition.front_matter", file, page.FrontLine, "%v", err)
 		d := &Definition{ID: id, File: file, Data: data}
-		c.m.Definitions[id] = d
+		c.spec.Definitions[id] = d
 		c.rawKind[id] = rawKind{}
 		return d
 	}
@@ -215,7 +215,7 @@ func (c *compiler) parseDefinition(id, file string, data []byte) *Definition {
 		c.diags.Add("definition.title", file, line, "%v", err)
 	}
 	d.Title = title
-	c.m.Definitions[id] = d
+	c.spec.Definitions[id] = d
 	c.rawKind[id] = kind
 	if c.raw == nil {
 		c.raw = map[string][]RawLink{}
@@ -233,7 +233,7 @@ func (c *compiler) resolve() {
 	}
 	sort.Strings(ids)
 	for _, id := range ids {
-		d := c.m.Definitions[id]
+		d := c.spec.Definitions[id]
 		if k := c.rawKind[id]; k.value != "" {
 			link := c.resolveLink(d, k.value, k.line, true)
 			if link.Target != "" {
@@ -270,8 +270,8 @@ func (c *compiler) resolveLink(d *Definition, raw string, line int, kind bool) L
 	switch {
 	case target == CoreKind:
 		link.Target = CoreKind
-	case c.m.Libraries[first] != nil:
-		if _, ok := c.m.Definitions[target]; ok && nested {
+	case c.spec.Libraries[first] != nil:
+		if _, ok := c.spec.Definitions[target]; ok && nested {
 			link.Target = target
 		} else {
 			c.diags.Add(code, d.File, line, "%s %q: Library %s has no Kind of that name", what, raw, first)
@@ -281,9 +281,9 @@ func (c *compiler) resolveLink(d *Definition, raw string, line int, kind bool) L
 		c.diags.Add(code, d.File, line, "%s %q: a Library Definition may link only to Libraries the manifest names and to Kind", what, raw)
 		return link
 	default:
-		if def, ok := c.m.Definitions[target]; ok && def.InModel() {
+		if def, ok := c.spec.Definitions[target]; ok && def.Own() {
 			link.Target = target
-		} else if _, ok := c.m.Packages[target]; ok {
+		} else if _, ok := c.spec.Packages[target]; ok {
 			link.Target, link.Package = target, true
 		} else {
 			c.diags.Add(code, d.File, line, "%s %q resolves to no Definition, Package or Library Kind; paths start at the spec folder", what, raw)
@@ -297,12 +297,12 @@ func (c *compiler) resolveLink(d *Definition, raw string, line int, kind bool) L
 }
 
 // checkDirection applies visibility and the Go-like dependency rules to one
-// resolved link of a model Definition and records the edge it makes.
+// resolved link of a Definition of the spec and records the edge it makes.
 func (c *compiler) checkDirection(d *Definition, link Link) {
 	to := link.Target
-	target := c.m.Definitions[link.Target]
+	target := c.spec.Definitions[link.Target]
 	if !link.Package {
-		if !target.InModel() {
+		if !target.Own() {
 			return // Libraries and Core lie outside the Package graph
 		}
 		to = target.Package
@@ -322,8 +322,8 @@ func (c *compiler) checkDirection(d *Definition, link Link) {
 	if !link.Package && target.Internal {
 		c.diags.Add("link.internal", d.File, link.Line, "%s is internal to %s; only %s and the Packages below it may link to it", link.Target, PackageName(to), PackageName(to))
 	}
-	if c.m.Edges[from] == nil {
-		c.m.Edges[from] = map[string][]Use{}
+	if c.spec.Edges[from] == nil {
+		c.spec.Edges[from] = map[string][]Use{}
 	}
-	c.m.Edges[from][to] = append(c.m.Edges[from][to], Use{From: d.ID, Target: link.Target, Kind: link.Kind, File: d.File, Line: link.Line})
+	c.spec.Edges[from][to] = append(c.spec.Edges[from][to], Use{From: d.ID, Target: link.Target, Kind: link.Kind, File: d.File, Line: link.Line})
 }

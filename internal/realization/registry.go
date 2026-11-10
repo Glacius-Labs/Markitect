@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 	"github.com/yuin/goldmark/ast"
 	east "github.com/yuin/goldmark/extension/ast"
 	"go.yaml.in/yaml/v3"
@@ -13,12 +13,12 @@ import (
 
 // Input is everything Account reads.
 type Input struct {
-	Model *model.Model
+	Spec *spec.Spec
 	// Pages are the registry pages by their path below the registry folder:
 	// "" for Root's page, "members" for .../registry/members.md.
 	Pages []PageFile
 	// Ignore is the ignore file, if the project has one.
-	Ignore *model.File
+	Ignore *spec.File
 	// Files are every repository file Git can see (tracked, or untracked and
 	// not ignored) outside Markitect's own folder.
 	Files []string
@@ -53,7 +53,7 @@ type Page struct {
 	File     string
 	Patterns []Pattern
 	Entries  []*Entry
-	Orphaned bool // the Package no longer exists in the model
+	Orphaned bool // the Package no longer exists in the spec
 }
 
 // Entry is one file row of a registry page.
@@ -66,7 +66,7 @@ type Entry struct {
 	Reason   string
 }
 
-// Stale is realization the model or the repository no longer supports: a
+// Stale is realization the spec or the repository no longer supports: a
 // link to a Definition that is gone, an entry for a file that is gone, or the
 // page of a Package that is gone. Account reports none as a diagnostic;
 // project.Load makes each an error.
@@ -81,7 +81,7 @@ type Stale struct {
 // Account parses the registry pages and the ignore file and accounts every repository
 // file: each has exactly one owning Package and is listed on its owner's page
 // or ignored.
-func Account(in Input) (*Registry, model.Diagnostics) {
+func Account(in Input) (*Registry, spec.Diagnostics) {
 	a := &accountant{in: in, reg: &Registry{
 		Pages:   map[string]*Page{},
 		Owner:   map[string]string{},
@@ -125,7 +125,7 @@ func Account(in Input) (*Registry, model.Diagnostics) {
 		if !accounted || a.reg.Entries[f] != nil || a.staleOnly[f] {
 			continue
 		}
-		a.diags.Add("file.unregistered", f, 0, "neither registered nor ignored: list it on %s, the page of its owner %s, or add it to the ignore file", a.pagePath(owner), model.PackageName(owner))
+		a.diags.Add("file.unregistered", f, 0, "neither registered nor ignored: list it on %s, the page of its owner %s, or add it to the ignore file", a.pagePath(owner), spec.PackageName(owner))
 	}
 	sort.Slice(a.reg.Stale, func(i, j int) bool {
 		x, y := a.reg.Stale[i], a.reg.Stale[j]
@@ -140,7 +140,7 @@ func Account(in Input) (*Registry, model.Diagnostics) {
 type accountant struct {
 	in        Input
 	reg       *Registry
-	diags     model.Diagnostics
+	diags     spec.Diagnostics
 	staleOnly map[string]bool // files listed only on orphaned pages
 	ambiguous map[[2]string]bool
 }
@@ -150,7 +150,7 @@ func (a *accountant) pagePath(pkg string) string {
 	if p := a.reg.Pages[pkg]; p != nil {
 		return p.File
 	}
-	if pkg == model.RootPackage {
+	if pkg == spec.RootPackage {
 		return a.in.OwnDir + "/registry.md"
 	}
 	return a.in.OwnDir + "/registry/" + pkg + ".md"
@@ -158,11 +158,11 @@ func (a *accountant) pagePath(pkg string) string {
 
 func (a *accountant) parsePage(src PageFile) {
 	page := &Page{Package: src.Package, File: src.File}
-	if _, ok := a.in.Model.Packages[src.Package]; !ok {
+	if _, ok := a.in.Spec.Packages[src.Package]; !ok {
 		page.Orphaned = true
 	}
 	a.reg.Pages[src.Package] = page
-	doc, err := model.ParsePage(src.Data)
+	doc, err := spec.ParsePage(src.Data)
 	if err != nil {
 		a.diags.Add("registry.front_matter", src.File, doc.FrontLine, "%v", err)
 		return
@@ -188,7 +188,7 @@ func (a *accountant) parsePage(src PageFile) {
 			page.Patterns = append(page.Patterns, Pattern{Text: item.Value, Line: item.Line + doc.FrontLine})
 		}
 	}
-	if src.Package == model.RootPackage && len(page.Patterns) > 0 {
+	if src.Package == spec.RootPackage && len(page.Patterns) > 0 {
 		a.diags.Add("registry.pattern", src.File, page.Patterns[0].Line, "Root owns every file no other Package claims; its page names no paths")
 		page.Patterns = nil
 	}
@@ -217,18 +217,18 @@ func (a *accountant) parsePage(src PageFile) {
 	})
 }
 
-// resolve resolves one registry link to a model Definition. A link to a
+// resolve resolves one registry link to a Definition of the spec. A link to a
 // Definition that does not exist is stale, not an error.
-func (a *accountant) resolve(src PageFile, raw model.RawLink, entry *Entry) (string, bool) {
+func (a *accountant) resolve(src PageFile, raw spec.RawLink, entry *Entry) (string, bool) {
 	target := strings.TrimSuffix(raw.Target, ".md")
-	d, ok := a.in.Model.Definitions[target]
+	d, ok := a.in.Spec.Definitions[target]
 	switch {
-	case ok && d.InModel():
+	case ok && d.Own():
 		return target, true
-	case ok || a.in.Model.Packages[target] != nil:
-		a.diags.Add("registry.link", src.File, raw.Line, "[[%s]] is not a Definition of the model; a registry entry links the Definitions its file realizes", raw.Target)
-	case !model.ValidPath(target):
-		a.diags.Add("registry.link", src.File, raw.Line, "[[%s]] is not a model path such as members/member", raw.Target)
+	case ok || a.in.Spec.Packages[target] != nil:
+		a.diags.Add("registry.link", src.File, raw.Line, "[[%s]] is not a Definition of the spec; a registry entry links the Definitions its file realizes", raw.Target)
+	case !spec.ValidPath(target):
+		a.diags.Add("registry.link", src.File, raw.Line, "[[%s]] is not a spec path such as members/member", raw.Target)
 	case a.reg.Pages[src.Package].Orphaned:
 		// The whole page is stale; its links need no item of their own.
 	default:
@@ -240,7 +240,7 @@ func (a *accountant) resolve(src PageFile, raw model.RawLink, entry *Entry) (str
 // parseIgnore reads the ignore file, written like a .gitignore: one pattern per
 // line, and # for a comment. Its patterns are the registry's, from the top of the
 // repository, and nothing takes a file back.
-func (a *accountant) parseIgnore(f model.File) []Pattern {
+func (a *accountant) parseIgnore(f spec.File) []Pattern {
 	var patterns []Pattern
 	for i, raw := range strings.Split(string(f.Data), "\n") {
 		text, line := strings.TrimSpace(raw), i+1
@@ -265,7 +265,7 @@ func (a *accountant) parseIgnore(f model.File) []Pattern {
 
 // forTables calls row for every body row of every table whose first header
 // cell is first (ignoring case).
-func forTables(doc model.Page, first string, row func(cells []ast.Node, line int)) {
+func forTables(doc spec.Page, first string, row func(cells []ast.Node, line int)) {
 	_ = ast.Walk(doc.Root, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		table, ok := n.(*east.Table)
 		if !entering || !ok {
@@ -300,7 +300,7 @@ func (a *accountant) checkPatterns() {
 		page := a.reg.Pages[pkg]
 		for _, p := range page.Patterns {
 			if other := claimed[p.Text]; other != nil {
-				a.diags.Add("registry.duplicate_pattern", page.File, p.Line, "%s is already claimed by %s on %s; every pattern has one owner", p.Text, model.PackageName(other.Package), other.File)
+				a.diags.Add("registry.duplicate_pattern", page.File, p.Line, "%s is already claimed by %s on %s; every pattern has one owner", p.Text, spec.PackageName(other.Package), other.File)
 				continue
 			}
 			claimed[p.Text] = page
@@ -322,7 +322,7 @@ func (a *accountant) sortedLivePages() []string {
 // owner returns the Package whose most specific pattern matches the file, or
 // Root. Equally specific patterns of two Packages are an error.
 func (a *accountant) owner(file string) string {
-	best, bestScore := model.RootPackage, -1
+	best, bestScore := spec.RootPackage, -1
 	var tied []string
 	for _, pkg := range a.sortedLivePages() {
 		page := a.reg.Pages[pkg]
@@ -345,7 +345,7 @@ func (a *accountant) owner(file string) string {
 		}
 		if !a.ambiguous[key] {
 			a.ambiguous[key] = true
-			a.diags.Add("registry.ambiguous_owner", file, 0, "equally specific patterns of %s and %s match this file; make one of them more specific", model.PackageName(best), model.PackageName(other))
+			a.diags.Add("registry.ambiguous_owner", file, 0, "equally specific patterns of %s and %s match this file; make one of them more specific", spec.PackageName(best), spec.PackageName(other))
 		}
 	}
 	return best
@@ -377,7 +377,7 @@ func (a *accountant) checkEntries(visible map[string]bool) {
 				first := a.reg.Entries[e.File]
 				a.diags.Add("registry.duplicate_entry", e.PageFile, e.Line, "%s is already listed on %s line %d; a file has one entry", e.File, first.PageFile, first.Line)
 			case a.reg.Owner[e.File] != e.Package:
-				a.diags.Add("registry.wrong_owner", e.PageFile, e.Line, "%s is owned by %s, so it belongs on %s", e.File, model.PackageName(a.reg.Owner[e.File]), a.pagePath(a.reg.Owner[e.File]))
+				a.diags.Add("registry.wrong_owner", e.PageFile, e.Line, "%s is owned by %s, so it belongs on %s", e.File, spec.PackageName(a.reg.Owner[e.File]), a.pagePath(a.reg.Owner[e.File]))
 			default:
 				a.reg.Entries[e.File] = e
 			}
@@ -406,7 +406,7 @@ func (a *accountant) sortedAllPages() []string {
 var unescapedBar = regexp.MustCompile(`\[\[[^\]|]*[^\]|\\]\|`)
 
 // sourceLine returns one line of a page's body by its file line number.
-func sourceLine(doc model.Page, line int) string {
+func sourceLine(doc spec.Page, line int) string {
 	lines := strings.Split(string(doc.Body), "\n")
 	if i := line - doc.BodyLine; i >= 0 && i < len(lines) {
 		return lines[i]

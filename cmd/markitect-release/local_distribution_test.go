@@ -101,7 +101,7 @@ func newReleaseSource(t *testing.T) *testkit.Repo {
 	repo.Write("LICENSE", "Apache License\nVersion 2.0\n")
 	repo.Write("internal/buildinfo/version.go", "package buildinfo\nvar version = \""+buildinfo.Version()+"\"\n")
 	repo.Write("cmd/markitect/main.go", "package main\nfunc main() {}\n")
-	repo.Write("internal/model/core.go", "package core\n")
+	repo.Write("internal/spec/core.go", "package core\n")
 	repo.Write("packaging/bootstrap/run-markitect.go", "package main\nfunc main() {}\n")
 	repo.Write("packaging/bootstrap/run-markitect_test.go", "package main\n")
 	return repo

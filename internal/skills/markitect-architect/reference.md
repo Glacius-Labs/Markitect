@@ -1,6 +1,6 @@
-# Reference: the model form
+# Reference: the spec form
 
-A compact summary. The canonical text is `docs/guides/model-language.md` in the Markitect repository; if they differ, the guide wins.
+A compact summary. The canonical text is `docs/guides/spec-language.md` in the Markitect repository; if they differ, the guide wins.
 
 ## Layout
 
@@ -24,10 +24,10 @@ Everything under `.markitect/` is accounted for by the compiler and needs no reg
 One Markdown file with YAML front matter.
 
 - Front matter: `kind` (required) and `internal: true` (optional). Another key is `definition.front_matter`.
-- File name without `.md` is the name, the path below `spec/` is the ID (`members/member`). Names: letters, digits, `-`, `_`, starting with a letter or digit (`model.name`).
+- File name without `.md` is the name, the path below `spec/` is the ID (`members/member`). Names: letters, digits, `-`, `_`, starting with a letter or digit (`spec.name`).
 - Body: one level-1 heading, the title, first; no second one (`definition.title`); then prose. Exact values in backticks.
-- The spec folder holds only `.md` files and folders (`model.file`). Two entries differing only in case, or `member.md` beside `member/`, collide (`model.collision`).
-- A top-level name may not be a Library name or `Kind` (`model.reserved`).
+- The spec folder holds only `.md` files and folders (`spec.file`). Two entries differing only in case, or `member.md` beside `member/`, collide (`spec.collision`).
+- A top-level name may not be a Library name or `Kind` (`spec.reserved`).
 
 ## Kinds and Libraries
 
@@ -81,7 +81,7 @@ paths:
 - Patterns: `*` and `?` inside one name; a whole segment `**` matches any depth; a trailing `**` matches what is inside the folder. No `[ ]` or `{ }` (`registry.pattern`).
 - Ownership: the most specific pattern wins; a pattern with no wildcard beats any with one; otherwise more literal characters win. Root owns what no one claims. Two Packages with the same pattern: `registry.duplicate_pattern`; equal specificity matching the same file: `registry.ambiguous_owner`.
 - Accounting: every file outside `.markitect/` is listed on its owner's page or in the ignore file (`file.unregistered`). Listed on a page of a different owner: `registry.wrong_owner`; listed twice: `registry.duplicate_entry`; listed and ignored: `registry.ignored_file`; excluded by a `.gitignore`: `registry.git_ignored`; below `.markitect/`: `registry.own_file`.
-- Rows: tables whose first header is `File`, three cells: file, links to the Definitions it realizes (model Definitions only; none is allowed), a short reason (`registry.table`, `registry.link`). The registry folder holds only pages (`registry.page`).
+- Rows: tables whose first header is `File`, three cells: file, links to the Definitions it realizes (Definitions of the spec only; none is allowed), a short reason (`registry.table`, `registry.link`). The registry folder holds only pages (`registry.page`).
 - Shared files (README, CI pipeline, compose file) belong to the lowest common parent of the Packages they serve, often Root, and list every Definition they realize.
 
 ## Ignore file
@@ -122,7 +122,7 @@ Notes: `vet.unlinked_mention` (a Definition's title or name in another Definitio
 | Group | Codes |
 |---|---|
 | Project | `project.file` (a file under `.markitect/` has no place in the layout), `project.read` |
-| Definition and model | `definition.front_matter`, `definition.title`, `model.name`, `model.file`, `model.collision`, `model.reserved` |
+| Definition and spec | `definition.front_matter`, `definition.title`, `spec.name`, `spec.file`, `spec.collision`, `spec.reserved` |
 | Kind and Library | `kind.unresolved`, `kind.not_a_kind`, `library.name`, `library.file`, `library.not_a_kind`, `library.internal`, `library.version`, `library.reserved`, `library.missing`, `library.undeclared` |
 | Manifest and lock | `manifest.syntax`, `manifest.missing`, `lock.mismatch`, `lock.missing`, `lock.syntax` |
 | Links and Packages | `link.unresolved`, `link.syntax`, `link.internal`, `link.downward`, `package.cycle` |

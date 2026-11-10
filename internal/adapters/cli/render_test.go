@@ -4,16 +4,16 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
-	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
 // Plain vet counts its notes in one line: the unlinked mentions within the Package
 // structure and their Definitions, those against or beyond it, and the others.
 func TestNotesLine(t *testing.T) {
 	mention := func(structure string, targets ...string) analysis.Note {
-		return analysis.Note{Diagnostic: model.Diagnostic{Code: "vet.unlinked_mention"}, Targets: targets, Structure: structure}
+		return analysis.Note{Diagnostic: spec.Diagnostic{Code: "vet.unlinked_mention"}, Targets: targets, Structure: structure}
 	}
-	other := analysis.Note{Diagnostic: model.Diagnostic{Code: "vet.statements"}}
+	other := analysis.Note{Diagnostic: spec.Diagnostic{Code: "vet.statements"}}
 	for _, c := range []struct {
 		notes []analysis.Note
 		want  string

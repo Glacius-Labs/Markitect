@@ -3,8 +3,8 @@ package analysis
 import (
 	"math"
 
-	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
 // Graph is the Package dependency graph with its measures.
@@ -33,26 +33,26 @@ type PackageNode struct {
 
 // Edge is one explicit dependency and the links that make it.
 type Edge struct {
-	From string      `json:"from"`
-	To   string      `json:"to"`
-	Uses []model.Use `json:"uses"`
+	From string     `json:"from"`
+	To   string     `json:"to"`
+	Uses []spec.Use `json:"uses"`
 }
 
 // BuildGraph derives the graph of a loaded project.
 func BuildGraph(p *project.Project) Graph {
-	m := p.Model
+	sp := p.Spec
 	var g Graph
 	afferent := map[string]int{}
-	for _, from := range sortedKeys(m.Edges) {
-		for _, to := range sortedKeys(m.Edges[from]) {
+	for _, from := range sortedKeys(sp.Edges) {
+		for _, to := range sortedKeys(sp.Edges[from]) {
 			afferent[to]++
-			g.Edges = append(g.Edges, Edge{From: from, To: to, Uses: m.Edges[from][to]})
+			g.Edges = append(g.Edges, Edge{From: from, To: to, Uses: sp.Edges[from][to]})
 		}
 	}
-	for _, path := range m.SortedPackages() {
-		pkg := m.Packages[path]
-		n := PackageNode{Path: path, Parent: pkg.Parent, Definitions: len(pkg.Definitions), Afferent: afferent[path], Efferent: len(m.Edges[path])}
-		if path == model.RootPackage {
+	for _, path := range sp.SortedPackages() {
+		pkg := sp.Packages[path]
+		n := PackageNode{Path: path, Parent: pkg.Parent, Definitions: len(pkg.Definitions), Afferent: afferent[path], Efferent: len(sp.Edges[path])}
+		if path == spec.RootPackage {
 			n.Parent = ""
 		}
 		if total := n.Afferent + n.Efferent; total > 0 {
@@ -60,7 +60,7 @@ func BuildGraph(p *project.Project) Graph {
 		}
 		kinds := 0
 		for _, id := range pkg.Definitions {
-			if m.Definitions[id].Kind == model.CoreKind {
+			if sp.Definitions[id].Kind == spec.CoreKind {
 				kinds++
 			}
 		}
@@ -73,17 +73,17 @@ func BuildGraph(p *project.Project) Graph {
 	return g
 }
 
-// fanIn returns, for each model Definition, the other model Definitions that link
+// fanIn returns, for each Definition of the spec, the other Definitions that link
 // to it or are of it as their Kind: what a change to it alone puts back on the
 // list to verify besides itself (DEC-099). A link to a Package is none.
-func fanIn(m *model.Model) map[string]map[string]bool {
+func fanIn(sp *spec.Spec) map[string]map[string]bool {
 	in := map[string]map[string]bool{}
-	for _, id := range m.ModelDefinitions() {
-		for _, l := range m.Definitions[id].Links {
+	for _, id := range sp.OwnDefinitions() {
+		for _, l := range sp.Definitions[id].Links {
 			if l.Package || l.Target == "" || l.Target == id {
 				continue
 			}
-			if t := m.Definitions[l.Target]; t == nil || !t.InModel() {
+			if t := sp.Definitions[l.Target]; t == nil || !t.Own() {
 				continue
 			}
 			if in[l.Target] == nil {

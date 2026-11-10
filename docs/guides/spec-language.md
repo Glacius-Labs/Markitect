@@ -41,10 +41,10 @@ A [[members/member|member]] reserves a [[equipment/machine|machine]] for a slot.
 ```
 
 - The front matter holds `kind` and, where needed, `internal: true`. Nothing else; another key is an error (`definition.front_matter`).
-- The file name without `.md` is the Definition's name, and its path below `spec/` is its ID: `members/member.md` is `members/member`. Names start with a letter or digit and use only letters, digits, `-` and `_` (`model.name`).
+- The file name without `.md` is the Definition's name, and its path below `spec/` is its ID: `members/member.md` is `members/member`. Names start with a letter or digit and use only letters, digits, `-` and `_` (`spec.name`).
 - The body starts with one level-1 heading, the title; no other level-1 heading follows (`definition.title`).
 - The rest is documentation. Exact values such as wire names and error codes are written in backticks.
-- The spec folder holds only `.md` files and folders (`model.file`). Two entries of one folder whose names differ only in case, or a file and a folder of the same name (`member.md` and `member/`), collide (`model.collision`): a link could not tell them apart.
+- The spec folder holds only `.md` files and folders (`spec.file`). Two entries of one folder whose names differ only in case, or a file and a folder of the same name (`member.md` and `member/`), collide (`spec.collision`): a link could not tell them apart.
 
 ## Kinds and Libraries
 
@@ -79,7 +79,7 @@ The manifest names each Library with its version and nothing else (`manifest.syn
 
 A link names its target by path: `[[members/member]]` inside the spec, `[[std/Rule]]` for a Library Kind, `[[members]]` for a Package. A label after `|` and a section after `#` are allowed and ignored for resolution: `[[members/member#Status|member]]`. In a Markdown table, write the label's bar as `\|`. Links inside code spans and code blocks are text, not links. There are no imports and no relative links: a link to a Definition in the same Package still names its full path, `[[members/member]]` from inside `members/`.
 
-- A path whose first name is a Library the manifest names is a Library link. No top-level Package or Definition of the spec may have a Library's name, or the name `Kind` (`model.reserved`).
+- A path whose first name is a Library the manifest names is a Library link. No top-level Package or Definition of the spec may have a Library's name, or the name `Kind` (`spec.reserved`).
 - A link that resolves to nothing, or that is not a path of valid names (`../x`, `/x`), is an error (`link.unresolved`, `link.syntax`).
 
 **Every link is a relation** ([DEC-104](../decisions.md#dec-104-a-link-is-never-decorative-identity-and-surface-are-written-as-code-writes-them)). The spec behaves like code, and code has no "see also", so a link is never decorative. A link to a Definition says that the source relies on what the target states: a change to the target puts the source back on the list of `status`. A link to a Package says that the source's module depends on that module or, down the tree, says something about a part of the parent's organization. The Kind, the tree with its visibility, the registry and the evidence state the other relations. A link that would only help a reader find something does not belong in the spec; navigation belongs in documentation rendered from it. The [guide to a good spec](good-spec.md#every-link-is-a-relation) shows how identities, a module's surface and the modules it uses are written under this rule.
@@ -173,7 +173,7 @@ All commands take `--repo DIR`, a folder of the project (default: the current fo
 
 As in Go's tools:
 
-- **Diagnostics** are one line each, `file:line: code: message`. Codes that start with `model.` concern the spec, which the code still calls the model. `check` prints only diagnostics and one summary line, `vet` its warnings and one line that counts its notes (with `--strict`, the notes as diagnostics instead), and `status` prints the errors in the realization as diagnostics.
+- **Diagnostics** are one line each, `file:line: code: message`. Codes that start with `spec.` concern the spec itself. `check` prints only diagnostics and one summary line, `vet` its warnings and one line that counts its notes (with `--strict`, the notes as diagnostics instead), and `status` prints the errors in the realization as diagnostics.
 - **`--json`** prints one document that starts with `format_version` (1) and `kind`, the command's name. A diagnostic in it is an object with `severity` (`error`, `warning` or `note`), `code`, `message`, `file` and `line`.
 - **Exit codes:** 0 when all is well; 1 when the command did its job and found something (errors of `check`, items of `status`, a refused `mark`, warnings of `vet` with `--strict`, a `doc` target that is neither a Definition nor a Package); 2 when it could not run (a usage error, no project). Notes, such as a `skip` or an outdated harness, never change the exit code.
 

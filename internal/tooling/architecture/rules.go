@@ -51,17 +51,17 @@ type Rules struct {
 // generated code map and the source packager's roots all derive from it.
 var Table = Rules{
 	Layers: []Layer{
-		{Name: "model", Title: "Canonical model", Meaning: "The model language over supplied bytes: Definitions, Kinds, links, visibility, cycles, manifest and lock."},
+		{Name: "spec", Title: "Spec language", Meaning: "The spec language over supplied bytes: Definitions, Kinds, links, visibility, cycles, manifest and lock."},
 		{Name: "assets", Title: "Built-in files", Meaning: "Files built into the binary: the standard Libraries, the skills and the harness of the work."},
 		{Name: "harness", Title: "Harness configuration", Meaning: "harness.yaml at user and project level, resolved key by key, and the agents' front matter rendered from it."},
-		{Name: "domain", Title: "Realization record", Meaning: "Registry pages, ownership and file accounting over a compiled model.", Imports: []string{"model"}},
-		{Name: "project", Title: "Project", Meaning: "Loads and checks a project's Markitect folder from the files of a project folder.", Imports: []string{"model", "assets", "harness", "domain"}},
-		{Name: "service", Title: "Analysis", Meaning: "Questions about a loaded project: what it holds, what depends on what, and vet.", Imports: []string{"model", "assets", "domain", "project"}},
-		{Name: "run", Title: "The record", Meaning: "The record of what was verified, without Git: the inputs of each Definition, review.sum, status, mark and the hook.", Imports: []string{"model", "assets", "domain", "project"}},
+		{Name: "domain", Title: "Realization record", Meaning: "Registry pages, ownership and file accounting over a compiled spec.", Imports: []string{"spec"}},
+		{Name: "project", Title: "Project", Meaning: "Loads and checks a project's Markitect folder from the files of a project folder.", Imports: []string{"spec", "assets", "harness", "domain"}},
+		{Name: "service", Title: "Analysis", Meaning: "Questions about a loaded project: what it holds, what depends on what, and vet.", Imports: []string{"spec", "assets", "domain", "project"}},
+		{Name: "run", Title: "The record", Meaning: "The record of what was verified, without Git: the inputs of each Definition, review.sum, status, mark and the hook.", Imports: []string{"spec", "assets", "domain", "project"}},
 		{Name: "guardedwrite", Title: "Guarded write", Meaning: "Guarded working-tree writes for bundle installation, with the Git and path helpers they share with source snapshots."},
 		{Name: "build", Title: "Build data", Meaning: "Version identity and embedded license notices."},
-		{Name: "adapter", Title: "Adapters", Meaning: "Concrete project-folder, command-line and release adapters; no adapter imports another.", Imports: []string{"model", "assets", "harness", "domain", "project", "service", "run", "build"}},
-		{Name: "composition", Title: "Composition", Meaning: "Constructs the command line with its adapters.", Imports: []string{"model", "project", "service", "run", "adapter"}},
+		{Name: "adapter", Title: "Adapters", Meaning: "Concrete project-folder, command-line and release adapters; no adapter imports another.", Imports: []string{"spec", "assets", "harness", "domain", "project", "service", "run", "build"}},
+		{Name: "composition", Title: "Composition", Meaning: "Constructs the command line with its adapters.", Imports: []string{"spec", "project", "service", "run", "adapter"}},
 		{Name: "command", Title: "Product commands", Meaning: "Thin entrypoints to product composition.", Imports: []string{"composition"}},
 		{Name: "maintenance", Title: "Maintenance", Meaning: "The import gate and release packaging, separate from product execution.", Imports: []string{"guardedwrite"}},
 		{Name: "maintenance-command", Title: "Maintenance command", Meaning: "Release maintenance entrypoint.", Imports: []string{"maintenance", "build"}},
@@ -69,7 +69,7 @@ var Table = Rules{
 		{Name: "standalone", Title: "Standalone tools", Meaning: "Consumer bootstrap and source smoke.", Standalone: true},
 	},
 	Packages: []Package{
-		{"internal/model", "model", "docs/guides/spec-language.md#definitions"},
+		{"internal/spec", "spec", "docs/guides/spec-language.md#definitions"},
 		{"internal/libraries", "assets", "docs/guides/spec-language.md#kinds-and-libraries"},
 		{"internal/skills", "assets", "docs/guides/spec-language.md#commands"},
 		{"internal/harness", "harness", "docs/guides/project-workflow.md#strategies-and-configuration"},

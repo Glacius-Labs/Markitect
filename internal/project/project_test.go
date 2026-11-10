@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
-	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
 // memRepo is a repository state held in memory.
@@ -39,11 +39,11 @@ func (r memRepo) GitIgnored(f string) bool { return r.ignored[f] }
 func stdLock(t *testing.T) string {
 	t.Helper()
 	files, _ := libraries.Files("std")
-	lib := model.LibrarySource{Name: "std", Version: libraries.Version}
+	lib := spec.LibrarySource{Name: "std", Version: libraries.Version}
 	for _, f := range files {
-		lib.Files = append(lib.Files, model.File{Path: f.Path, Data: f.Data})
+		lib.Files = append(lib.Files, spec.File{Path: f.Path, Data: f.Data})
 	}
-	return string(model.RenderLock([]model.LibrarySource{lib}))
+	return string(spec.RenderLock([]spec.LibrarySource{lib}))
 }
 
 func valid(t *testing.T) memRepo {
@@ -73,7 +73,7 @@ func load(t *testing.T, r memRepo) *Project {
 	return p
 }
 
-func expect(t *testing.T, ds model.Diagnostics, code, fragment string) {
+func expect(t *testing.T, ds spec.Diagnostics, code, fragment string) {
 	t.Helper()
 	for _, d := range ds {
 		if d.Code == code && strings.Contains(d.String(), fragment) {
@@ -109,11 +109,11 @@ func TestLoadUnknownOwnFiles(t *testing.T) {
 	r := valid(t)
 	r.files[Dir+"/notes.txt"] = "x"
 	r.files[RegistryDir+"/members.yaml"] = "x"
-	r.files[Dir+"/model/members.md"] = "x"
+	r.files[Dir+"/drafts/members.md"] = "x"
 	r.files[Dir+"/results/gate.json"] = "{}"
 	p := load(t, r)
 	expect(t, p.Errors, "project.file", ".markitect/notes.txt")
-	expect(t, p.Errors, "project.file", ".markitect/model/members.md")
+	expect(t, p.Errors, "project.file", ".markitect/drafts/members.md")
 	expect(t, p.Errors, "project.file", ".markitect/results/gate.json")
 	expect(t, p.Errors, "registry.page", ".markitect/registry/members.yaml")
 }
@@ -156,18 +156,18 @@ func TestLoadLocalLibraryAndLock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	std, _, _ := LibrarySource(model.LibraryRef{Name: "std", Version: "1.0.0"}, local)
-	web, code, _ := LibrarySource(model.LibraryRef{Name: "web", Version: "0.2.0"}, local)
+	std, _, _ := LibrarySource(spec.LibraryRef{Name: "std", Version: "1.0.0"}, local)
+	web, code, _ := LibrarySource(spec.LibraryRef{Name: "web", Version: "0.2.0"}, local)
 	if code != "" {
 		t.Fatal(code)
 	}
-	r.files[LockFile] = string(model.RenderLock([]model.LibrarySource{std, web}))
+	r.files[LockFile] = string(spec.RenderLock([]spec.LibrarySource{std, web}))
 	p := load(t, r)
 	for _, d := range p.SpecErrors() {
 		t.Errorf("unexpected: %v", d)
 	}
-	if p.Model.Definitions["home"].Kind != "web/Page" {
-		t.Fatalf("kind = %q", p.Model.Definitions["home"].Kind)
+	if p.Spec.Definitions["home"].Kind != "web/Page" {
+		t.Fatalf("kind = %q", p.Spec.Definitions["home"].Kind)
 	}
 
 	r.files[LibraryDir+"/web/Page.md"] += "Changed.\n"

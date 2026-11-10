@@ -1,4 +1,4 @@
-package model
+package spec
 
 import (
 	"regexp"
@@ -34,9 +34,9 @@ type Source struct {
 	Libraries []LibrarySource
 }
 
-// Model is a compiled model. It is complete even when Compile reports errors;
+// Spec is a compiled spec. It is complete even when Compile reports errors;
 // unresolved links then have an empty Target.
-type Model struct {
+type Spec struct {
 	Definitions map[string]*Definition // by ID: "members/member", "std/Rule", "Kind"
 	Packages    map[string]*Package    // by path; RootPackage is ""
 	Libraries   map[string]*Library
@@ -53,7 +53,7 @@ type Library struct {
 	Definitions []string
 }
 
-// Package is one folder of the model.
+// Package is one folder of the spec.
 type Package struct {
 	Path        string
 	Parent      string
@@ -61,11 +61,11 @@ type Package struct {
 	Definitions []string // own Definition IDs, sorted
 }
 
-// Definition is one Markdown file of the model, of a Library, or Core's Kind.
+// Definition is one Markdown file of the spec, of a Library, or Core's Kind.
 type Definition struct {
 	ID       string
-	Library  string // "" for the project's model, "core" for Kind
-	Package  string // Package path for the project's model
+	Library  string // "" for the project's spec, "core" for Kind
+	Package  string // Package path for the project's spec
 	File     string // repository-relative file
 	Kind     string // resolved Kind ID; "" when it does not resolve
 	Internal bool
@@ -95,8 +95,8 @@ type Use struct {
 	Line   int
 }
 
-// InModel reports whether the Definition belongs to the project's model.
-func (d *Definition) InModel() bool { return d.Library == "" }
+// Own reports whether the Definition belongs to the project's own spec, not to a Library.
+func (d *Definition) Own() bool { return d.Library == "" }
 
 // PackageName returns a Package path for people: "Root" for the Root Package.
 func PackageName(path string) string {
@@ -120,20 +120,20 @@ func Within(p, q string) bool {
 }
 
 // SortedPackages returns every Package path in order, Root first.
-func (m *Model) SortedPackages() []string {
-	out := make([]string, 0, len(m.Packages))
-	for p := range m.Packages {
+func (s *Spec) SortedPackages() []string {
+	out := make([]string, 0, len(s.Packages))
+	for p := range s.Packages {
 		out = append(out, p)
 	}
 	sort.Strings(out)
 	return out
 }
 
-// ModelDefinitions returns the IDs of the project's own Definitions, sorted.
-func (m *Model) ModelDefinitions() []string {
+// OwnDefinitions returns the IDs of the project's own Definitions, sorted.
+func (s *Spec) OwnDefinitions() []string {
 	var out []string
-	for id, d := range m.Definitions {
-		if d.InModel() {
+	for id, d := range s.Definitions {
+		if d.Own() {
 			out = append(out, id)
 		}
 	}

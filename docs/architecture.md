@@ -2,7 +2,7 @@
 
 How the source is composed, where each responsibility lives and which contracts hold between the packages. Main builds the [concept](concept.md). The spec language and its commands check and analyse a project's spec; [the record](../internal/run/README.md) (`status`, `mark`) says what a driver's agents have to verify and records their verdicts; and the tool steers no work and uses no Git ([DEC-096](decisions.md#dec-096-the-tool-computes-and-checks-a-driver-acts), [DEC-097](decisions.md#dec-097-markitect-uses-no-git), [DEC-099](decisions.md#dec-099-a-record-of-what-was-verified)).
 
-This page owns the package contracts and the repository layout. The [spec language guide](guides/spec-language.md) owns the language, the `.markitect/` layout and the commands; the [code map](development/code-map.md) lists every package with its owning document. The Go code still names the spec "model", as in `internal/model`; the [roadmap](roadmap.md#later) renames it.
+This page owns the package contracts and the repository layout. The [spec language guide](guides/spec-language.md) owns the language, the `.markitect/` layout and the commands; the [code map](development/code-map.md) lists every package with its owning document.
 
 ## Product flow
 
@@ -26,11 +26,11 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 
 | Responsibility | Packages | Depends on |
 | --- | --- | --- |
-| Spec language: Definitions, Kinds, links, visibility, cycles, manifest and lock, over supplied bytes | `internal/model` | No other Markitect package |
+| Spec language: Definitions, Kinds, links, visibility, cycles, manifest and lock, over supplied bytes | `internal/spec` | No other Markitect package |
 | Files built into the binary: the standard Libraries `std`, `rest` and `cli`, the architect skill, and the harness of the work: its skills, agents, routine prompts and the parallel workflow | `internal/libraries`, `internal/skills` | No other Markitect package |
 | The harness configuration: `harness.yaml` at user and project level, resolved key by key, and the agents' front matter rendered from it | `internal/harness` | No other Markitect package |
-| Registry pages, ownership by path pattern, file accounting and stale realization | `internal/realization` | Model |
-| Loading and checking a project's `.markitect/` folder from one set of files | `internal/project` | Model, the built-in files, the harness configuration, realization; its own `Repository` port |
+| Registry pages, ownership by path pattern, file accounting and stale realization | `internal/realization` | Spec language |
+| Loading and checking a project's `.markitect/` folder from one set of files | `internal/project` | Spec language, the built-in files, the harness configuration, realization; its own `Repository` port |
 | What a project holds and who links to what, the Package graph, vet | `internal/analysis` | Project and the packages below it |
 | The record: the inputs of each Definition, `review.sum`, `status`, `mark` and the hook | `internal/run` | Project and the packages below it |
 | Project-folder, command-line and release adapters; no adapter imports another | `internal/adapters/folder`, `internal/adapters/cli`, `internal/adapters/upgrade` | Their inward consumers and build data |
@@ -41,7 +41,7 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 | Test support, test files only | `internal/testkit` | No Markitect package |
 | Standalone: consumer bootstrap and source smoke | `packaging/bootstrap`, `tools/smoke` | No Markitect package |
 
-The pure packages (`model`, `realization`, `analysis`) read no files and start no process; their callers hand them bytes. `model` and `realization` return every error as a diagnostic with a code, which the [spec language guide](guides/spec-language.md) lists.
+The pure packages (`spec`, `realization`, `analysis`) read no files and start no process; their callers hand them bytes. `spec` and `realization` return every error as a diagnostic with a code, which the [spec language guide](guides/spec-language.md) lists.
 
 ### Import gate
 
