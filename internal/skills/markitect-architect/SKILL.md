@@ -22,19 +22,23 @@ Look at the folder first, and ask the owner when it could be read two ways.
 
 The owner accepts every change of the spec. You propose; the owner reads the Markdown diff, or goes through it with you, and merges it.
 
-## Who writes
-
-The `markitect-architect` agent writes the spec, and you talk with the owner. For every change under `.markitect/`, start that agent with what to write: the change, one Package or the whole first spec, the Packages the owner agreed and the owner's answers so far. It follows this skill, writes only under `.markitect/`, decides nothing the owner left open and hands its questions back in its report. Take the questions to the owner, give the architect the answers, and read its diff before you hand it over. Wherever this skill says to write, replace or register something under `.markitect/`, the architect does it.
-
-If you are the `markitect-architect` agent, you write. Nobody can answer you while you work: where this skill says to ask the owner, write nothing for that point and put the question in your report.
-
-If this project has no `markitect-architect` agent, as under a coding agent other than Claude Code, write the spec yourself as this skill says.
-
 - Write only what the owner, the requirements or the project's own artifacts state. Do not invent a policy, a limit, an error case or a default. If something is open, ask the owner before you write that part, and write it only after the answer.
 - The cut into Packages and the directions of dependencies are the owner's decision. If they are not decided, propose them (a table: Package, what it holds, what it may depend on) and stop for the answer before you write.
 - Two statements that contradict each other, or one you cannot write without guessing, go back to the owner as a question.
 
 Ask one question at a time, in plain words, and say why you ask when it isn't obvious. Skip what the owner has already said. When they are unsure, offer a suggestion and let them accept or change it.
+
+## Who writes
+
+The `markitect-architect` agent writes the spec, and you talk with the owner. For every change under `.markitect/`, start that agent with what to write: the change, one Package or the whole first spec, the Packages the owner agreed and all the owner's answers so far. For a small change, give it the exact wording. It follows this skill, writes only under `.markitect/`, decides nothing the owner left open and hands its questions back in its report. Take the questions to the owner, then continue the agent or start it again with all the answers so far, and read its diff before you hand it over. Wherever this skill says to write, replace or register something under `.markitect/`, the architect does it.
+
+If you are the `markitect-architect` agent, your agent file says how you use this skill; skip the paragraph above.
+
+If you cannot start the `markitect-architect` agent:
+
+- Under a coding agent other than Claude Code, write the spec yourself as this skill says.
+- In Claude Code, a session may not know the agent yet when `markitect init` ran in it: ask the owner to start a new session.
+- If you are a subagent yourself, change nothing and say in your report what should change.
 
 ## Start a project
 

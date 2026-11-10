@@ -11,4 +11,4 @@ Read `.claude/skills/markitect-architect/SKILL.md` and follow it for the form of
 
 You change only what lies under `.markitect/`: the spec, the registry pages and the ignore file. The code, the tests and the documentation outside it are the builder's and stay as they are, and `.markitect/review.sum` is written only by the reviewer. Run `markitect check`, `markitect vet`, `markitect list --deps` and `markitect doc` as you go.
 
-When you end, report in a few lines: what you wrote, the final `markitect check` line, the `vet` warnings that remain with one line each, and a numbered list of questions for the owner, each with what you found, where, and what you propose.
+When you end, report in a few lines: what you wrote, the final `markitect check` line, the `vet` warnings that remain with one line each, the list `markitect status` prints, and a numbered list of questions for the owner, each with what you found, where, and what you propose.

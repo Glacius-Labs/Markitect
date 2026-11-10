@@ -55,3 +55,27 @@ func TestEveryAgentNamesItsModelAndEffort(t *testing.T) {
 		t.Fatalf("%d workflows", workflows)
 	}
 }
+
+// The architect agent reads the architect skill by its path in a project, so
+// that path must be a file init installs: a rename of the skill must reach the
+// agent's file too.
+func TestTheArchitectAgentNamesAnInstalledSkillFile(t *testing.T) {
+	const path = "markitect-architect/SKILL.md"
+	installed := false
+	for _, f := range Files() {
+		installed = installed || f.Path == path
+	}
+	if !installed {
+		t.Fatalf("%s is not among the skill files", path)
+	}
+	for _, f := range Harness() {
+		if f.Path != ".claude/agents/markitect-architect.md" {
+			continue
+		}
+		if !strings.Contains(string(f.Data), ".claude/skills/"+path) {
+			t.Fatalf("%s does not name .claude/skills/%s", f.Path, path)
+		}
+		return
+	}
+	t.Fatal("the harness has no architect agent")
+}

@@ -62,7 +62,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 			t.Fatalf("init output lacks %q:\n%s", want, out)
 		}
 	}
-	if !strings.Contains(read(t, r.Dir, ".claude/skills/markitect-architect/SKILL.md"), "markitect-architect") || !strings.Contains(read(t, r.Dir, ".agents/skills/markitect-architect/reference.md"), "model form") {
+	if !strings.Contains(read(t, r.Dir, ".claude/skills/markitect-architect/SKILL.md"), "## Who writes") || !strings.Contains(read(t, r.Dir, ".agents/skills/markitect-architect/reference.md"), "model form") {
 		t.Fatal("skills not installed")
 	}
 	if !strings.Contains(read(t, r.Dir, ".markitect/spec/project.md"), "# Lending library") {
