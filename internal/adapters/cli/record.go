@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Glacius-Labs/Markitect/internal/guard"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
@@ -167,10 +168,10 @@ func (c CLI) hook(_ context.Context, args []string) (int, error) {
 	if err != nil {
 		return OK, nil
 	}
-	if os.Getenv(run.HookEnv) == "project" && pluginGuards(hookProject(input)) {
+	if os.Getenv(guard.HookEnv) == "project" && pluginGuards(hookProject(input)) {
 		return OK, nil
 	}
-	if out := run.Guard(input); len(out) > 0 {
+	if out := guard.Guard(input); len(out) > 0 {
 		c.Stdout.Write(out)
 	}
 	return OK, nil

@@ -33,7 +33,7 @@ func TestNotesLine(t *testing.T) {
 // doc of a Package shows its public Definitions, what it publishes, apart from
 // its internal ones, and leaves out a heading with nothing under it.
 func TestRenderDocPackageSeparatesPublicFromInternal(t *testing.T) {
-	got := renderDocPackage(docPackage{Name: "members", Parent: "Root", Definitions: []listedDefinition{
+	got := renderDocPackage(analysis.DocPackage{Name: "members", Parent: "Root", Definitions: []analysis.ListedDefinition{
 		{ID: "members/limit", Title: "Limit", Kind: "std/Rule", Internal: true},
 		{ID: "members/member", Title: "Member", Kind: "std/Concept"},
 	}})
@@ -43,11 +43,11 @@ func TestRenderDocPackageSeparatesPublicFromInternal(t *testing.T) {
 	if got != want {
 		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
 	}
-	got = renderDocPackage(docPackage{Name: "Root", Definitions: []listedDefinition{{ID: "project", Title: "Project", Kind: "std/Project"}}})
+	got = renderDocPackage(analysis.DocPackage{Name: "Root", Definitions: []analysis.ListedDefinition{{ID: "project", Title: "Project", Kind: "std/Project"}}})
 	if want := "Package Root\n\nPublic Definitions:\n  project: Project (std/Project)\n"; got != want {
 		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
 	}
-	got = renderDocPackage(docPackage{Name: "loans", Parent: "members", Definitions: []listedDefinition{{ID: "members/loans/count", Title: "Count", Kind: "std/Concept", Internal: true}}})
+	got = renderDocPackage(analysis.DocPackage{Name: "loans", Parent: "members", Definitions: []analysis.ListedDefinition{{ID: "members/loans/count", Title: "Count", Kind: "std/Concept", Internal: true}}})
 	if want := "Package loans, in members\n\nInternal Definitions:\n  members/loans/count: Count (std/Concept)\n"; got != want {
 		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
 	}
@@ -57,10 +57,10 @@ func TestRenderDocPackageSeparatesPublicFromInternal(t *testing.T) {
 // it depends on, with the links that make the dependency, and each Definition's
 // links.
 func TestRenderListWithDeps(t *testing.T) {
-	got := renderList([]listedPackage{
-		{Name: "Root", Definitions: []listedDefinition{{ID: "loan-limit", Title: "Loan limit", Kind: "std/Rule"}}, Deps: &packageDeps{Afferent: 1, Abstractness: 0.5, Distance: 0.5}},
-		{Name: "catalog", Parent: "Root", Definitions: []listedDefinition{{ID: "catalog/book", Title: "Book", Kind: "std/Concept", Links: []string{"members/member"}}}, Deps: &packageDeps{Efferent: 1, Instability: 1, DependsOn: []dependency{
-			{Package: "members", Uses: []use{{From: "catalog/book", Target: "members/member", Via: "link"}, {From: "catalog/dvd", Target: "members/Medium", Via: "kind"}}},
+	got := renderList([]analysis.ListedPackage{
+		{Name: "Root", Definitions: []analysis.ListedDefinition{{ID: "loan-limit", Title: "Loan limit", Kind: "std/Rule"}}, Deps: &analysis.PackageDeps{Afferent: 1, Abstractness: 0.5, Distance: 0.5}},
+		{Name: "catalog", Parent: "Root", Definitions: []analysis.ListedDefinition{{ID: "catalog/book", Title: "Book", Kind: "std/Concept", Links: []string{"members/member"}}}, Deps: &analysis.PackageDeps{Efferent: 1, Instability: 1, DependsOn: []analysis.Dependency{
+			{Package: "members", Uses: []analysis.Use{{From: "catalog/book", Target: "members/member", Via: "link"}, {From: "catalog/dvd", Target: "members/Medium", Via: "kind"}}},
 		}}},
 	})
 	want := "Root (Ca 1, Ce 0, instability 0.00, abstractness 0.50, distance 0.50)\n" +

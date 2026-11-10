@@ -1,4 +1,10 @@
-package run
+// Package guard holds the agents' rights: which role may write what and start
+// whom, the hook that holds them before a tool call (DEC-100), and its entries in
+// a project's Claude Code settings. It reads no files and no environment; its
+// callers hand it bytes.
+//
+// The hook is described in internal/guard/README.md.
+package guard
 
 import (
 	"encoding/json"
@@ -89,58 +95,6 @@ func (r rights) may(start string) bool {
 		}
 	}
 	return false
-}
-
-// HasGuard says whether settings run HookCommand before a shell command that
-// records a verdict, before every tool that writes a file and before every tool
-// that starts an agent; a mention elsewhere does not count. A handler without a
-// rule runs before every call of its tools, and so covers them.
-func HasGuard(settings []byte) bool {
-	var s struct {
-		Hooks struct {
-			PreToolUse []struct {
-				Matcher string `json:"matcher"`
-				Hooks   []struct {
-					Type    string `json:"type"`
-					If      string `json:"if"`
-					Command string `json:"command"`
-				} `json:"hooks"`
-			} `json:"PreToolUse"`
-		} `json:"hooks"`
-	}
-	if json.Unmarshal(settings, &s) != nil {
-		return false
-	}
-	mark, covered := false, map[string]bool{}
-	for _, m := range s.Hooks.PreToolUse {
-		tools := map[string]bool{}
-		all := m.Matcher == "" || m.Matcher == "*"
-		for _, t := range strings.Split(m.Matcher, "|") {
-			tools[strings.TrimSpace(t)] = true
-		}
-		for _, h := range m.Hooks {
-			if h.Type != "command" || strings.TrimSpace(h.Command) != HookCommand {
-				continue
-			}
-			if (all || tools["Bash"]) && (h.If == "" || h.If == MarkRule) {
-				mark = true
-			}
-			if h.If != "" {
-				continue
-			}
-			for _, t := range guardedTools() {
-				if all || tools[t] {
-					covered[t] = true
-				}
-			}
-		}
-	}
-	return mark && len(covered) == len(guardedTools())
-}
-
-// guardedTools are the tools the hook runs before on every call.
-func guardedTools() []string {
-	return append(strings.Split(EditTools, "|"), strings.Split(AgentTools, "|")...)
 }
 
 // markCommand finds a call of markitect mark in a shell command.

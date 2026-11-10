@@ -20,9 +20,11 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `domain` | Registry pages, ownership and file accounting over a compiled spec. | `spec` | 1 |
 | `project` | Loads and checks a project's Markitect folder from the files of a project folder. | `spec`, `assets`, `harness`, `domain` | 1 |
 | `service` | Questions about a loaded project: what it holds, what depends on what, and vet. | `spec`, `assets`, `domain`, `project` | 1 |
-| `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, status, mark and the hook. | `spec`, `assets`, `domain`, `project` | 1 |
+| `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, status and mark. | `spec`, `assets`, `domain`, `project` | 1 |
+| `guard` | Which role may write what and start whom, the hook that holds it and its entries in a project's settings, over supplied bytes. | `project` | 1 |
+| `setup` | What Markitect writes into a project: its first files, the skills and the harness, the settings, the Git attributes, the ignore line and the lock. | `spec`, `assets`, `harness`, `project`, `guard` | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete project-folder, command-line and update adapters; no adapter imports another. | `spec`, `assets`, `harness`, `domain`, `project`, `service`, `run`, `build` | 3 |
+| `adapter` | Concrete project-folder, command-line and update adapters; no adapter imports another. | `spec`, `assets`, `harness`, `domain`, `project`, `service`, `run`, `guard`, `setup`, `build` | 3 |
 | `composition` | Constructs the command line with its adapters. | `spec`, `project`, `service`, `run`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `maintenance` | The import gate and the code map, separate from product execution. | nothing | 1 |
@@ -70,13 +72,25 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/analysis` | Package analysis answers questions about a loaded project without starting agents: who links to a Definition, the Package dependency graph, and the warnings and notes of vet, which analyse the spec's design like code. | [docs/guides/spec-language.md#vet-warnings-and-notes](../guides/spec-language.md#vet-warnings-and-notes) |
+| `internal/analysis` | Package analysis answers questions about a loaded project without starting agents: who links to a Definition, the Package dependency graph, the views of list and doc, and the warnings and notes of vet, which analyse the spec's design like code. | [docs/guides/spec-language.md#vet-warnings-and-notes](../guides/spec-language.md#vet-warnings-and-notes) |
 
 ## The record
 
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/run` | Package run is the record of what was verified (DEC-099): for each Definition, .markitect/review.sum holds the inputs at which a reviewer last verified it, modelled on Go's test cache. | [internal/run/README.md](../../internal/run/README.md) |
+
+## The agents' rights
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/guard` | Package guard holds the agents' rights: which role may write what and start whom, the hook that holds them before a tool call (DEC-100), and its entries in a project's Claude Code settings. | [internal/guard/README.md](../../internal/guard/README.md) |
+
+## Project setup
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/setup` | Package setup is what Markitect writes into a project: the first files of a new one, the skills and the harness with its agents rendered from the harness configuration, the hooks and the worktree base in Claude Code's settings, the record's Git attributes, the ignore line for Claude Code's worktrees and the lock. | [docs/guides/project-workflow.md#1-set-up-the-project](../guides/project-workflow.md#1-set-up-the-project) |
 
 ## Build data
 

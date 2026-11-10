@@ -3,6 +3,8 @@ package cli
 import (
 	"fmt"
 	"strings"
+
+	"github.com/Glacius-Labs/Markitect/internal/analysis"
 )
 
 // The renderers write plain text, as Go's tools print theirs; --json gives the
@@ -11,7 +13,7 @@ import (
 // renderList prints each Package, then its Definitions indented below it; with
 // --deps a Package's coupling, abstractness and distance and what it depends on,
 // and each Definition's links.
-func renderList(pkgs []listedPackage) string {
+func renderList(pkgs []analysis.ListedPackage) string {
 	var b strings.Builder
 	for _, p := range pkgs {
 		b.WriteString(p.Name)
@@ -43,14 +45,14 @@ func renderList(pkgs []listedPackage) string {
 }
 
 // definitionLine is a Definition on one line: its ID, title and Kind.
-func definitionLine(d listedDefinition) string {
+func definitionLine(d analysis.ListedDefinition) string {
 	return fmt.Sprintf("%s: %s (%s)", d.ID, d.Title, d.Kind)
 }
 
 // renderDocDefinition prints a Definition as doc shows it.
-func renderDocDefinition(d docDefinition) string {
+func renderDocDefinition(d analysis.DocDefinition) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s\n", definitionLine(d.listedDefinition))
+	fmt.Fprintf(&b, "%s\n", definitionLine(d.ListedDefinition))
 	switch {
 	case d.Library != "":
 		fmt.Fprintf(&b, "Library %s\n", d.Library)
@@ -87,7 +89,7 @@ func renderDocDefinition(d docDefinition) string {
 }
 
 // renderDocPackage prints a Package as doc shows it.
-func renderDocPackage(p docPackage) string {
+func renderDocPackage(p analysis.DocPackage) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "Package %s", p.Name)
 	if p.Parent != "" {
