@@ -210,3 +210,15 @@ func TestRenderAgent(t *testing.T) {
 		}
 	}
 }
+
+// A role without built-in values would get an agent file that names no model.
+func TestEveryRoleHasBuiltInValues(t *testing.T) {
+	for _, role := range Roles {
+		if d, ok := agentDefaults[role]; !ok || d.model == "" || d.effort == "" {
+			t.Errorf("the role %s has no built-in model and effort", role)
+		}
+	}
+	if len(agentDefaults) != len(Roles) {
+		t.Errorf("agentDefaults names %d roles, Roles %d", len(agentDefaults), len(Roles))
+	}
+}

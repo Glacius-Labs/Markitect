@@ -26,7 +26,7 @@ Open Claude Code in the project and run `/markitect-architect`. In a new project
 
 The spec lives under `.markitect/spec/`: one Markdown file with front matter per Definition, one folder per Package. The [spec language guide](spec-language.md#definitions) gives the form. A project writes its own Kinds for what the standard Libraries do not cover; to use `rest` or `cli`, add it to the manifest and run `markitect tidy`.
 
-The architect skill has your session write the spec with you and ask first when something is open. A large first draft it can hand to the `markitect-architect` agent, which writes only under `.markitect/` and hands its questions back. You accept every change of the spec yourself; the builder never changes it. `/markitect-audit` has a fresh auditor read the spec for contradictions, gaps, unclear and duplicated statements and missing links, and report them to you: it triages the unlinked mentions `markitect vet --strict` lists into missing links and ordinary words, and you, or the architect, add the links.
+The architect skill has your session write the spec with you and ask first when something is open. A large first draft it can hand to the `markitect-architect` agent, which writes only under `.markitect/` and hands its questions back. You accept every change of the spec yourself; the builder never changes it. `/markitect-audit` has a fresh auditor read the spec for contradictions, gaps, unclear and duplicated statements and missing links, and report them to you: it triages the unlinked mentions `markitect vet --strict` lists into missing links and ordinary words, and you add the links, with `/markitect-architect` or by hand.
 
 ## 3. Register the files
 
@@ -118,7 +118,7 @@ The strategies, and the agents' model and effort, are set in `harness.yaml`, at 
 | Key | Values | Built in |
 |---|---|---|
 | `agents.ROLE.model` | `sonnet`, `opus`, `haiku`, a full model ID or `inherit`; ROLE is `builder`, `reviewer`, `architect` or `auditor` | `sonnet` for the builder and the reviewer, `opus` for the architect and the auditor |
-| `agents.ROLE.effort` | `low`, `medium`, `high`, `xhigh` or `max` | `high` for the builder and the reviewer, `medium` for the architect and the auditor |
+| `agents.ROLE.effort` | `low`, `medium`, `high`, `xhigh` or `max`. A role keeps its effort when you change its model, so set both when you move a role to another model | `high` for the builder and the reviewer, `medium` for the architect and the auditor |
 | `strategy.default` | `auto`, `sequential`, `parallel` or a custom workflow's name | `auto` |
 | `strategy.SKILL` | the same, for `build`, `review`, `cleanup`, `bughunt` or `audit` | `strategy.default` |
 | `workflows.NAME` | the path of a custom workflow's script | |

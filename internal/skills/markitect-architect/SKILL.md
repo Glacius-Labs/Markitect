@@ -30,9 +30,9 @@ Ask one question at a time, in plain words, and say why you ask when it isn't ob
 
 ## Who writes
 
-You write the spec, in the owner's session, where the conversation is. Hand a large draft to the `markitect-architect` agent when you can start it: a first spec drawn from a large code base, one Package at a time, or a change that takes much reading. Start it with what to write, the Packages the owner agreed and all the owner's answers so far. It follows this skill, writes only under `.markitect/`, decides nothing the owner left open and hands its questions back in its report. Take the questions to the owner, then continue the agent or start it again with all the answers so far, and read its draft before you hand it over.
+You write the spec, in the owner's session, where the conversation is. Hand a large draft to the `markitect-architect` agent when you can start it: a first spec drawn from a large code base, which it drafts one Package at a time, or a change that takes much reading. Start it with what to write, the Packages the owner agreed and all the owner's answers so far. It follows this skill, writes only under `.markitect/`, decides nothing the owner left open and hands its questions back in its report. Take the questions to the owner, then continue the agent or start it again with all the answers so far, and read its draft before you hand it over.
 
-If you are the `markitect-architect` agent, your agent file says how you use this skill.
+If you are the `markitect-architect` agent, your agent file says how you use this skill. Any other subagent changes nothing under `.markitect/` and says in its report what should change.
 
 ## Start a project
 

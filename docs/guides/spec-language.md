@@ -156,7 +156,7 @@ The tool accounts for what `init` installs by itself: `AGENTS.md`, `CLAUDE.md`, 
 
 ### The agents' model and effort
 
-The model and effort of Markitect's agents are set in the harness configuration, `.markitect/harness.yaml` for the project and `~/.markitect/harness.yaml` for all of a user's projects, with `markitect config` ([strategies and configuration](project-workflow.md#strategies-and-configuration)); `init`, `update` and `config` write them into the agent files. Without it the agents use `sonnet` at effort `high`, as their files say. A manifest that still names `model` is an error (`manifest.model`) until `markitect update` or `init` moves it there.
+The model and effort of Markitect's agents are set in the harness configuration, `.markitect/harness.yaml` for the project and `~/.markitect/harness.yaml` for all of a user's projects, with `markitect config` ([strategies and configuration](project-workflow.md#strategies-and-configuration)); `init`, `update` and `config` write them into the agent files. Without it the builder and the reviewer use `sonnet` at effort `high`, and the architect and the auditor `opus` at effort `medium`, as their files say. A manifest that still names `model` is an error (`manifest.model`) until `markitect update` or `init` moves it there.
 
 ```yaml
 # .markitect/harness.yaml
