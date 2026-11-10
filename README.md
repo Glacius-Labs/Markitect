@@ -34,9 +34,13 @@
 
 ## Why Markitect
 
-When AI agents build most of a project, its design, rules, documentation, code, tests and configuration drift apart. A decision about behavior has to reach the code, the tests, the documentation and the agents' own instructions. An agent finishes its task and misses a rule two folders away. Consistency passes take hours and find more each time.
+When agents build most of a project, two things go missing that used to come with writing and reviewing the code yourself: trust that the code is what you meant, and an overview of how the project stands. Reading everything again would bring both back and make you the bottleneck.
 
-Markitect moves the knowledge of what belongs together out of the agents' memory and into one place you own: the spec. You describe the project once, as typed prose in Markdown: Definitions of a Kind, in Packages, with links that work like imports. Code, tests, configuration and documentation are built from it. When you want something different, you change the spec; Markitect says which Definitions the change puts back on the list to verify, an agent brings the project in line, and a fresh agent verifies each one and records its verdict, until nothing is left.
+The usual substitutes are extra sessions that look for bugs or check that everything fits, and a growing set of rules and skills. The sessions have nothing to measure against and run only when someone thinks of them. The rules are more artifacts that drift: an agent finishes its task and misses a rule two folders away, and consistency passes take hours and find more each time.
+
+What is missing is a standing statement of what the project should be. Prompts, tickets and most specs describe one change and age with it. Markitect supplies that statement: the spec, one place you own, where what is written is binding. You describe the project once, as typed prose in Markdown: Definitions of a Kind, in Packages, with links that work like imports. Code, tests, configuration and documentation are built from it.
+
+The spec is what you work on. When you want something different, you change the spec; Markitect says which Definitions the change puts back on the list to verify, an agent brings the project in line, and a fresh agent verifies each one and records its verdict, until nothing is left. You do not have to watch the build or read the verdicts. What an agent cannot settle for itself comes back to you as a question about the spec.
 
 Code has always been a precise description for a limited executor. An AI executor is intelligent, but it still has to be told what is meant and what holds, or it guesses. So documentation becomes the programming language, and we expect coding to move from Go, C# or Python towards documentation and meaning. What matters in code stays: architecture, consistency, cleanliness, an overview without reading the code, and knowing what should be against what is. Markitect builds on proven practice for that:
 
@@ -66,15 +70,6 @@ For a new project, make an empty folder, run `git init` in it, and open Claude C
 [Install and set up](#install-and-set-up) has the other ways to install, upgrades and an existing code base.
 
 ## How it works
-
-```mermaid
-flowchart LR
-    Spec["You change<br/>the spec"] --> Status["status<br/>what is<br/>to verify"]
-    Status --> Build["builder<br/>makes the project<br/>match"]
-    Build --> Review["reviewer<br/>verifies and records<br/>every item"]
-    Review -->|"fail stays<br/>on the list"| Status
-    Review --> Land["work and record<br/>merged into<br/>your branch"]
-```
 
 1. **You change the spec,** by hand or with your coding agent through `/markitect-design`, which asks first when something is open. You read the Markdown diff, or go through it with the agent, and commit it.
 2. **You run `/markitect-build` in Claude Code.** Your session starts a builder agent in a worktree of its own, so you can go on designing.
