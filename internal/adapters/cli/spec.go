@@ -3,7 +3,6 @@ package cli
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
@@ -113,56 +112,6 @@ func notesLine(notes []analysis.Note) string {
 	return "notes: " + strings.Join(parts, ", ") + "; markitect vet --strict lists them"
 }
 
-// listedDefinition is one Definition as list and doc show it.
-type listedDefinition struct {
-	ID    string `json:"id"`
-	Title string `json:"title"`
-	Kind  string `json:"kind"`
-	File  string `json:"file"`
-	// Internal says that only its own Package and those below may link to it;
-	// the public Definitions of a Package are what it publishes.
-	Internal bool `json:"internal"`
-	// Links are the Definitions and Packages its body links to, with --deps.
-	Links []string `json:"links,omitempty"`
-}
-
-// listedPackage is one Package as list shows it.
-type listedPackage struct {
-	Path        string             `json:"path"`
-	Name        string             `json:"name"`
-	Parent      string             `json:"parent,omitempty"`
-	Definitions []listedDefinition `json:"definitions"`
-	Deps        *packageDeps       `json:"deps,omitempty"`
-}
-
-// packageDeps is what a Package depends on, its coupling, and its abstractness and
-// distance from the main sequence, with --deps. They inform; vet warns about none
-// of the last two yet (DEC-102).
-type packageDeps struct {
-	Afferent     int          `json:"afferent"`
-	Efferent     int          `json:"efferent"`
-	Instability  float64      `json:"instability"`
-	Abstractness float64      `json:"abstractness"`
-	Distance     float64      `json:"distance"`
-	DependsOn    []dependency `json:"depends_on"`
-}
-
-// dependency is one Package another depends on, and the links that make it.
-type dependency struct {
-	Package string `json:"package"`
-	Uses    []use  `json:"uses"`
-}
-
-// use is one link that makes a dependency.
-type use struct {
-	From   string `json:"from"`
-	Target string `json:"target"`
-	// Via is "link", or "kind" when From is of Target as its Kind.
-	Via  string `json:"via"`
-	File string `json:"file"`
-	Line int    `json:"line,omitempty"`
-}
-
 // list prints the Packages and their Definitions; with --deps, what each
 // depends on.
 func (c CLI) list(_ context.Context, args []string) (int, error) {
@@ -180,11 +129,11 @@ func (c CLI) list(_ context.Context, args []string) (int, error) {
 		return Misused, err
 	}
 	c.warnErrors(p)
-	pkgs := listPackages(p, deps)
+	pkgs := analysis.ListPackages(p, deps)
 	if o.json {
 		if err := c.printJSON(struct {
 			envelope
-			Packages []listedPackage `json:"packages"`
+			Packages []analysis.ListedPackage `json:"packages"`
 		}{newEnvelope("list"), pkgs}); err != nil {
 			return Misused, err
 		}
@@ -192,107 +141,6 @@ func (c CLI) list(_ context.Context, args []string) (int, error) {
 	}
 	fmt.Fprint(c.Stdout, renderList(pkgs))
 	return OK, nil
-}
-
-// listPackages is the spec as list shows it.
-func listPackages(p *project.Project, deps bool) []listedPackage {
-	sp := p.Spec
-	g := analysis.BuildGraph(p)
-	nodes := map[string]analysis.PackageNode{}
-	for _, n := range g.Packages {
-		nodes[n.Path] = n
-	}
-	edges := map[string][]analysis.Edge{}
-	for _, e := range g.Edges {
-		edges[e.From] = append(edges[e.From], e)
-	}
-	out := []listedPackage{}
-	for _, path := range sp.SortedPackages() {
-		pkg := sp.Packages[path]
-		lp := listedPackage{Path: path, Name: spec.PackageName(path), Definitions: []listedDefinition{}}
-		if path != spec.RootPackage {
-			lp.Parent = spec.PackageName(pkg.Parent)
-		}
-		for _, id := range pkg.Definitions {
-			lp.Definitions = append(lp.Definitions, listDefinition(sp.Definitions[id], deps))
-		}
-		if deps {
-			n := nodes[path]
-			d := &packageDeps{Afferent: n.Afferent, Efferent: n.Efferent, Instability: n.Instability, Abstractness: n.Abstractness, Distance: n.Distance, DependsOn: []dependency{}}
-			for _, e := range edges[path] {
-				dep := dependency{Package: spec.PackageName(e.To)}
-				for _, u := range e.Uses {
-					via := "link"
-					if u.Kind {
-						via = "kind"
-					}
-					dep.Uses = append(dep.Uses, use{From: u.From, Target: u.Target, Via: via, File: u.File, Line: u.Line})
-				}
-				d.DependsOn = append(d.DependsOn, dep)
-			}
-			lp.Deps = d
-		}
-		out = append(out, lp)
-	}
-	return out
-}
-
-// listDefinition is one Definition as list shows it; with links, the Definitions
-// and Packages its body links to.
-func listDefinition(d *spec.Definition, links bool) listedDefinition {
-	ld := listedDefinition{ID: d.ID, Title: d.Title, Kind: d.Kind, File: d.File, Internal: d.Internal}
-	if links {
-		seen := map[string]bool{}
-		for _, l := range d.Links {
-			if l.Kind || l.Target == "" || l.Target == d.ID || seen[l.Target] {
-				continue
-			}
-			seen[l.Target] = true
-			ld.Links = append(ld.Links, l.Target)
-		}
-		sort.Strings(ld.Links)
-	}
-	return ld
-}
-
-// docRecord is a Definition's record, as status sees it.
-type docRecord struct {
-	Item    string   `json:"item"`
-	State   string   `json:"state"`
-	Verdict string   `json:"verdict,omitempty"`
-	Why     string   `json:"why,omitempty"`
-	Changes []string `json:"changes,omitempty"`
-}
-
-// realizer is one registry row that names a Definition.
-type realizer struct {
-	File string `json:"file"`
-	Page string `json:"page"`
-	Line int    `json:"line,omitempty"`
-}
-
-// docDefinition is one Definition as doc shows it.
-type docDefinition struct {
-	listedDefinition
-	Package    string         `json:"package"`
-	Library    string         `json:"library,omitempty"`
-	Text       string         `json:"text"`
-	LinkedFrom []analysis.Ref `json:"linked_from"`
-	RealizedBy []realizer     `json:"realized_by"`
-	Record     *docRecord     `json:"record,omitempty"`
-}
-
-// docPackage is one Package as doc shows it.
-type docPackage struct {
-	Path        string             `json:"path"`
-	Name        string             `json:"name"`
-	Parent      string             `json:"parent,omitempty"`
-	Children    []string           `json:"children"`
-	Page        string             `json:"page,omitempty"`
-	Paths       []string           `json:"paths"`
-	Definitions []listedDefinition `json:"definitions"`
-	LinkedFrom  []analysis.Ref     `json:"linked_from"`
-	Files       []string           `json:"files"`
 }
 
 // doc prints a Definition with its text, what links to it, what it links to,
@@ -320,7 +168,7 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 		if o.json {
 			return OK, c.printJSON(struct {
 				envelope
-				Definition docDefinition `json:"definition"`
+				Definition analysis.DocDefinition `json:"definition"`
 			}{newEnvelope("doc"), dd})
 		}
 		fmt.Fprint(c.Stdout, renderDocDefinition(dd))
@@ -330,11 +178,11 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 		target = spec.RootPackage
 	}
 	if pkg := p.Spec.Packages[target]; pkg != nil {
-		dp := docPackageOf(p, pkg)
+		dp := analysis.DocPackageOf(p, pkg)
 		if o.json {
 			return OK, c.printJSON(struct {
 				envelope
-				Package docPackage `json:"package"`
+				Package analysis.DocPackage `json:"package"`
 			}{newEnvelope("doc"), dp})
 		}
 		fmt.Fprint(c.Stdout, renderDocPackage(dp))
@@ -352,27 +200,16 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 	return Failed, nil
 }
 
-// docDefinition gathers what doc shows of a Definition.
-func (c CLI) docDefinition(ctx context.Context, o options, p *project.Project, d *spec.Definition) docDefinition {
-	dd := docDefinition{listedDefinition: listDefinition(d, true), Package: spec.PackageName(d.Package), Library: d.Library, Text: body(d.Data), LinkedFrom: []analysis.Ref{}, RealizedBy: []realizer{}}
-	if d.Library != "" {
-		dd.Package = ""
-	}
-	refs, _ := analysis.Refs(p, d.ID)
-	for _, r := range refs {
-		if r.Via == "registry" {
-			dd.RealizedBy = append(dd.RealizedBy, realizer{File: r.From, Page: r.File, Line: r.Line})
-			continue
-		}
-		dd.LinkedFrom = append(dd.LinkedFrom, r)
-	}
+// docDefinition gathers what doc shows of a Definition, with its record.
+func (c CLI) docDefinition(ctx context.Context, o options, p *project.Project, d *spec.Definition) analysis.DocDefinition {
+	dd := analysis.DocDefinitionOf(p, d)
 	if d.Own() {
 		if st, err := c.Record.Status(ctx, run.StatusRequest{Dir: o.repo, All: true}); err == nil {
 			for _, it := range st.Items {
 				if it.Definition != d.ID {
 					continue
 				}
-				r := &docRecord{Item: it.Definition + "@" + it.Fingerprint, State: it.State, Verdict: it.Verdict, Why: it.Why}
+				r := &analysis.DocRecord{Item: it.Definition + "@" + it.Fingerprint, State: it.State, Verdict: it.Verdict, Why: it.Why}
 				for _, ch := range it.Changes {
 					r.Changes = append(r.Changes, ch.String())
 				}
@@ -381,47 +218,4 @@ func (c CLI) docDefinition(ctx context.Context, o options, p *project.Project, d
 		}
 	}
 	return dd
-}
-
-// docPackageOf gathers what doc shows of a Package.
-func docPackageOf(p *project.Project, pkg *spec.Package) docPackage {
-	dp := docPackage{Path: pkg.Path, Name: spec.PackageName(pkg.Path), Children: []string{}, Paths: []string{}, Definitions: []listedDefinition{}, LinkedFrom: []analysis.Ref{}, Files: []string{}}
-	if pkg.Path != spec.RootPackage {
-		dp.Parent = spec.PackageName(pkg.Parent)
-	}
-	dp.Children = append(dp.Children, pkg.Children...)
-	for _, id := range pkg.Definitions {
-		dp.Definitions = append(dp.Definitions, listDefinition(p.Spec.Definitions[id], false))
-	}
-	if p.Registry != nil {
-		if page := p.Registry.Pages[pkg.Path]; page != nil {
-			dp.Page = page.File
-			for _, pat := range page.Patterns {
-				dp.Paths = append(dp.Paths, pat.Text)
-			}
-		}
-		for file, owner := range p.Registry.Owner {
-			if owner == pkg.Path {
-				dp.Files = append(dp.Files, file)
-			}
-		}
-		sort.Strings(dp.Files)
-	}
-	if pkg.Path != spec.RootPackage {
-		if refs, err := analysis.Refs(p, pkg.Path); err == nil {
-			dp.LinkedFrom = append(dp.LinkedFrom, refs...)
-		}
-	}
-	return dp
-}
-
-// body is a Definition's text without its front matter.
-func body(data []byte) string {
-	text := string(project.Normalize(data))
-	if rest, ok := strings.CutPrefix(text, "---\n"); ok {
-		if i := strings.Index(rest, "\n---\n"); i >= 0 {
-			text = rest[i+len("\n---\n"):]
-		}
-	}
-	return strings.TrimSpace(text) + "\n"
 }
