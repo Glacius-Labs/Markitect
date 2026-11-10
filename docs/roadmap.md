@@ -20,7 +20,6 @@ Before step 3, read the nine finished launches of an earlier reviewing test at t
 
 Agreed directions that are not scheduled.
 
-- **The rest of the rename.** The code still says "model" where it means the spec, as in the package `internal/model` and diagnostic codes such as `model.name`; it becomes "spec", with no compatibility kept.
 - **A routine that audits the spec.** Cleanup, bug hunt and a full review run as routines, and the audit of the spec runs only when the owner or Claude starts it. A scheduled audit reads the spec regularly and tells the owner what is contradictory, missing, unclear or duplicated.
 - **More skills and checks.** `security` and `improve` skills, and a CI check with `markitect status` that ships with Markitect.
 - **Observed code dependencies widen what `status` lists.** The spec's links do not contain the code's own calls, imports and shared types. Optional, language-specific tools could observe them and widen the list, never narrow it ([OQ-001](decisions.md#open-questions)). Until then, `/markitect-review --all` is the safety net.
