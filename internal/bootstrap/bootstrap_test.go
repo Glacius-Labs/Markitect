@@ -55,12 +55,12 @@ func TestCommandsEndToEnd(t *testing.T) {
 
 	out := mustRun(t, r.Dir, "init", "--name", "Lending library")
 	noRepository(t, r.Dir)
-	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/spec/project.md", "wrote .markitect/lock.yaml: std 1.1.0", "installed the skills markitect-architect"} {
+	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/spec/project.md", "wrote .markitect/lock.yaml: std 1.1.0", "installed the harness in .claude/: the architect, build"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("init output lacks %q:\n%s", want, out)
 		}
 	}
-	if !strings.Contains(read(t, r.Dir, ".claude/skills/markitect-architect/SKILL.md"), "## Who writes") || !strings.Contains(read(t, r.Dir, ".agents/skills/markitect-architect/reference.md"), "spec form") {
+	if !strings.Contains(read(t, r.Dir, ".claude/skills/markitect-architect/SKILL.md"), "## Who writes") || !strings.Contains(read(t, r.Dir, ".claude/skills/markitect-architect/reference.md"), "spec form") {
 		t.Fatal("skills not installed")
 	}
 	if !strings.Contains(read(t, r.Dir, ".markitect/spec/project.md"), "# Lending library") {
@@ -533,19 +533,24 @@ func TestInitInstallsTheHarness(t *testing.T) {
 	if strings.Contains(read(t, r.Dir, ".claude/skills/markitect-architect/SKILL.md"), "disable-model-invocation") {
 		t.Error("Claude may not start the architect skill")
 	}
-	// A routine's prompt is the frame with the setup's four values and one
-	// routine's work, which holds no value of its own to fill in.
-	frame := read(t, r.Dir, ".claude/skills/markitect-schedule/routine.md")
-	for _, value := range []string{"{{NAME}}", "{{SOURCE}}", "{{FOLDER}}", "{{WORK}}"} {
-		if !strings.Contains(frame, value) {
-			t.Errorf("the routine frame lacks %s", value)
+	// A scheduled prompt is one line that points at the routine's file in the
+	// project, so that update reaches a routine that is already scheduled. The
+	// file holds nothing to fill in and the work of all three routines.
+	routine := read(t, r.Dir, ".claude/skills/markitect-schedule/routine.md")
+	if strings.Contains(routine, "{{") {
+		t.Errorf("the routine's file has a value to fill in:\n%s", routine)
+	}
+	for _, work := range []string{"- **review:**", "- **bughunt:**", "- **cleanup:**", `"Verify every Definition: markitect status --all."`, `"Hunt bugs."`, `"Clean up."`} {
+		if !strings.Contains(routine, work) {
+			t.Errorf("the routine's file lacks %s", work)
 		}
 	}
-	setup := read(t, r.Dir, ".claude/skills/markitect-schedule/SKILL.md")
-	for _, work := range []string{"review.md", "bughunt.md", "cleanup.md"} {
-		text := read(t, r.Dir, ".claude/skills/markitect-schedule/"+work)
-		if text == "" || strings.Contains(text, "{{") || !strings.Contains(setup, "("+work+")") {
-			t.Errorf("the routine work %s:\n%s", work, text)
+	if setup := read(t, r.Dir, ".claude/skills/markitect-schedule/SKILL.md"); !strings.Contains(setup, "read .claude/skills/markitect-schedule/routine.md there and follow it.") || !strings.Contains(setup, "(routine.md)") {
+		t.Errorf("the schedule skill does not point a routine at its file:\n%s", setup)
+	}
+	for _, gone := range []string{"review.md", "bughunt.md", "cleanup.md"} {
+		if _, err := os.Stat(filepath.Join(r.Dir, ".claude", "skills", "markitect-schedule", gone)); !os.IsNotExist(err) {
+			t.Errorf("init installed %s, a copy of a routine's work", gone)
 		}
 	}
 	// Only the builder may start an agent, and its tools name the reviewer; the

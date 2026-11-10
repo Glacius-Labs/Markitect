@@ -2,7 +2,6 @@ package setup
 
 import (
 	"bytes"
-	"slices"
 	"sort"
 
 	"github.com/Glacius-Labs/Markitect/internal/harness"
@@ -54,9 +53,6 @@ func (r *refresher) Remove(file string) error {
 // says, also when it fails.
 func RefreshHarness(f Folder, cfg harness.Config, dry bool) (files, said []string, err error) {
 	r := &refresher{Folder: f, dry: dry}
-	if _, err := InstallSkills(r); err != nil {
-		return nil, nil, err
-	}
 	if err := InstallHarness(r, cfg); err != nil {
 		return nil, nil, err
 	}
@@ -69,10 +65,8 @@ func RefreshHarness(f Folder, cfg harness.Config, dry bool) (files, said []strin
 	if _, err := EnsureIgnore(r); err != nil {
 		return nil, said, err
 	}
-	// A retired file is removed by both of the writers above in a dry run, which
-	// removes nothing in between.
 	sort.Strings(r.files)
-	return slices.Compact(r.files), said, nil
+	return r.files, said, nil
 }
 
 // Refreshed is what a refresh found in a project.

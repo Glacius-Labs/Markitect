@@ -71,15 +71,24 @@ func TestStartSpecAndInstructions(t *testing.T) {
 	if !strings.Contains(m[project.SpecDir+"/project.md"], "# Library\n") {
 		t.Fatalf("anchor:\n%s", m[project.SpecDir+"/project.md"])
 	}
-	kept, created, err := WriteInstructions(m, "Library")
-	if err != nil || kept || !reflect.DeepEqual(created, []string{InstructionsFile, "CLAUDE.md"}) || m["CLAUDE.md"] != "@AGENTS.md\n" {
-		t.Fatalf("kept %v, created %v, %v", kept, created, err)
+	kept, unread, created, err := WriteInstructions(m, "Library")
+	if err != nil || kept || unread || !reflect.DeepEqual(created, []string{InstructionsFile, "CLAUDE.md"}) || m["CLAUDE.md"] != "@AGENTS.md\n" {
+		t.Fatalf("kept %v, unread %v, created %v, %v", kept, unread, created, err)
 	}
 	if created, empty, err := StartSpec(m, "Library"); err != nil || empty || len(created) != 0 {
 		t.Fatalf("again: created %v, empty spec %v, %v", created, empty, err)
 	}
-	if kept, created, err := WriteInstructions(m, "Library"); err != nil || !kept || len(created) != 0 {
-		t.Fatalf("again: kept %v, created %v, %v", kept, created, err)
+	if kept, unread, created, err := WriteInstructions(m, "Library"); err != nil || !kept || unread || len(created) != 0 {
+		t.Fatalf("again: kept %v, unread %v, created %v, %v", kept, unread, created, err)
+	}
+	// A CLAUDE.md of the owner's that does not import AGENTS.md stays as it is,
+	// and the caller learns that Claude Code does not read AGENTS.md through it.
+	for claude, want := range map[string]bool{"# Notes\n": true, "# Notes\n\n@AGENTS.md\n": false} {
+		own := memory{"CLAUDE.md": claude}
+		_, unread, created, err := WriteInstructions(own, "Library")
+		if err != nil || unread != want || own["CLAUDE.md"] != claude || !reflect.DeepEqual(created, []string{InstructionsFile}) {
+			t.Fatalf("with CLAUDE.md %q: unread %v, created %v, %v", claude, unread, created, err)
+		}
 	}
 }
 

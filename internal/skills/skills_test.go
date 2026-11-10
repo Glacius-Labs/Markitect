@@ -60,9 +60,9 @@ func TestEveryAgentNamesItsModelAndEffort(t *testing.T) {
 // that path must be a file init installs: a rename of the skill must reach the
 // agent's file too.
 func TestTheArchitectAgentNamesAnInstalledSkillFile(t *testing.T) {
-	const path = "markitect-architect/SKILL.md"
+	const path = ".claude/skills/markitect-architect/SKILL.md"
 	installed := false
-	for _, f := range Files() {
+	for _, f := range Harness() {
 		installed = installed || f.Path == path
 	}
 	if !installed {
@@ -72,8 +72,8 @@ func TestTheArchitectAgentNamesAnInstalledSkillFile(t *testing.T) {
 		if f.Path != ".claude/agents/markitect-architect.md" {
 			continue
 		}
-		if !strings.Contains(string(f.Data), ".claude/skills/"+path) {
-			t.Fatalf("%s does not name .claude/skills/%s", f.Path, path)
+		if !strings.Contains(string(f.Data), path) {
+			t.Fatalf("%s does not name %s", f.Path, path)
 		}
 		return
 	}

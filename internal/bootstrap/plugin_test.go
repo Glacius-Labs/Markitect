@@ -476,7 +476,7 @@ func TestGuardHooksStartTheLauncherOnlyForTheirCalls(t *testing.T) {
 				edit("markitect-builder", "/p/.claude/worktrees/agent-a1/src/hooks/check.go"), edit("markitect-builder", "/p/src/rules/go.md")},
 			guarded: []string{edit("markitect-builder", "/p/.markitect/spec/x.md"), edit("general-purpose", `C:\\p\\.markitect\\review.sum`), edit("markitect-builder", `C:\\p\\.MARKITECT\\review.sum`), edit("markitect-architect", "/p/src/fees.go"), edit("markitect-auditor", "/p/notes.md"),
 				edit("markitect-builder", "/p/.claude/settings.json"), edit("markitect-builder", `C:\\p\\.claude\\settings.local.json`), edit("general-purpose", "/p/AGENTS.md"), edit("markitect-builder", "/p/CLAUDE.md"),
-				edit("markitect-builder", "/p/.claude/agents/markitect-reviewer.md"), edit("markitect-builder", `C:\\p\\.agents\\skills\\markitect-architect\\SKILL.md`),
+				edit("markitect-builder", "/p/.claude/agents/markitect-reviewer.md"), edit("markitect-builder", `C:\\p\\.claude\\skills\\markitect-architect\\SKILL.md`),
 				edit("general-purpose", `C:\\p\\.claude\\skills\\markitect-build\\SKILL.md`), edit("general-purpose", "/p/.claude/workflows/markitect-parallel.js"),
 				edit("markitect-builder", "/p/CLAUDE.local.md"), edit("markitect-builder", "/p/.claude/hooks/check.sh"), edit("general-purpose", `C:\\p\\.Claude\\Hooks\\check.sh`),
 				edit("markitect-builder", "/p/.claude/rules/go.md"), edit("markitect-builder", `C:\\p\\.claude\\rules\\go\\style.md`), edit("markitect-architect", "/p/.markitect/.gitattributes")},

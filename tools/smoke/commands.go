@@ -45,10 +45,10 @@ func (s *smoke) specCommands() error {
 	markitect := func(args ...string) (string, error) { return s.run(repo, nil, s.tool("markitect"), args...) }
 	if out, err := markitect("init", "--name", "Lending library"); err != nil {
 		return err
-	} else if err := requireContains(out, "created .markitect/manifest.yaml", "wrote .markitect/lock.yaml: std 1.1.0", "installed the skills"); err != nil {
+	} else if err := requireContains(out, "created .markitect/manifest.yaml", "wrote .markitect/lock.yaml: std 1.1.0", "installed the harness"); err != nil {
 		return err
 	}
-	if err := requirePresent(repo, ".claude/skills/markitect-architect/SKILL.md", ".agents/skills/markitect-architect/SKILL.md", ".claude/agents/markitect-architect.md", ".claude/workflows/markitect-parallel.js", ".markitect/spec/project.md"); err != nil {
+	if err := requirePresent(repo, ".claude/skills/markitect-architect/SKILL.md", ".claude/agents/markitect-architect.md", ".claude/workflows/markitect-parallel.js", ".markitect/spec/project.md"); err != nil {
 		return err
 	}
 	for name, content := range smokeSpec {

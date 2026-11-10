@@ -44,7 +44,7 @@ const (
 const Attributes = "review.sum merge=union\n"
 
 // harnessPrefixes are what the files of the harness start with, in lower case.
-var harnessPrefixes = []string{".claude/agents/markitect-", ".claude/skills/markitect-", ".agents/skills/markitect-", ".claude/workflows/markitect-"}
+var harnessPrefixes = []string{".claude/agents/markitect-", ".claude/skills/markitect-", ".claude/workflows/markitect-"}
 
 // instructionFiles are what a coding agent reads by itself when a session starts,
 // and the project's settings, which hold the hook.

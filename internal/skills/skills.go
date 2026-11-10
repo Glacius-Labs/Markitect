@@ -1,8 +1,7 @@
 // Package skills holds what ships inside the markitect binary for agents: the
-// architect skill, which markitect init installs where coding agents look for
-// skills, and the harness of the work for Claude Code: its skills, its four agents
-// and the prompts of its routines (DEC-100), and the workflow of the parallel
-// strategy (DEC-103).
+// harness for Claude Code, which markitect init installs into a project. That is
+// its skills, the architect skill among them, its four agents and the prompt of
+// its routines (DEC-100), and the workflow of the parallel strategy (DEC-103).
 package skills
 
 import (
@@ -11,14 +10,11 @@ import (
 	"sort"
 )
 
-//go:embed markitect-architect
-var files embed.FS
-
 //go:embed all:claude
 var claudeFiles embed.FS
 
-// File is one file of a skill, relative to the skills folder, such as
-// "markitect-architect/SKILL.md".
+// File is one file of the harness, by the path it has in a project, such as
+// ".claude/skills/markitect-architect/SKILL.md".
 type File struct {
 	Path string
 	Data []byte
@@ -58,27 +54,6 @@ const personalTail = "\n`markitect` is a command on the path, so there is no nee
 // Personal returns the text of the personal skill, which reaches a session in a
 // folder that has no project yet.
 func Personal() []byte { return []byte(personalHead + About + personalTail) }
-
-// Names returns the skill names, sorted.
-func Names() []string { return []string{"markitect-architect"} }
-
-// Files returns every file of every skill, sorted by path.
-func Files() []File {
-	var out []File
-	_ = fs.WalkDir(files, ".", func(p string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return err
-		}
-		data, err := files.ReadFile(p)
-		if err != nil {
-			return err
-		}
-		out = append(out, File{Path: p, Data: data})
-		return nil
-	})
-	sort.Slice(out, func(i, j int) bool { return out[i].Path < out[j].Path })
-	return out
-}
 
 // HarnessPrefix is what every file of the harness starts with below its folder.
 const HarnessPrefix = "markitect-"

@@ -265,7 +265,7 @@ func TestOldFilesAreRefused(t *testing.T) {
 // builder's, need no registry entry; a page may still list them.
 func TestTheToolAccountsForItsOwnFiles(t *testing.T) {
 	r := valid(t)
-	for _, f := range []string{".gitignore", "AGENTS.md", "CLAUDE.md", ".claude/agents/markitect-architect.md", ".claude/skills/markitect-architect/SKILL.md", ".agents/skills/markitect-architect/SKILL.md", ".claude/worktrees/agent-a1", ".claude/worktrees/routine/src/fees.go"} {
+	for _, f := range []string{".gitignore", "AGENTS.md", "CLAUDE.md", ".claude/agents/markitect-architect.md", ".claude/skills/markitect-architect/SKILL.md", ".claude/workflows/markitect-parallel.js", ".claude/worktrees/agent-a1", ".claude/worktrees/routine/src/fees.go"} {
 		r.files[f] = "x\n"
 	}
 	r.files[RootPage] += "| .gitignore | [[project]] | Listed by the owner |\n"

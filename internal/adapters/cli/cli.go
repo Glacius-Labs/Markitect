@@ -69,7 +69,7 @@ Usage:
                                                   record a verdict at the state status printed: ok, fail, skip or
                                                   spec-problem; evidence is path:line or path; only the
                                                   markitect-reviewer agent runs it
-  markitect config [--repo DIR] [--user] KEY [VALUE] | --unset KEY | --list [--json]
+  markitect config [--repo DIR] KEY | [--user] KEY VALUE | [--user] --unset KEY | --list [--json]
                                                   read or change the harness configuration: the agents' model and
                                                   effort per role, the strategy per skill and custom workflows; the
                                                   project's .markitect/harness.yaml beats your ~/.markitect/harness.yaml
