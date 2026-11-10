@@ -26,7 +26,7 @@ Open Claude Code in the project and run `/markitect-architect`. In a new project
 
 The spec lives under `.markitect/spec/`: one Markdown file with front matter per Definition, one folder per Package. The [spec language guide](spec-language.md#definitions) gives the form. A project writes its own Kinds for what the standard Libraries do not cover; to use `rest` or `cli`, add it to the manifest and run `markitect tidy`.
 
-The architect skill has your session talk with you and ask first when something is open, and the `markitect-architect` agent write the spec. That agent writes only under `.markitect/` and hands its questions back to the session. You accept every change of the spec yourself; the builder never changes it. `/markitect-audit` has a fresh auditor read the spec for contradictions, gaps, unclear and duplicated statements and missing links, and report them to you: it triages the unlinked mentions `markitect vet --strict` lists into missing links and ordinary words, and you, or the architect, add the links.
+The architect skill has your session write the spec with you and ask first when something is open. A large first draft it can hand to the `markitect-architect` agent, which writes only under `.markitect/` and hands its questions back. You accept every change of the spec yourself; the builder never changes it. `/markitect-audit` has a fresh auditor read the spec for contradictions, gaps, unclear and duplicated statements and missing links, and report them to you: it triages the unlinked mentions `markitect vet --strict` lists into missing links and ordinary words, and you, or the architect, add the links.
 
 ## 3. Register the files
 
@@ -117,8 +117,8 @@ The strategies, and the agents' model and effort, are set in `harness.yaml`, at 
 
 | Key | Values | Built in |
 |---|---|---|
-| `agents.ROLE.model` | `sonnet`, `opus`, `haiku`, a full model ID or `inherit`; ROLE is `builder`, `reviewer`, `architect` or `auditor` | `sonnet` |
-| `agents.ROLE.effort` | `low`, `medium`, `high`, `xhigh` or `max` | `high` |
+| `agents.ROLE.model` | `sonnet`, `opus`, `haiku`, a full model ID or `inherit`; ROLE is `builder`, `reviewer`, `architect` or `auditor` | `sonnet` for the builder and the reviewer, `opus` for the architect and the auditor |
+| `agents.ROLE.effort` | `low`, `medium`, `high`, `xhigh` or `max` | `high` for the builder and the reviewer, `medium` for the architect and the auditor |
 | `strategy.default` | `auto`, `sequential`, `parallel` or a custom workflow's name | `auto` |
 | `strategy.SKILL` | the same, for `build`, `review`, `cleanup`, `bughunt` or `audit` | `strategy.default` |
 | `workflows.NAME` | the path of a custom workflow's script | |
@@ -190,7 +190,7 @@ The plugin's launcher downloads the binary of the release with the plugin's own 
 | `mark` says the inputs changed since `status` printed the fingerprint | A file changed after the reviewer read it, perhaps by its own test run. Run `status` again and verify the item as it is now. |
 | `mark` says the record has lines it cannot read | A line of `.markitect/review.sum` was written by hand or broken. Fix or remove the lines `status` names; no agent may. |
 | `status` lists a conflict | After a merge two lines match the folder with different verdicts. Verify the Definition again; the next `mark` writes the file clean. |
-| An agent's call was refused by the hook | Each role may only do its own part: only the `markitect-reviewer` agent records verdicts; the builder writes code and the registry pages and starts only the reviewer; the architect writes only under `.markitect/`; the reviewer and the auditor write nothing; no agent changes the settings, the Markitect skills and agents, `AGENTS.md` or `CLAUDE.md`; and only your session starts the builder and the architect. A change to the spec is yours: your session has the architect write it, with `/markitect-architect`. |
+| An agent's call was refused by the hook | Each role may only do its own part: only the `markitect-reviewer` agent records verdicts; the builder writes code and the registry pages and starts only the reviewer; the architect writes only under `.markitect/`; the reviewer and the auditor write nothing; no agent changes the settings, the Markitect skills and agents, `AGENTS.md` or `CLAUDE.md`; and only your session starts the builder and the architect. A change to the spec is yours, in your own session, with `/markitect-architect`. |
 | The builder ended while `status` still lists items | Look at what it said: a `spec-problem` waits for you; a list that did not get shorter for three rounds needs a look; anything else you can build again with `/markitect-build`. Its work stays committed on the worktree's branch until you merge it. |
 | The builder's work did not come back to your branch | `status` in its worktree was not empty, or Git refused the merge because of a conflict or uncommitted changes in your folder. The work is committed on the worktree's branch (`git worktree list`): merge it yourself, or run the skill again. |
 | `manifest.model` | The manifest names the agents' model, which belongs in `.markitect/harness.yaml` now. Run `markitect update`, which moves it. |

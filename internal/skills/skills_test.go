@@ -33,7 +33,7 @@ func TestEveryAgentNamesItsModelAndEffort(t *testing.T) {
 		if !ok || !strings.HasPrefix(string(f.Data), "---\n") {
 			t.Fatalf("%s has no front matter", f.Path)
 		}
-		for _, key := range []string{"\nmodel: sonnet\n", "\neffort: high\n"} {
+		for _, key := range []string{"\nmodel: ", "\neffort: "} {
 			if !strings.Contains("\n"+front+"\n", key) {
 				t.Errorf("%s lacks %q in its front matter", f.Path, strings.TrimSpace(key))
 			}

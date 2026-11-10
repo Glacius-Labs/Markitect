@@ -200,3 +200,19 @@ func TestInitInstallsTheParallelWorkflow(t *testing.T) {
 		t.Fatalf("the workflow needs no registry entry, the owner's does:\n%s", out)
 	}
 }
+
+// The roles that work on the spec are built in on a larger model than the roles
+// that work on the code, and init writes each role's values into its agent file.
+func TestInitWritesEachRolesBuiltInModelAndEffort(t *testing.T) {
+	emptyHome(t)
+	r := newFolder(t)
+	mustRun(t, r.Dir, "init")
+	for role, want := range map[string]string{
+		"builder":   "\nmodel: sonnet\neffort: high\n",
+		"reviewer":  "\nmodel: sonnet\neffort: high\n",
+		"architect": "\nmodel: opus\neffort: medium\n",
+		"auditor":   "\nmodel: opus\neffort: medium\n",
+	} {
+		wantAll(t, read(t, r.Dir, ".claude/agents/markitect-"+role+".md"), want)
+	}
+}
