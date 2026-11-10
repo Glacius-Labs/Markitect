@@ -30,13 +30,13 @@
 
 When agents build most of your project, two things go missing that used to come with writing and reviewing the code yourself: trust that the code is what you meant, and an overview of how the project stands. Reading everything again would bring both back and make you the bottleneck.
 
-The usual fixes have no measure. A session that checks whether everything fits has nothing to fit it against. More rules and skills are more to maintain and more for an agent to overlook. Prompts, tickets and most specs in spec-driven development describe one change and go stale once it is made. Nowhere does it say what the project as a whole should be.
+The usual fixes have no measure. A session that checks whether everything fits has nothing to fit it against. More rules and skills are more to maintain and more for an agent to overlook. Prompts, tickets and most specs in spec-driven development describe one change and go stale once it is made. What is missing is a standing statement of what the project as a whole should be.
 
-Markitect gives the project that statement, and a systematic way to build to it.
+Markitect gives the project that statement, and agents build to it.
 
-**You architect in Markdown.** The spec is the plan of the whole project: one place you own, where what is written is binding. You decide what the project is, how it is divided and which rules hold, and an agent writes it down with you. The spec is typed prose: Definitions of a Kind, in Packages, with links that work like imports. The `markitect` tool checks its structure as a compiler checks code.
+**You architect in Markdown.** The spec is the plan of the whole project: one place you own, where what is written is binding. You decide what the project is, how it is divided and which rules hold, and an agent writes it down with you. The spec is typed prose: Definitions of a Kind, in Packages, with links that work like imports. The `markitect` tool checks its structure, never its meaning, as a compiler checks code.
 
-**Agents build to spec.** `markitect status` computes from the spec what a change reaches, so no agent decides from memory what belongs to the work. A builder agent makes code, tests, configuration and documentation match the spec for that list. A fresh reviewer agent verifies every Definition on it against the spec and records a verdict with its evidence. A verdict holds until one of its inputs changes.
+**Agents build to spec.** `markitect status` computes from the spec and the record of what was verified which Definitions a change reaches through their declared links, so the list of work does not depend on an agent's memory. A builder agent makes code, tests, configuration and documentation match the spec for that list. A reviewer agent with fresh context verifies every Definition on it against the spec and records a verdict with its evidence.
 
 Markitect builds on requirements traceability, architecture metrics and the conventions of Go's tools, and it works with Claude Code's own skills, subagents, hooks and worktrees. The [vision](docs/vision.md#why-markitect-exists) gives the full reasoning.
 
