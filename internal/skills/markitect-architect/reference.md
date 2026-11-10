@@ -24,10 +24,10 @@ Everything under `.markitect/` is accounted for by the compiler and needs no reg
 One Markdown file with YAML front matter.
 
 - Front matter: `kind` (required) and `internal: true` (optional). Another key is `definition.front_matter`.
-- File name without `.md` is the name, the path below `spec/` is the ID (`members/member`). Names: letters, digits, `-`, `_`, starting with a letter or digit (`model.name`).
+- File name without `.md` is the name, the path below `spec/` is the ID (`members/member`). Names: letters, digits, `-`, `_`, starting with a letter or digit (`spec.name`).
 - Body: one level-1 heading, the title, first; no second one (`definition.title`); then prose. Exact values in backticks.
-- The spec folder holds only `.md` files and folders (`model.file`). Two entries differing only in case, or `member.md` beside `member/`, collide (`model.collision`).
-- A top-level name may not be a Library name or `Kind` (`model.reserved`).
+- The spec folder holds only `.md` files and folders (`spec.file`). Two entries differing only in case, or `member.md` beside `member/`, collide (`spec.collision`).
+- A top-level name may not be a Library name or `Kind` (`spec.reserved`).
 
 ## Kinds and Libraries
 
@@ -122,7 +122,7 @@ Notes: `vet.unlinked_mention` (a Definition's title or name in another Definitio
 | Group | Codes |
 |---|---|
 | Project | `project.file` (a file under `.markitect/` has no place in the layout), `project.read` |
-| Definition and model | `definition.front_matter`, `definition.title`, `model.name`, `model.file`, `model.collision`, `model.reserved` |
+| Definition and spec | `definition.front_matter`, `definition.title`, `spec.name`, `spec.file`, `spec.collision`, `spec.reserved` |
 | Kind and Library | `kind.unresolved`, `kind.not_a_kind`, `library.name`, `library.file`, `library.not_a_kind`, `library.internal`, `library.version`, `library.reserved`, `library.missing`, `library.undeclared` |
 | Manifest and lock | `manifest.syntax`, `manifest.missing`, `lock.mismatch`, `lock.missing`, `lock.syntax` |
 | Links and Packages | `link.unresolved`, `link.syntax`, `link.internal`, `link.downward`, `package.cycle` |

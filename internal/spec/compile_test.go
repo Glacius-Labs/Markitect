@@ -129,13 +129,13 @@ func TestCompileFileAndNameErrors(t *testing.T) {
 		"ok/.hidden.md":  def("std/Rule", "# Hidden\n"),
 		"ok/visible.md":  def("std/Rule", "# Visible\n"),
 	})
-	expect(t, ds, "model.file", "diagram.png")
-	expect(t, ds, "model.name", "bad name.md")
-	expect(t, ds, "model.name", ".hidden.md")
-	expect(t, ds, "model.collision", "file Member and file member")
-	expect(t, ds, "model.collision", "file loans and folder loans")
-	expect(t, ds, "model.reserved", `"std" is the name of a Library`)
-	expect(t, ds, "model.reserved", `"Kind" is Core's Kind`)
+	expect(t, ds, "spec.file", "diagram.png")
+	expect(t, ds, "spec.name", "bad name.md")
+	expect(t, ds, "spec.name", ".hidden.md")
+	expect(t, ds, "spec.collision", "file Member and file member")
+	expect(t, ds, "spec.collision", "file loans and folder loans")
+	expect(t, ds, "spec.reserved", `"std" is the name of a Library`)
+	expect(t, ds, "spec.reserved", `"Kind" is Core's Kind`)
 }
 
 func TestCompileKindErrors(t *testing.T) {

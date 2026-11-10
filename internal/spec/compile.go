@@ -106,11 +106,11 @@ func (c *compiler) loadSpec(src Source) {
 		file := path.Join(src.Dir, f.Path)
 		id, isMarkdown := strings.CutSuffix(f.Path, ".md")
 		if !isMarkdown {
-			c.diags.Add("model.file", file, 0, "the spec folder holds only Definitions (.md files) and Package folders")
+			c.diags.Add("spec.file", file, 0, "the spec folder holds only Definitions (.md files) and Package folders")
 			continue
 		}
 		if !ValidPath(id) {
-			c.diags.Add("model.name", file, 0, "%q is not a valid Definition path: every folder and file name starts with a letter or digit and uses only letters, digits, - and _", f.Path)
+			c.diags.Add("spec.name", file, 0, "%q is not a valid Definition path: every folder and file name starts with a letter or digit and uses only letters, digits, - and _", f.Path)
 			continue
 		}
 		segments := strings.Split(id, "/")
@@ -130,7 +130,7 @@ func (c *compiler) loadSpec(src Source) {
 			if id == CoreKind {
 				what = "Core's Kind"
 			}
-			c.diags.Add("model.reserved", file, 0, "%s is already the ID of %s; choose another name", id, what)
+			c.diags.Add("spec.reserved", file, 0, "%s is already the ID of %s; choose another name", id, what)
 			continue
 		}
 		d := c.parseDefinition(id, file, f.Data)
@@ -148,7 +148,7 @@ func (c *compiler) loadSpec(src Source) {
 					spelled = append(spelled, e.form+" "+e.name)
 				}
 				sort.Strings(spelled)
-				c.diags.Add("model.collision", path.Join(src.Dir, parent), 0, "%s name the same thing; links could not tell them apart", strings.Join(spelled, " and "))
+				c.diags.Add("spec.collision", path.Join(src.Dir, parent), 0, "%s name the same thing; links could not tell them apart", strings.Join(spelled, " and "))
 			}
 		}
 	}
@@ -162,10 +162,10 @@ func (c *compiler) loadSpec(src Source) {
 
 func (c *compiler) reserved(dir, name string) {
 	if name == CoreKind {
-		c.diags.Add("model.reserved", path.Join(dir, name), 0, "%q is Core's Kind; choose another top-level name", name)
+		c.diags.Add("spec.reserved", path.Join(dir, name), 0, "%q is Core's Kind; choose another top-level name", name)
 	}
 	if _, ok := c.spec.Libraries[name]; ok {
-		c.diags.Add("model.reserved", path.Join(dir, name), 0, "%q is the name of a Library; links to %s/... would be ambiguous", name, name)
+		c.diags.Add("spec.reserved", path.Join(dir, name), 0, "%q is the name of a Library; links to %s/... would be ambiguous", name, name)
 	}
 }
 

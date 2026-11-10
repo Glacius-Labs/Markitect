@@ -39,7 +39,7 @@ func TestEscapedLabelBarInTable(t *testing.T) {
 
 func TestKindFileAtRootIsReserved(t *testing.T) {
 	_, ds := compile(t, map[string]string{"Kind.md": def("Kind", "# My Kind\n")})
-	expect(t, ds, "model.reserved", "Kind.md: model.reserved: Kind is already the ID of Core's Kind")
+	expect(t, ds, "spec.reserved", "Kind.md: spec.reserved: Kind is already the ID of Core's Kind")
 }
 
 func TestBrokenFrontMatterReportsOnce(t *testing.T) {
