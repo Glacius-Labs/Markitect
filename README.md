@@ -76,7 +76,7 @@ flowchart LR
     Review --> Land["work and record<br/>merged into<br/>your branch"]
 ```
 
-1. **You change the spec,** by hand or with your coding agent through `/markitect-design`, which asks first when something is open. You read the Markdown diff and commit it.
+1. **You change the spec,** by hand or with your coding agent through `/markitect-design`, which asks first when something is open. You read the Markdown diff, or go through it with the agent, and commit it.
 2. **You run `/markitect-build` in Claude Code.** Your session starts a builder agent in a worktree of its own, so you can go on designing.
 3. **`markitect status` makes the list.** It lists the Definitions the change reaches: those it edits, those that link to them, and those whose files changed, each with where to look. A spec that does not compile gives no list.
 4. **A builder agent does the work.** It changes the code, tests and documentation for what the list holds and keeps the registry current. A hook keeps it out of the spec and the record.

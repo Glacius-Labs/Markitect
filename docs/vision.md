@@ -4,7 +4,7 @@ This page says why Markitect exists, where its trust comes from and what it leav
 
 ## Markitect in brief
 
-Read this section first, then [Founding intent](#founding-intent) and [Common misreadings](#common-misreadings).
+Read this section first, then [Why Markitect exists](#why-markitect-exists), [Founding intent](#founding-intent) and [Common misreadings](#common-misreadings).
 
 **What it is: a programming language for documentation** ([DEC-101](decisions.md#dec-101-markitect-is-a-programming-language-for-documentation)).
 - People maintain one authoritative place per project: the spec. It is typed prose: Markdown Definitions, each of a Kind, organized in Packages, with links that work like imports. It states the project's concepts, rules, boundaries, interfaces, architecture and way of working, as far as good documentation of the project would.
@@ -29,21 +29,43 @@ Markitect expects coding to move from languages such as Go, C# or Python towards
 
 **The honest limit.** "Complete" means complete for the declared links. `status` follows a Definition's own text, its Kind, the Definitions it links to, its registry rows and its evidence, one step deep; it does not read the code's imports. Prose that names a concept without linking it is a gap: a change to that concept does not put the naming Definition back on the list. `vet` notes such names, and the auditor tells real missing links from ordinary words; names a text check does not match, only a careful reader finds. An empty `status` says that every Definition was verified at its current inputs, not that every verdict is right.
 
-## Why: three problems
+## Why Markitect exists
 
-- **Nobody keeps track of what was decided.** In a long session or a large project, nobody can remember or keep current what was decided when; coding agents lose track of relevant files and rules as projects grow, and explicit consistency runs miss things and scale badly. The spec is the one living statement of what holds.
-- **Nobody reads all the documentation.** AI produces more documentation than anyone reads. The spec is small, structured and navigable: Definitions in Packages, with links, and `markitect list` and `doc` to find one's way.
-- **Nobody knows whether the realization matches the idea.** Common practice nevertheless trusts the agents: an agent implements a work item, another AI reviews the pull request, and the required human approval is often given almost blind. `status` and the record say per Definition what a fresh reviewer found, with its evidence.
+**What changed.** A coding agent works like a very able and fast colleague. As with a colleague, the result depends on how well it was told what is wanted, what matters and what belongs to the task, and like a colleague it can forget. Much software is now built through such agents alone: the editor stays closed, code is skimmed at most, and pull requests are reviewed by another AI and hardly read.
 
-So the knowledge of what belongs to what must not depend on an agent's memory, and people cannot read every diff without becoming the bottleneck.
+**What was lost.** Two things came with writing and reviewing the code oneself, at no extra cost:
+
+- **Trust:** knowing that the code is what was meant.
+- **Overview:** knowing the project's state, how it works and how it is organized, at the speed agents change it.
+
+Getting them back by reading everything would make people the bottleneck. People should develop ideas, work out concepts, organize and delegate, like a manager rather than a worker.
+
+**Why today's substitutes fall short.** People ask the agent how something works, and they start separate sessions: look for bugs, judge the architecture, check that everything fits, and after a fix check that nothing else broke. These passes do find what the implementing session missed, because each looks from one angle. But "everything fits" has nothing to fit against, and the passes run only when someone thinks of them. So projects add rules, processes and skills. Those live in agent instructions and documentation, and they are more artifacts to remember, to maintain and to keep uniform, and more for an agent to overlook. Consolidating them with an agent works for a small project; it takes a long time, scales badly and leaves no way to know that the result is consistent.
+
+**What is missing.** A standing statement of what should be. A prompt, a user story and most specs in spec-driven development describe a change or one part of the project; they age once the change is made, and nobody maintains them. So at no moment is it written down what the project as a whole should be, and what exists has nothing to converge on. An agent then cannot tell how far the project has moved from what was wanted, cannot find the deviations that crept in earlier, and cannot tell a bug from intended behavior. It guesses, and the more it guesses, the less the result can be relied on. Getting what one wants takes knowing what one wants and saying it.
+
+Markitect supplies that statement, the spec, and rebuilds trust and overview on it:
+
+| Question | Markitect's answer |
+|---|---|
+| Was something forgotten? | What is to verify is computed from the spec and the record, like a checklist, not recalled from memory. Surgeons work with checklists for the same reason: they know every step and can still skip one |
+| Was it understood correctly? | A fresh reviewer judges the code against the spec and records per Definition what it found, with its evidence |
+| Does the spec say what was meant? | The person answers for the spec. It is developed in conversation with an agent, and the person reads a change or goes through it with the agent. `check` finds structural errors, `vet` measures the design, and the auditor reports contradictions, gaps and unclear statements |
+| How does the project stand, and how is it organized? | Follow the spec, not the code. Its structure shows the project's division, modules, architecture and dependencies, with `markitect list`, `doc` and `vet`. It moves only when a person accepts a change, and `status` lists what is not yet verified |
+
+[Where trust comes from](#where-trust-comes-from) lists the mechanisms.
 
 ## Founding intent
 
 **The problem.** A project built almost entirely with coding agents, documented in Markdown with rules, skills and agent instructions, drifted away from its code. It had explicit Core, Module and Product boundaries, and a specified working method, review policies and skills per module. Code, documentation and the agents' skills repeatedly contradicted one another; changes missed rules, every consistency run took hours and found more, and nobody could tell any more which rules existed, what was defined and what had entered the project silently.
 
+**The whole project, as good documentation would state it.** The spec covers the project in its whole breadth: which modules and deployments exist, what a concept such as a book is and what can be done with it, the rules and the way of working. It states what callers rely on, such as data shapes and status codes, and leaves loops and data structures to the agents ([DEC-079](decisions.md#dec-079-the-spec-is-as-explicit-as-good-documentation)). The concept says [what belongs in it](concept.md#the-spec) and what happens where it leaves something open.
+
+**One source, and why it is documentation.** What exists is many artifacts that work together: code, tests, configuration and documentation. They drift apart, and when they contradict one another, nothing says which of them is right; the agent guesses, or a person sits down and brings them in step. Software answers that problem with a single source of truth, and gives it up only where a system must scale across machines, which a project's description never has to. Code could be that source: it compiles, it can be tested and it is exact. But code cannot state everything, such as a deployment or a way of working, which is why documentation, Dockerfiles and agent rules stand beside it. And its detail makes code rigid. Documentation, kept as one source, can state everything. What it lacks is a compiler and tests, and it tends to say the same thing in many places.
+
 **Code is a description.** Code has always been a very precise description for an extremely limited but diligent executor. With AI the executor is intelligent, but it still has to be told what is meant and what holds; otherwise it guesses, and may do what nobody wanted. So documentation, prose and prompts become the programming language. Markitect makes their authors express themselves cleanly: define what they mean and what holds, and connect those statements meaningfully.
 
-**The answer is a typed language in prose.** Contradictions in a description surface only when someone changes the place where they sit, the same observation as with weakly typed programming languages. So Markitect borrows typing and a compiler as helpers: in a strongly typed language, a compiler and explicit dependencies report issues at compile time instead of leaving them to be found later. The spec applies that to project intent:
+**The answer is a typed language in prose.** Whether documentation is consistent shows only at run time: a contradiction surfaces when an agent or a person stumbles over it while working. Dynamically typed programming languages have the same problem, and statically typed ones such as Go and C# are valued because they do not: a compiler and explicit dependencies report issues at compile time, and the author has to say explicitly what is meant. So Markitect borrows typing and a compiler as helpers. The spec applies that to project intent:
 
 | Typed language | Markitect spec |
 | --- | --- |
@@ -60,9 +82,13 @@ So the knowledge of what belongs to what must not depend on an agent's memory, a
 - The core stays clean. Projects define their own Kinds and so form their own language; Libraries supply common Kinds, so that no project reinvents them.
 - The compiler checks structural correctness from the core alone. Meaning is judged by agents: the reviewer judges the code against the spec, and the auditor judges the spec itself.
 - The spec carries the structure that keeps software changeable, after Conway's law, Clean Architecture, clean code and modularity: Packages are modules, and links go up the tree or sideways towards stability, never down.
-- People decide intent. Agents write the spec in conversation through the design skill, which asks first when something is open; the person reads the Markdown diff and accepts it.
+- People decide intent and answer for the spec. Agents write it in conversation through the design skill, which asks first when something is open.
+
+**Design against drift.** A compiler checks structure, not content, and typing alone does not prevent drift: where the same fact stands in several places, the places move apart with every change, and it is unclear again what should be. Code has the same problem and manages change through design. With links as declared dependencies, the same principles apply to the spec. Clean code holds that good code reads like well-written prose; in Markitect the prose is the program.
 
 **The aim of the language.** Meet the preconditions that unlock the established knowledge of software architecture for this new language: Definitions with a type, dependencies that are declared, and a structure a tool can check and measure. So judge a spec as you would judge code: dependencies, coupling and stability, clean architecture and size. A Definition of 500 words is prose compensating for missing Definitions. Results of Markitect are only as good as the spec they use.
+
+**What the language is for.** The typed language is the foundation, and applying it is the purpose: a language that nothing is built from would help little. One source settles which side is right when the spec and what exists differ; it does not make them agree. That takes reconciliation, as infrastructure tools do with a declared state: compute what a change reaches, realize it, verify it, and repeat. Because each pass sees from one angle, Markitect keeps the kinds of pass apart, each with its own question: build, review, cleanup, bug hunt and audit. With the spec as their measure, cleanup, bug hunt and a full review can run as routines on a schedule rather than when someone thinks of them, and trust is meant to grow as the project converges on its spec.
 
 ## Where trust comes from
 
@@ -108,6 +134,8 @@ Why the method should help, and what would show that it does not.
 
 | Assumption | What would challenge it |
 |---|---|
+| An agent that is told fully what is wanted, what matters and what belongs to the task builds what was meant | Results match the intent no better with a complete spec than with a short prompt |
+| A person can answer for a spec written with an agent, from its structure and by going through its changes | Wrong statements stay unnoticed in the spec, are realized faithfully and are found only in the product |
 | One authoritative spec with maintained links reduces the mistakes of keeping things in step | Contradictions still pile up, or keeping the spec and the registry costs as much as the consolidation it replaces |
 | Typing catches useful structural errors before agents work | Most consequential failures pass `check` and still need the same late investigation |
 | A list computed from declared links keeps continuing obligations in view | What a change really affects falls outside the list, or the list grows to nearly the whole spec on every change |

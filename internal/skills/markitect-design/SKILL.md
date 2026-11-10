@@ -20,7 +20,7 @@ Look at the folder first, and ask the owner when it could be read two ways.
 
 ## Who decides
 
-The owner accepts every change of the spec. You propose; the owner reads the Markdown diff and merges it.
+The owner accepts every change of the spec. You propose; the owner reads the Markdown diff, or goes through it with you, and merges it.
 
 - Write only what the owner, the requirements or the project's own artifacts state. Do not invent a policy, a limit, an error case or a default. If something is open, ask the owner before you write that part, and write it only after the answer.
 - The cut into Packages and the directions of dependencies are the owner's decision. If they are not decided, propose them (a table: Package, what it holds, what it may depend on) and stop for the answer before you write.
@@ -145,7 +145,7 @@ Every other code is listed in [reference.md](reference.md). A cycle or unresolve
 
 ## Hand over
 
-Report to the owner in a few lines: the diff; the output of `check` (its summary line) and of `vet` (warnings fixed or justified); the list `status` prints, so the owner sees what the change makes the agents do; and any point the owner chose to leave open. Leave the work as a diff; commit only if the owner asks. Change it until they accept it.
+Report to the owner in a few lines: the diff; the output of `check` (its summary line) and of `vet` (warnings fixed or justified); the list `status` prints, so the owner sees what the change makes the agents do; and any point the owner chose to leave open. Leave the work as a diff; commit only if the owner asks. Go through it with the owner when they would rather talk it through than read it. Change it until they accept it.
 
 Deleting or renaming a Definition leaves registry entries that name it. That is stale realization, an error of the realization rather than the spec's: `check` lists it apart, and the next build cleans it up. Say so; do not edit the registry pages in a change of the spec, which the builder keeps (only drawing the spec from the code writes them).
 
