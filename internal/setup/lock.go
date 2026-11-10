@@ -58,23 +58,26 @@ func WriteLock(f Folder) (libs []spec.LibrarySource, named []string, problems sp
 
 // shipStandard returns the manifest with each standard Library at the version
 // this binary ships, and what it changed, each as "std 1.1.0, where it named
-// 1.0.0". It changes the version on the Library's line and keeps every other
-// byte. A manifest that needs no change it returns as it is, with nothing.
+// 1.0.0". It writes the version where the manifest's parser found the old one,
+// plain or in quotes, and keeps every other byte; a version it does not find
+// there it leaves, and the Library's error says to name it by hand. A manifest
+// that needs no change it returns as it is, with nothing.
 func shipStandard(manifest []byte, refs []spec.LibraryRef) ([]byte, []string) {
 	lines := strings.Split(string(manifest), "\n")
 	var named []string
 	for _, ref := range refs {
-		if _, standard := libraries.Files(ref.Name); !standard || ref.Version == libraries.Version || ref.Line < 1 || ref.Line > len(lines) {
+		if _, standard := libraries.Files(ref.Name); !standard || ref.Version == libraries.Version || ref.VersionLine < 1 || ref.VersionLine > len(lines) {
 			continue
 		}
-		line := lines[ref.Line-1]
-		colon := strings.Index(line, ":")
-		at := strings.Index(line[colon+1:], ref.Version)
-		if colon < 0 || at < 0 {
+		line := lines[ref.VersionLine-1]
+		at := ref.VersionColumn - 1
+		if at >= 0 && at < len(line) && (line[at] == '"' || line[at] == '\'') {
+			at++
+		}
+		if at < 0 || !strings.HasPrefix(line[min(at, len(line)):], ref.Version) {
 			continue
 		}
-		at += colon + 1
-		lines[ref.Line-1] = line[:at] + libraries.Version + line[at+len(ref.Version):]
+		lines[ref.VersionLine-1] = line[:at] + libraries.Version + line[at+len(ref.Version):]
 		named = append(named, fmt.Sprintf("%s %s, where it named %s", ref.Name, libraries.Version, ref.Version))
 	}
 	if named == nil {

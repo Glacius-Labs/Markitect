@@ -16,6 +16,9 @@ type LibraryRef struct {
 	Name    string
 	Version string
 	Line    int
+	// VersionLine and VersionColumn are where the version stands in the
+	// manifest, both counted from 1, for a tool that writes another there.
+	VersionLine, VersionColumn int
 }
 
 // Manifest is the project's .markitect/manifest.yaml.
@@ -70,7 +73,7 @@ func ParseManifest(file string, data []byte) (Manifest, Diagnostics) {
 			ds.Add("manifest.syntax", file, v.Line, "Library %s needs a version such as 1.0.0", k.Value)
 			continue
 		}
-		m.Libraries = append(m.Libraries, LibraryRef{Name: k.Value, Version: v.Value, Line: k.Line})
+		m.Libraries = append(m.Libraries, LibraryRef{Name: k.Value, Version: v.Value, Line: k.Line, VersionLine: v.Line, VersionColumn: v.Column})
 	}
 	sort.Slice(m.Libraries, func(i, j int) bool { return m.Libraries[i].Name < m.Libraries[j].Name })
 	for i := 1; i < len(m.Libraries); i++ {

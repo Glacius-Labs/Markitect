@@ -125,7 +125,7 @@ internal: true
 ---
 # Email
 
-The email address of a [[members/member]]. It is valid when it holds an `@`, and two emails are the same when they differ only in upper and lower case.
+An email address. It is valid when it holds an `@`, and two emails are the same when they differ only in upper and lower case.
 ```
 
 `spec/members/register-member.md` is a Feature.

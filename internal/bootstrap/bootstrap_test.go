@@ -643,7 +643,7 @@ func TestAStandardLibraryMovesWithTheBinary(t *testing.T) {
 	}
 	r := old()
 	code, out, _ := run(t, r.Dir, "check")
-	wantAll(t, out, ".markitect/manifest.yaml:3: library.version: this markitect ships std 1.1.0, not 1.0.0; run markitect tidy", ".markitect/manifest.yaml:4: library.version: this markitect ships rest 1.1.0, not 0.9.0")
+	wantAll(t, out, ".markitect/manifest.yaml:3: library.version: this markitect ships std 1.1.0, not 1.0.0; markitect tidy names 1.1.0 in the manifest", ".markitect/manifest.yaml:4: library.version: this markitect ships rest 1.1.0, not 0.9.0")
 	if code != 1 || strings.Contains(out, "lock.mismatch") || strings.Contains(out, "kind.unresolved") || strings.Count(out, "library.version") != 2 {
 		t.Fatalf("check on an earlier version: %d\n%s", code, out)
 	}
@@ -666,6 +666,26 @@ func TestAStandardLibraryMovesWithTheBinary(t *testing.T) {
 	r = old()
 	wantAll(t, mustRun(t, r.Dir, "update", "--files"), ".markitect/manifest.yaml now names std 1.1.0, where it named 1.0.0", "lock: rewritten")
 	mustRun(t, r.Dir, "check")
+
+	// The version is written where it stands, whatever else the line holds: in
+	// quotes, in flow style behind a project Library of the same version, or on
+	// a line of its own.
+	for before, after := range map[string]string{
+		"libraries:\r\n  \"std\" :   '1.0.0'   # 1.0.0 was the first\r\n": "libraries:\r\n  \"std\" :   '1.1.0'   # 1.0.0 was the first\r\n",
+		"libraries: {web: 1.0.0, std: 1.0.0}\n":                           "libraries: {web: 1.0.0, std: 1.1.0}\n",
+		"libraries:\n  std:\n    1.0.0\n  web: 1.0.0\n":                   "libraries:\n  std:\n    1.1.0\n  web: 1.0.0\n",
+	} {
+		r = old()
+		if strings.Contains(before, "web") {
+			r.Write(".markitect/libraries/web/Page.md", "---\nkind: Kind\n---\n# Page\n")
+		}
+		r.Write(".markitect/manifest.yaml", before)
+		mustRun(t, r.Dir, "tidy")
+		if got := read(t, r.Dir, ".markitect/manifest.yaml"); got != after {
+			t.Errorf("tidy made %q of %q", got, before)
+		}
+		mustRun(t, r.Dir, "check", "--spec")
+	}
 
 	// A manifest with an error of its own is left as it is.
 	r = old()

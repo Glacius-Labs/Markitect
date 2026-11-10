@@ -346,7 +346,7 @@ func LibrarySource(ref spec.LibraryRef, local map[string][]spec.File) (spec.Libr
 			return spec.LibrarySource{}, "library.reserved", fmt.Sprintf("%s is a standard Library that ships with markitect; remove %s/%s", ref.Name, LibraryDir, ref.Name)
 		}
 		if ref.Version != libraries.Version {
-			return spec.LibrarySource{}, "library.version", fmt.Sprintf("this markitect ships %s %s, not %s; run markitect tidy, which names %s in the manifest and writes the lock", ref.Name, libraries.Version, ref.Version, libraries.Version)
+			return spec.LibrarySource{}, "library.version", fmt.Sprintf("this markitect ships %s %s, not %s; markitect tidy names %s in the manifest and writes the lock, or name it there by hand", ref.Name, libraries.Version, ref.Version, libraries.Version)
 		}
 		lib := spec.LibrarySource{Name: ref.Name, Version: ref.Version, Dir: "markitect:" + ref.Name}
 		for _, f := range files {
