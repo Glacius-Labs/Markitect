@@ -29,9 +29,8 @@ type File struct {
 const About = `A Markitect project has one spec: the Markdown files in .markitect/spec/. The
 spec is the authority over the code, tests and documentation: where they differ,
 the spec is right. People architect the project with the markitect-architect
-skill, whose architect agent writes the spec. The /markitect-build skill has a
-builder agent build it and a fresh reviewer verify each Definition; markitect
-status says what is left to verify.
+skill, and the /markitect-build skill has a builder agent build it and a fresh
+reviewer verify each Definition; markitect status says what is left to verify.
 `
 
 // PersonalName is the personal skill's folder name below a user's skills folder.

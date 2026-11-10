@@ -19,7 +19,7 @@ Make one clean and simple version work reliably on Sonnet ([DEC-009](decisions.m
 
 **The way of working:**
 
-1. A person architects the project in an ordinary Claude Code session, with the architect skill: the session asks and proposes, and the architect agent writes the spec. The person reads the Markdown diff or goes through it with the session, and commits it.
+1. A person architects the project in an ordinary Claude Code session, with the architect skill: the session asks, proposes and writes the spec, and hands a large draft to the architect agent. The person reads the Markdown diff or goes through it with the session, and commits it.
 2. The person runs the build skill. Agents started by the person's own session apply the spec as it stands, in a worktree of their own, so the person can go on architecting. They ask nothing about the spec, and nobody has to watch.
 3. The spec stays as it was while they work: the hook keeps the agents that build out of it.
 4. When `markitect status` lists nothing, the session commits the work with the record of what was verified and brings it to the person's branch. The person reads the verdicts when they want to, and answers only when the spec has a problem.
@@ -51,7 +51,7 @@ What is left to the agents is what needs judgment: how to build it, and whether 
 | **Registry** | One page per Package: the paths it owns and which Definitions each file realizes |
 | **Record** | `.markitect/review.sum`: for each Definition, the verdict and the inputs at which it was verified |
 | **Owner** | The person who owns the project and its spec: decides intent, accepts every spec change and settles every `spec-problem` |
-| **Builder, reviewer, architect, auditor** | The four agents: the builder writes code, the reviewer judges it and records, the architect writes the spec for the owner, who decides, the auditor judges the spec |
+| **Builder, reviewer, architect, auditor** | The four agents: the builder writes code, the reviewer judges it and records, the architect writes large parts of the spec for the owner's session, the auditor judges the spec |
 | **Driver** | Whatever starts the agents and makes the Git steps: by default the harness and the owner's session |
 
 ### The spec
@@ -225,7 +225,7 @@ A skill names which agent the owner's session starts and on what task; the agent
 
 | Skill | Started by | Does |
 |---|---|---|
-| `markitect-architect` | The owner or Claude | Architects the project with the owner. The session sees whether the folder is an empty project, code without a spec or an existing spec, asks one question at a time and proposes. The `markitect-architect` agent writes: it starts the spec, draws it from the code or changes it, links the real unlinked mentions that `vet` notes, and hands its questions back to the session. Where the session cannot start that agent, as under a coding agent other than Claude Code, it writes the spec itself |
+| `markitect-architect` | The owner or Claude | Architects the project with the owner, in their own session. It sees whether the folder is an empty project, code without a spec or an existing spec, and starts the spec one question at a time, draws it from the code, or changes it. The session writes the spec, since it holds the conversation; a large draft, such as a first spec drawn from a large code base, it hands to the `markitect-architect` agent, which hands its questions back. It links the real unlinked mentions that `vet` notes |
 | `/markitect-build` | The owner | [§5](#5-what-build-does) |
 | `/markitect-review` | The owner or Claude | The `markitect-reviewer` agent verifies what `status` lists, or with `--all` every Definition, records each verdict and reports what failed and what is a `spec-problem`. With the `parallel` strategy it starts one reviewer per Package ([§10](#10-drivers)). The session commits the record |
 | `/markitect-cleanup` | The owner | The builder, in a worktree of its own, refactors without changing behaviour, and the reviewer verifies again what that put back on the list. The work comes back when it leaves nothing worse |
@@ -248,16 +248,16 @@ For Claude Code, `markitect init` writes these project files, so they are versio
 | `.claude/skills/markitect-config/SKILL.md` | The configuration skill ([§8](#8-other-skills)) |
 | `.claude/workflows/markitect-parallel.js` | The parallel strategy, a saved Claude Code workflow ([§10](#10-drivers)) |
 | `.claude/skills/markitect-schedule/` | The routine setup, with the routine prompts: a frame, `routine.md`, and the work of each routine |
-| `.claude/agents/markitect-builder.md` | The builder's three tasks, build, clean up and hunt bugs, and how it works. Tools Read, Edit, Write, Glob, Grep, Bash and `Agent(markitect-reviewer)`; model `sonnet`, effort `high` |
+| `.claude/agents/markitect-builder.md` | The builder's three tasks, build, clean up and hunt bugs, and how it works. Tools Read, Edit, Write, Glob, Grep, Bash and `Agent(markitect-reviewer)`; model `sonnet`, effort `high`, as the reviewer; the architect and the auditor have `opus` and `medium` |
 | `.claude/agents/markitect-reviewer.md` | The reviewer's two tasks, verify and hunt bugs, and the verdict words. No edit or agent tools |
-| `.claude/agents/markitect-architect.md` | Write the spec as the architect skill says, only under `.markitect/`, and hand every question back. No agent tool |
+| `.claude/agents/markitect-architect.md` | Write a large part of the spec as the architect skill says, only under `.markitect/`, and hand every question back. No agent tool |
 | `.claude/agents/markitect-auditor.md` | Read the spec fresh and report what is wrong with it. No edit or agent tools |
 | `.claude/settings.json` | The hooks, below, and `worktree.baseRef: "head"` unless the settings name a base, added to whatever settings the project already has |
 | `.markitect/.gitattributes` | `review.sum merge=union` |
 | `.markitect/harness.yaml` | The project's harness configuration, below. `markitect config` makes it when the owner sets a value |
 | `AGENTS.md`, `CLAUDE.md` | What kind of project this is, for any session: the spec is the authority, changes start there, and `markitect` is on the path. `CLAUDE.md` holds only `@AGENTS.md`. They hold no process, since the agents read them too. Written only if missing |
 
-**The agents' settings** come from their files, whose model and effort come from the harness configuration ([DEC-103](decisions.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)): one file format, `harness.yaml`, at two levels, the user's `~/.markitect/harness.yaml`, not committed, and the project's `.markitect/harness.yaml`, committed. Key by key the project beats the user, and the user beats the built-in values, `sonnet` and effort `high`. It holds the model and effort per role, the strategy of each skill and the custom workflows. `init` and `update` write the agents' front matter from it, and `markitect config` rewrites them. A user's value reaches the committed agent files when that user runs these, since Claude Code has no agent scope that is not committed and beats the project's; a team that wants the same agents for everyone sets them in the project's file. Everything else is the owner's session: its permission mode, settings, plugins and memory. The builder file's `permissionMode: acceptEdits` did not apply in the trials, where the agents ran in the session's mode.
+**The agents' settings** come from their files, whose model and effort come from the harness configuration ([DEC-103](decisions.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)): one file format, `harness.yaml`, at two levels, the user's `~/.markitect/harness.yaml`, not committed, and the project's `.markitect/harness.yaml`, committed. Key by key the project beats the user, and the user beats the built-in values: `sonnet` at effort `high` for the builder and the reviewer, and `opus` at effort `medium` for the architect and the auditor. The spec is little text that everything else is built from, so the roles that work on it think on the larger model, and the roles that work on the code build and verify from it on the smaller one. These values are a reasoned starting point, not a measured one. It holds the model and effort per role, the strategy of each skill and the custom workflows. `init` and `update` write the agents' front matter from it, and `markitect config` rewrites them. A user's value reaches the committed agent files when that user runs these, since Claude Code has no agent scope that is not committed and beats the project's; a team that wants the same agents for everyone sets them in the project's file. Everything else is the owner's session: its permission mode, settings, plugins and memory. The builder file's `permissionMode: acceptEdits` did not apply in the trials, where the agents ran in the session's mode.
 
 **The worktree.** Claude Code branches a subagent's worktree from the repository's default branch unless `worktree.baseRef` is `"head"`, so `init` and `update` set it when the project's settings name no base; a base the owner chose stays. Claude Code keeps its worktrees under `.claude/worktrees/`, and the tool accounts for that folder itself. A reviewer the builder starts works in the builder's worktree.
 
@@ -271,7 +271,7 @@ For Claude Code, `markitect init` writes these project files, so they are versio
 | `markitect-auditor` | Nothing | No | Nothing |
 | Any other | As the builder | No | Any agent but the builder and the architect; no workflow |
 
-- **No subagent writes `.markitect/review.sum`,** which only `mark` writes, and none but the architect writes the rest of `.markitect/` except the registry pages. The owner's own session, which starts the architect, is not a subagent and stays free, but does not record either.
+- **No subagent writes `.markitect/review.sum`,** which only `mark` writes, and none but the architect writes the rest of `.markitect/` except the registry pages. The owner's own session, where the owner architects, is not a subagent and stays free, but does not record either.
 - **No subagent writes what steers the agents:** the project's Claude Code settings, Markitect's skills, agents and workflows, the harness configuration, and `AGENTS.md` and `CLAUDE.md`. The builder's work comes back without anyone reading its diff, so a builder must not be able to drop the hook on its way.
 - **Only the owner's session starts the builder and the architect, or a workflow.** Claude Code ignores the agent types listed in a subagent's own tools, so the hook holds this. A workflow the owner's session starts may start the four roles, and the hook holds their rights inside it as anywhere; so it does in the user's own skills in `.claude/skills/`, which Markitect leaves alone.
 
