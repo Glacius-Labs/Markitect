@@ -1,6 +1,6 @@
 # Concept
 
-**You model. Markitect's tool checks the spec and says what is left to verify, an ordinary agent started by your own session makes the project match, and a fresh reviewer verifies each Definition and records it.**
+**You architect the project in Markdown. Markitect's tool checks the spec and says what is left to verify, an ordinary agent started by your own session builds the project to it, and a fresh reviewer verifies each Definition and records it.**
 
 This page is the one description of the product, and the target that Main builds ([DEC-098](decisions.md#dec-098-one-concept-describes-the-product)). The [decisions](decisions.md) list what it rests on, the [roadmap](roadmap.md) the next steps, and the [vision](vision.md) why.
 

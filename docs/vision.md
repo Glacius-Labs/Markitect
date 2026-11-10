@@ -11,7 +11,9 @@ Read this section first, then [Why Markitect exists](#why-markitect-exists), [Fo
 - Code, tests, configuration and documentation are realizations of the spec. Where they differ from it, the spec is right.
 - A deterministic tool, the `markitect` program, checks and analyses the spec as a compiler and a linter check code, and keeps a record of what was verified. Agents realize the spec and verify the result.
 
-Markitect expects coding to move from languages such as Go, C# or Python towards documentation and meaning. What matters in code stays as relevant there: architecture, consistency, cleanliness, an overview of the project without reading its code, and knowing what should be as against what is.
+**The picture: building to a plan.** An architect draws the plan, builders build to it, and an inspection checks the building against the plan. A change of plan goes through the architect. Markitect works the same way. The spec is the plan, and it is binding. The builder agent builds to it, the reviewer checks the result against it, and no builder changes it. Architecture here is the whole design: what the project's concepts are and mean, how they relate, its interfaces, structure, rules and way of working. Architect is a role that a person and an agent fill together: the agent drafts, analyses and proposes, and the person, the owner, decides.
+
+Markitect expects people's work to move from writing code towards architecture: designing, defining and modelling. What matters in code stays as relevant there: architecture, consistency, cleanliness, an overview of the project without reading its code, and knowing what should be as against what is.
 
 > **Humans architect the system of work. AI performs the work. Markitect keeps them aligned.**
 
@@ -65,11 +67,11 @@ Trust and overview are rebuilt on the spec:
 
 **One source, and why it is documentation.** A project is many artifacts that work together: code, tests, configuration and documentation. They drift apart. When two of them contradict each other, nothing says which is right, so the agent guesses or a person brings them back in step. Software solves this with a single source of truth and gives it up only where a system must scale across machines. A project's description never has to. Code could be that source: it compiles, it can be tested and it is exact. Code cannot state everything, though. A deployment or a way of working needs documentation, Dockerfiles and agent rules beside the code, and the detail of code makes it rigid. Documentation, kept as one source, can state everything. It lacks a compiler and tests, and it tends to say the same thing in many places.
 
-**Code is a description.** Code has always been a precise description for an extremely limited but diligent executor. With AI the executor is intelligent, but it still has to be told what is meant and what holds; otherwise it guesses, and may do what nobody wanted. So documentation, prose and prompts become the programming language. Markitect makes their authors express themselves cleanly: define what they mean and what holds, and connect those statements meaningfully.
+**Code is a description.** Code has always been a precise description for an extremely limited but diligent executor. With AI the executor is intelligent, but it still has to be told what is meant and what holds; otherwise it guesses, and may do what nobody wanted. So the description takes the place that code had: it is what people work on. Markitect makes its authors express themselves cleanly: define what they mean and what holds, and connect those statements meaningfully.
 
-**The answer is a typed language in prose.** Whether documentation is consistent shows only at run time: a contradiction surfaces when an agent or a person stumbles over it while working. Dynamically typed programming languages have the same problem. Statically typed ones such as Go and C# are valued because a compiler and explicit dependencies report such errors at compile time, and the author has to say explicitly what is meant. So Markitect borrows typing and a compiler as helpers. The spec applies that to project intent:
+**The answer is typed documentation with a compiler.** Whether documentation is consistent shows only at run time: a contradiction surfaces when an agent or a person stumbles over it while working. Dynamically typed programming languages have the same problem. Statically typed ones such as Go and C# are valued because a compiler and explicit dependencies report such errors at compile time, and the author has to say explicitly what is meant. So Markitect borrows typing and a compiler as helpers. The spec applies that to project intent:
 
-| Typed language | Markitect spec |
+| In a typed programming language | In a Markitect spec |
 | --- | --- |
 | type, class, function signature | Kind |
 | declaration | Definition |
@@ -81,16 +83,16 @@ Trust and overview are rebuilt on the spec:
 | `go vet`, architecture metrics | `markitect vet` |
 | test cache | `.markitect/review.sum`, the record of what was verified |
 
-- The core stays clean. Projects define their own Kinds and so form their own language; Libraries supply common Kinds, so that no project reinvents them.
+- The core stays clean. Projects define their own Kinds and so form their own vocabulary; Libraries supply common Kinds, so that no project reinvents them.
 - The compiler checks structural correctness from the core alone. Meaning is judged by agents: the reviewer judges the code against the spec, and the auditor judges the spec itself.
 - The spec carries the structure that keeps software changeable, after Conway's law, Clean Architecture, clean code and modularity: Packages are modules, and links go up the tree or sideways towards stability, never down.
 - People decide intent and answer for the spec. Agents write it in conversation through the design skill, which asks first when something is open.
 
-**Design against drift.** A compiler checks structure. It cannot see that the same fact stands in several places, and such places move apart with every change until it is unclear again what should be. Code has the same problem and manages it through design. Links are declared dependencies, so the same design principles apply to the spec. Clean code holds that good code reads like well-written prose. In Markitect the prose is the program.
+**Design against drift.** A compiler checks structure. It cannot see that the same fact stands in several places, and such places move apart with every change until it is unclear again what should be. Code has the same problem and manages it through design. Links are declared dependencies, so the same design principles apply to the spec. Clean code holds that good code reads like well-written prose. Markitect asks the reverse: prose that is built like clean code.
 
-**The aim of the language.** Meet the preconditions that open the established knowledge of software architecture to this new language: Definitions with a type, dependencies that are declared, and a structure a tool can check and measure. So judge a spec as you would judge code: dependencies, coupling and stability, clean architecture and size. A Definition of 500 words is prose compensating for missing Definitions. Results of Markitect are only as good as the spec they use.
+**The aim of the typing.** Meet the preconditions that open the established knowledge of software architecture to the spec: Definitions with a type, dependencies that are declared, and a structure a tool can check and measure. So judge a spec as you would judge code: dependencies, coupling and stability, clean architecture and size. A Definition of 500 words is prose compensating for missing Definitions. Results of Markitect are only as good as the spec they use.
 
-**What the language is for.** The typed language is the foundation, and applying it is the purpose. One source settles which side is right when the spec and the project differ. Making them agree takes reconciliation, as infrastructure tools do it with a declared state: compute what a change reaches, realize it, verify it, repeat. Each pass sees from one angle, so Markitect keeps the kinds of pass apart, each with its own question: build, review, cleanup, bug hunt and audit. With the spec as their measure, cleanup, bug hunt and a full review can run as routines on a schedule, without waiting for someone to think of them. No single pass has to find everything: a later one can catch what an earlier one missed, and trust is meant to grow as the project converges on its spec. An audit, started by the person or by Claude, reads the spec itself with fresh eyes and reports what is contradictory, missing, unclear or duplicated.
+**What the spec is for.** The typed spec is the foundation, and applying it is the purpose. One source settles which side is right when the spec and the project differ. Making them agree takes reconciliation, as infrastructure tools do it with a declared state: compute what a change reaches, realize it, verify it, repeat. Each pass sees from one angle, so Markitect keeps the kinds of pass apart, each with its own question: build, review, cleanup, bug hunt and audit. With the spec as their measure, cleanup, bug hunt and a full review can run as routines on a schedule, without waiting for someone to think of them. No single pass has to find everything: a later one can catch what an earlier one missed, and trust is meant to grow as the project converges on its spec. An audit, started by the person or by Claude, reads the spec itself with fresh eyes and reports what is contradictory, missing, unclear or duplicated.
 
 ## Where trust comes from
 
@@ -160,7 +162,9 @@ Check an assessment against this table before treating one of these as a finding
 
 | Misreading | Correct reading |
 |---|---|
-| Markitect is a linter or context tool for AI instructions such as rules, skills and `AGENTS.md`. | That is where the name comes from. With Markitect, people architect the whole project in Markdown, and agents realize it. Agent instructions are one kind of realization among many. |
+| Markitect is a linter or context tool for AI instructions such as rules, skills and `AGENTS.md`. | That is where the project began. With Markitect, people architect the whole project in Markdown, and agents realize it. Agent instructions are one kind of realization among many. |
+| Markitect is a tool for architecture documentation. | The spec is the plan the project is built from, and it is binding: agents realize it, and a reviewer verifies the result against it. Architecture covers the domain too: what a concept is, what can be done with it and how things relate. |
+| Markitect is a programming language. | Nothing in the spec is executed. Typing and a compiler are borrowed to keep the spec consistent ([DEC-003](decisions.md#dec-003-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)). People's work is architecture, and agents write the code. |
 | Markitect is a new, unproven formalism. | It builds on proven practice: requirements traceability with suspect links, architecture metrics and Go's conventions. What is new is that the traceability is plain, typed text checked deterministically, that agents realize the spec and gather the evidence, and that the record works like Go's test cache. |
 | The deterministic parts are the product, and agent work is scope creep. | Delegated realization is the purpose, and the tool supports it ([DEC-001](decisions.md#dec-001-delegated-realization-is-the-purpose)). |
 | Markitect orchestrates or steers the agents. | It checks and analyses the spec, says what is to verify and records verdicts. Who starts which agent, when and how often belongs to the driver: the skills, the person's own session or the person ([DEC-096](decisions.md#dec-096-the-tool-computes-and-checks-a-driver-acts)). |
@@ -185,4 +189,4 @@ Markitect does not decide which architecture is right, which business goal matte
 
 ## Origin of the name
 
-**Markitect = Markdown + Architect.** The project began with architecture and process knowledge in readable documentation, rules, skills and agent instructions. The spec is Markdown, typed by Kinds. The origin explains the name; it does not limit the product to agent instructions.
+**Markitect = Markdown + Architect.** The project began with architecture and process knowledge in readable documentation, rules, skills and agent instructions. The spec is Markdown, typed by Kinds. The name says what a person does with it: architect, in Markdown. The origin does not limit the product to agent instructions.
