@@ -40,6 +40,15 @@ markitect check --repo PATH
 
 `check` compiles the spec and the realization record and prints every compile error as `file:line: code: message`, the spec's first and then the realization's, and ends with one summary line: `ok: N Definitions in M Packages, K files accounted`, or the number of errors with how many are in the spec, for you to settle, and how many in the realization, which `/markitect-build` settles. It exits 1 when there is an error. A new project passes: when nothing is registered and all that is missing is the work, it says that the spec compiles and nothing is built yet. If the lock does not match the manifest, `check` says to run `markitect tidy`. The compiler sees the project folder, the nearest one with `.markitect/manifest.yaml`, without what its `.gitignore` files exclude, read as text; it uses no Git ([the folder](../../internal/run/README.md#the-folder)).
 
+In a repository that already has files, the first `check` fails by design, because every file must belong somewhere:
+
+```text
+README.md: file.unregistered: neither registered nor ignored: list it on .markitect/registry.md, the page of its owner Root, or add it to the ignore file
+1 error: 0 in the spec, for the owner to settle; 1 in the realization, so spec and code do not match yet, which /markitect-build settles
+```
+
+That is expected: `/markitect-design` registers the files as it draws the first spec ([§2](#2-write-the-spec)). From then on, `/markitect-review --all` verifies every Definition and records where the code deviates, and `/markitect-build` repairs it.
+
 ## 5. Vet and look around
 
 ```text
