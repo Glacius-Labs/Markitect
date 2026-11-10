@@ -15,7 +15,11 @@ import (
 const codeGroups = "definition|spec|kind|library|manifest|lock|link|package|project|registry|file|ignore|harness|record|stale|vet|doc"
 
 var (
-	codeInSource    = regexp.MustCompile(`"((?:` + codeGroups + `)\.[a-z_]+)"`)
+	codeInSource = regexp.MustCompile(`"((?:` + codeGroups + `)\.[a-z_]+)"`)
+	// addCall finds a diagnostic added with its code as a constant, whatever its
+	// group, and anyCode a backticked name of the form of a code.
+	addCall         = regexp.MustCompile(`\.Add\("([a-z]+)\.[a-z_]+"`)
+	anyCode         = regexp.MustCompile("`([a-z]+\\.[a-z_]+)`")
 	codeInReference = regexp.MustCompile("`((?:" + codeGroups + ")\\.[a-z_]+)`")
 	// A file name has the same form as a code, such as project.md.
 	fileName = regexp.MustCompile(`\.(md|yaml|json|go|sum|txt)$`)
@@ -39,6 +43,12 @@ func TestReferenceListsTheCodesMarkitectPrints(t *testing.T) {
 		for _, m := range codeInSource.FindAllStringSubmatch(string(data), -1) {
 			if !fileName.MatchString(m[1]) {
 				printed[m[1]] = filepath.ToSlash(path)
+			}
+		}
+		// A code of a group this test does not know would pass unseen.
+		for _, m := range addCall.FindAllStringSubmatch(string(data), -1) {
+			if !strings.Contains("|"+codeGroups+"|", "|"+m[1]+"|") {
+				t.Errorf("%s adds a diagnostic of the group %q, which codeGroups does not name", filepath.ToSlash(path), m[1])
 			}
 		}
 		return nil
@@ -77,6 +87,17 @@ func TestReferenceListsTheCodesMarkitectPrints(t *testing.T) {
 	}
 	if len(unknown) > 0 {
 		t.Errorf("the reference lists codes markitect does not print: %s", strings.Join(unknown, ", "))
+	}
+	// Below its heading on warnings, the reference names codes and nothing else
+	// of their form, so a code of no known group is caught here too.
+	_, codes, found := strings.Cut(string(reference), "\n## Warnings and notes")
+	if !found {
+		t.Fatal("the reference has no section on warnings and notes, where its codes begin")
+	}
+	for _, m := range anyCode.FindAllStringSubmatch(codes, -1) {
+		if _, ok := printed[m[1]]; !ok && !fileName.MatchString(m[1]) {
+			t.Errorf("the reference lists %s, which markitect does not print", m[1])
+		}
 	}
 	// The skill itself names only codes the reference explains.
 	skill, err := os.ReadFile("markitect-architect/SKILL.md")

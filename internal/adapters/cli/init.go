@@ -132,10 +132,11 @@ func (c CLI) tidy(_ context.Context, args []string) (int, error) {
 // writeLock writes the lock from the manifest and the Libraries it names, and
 // says what it wrote, or the manifest's errors.
 func (c CLI) writeLock(ws Workspace) (int, error) {
-	libs, problems, err := setup.WriteLock(ws)
+	libs, named, problems, err := setup.WriteLock(ws)
 	if err != nil {
 		return Misused, err
 	}
+	c.sayNamed(named)
 	if len(problems) > 0 {
 		for _, d := range problems {
 			fmt.Fprintln(c.Stderr, d.String())
@@ -148,6 +149,14 @@ func (c CLI) writeLock(ws Workspace) (int, error) {
 	}
 	fmt.Fprintf(c.Stdout, "wrote %s: %s\n", project.LockFile, strings.Join(names, ", "))
 	return OK, nil
+}
+
+// sayNamed says which standard Libraries the manifest now names at the version
+// this binary ships.
+func (c CLI) sayNamed(named []string) {
+	for _, n := range named {
+		fmt.Fprintf(c.Stdout, "%s now names %s: this markitect ships no other version\n", project.ManifestFile, n)
+	}
 }
 
 // nextSteps ends the init of a new project. The session that ran init started

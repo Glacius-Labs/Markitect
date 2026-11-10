@@ -626,6 +626,55 @@ func TestTidyWritesTheLock(t *testing.T) {
 	}
 }
 
+// A changed Kind is a new content, so a standard Library's version moves with
+// the binary. A project that names the version of an earlier binary gets one
+// error, which says what to do, and none of what would follow from it: its
+// Kinds still resolve, and the lock is not compared. tidy and update name the
+// shipped version in the manifest, keeping every other byte of it, since the
+// binary supplies no other; version says the project is out of date until then.
+func TestAStandardLibraryMovesWithTheBinary(t *testing.T) {
+	emptyHome(t)
+	const earlier = "# The Libraries this project uses.\nlibraries:\n  std: 1.0.0 # the first\n  rest: 0.9.0\n"
+	old := func() *plainFolder {
+		r := newFolder(t)
+		mustRun(t, r.Dir, "init")
+		r.Write(".markitect/manifest.yaml", earlier)
+		return r
+	}
+	r := old()
+	code, out, _ := run(t, r.Dir, "check")
+	wantAll(t, out, ".markitect/manifest.yaml:3: library.version: this markitect ships std 1.1.0, not 1.0.0; run markitect tidy", ".markitect/manifest.yaml:4: library.version: this markitect ships rest 1.1.0, not 0.9.0")
+	if code != 1 || strings.Contains(out, "lock.mismatch") || strings.Contains(out, "kind.unresolved") || strings.Count(out, "library.version") != 2 {
+		t.Fatalf("check on an earlier version: %d\n%s", code, out)
+	}
+	if _, out, _ := run(t, r.Dir, "version"); !strings.Contains(out, "project: out of date") {
+		t.Fatalf("version on an earlier version:\n%s", out)
+	}
+	wantAll(t, mustRun(t, r.Dir, "tidy"),
+		".markitect/manifest.yaml now names std 1.1.0, where it named 1.0.0",
+		".markitect/manifest.yaml now names rest 1.1.0, where it named 0.9.0",
+		"wrote .markitect/lock.yaml: rest 1.1.0, std 1.1.0")
+	if got, want := read(t, r.Dir, ".markitect/manifest.yaml"), strings.NewReplacer("1.0.0", "1.1.0", "0.9.0", "1.1.0").Replace(earlier); got != want {
+		t.Fatalf("the manifest after tidy:\n%s", got)
+	}
+	mustRun(t, r.Dir, "check")
+	if out := mustRun(t, r.Dir, "tidy"); strings.Contains(out, "now names") {
+		t.Fatalf("a second tidy:\n%s", out)
+	}
+
+	// update does the same, and says so.
+	r = old()
+	wantAll(t, mustRun(t, r.Dir, "update", "--files"), ".markitect/manifest.yaml now names std 1.1.0, where it named 1.0.0", "lock: rewritten")
+	mustRun(t, r.Dir, "check")
+
+	// A manifest with an error of its own is left as it is.
+	r = old()
+	r.Write(".markitect/manifest.yaml", earlier+"  web: 0.1.0\n")
+	if code, _, errOut := run(t, r.Dir, "tidy"); code != 1 || !strings.Contains(errOut, "library.missing") || read(t, r.Dir, ".markitect/manifest.yaml") != earlier+"  web: 0.1.0\n" {
+		t.Fatalf("tidy with a Library that is missing: %d %s", code, errOut)
+	}
+}
+
 func TestUsageAndRefusals(t *testing.T) {
 	var out, errOut bytes.Buffer
 	if Run(context.Background(), nil, &out, &errOut) != 0 || !strings.Contains(out.String(), "DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]") {

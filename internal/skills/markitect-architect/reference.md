@@ -43,7 +43,7 @@ A Kind is a Definition with `kind: Kind`; its body says what a Definition of tha
 | `rest/Endpoint` | One HTTP operation: title `METHOD /path`, request, each response with status and error codes; links its Feature. |
 | `cli/Command` | One command as typed: arguments, flags, output, exit codes, refusals; links its Feature. |
 
-A project writes its own Kinds as small files (`kind: Kind`) anywhere in its spec; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. Standard Libraries ship in the binary at 1.0.0. After a manifest change run `markitect tidy`.
+A project writes its own Kinds as small files (`kind: Kind`) anywhere in its spec; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. The standard Libraries ship in the binary, all at one version, as in `std: 1.1.0`. After a manifest change run `markitect tidy`.
 
 ## Links, scope, visibility, cycles
 

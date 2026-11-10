@@ -53,7 +53,7 @@ func ParseManifest(file string, data []byte) (Manifest, Diagnostics) {
 	}
 	libs := top["libraries"]
 	if libs == nil {
-		ds.Add("manifest.syntax", file, 0, "the manifest must name its Libraries under libraries, at least std: 1.0.0")
+		ds.Add("manifest.syntax", file, 0, "the manifest must name its Libraries under libraries, at least std with its version")
 		return m, ds
 	}
 	if libs.Kind != yaml.MappingNode {

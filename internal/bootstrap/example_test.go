@@ -155,8 +155,8 @@ func TestArchitectExampleIsWhatTheToolsPrint(t *testing.T) {
 		"link.downward": {says: "Staff lend books with [[catalog/post-loans]].", change: func(f map[string]string) {
 			f["spec/project.md"] += "\nStaff lend books with [[catalog/post-loans]].\n"
 		}},
-		"link.internal": {says: "- The count is the [[members/open-loan-count]].", change: func(f map[string]string) {
-			f["spec/catalog/borrow-book.md"] += "- The count is the [[members/open-loan-count]].\n"
+		"link.internal": {says: "- The receipt goes to the member's [[members/email]].", change: func(f map[string]string) {
+			f["spec/catalog/borrow-book.md"] += "- The receipt goes to the member's [[members/email]].\n"
 		}},
 		"registry.wrong_owner": {says: "| `internal/members/http.go` | [[members/post-members]] | The handler |", change: func(f map[string]string) {
 			f["registry/catalog.md"] += "| `internal/members/http.go` | [[members/post-members]] | The handler |\n"

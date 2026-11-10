@@ -82,8 +82,11 @@ type Refreshed struct {
 	// Said is what the refresh of the settings says. A dry refresh returns it
 	// too, although it wrote nothing, so its caller does not print it.
 	Said []string
-	// Lock says the lock differs.
+	// Lock says the lock differs, or the manifest with it.
 	Lock bool
+	// Named are the standard Libraries the manifest names at the version this
+	// binary ships, where it named another: "std 1.1.0, where it named 1.0.0".
+	Named []string
 	// LockProblems are the errors of the manifest, which keep the lock as it is:
 	// it names a Library the binary cannot supply.
 	LockProblems spec.Diagnostics
@@ -104,7 +107,7 @@ func Refresh(f Folder, user harness.File, dry bool) (Refreshed, error) {
 		return r, err
 	}
 	l := &refresher{Folder: f, dry: dry}
-	if _, r.LockProblems, err = WriteLock(l); err != nil {
+	if _, r.Named, r.LockProblems, err = WriteLock(l); err != nil {
 		return r, err
 	}
 	r.Lock = len(l.files) > 0
