@@ -14,7 +14,7 @@ import (
 var version = "0.26.0-dev"
 
 // injectedRevision is the source revision a build without VCS information
-// names through the linker, as the runner image does (-X ...buildinfo.injectedRevision=SHA).
+// names through the linker, as the release workflow does (-X ...buildinfo.injectedRevision=SHA).
 // It is the builder's assertion; a revision the Go toolchain recorded always takes precedence.
 var injectedRevision string
 

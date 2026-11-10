@@ -14,9 +14,9 @@ import (
 
 // The inputs of a Definition: everything its verification depended on, each by
 // its hash. A change of any input puts the Definition back on the list. They
-// reach what concept 4.0's checklist reached at distance 0 and 1: a Definition
-// that changed, one that links to a changed Definition or is of a changed Kind,
-// one whose files changed, and one whose registry rows gained or lost it.
+// reach what a change touches at distance 0 and 1: a Definition that changed,
+// one that links to a changed Definition or is of a changed Kind, one whose
+// files changed, and one whose registry rows gained or lost it.
 
 // Keys of the inputs: the Definition's own text, its Kind, a Definition it links
 // to, a file a registry row names for it, and a file a reviewer gave as evidence.

@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-// Diagnostic is one finding of the compiler or the linter. File is
+// Diagnostic is one finding of the compiler. File is
 // repository-relative with forward slashes; Line is 1-based and 0 when the
 // finding concerns the whole file or no file.
 type Diagnostic struct {

@@ -92,8 +92,8 @@ jobs:
           retention-days: 14
 
   race:
-    # The suite under the race detector, in parallel with the quality job
-    # (backlog CI-07). Linux only: -race needs cgo.
+    # The suite under the race detector, in parallel with the quality job.
+    # Linux only: -race needs cgo.
     name: Race detector (ubuntu-24.04)
     runs-on: ubuntu-24.04
     timeout-minutes: 30
