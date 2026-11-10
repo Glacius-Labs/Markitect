@@ -6,7 +6,7 @@
 </h1>
 
 <p align="center">
-  Architect in Markdown.
+  Architect in Markdown. Agents build to spec.
 </p>
 
 <p align="center">
@@ -26,18 +26,22 @@
   <a href="#documentation">Documentation</a>
 </p>
 
-> [!IMPORTANT]
-> **Early access.** The latest release runs the whole way of working on Claude Code, with tests. Real runs on real projects are only beginning, and commands, files and skills may still change. Try it on a small project you can throw away, read the [limits](#limits), and tell us in [Issues](https://github.com/Glacius-Labs/Markitect/issues) what worked and what broke.
-
 ## Why Markitect
 
-When agents build most of a project, two things go missing that used to come with writing and reviewing the code yourself: trust that the code is what you meant, and an overview of how the project stands. Reading everything again would bring both back and make you the bottleneck.
+When agents build most of your project, two things go missing that used to come with writing and reviewing the code yourself: trust that the code is what you meant, and an overview of how the project stands. Reading everything again would bring both back and make you the bottleneck.
 
-The usual fixes fall short. Extra sessions that hunt for bugs or check that everything fits have nothing to measure against. More rules and skills are more to maintain and more to overlook. What is missing is a standing statement of what the project should be. Prompts, tickets and most specs describe one change and go stale once it is made.
+The usual fixes have no measure. A session that checks whether everything fits has nothing to fit it against. More rules and skills are more to maintain and more for an agent to overlook. Prompts, tickets and most specs in spec-driven development describe one change and go stale once it is made. What is missing is a standing statement of what the project as a whole should be.
 
-Markitect supplies that statement: the spec, one place you own, where what is written is binding. It is typed prose in Markdown: Definitions of a Kind, in Packages, with links that work like imports. Markitect works like building to a plan. The spec is the plan: the `markitect` tool checks its structure, agents build code, tests, configuration and documentation to it, and a fresh agent verifies every Definition a change reaches against it.
+Markitect gives the project that statement, and agents build to it.
+
+**You architect in Markdown.** The spec is the plan of the whole project: one place you own, where what is written is binding. You decide what the project is, how it is divided and which rules hold, and an agent writes it down with you. The spec is typed prose: Definitions of a Kind, in Packages, with links that work like imports. The `markitect` tool checks its structure, never its meaning, as a compiler checks code.
+
+**Agents build to spec.** `markitect status` computes from the spec and the record of what was verified which Definitions a change reaches through their declared links, so the list of work does not depend on an agent's memory. A builder agent makes code, tests, configuration and documentation match the spec for that list. A reviewer agent with fresh context verifies every Definition on it against the spec and records a verdict with its evidence.
 
 Markitect builds on requirements traceability, architecture metrics and the conventions of Go's tools, and it works with Claude Code's own skills, subagents, hooks and worktrees. The [vision](docs/vision.md#why-markitect-exists) gives the full reasoning.
+
+> [!IMPORTANT]
+> **Early access.** The latest release runs the whole way of working on Claude Code, with tests. Real runs on real projects are only beginning, and commands, files and skills may still change. Try it on a small project you can throw away, read the [limits](#limits), and tell us in [Issues](https://github.com/Glacius-Labs/Markitect/issues) what worked and what broke.
 
 ## Quick start
 
