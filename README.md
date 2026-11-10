@@ -6,8 +6,7 @@
 </h1>
 
 <p align="center">
-  A programming language for documentation. Markitect keeps one typed spec of your project<br>
-  in Markdown, checks it like code, and has an agent build every change while a fresh agent verifies it.
+  Architect your project in Markdown.
 </p>
 
 <p align="center">
