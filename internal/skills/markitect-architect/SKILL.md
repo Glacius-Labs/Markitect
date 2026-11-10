@@ -30,15 +30,9 @@ Ask one question at a time, in plain words, and say why you ask when it isn't ob
 
 ## Who writes
 
-The `markitect-architect` agent writes the spec, and you talk with the owner. For every change under `.markitect/`, start that agent with what to write: the change, one Package or the whole first spec, the Packages the owner agreed and all the owner's answers so far. For a small change, give it the exact wording. It follows this skill, writes only under `.markitect/`, decides nothing the owner left open and hands its questions back in its report. Take the questions to the owner, then continue the agent or start it again with all the answers so far, and read its diff before you hand it over. Wherever this skill says to write, replace or register something under `.markitect/`, the architect does it.
+You write the spec, in the owner's session, where the conversation is. Hand a large draft to the `markitect-architect` agent when you can start it: a first spec drawn from a large code base, which it drafts one Package at a time, or a change that takes much reading. Start it with what to write, the Packages the owner agreed and all the owner's answers so far. It follows this skill, writes only under `.markitect/`, decides nothing the owner left open and hands its questions back in its report. Take the questions to the owner, then continue the agent or start it again with all the answers so far, and read its draft before you hand it over.
 
-If you are the `markitect-architect` agent, your agent file says how you use this skill; skip the paragraph above.
-
-If you cannot start the `markitect-architect` agent:
-
-- Under a coding agent other than Claude Code, write the spec yourself as this skill says.
-- In Claude Code, a session may not know the agent yet when `markitect init` ran in it: ask the owner to start a new session.
-- If you are a subagent yourself, change nothing and say in your report what should change.
+If you are the `markitect-architect` agent, your agent file says how you use this skill. Any other subagent changes nothing under `.markitect/` and says in its report what should change.
 
 ## Start a project
 
@@ -65,7 +59,7 @@ Read the repository and write the spec a good maintainer would document: what th
 6. **Write the registry.** `markitect check` names every file still unaccounted for (`file.unregistered`), so its output is your to-do list. One page per Package (`.markitect/registry/<package path>.md`) with `paths` that claim its code, tests and documentation; Root's page (`.markitect/registry.md`) lists what no one claims. List every file in its owner's table with the Definitions it realizes (tests too) and a short reason; a file that serves several Packages belongs to their lowest common parent. Files that belong to no Package, such as the license, generated or vendored files and lock files, go into `.markitect/ignore`, one pattern per line. Never ignore real source or documentation to make `check` pass.
 7. **Hand over** as [below](#hand-over), adding the Packages you chose and why, what you left free on purpose, each point where code and documentation disagreed with the owner's answer, and the ignored files.
 
-On a large code base, have the architect draw one Package at a time, Root first.
+On a large code base, the architect agent can draw one Package at a time, Root first ([who writes](#who-writes)).
 
 ## Change the spec
 

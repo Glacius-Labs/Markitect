@@ -4,7 +4,7 @@ Where Main is, what comes next and what may come later. The [concept](concept.md
 
 ## Where Main is
 
-The latest release, 0.25.3, carries the whole concept on Claude Code: the spec with `check`, `tidy`, `vet`, `list` and `doc`; the record with `status` and `mark`; the eight skills and four agents whose rights a hook holds; the strategies with the shipped parallel workflow and `harness.yaml`; and releases with the Claude Code plugin and `markitect update`. Main is one change ahead of that release: its spec skill is `/markitect-architect`, whose architect agent writes the spec. All of it is covered by tests, and small real runs have passed ([concept, §13](concept.md#13-what-is-shown-and-what-is-not)).
+The latest release, 0.25.3, carries the whole concept on Claude Code: the spec with `check`, `tidy`, `vet`, `list` and `doc`; the record with `status` and `mark`; the eight skills and four agents whose rights a hook holds; the strategies with the shipped parallel workflow and `harness.yaml`; and releases with the Claude Code plugin and `markitect update`. Main is ahead of that release in two points: the skill for the spec is `/markitect-architect`, and the architect and the auditor run on Opus. In an existing project, `markitect update` moves those two to `opus` at effort `medium` unless its `harness.yaml` sets them. All of it is covered by tests, and small real runs have passed ([concept, §13](concept.md#13-what-is-shown-and-what-is-not)).
 
 ## Current steps
 

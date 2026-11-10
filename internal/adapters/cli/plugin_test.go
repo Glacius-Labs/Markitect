@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
+	"github.com/Glacius-Labs/Markitect/internal/harness"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/skills"
 )
@@ -135,5 +136,26 @@ func TestPluginHooksRunTheLauncher(t *testing.T) {
 				t.Errorf("%s group %d puts markitect on the PATH in the background, after the first command may have run", event, i)
 			}
 		}
+	}
+}
+
+// The agent files ship with the built-in model and effort of their role, so the
+// files in the repository and the values init writes cannot drift apart.
+func TestShippedAgentFilesCarryTheBuiltInValues(t *testing.T) {
+	builtIn := harness.Resolve(harness.File{}, harness.File{})
+	agents := 0
+	for _, f := range skills.Harness() {
+		role, ok := harness.RoleOf(f.Path)
+		if !ok {
+			continue
+		}
+		agents++
+		if !bytes.Equal(builtIn.RenderAgent(role, f.Data), f.Data) {
+			model, effort := builtIn.Agent(role)
+			t.Errorf("%s does not name the built-in values of its role, %s and %s", f.Path, model, effort)
+		}
+	}
+	if agents != len(harness.Roles) {
+		t.Errorf("found %d agent files for %d roles", agents, len(harness.Roles))
 	}
 }

@@ -31,14 +31,16 @@ func TestResolveKeyByKey(t *testing.T) {
 	project := mustParse(t, "agents:\n  builder:\n    model: haiku\nstrategy:\n  review: sequential\n")
 	c := Resolve(user, project)
 	for key, want := range map[string]Value{
-		"agents.builder.model":  {Value: "haiku", Origin: Project},
-		"agents.builder.effort": {Value: "max", Origin: User},
-		"agents.reviewer.model": {Value: "sonnet", Origin: BuiltIn},
-		"agents.auditor.effort": {Value: "high", Origin: BuiltIn},
-		"strategy.default":      {Value: "parallel", Origin: User},
-		"strategy.review":       {Value: "sequential", Origin: Project},
-		"strategy.build":        {Value: "parallel", Origin: User, Via: "strategy.default"},
-		"strategy.audit":        {Value: "parallel", Origin: User, Via: "strategy.default"},
+		"agents.builder.model":   {Value: "haiku", Origin: Project},
+		"agents.builder.effort":  {Value: "max", Origin: User},
+		"agents.reviewer.model":  {Value: "sonnet", Origin: BuiltIn},
+		"agents.auditor.effort":  {Value: "medium", Origin: BuiltIn},
+		"agents.architect.model": {Value: "opus", Origin: BuiltIn},
+		"agents.reviewer.effort": {Value: "high", Origin: BuiltIn},
+		"strategy.default":       {Value: "parallel", Origin: User},
+		"strategy.review":        {Value: "sequential", Origin: Project},
+		"strategy.build":         {Value: "parallel", Origin: User, Via: "strategy.default"},
+		"strategy.audit":         {Value: "parallel", Origin: User, Via: "strategy.default"},
 	} {
 		got, ok := c.Get(key)
 		if !ok || got.Value != want.Value || got.Origin != want.Origin || got.Via != want.Via {
@@ -206,5 +208,17 @@ func TestRenderAgent(t *testing.T) {
 		if role, _ := RoleOf(file); role != want {
 			t.Errorf("RoleOf(%s) = %q", file, role)
 		}
+	}
+}
+
+// A role without built-in values would get an agent file that names no model.
+func TestEveryRoleHasBuiltInValues(t *testing.T) {
+	for _, role := range Roles {
+		if d, ok := agentDefaults[role]; !ok || d.model == "" || d.effort == "" {
+			t.Errorf("the role %s has no built-in model and effort", role)
+		}
+	}
+	if len(agentDefaults) != len(Roles) {
+		t.Errorf("agentDefaults names %d roles, Roles %d", len(agentDefaults), len(Roles))
 	}
 }

@@ -8,9 +8,8 @@ description: Use when someone mentions Markitect, wants to set it up, start a pr
 A Markitect project has one spec: the Markdown files in .markitect/spec/. The
 spec is the authority over the code, tests and documentation: where they differ,
 the spec is right. People architect the project with the markitect-architect
-skill, whose architect agent writes the spec. The /markitect-build skill has a
-builder agent build it and a fresh reviewer verify each Definition; markitect
-status says what is left to verify.
+skill, and the /markitect-build skill has a builder agent build it and a fresh
+reviewer verify each Definition; markitect status says what is left to verify.
 
 `markitect` is a command on the path, so there is no need to look for it. `markitect help` lists what it does. If the shell says the command is not found, the binary is missing or its folder is not on the PATH. The Claude Code plugin brings it (`claude plugin marketplace add Glacius-Labs/Claude-Plugins`, then `claude plugin install markitect@glacius-labs`); or download the binary for the system from https://github.com/Glacius-Labs/Markitect/releases and put it on the PATH.
 

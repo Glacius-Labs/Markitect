@@ -74,11 +74,20 @@ const ownPrefix = "markitect-"
 
 // Built-in values: the agents as the binary ships their files, and auto.
 const (
-	defaultModel    = "sonnet"
-	defaultEffort   = "high"
 	defaultStrategy = Auto
 	strategyDefault = "strategy.default"
 )
+
+// agentDefaults are the built-in model and effort of each role. The roles that
+// work on the spec think on a larger model, since the spec is little text that
+// everything else is built from; the roles that work on the code build and
+// verify from it on a smaller one.
+var agentDefaults = map[string]struct{ model, effort string }{
+	"builder":   {"sonnet", "high"},
+	"reviewer":  {"sonnet", "high"},
+	"architect": {"opus", "medium"},
+	"auditor":   {"opus", "medium"},
+}
 
 var (
 	// modelName is what a model may look like: an alias such as opus, a full
@@ -92,8 +101,8 @@ var (
 func builtIn() map[string]string {
 	values := map[string]string{strategyDefault: defaultStrategy}
 	for _, r := range Roles {
-		values["agents."+r+".model"] = defaultModel
-		values["agents."+r+".effort"] = defaultEffort
+		values["agents."+r+".model"] = agentDefaults[r].model
+		values["agents."+r+".effort"] = agentDefaults[r].effort
 	}
 	return values
 }
