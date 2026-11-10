@@ -98,8 +98,7 @@ type Releases interface {
 // CLI runs one command.
 type CLI struct {
 	Folders Folders
-	// Record is the engine of status and mark. Nil means this build reads no
-	// record.
+	// Record is the engine of status and mark.
 	Record *run.Engine
 	Stdin  io.Reader
 	Stdout io.Writer
