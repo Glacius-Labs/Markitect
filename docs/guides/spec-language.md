@@ -152,7 +152,7 @@ Its patterns are the registry's, not Git's: they start at the top of the project
 
 It can't merge with `.gitignore`, because the two answer different questions: `.gitignore` says what Git does not track, and this file says what Git tracks and no Package owns. A file Git ignores needs no line here.
 
-The tool accounts for what `init` installs by itself: `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, the `markitect-*` skills, agents and workflows, and `.gitignore`, and for the worktrees Claude Code keeps under `.claude/worktrees/`. They need no line here and no registry entry, though a registry page may list them. The ignore file lies under `.markitect/`, so no subagent but the architect may change it ([the hook](../../internal/run/README.md#the-hook)); a file it lists is no input of any Definition.
+The tool accounts for what `init` installs by itself: `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, the `markitect-*` skills, agents and workflows, and `.gitignore`, and for the worktrees Claude Code keeps under `.claude/worktrees/`. They need no line here and no registry entry, though a registry page may list them. The ignore file lies under `.markitect/`, so no subagent but the architect may change it ([the hook](../../internal/guard/README.md#the-hook)); a file it lists is no input of any Definition.
 
 ### The agents' model and effort
 
@@ -214,7 +214,7 @@ Two commands work on the record of what was verified, `.markitect/review.sum` ([
 |---|---|
 | `markitect status [--all]` | Lists what is to verify: each Definition with a changed input or no record, with what changed, where to look and its fingerprint; each Definition recorded `fail` or `spec-problem`; each Definition gone from the spec, with the files that realized it; conflicts after a merge; and the errors in the realization. A `skip` is a note. Exit 0 when it lists nothing, 1 when it lists something; a spec with errors has no list. `--all` lists every Definition. Changes nothing. |
 | `markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m WHY] [--cases N [--covered M]]` | Records `ok`, `fail`, `skip` or `spec-problem` at the state `status` printed, which prints each item as `DEFINITION@FINGERPRINT`. `ok` names its evidence with `-e`, files of the folder as `path` or `path:line`; the others say why with `-m`. `--cases` and `--covered` are the reviewer's counts of the Definition's cases, conditions and exceptions and of those its evidence demonstrates, kept on the line ([the record file](../../internal/run/README.md#the-record-file)), which also counts how often the Definition's own text changed between verdicts. Refuses, and records nothing, when the inputs changed since the fingerprint or evidence does not exist. In an agent session, only the reviewer agent may run it (the hook). |
-| `markitect hook pretool` | The hook before a tool call: only the reviewer records, a subagent writes only what its role may, and none starts the builder, the architect or a workflow ([the hook](../../internal/run/README.md#the-hook)). Hooks only. |
+| `markitect hook pretool` | The hook before a tool call: only the reviewer records, a subagent writes only what its role may, and none starts the builder, the architect or a workflow ([the hook](../../internal/guard/README.md#the-hook)). Hooks only. |
 
 An unknown command is a usage error, exit 2.
 

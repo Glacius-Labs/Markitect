@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
+	"github.com/Glacius-Labs/Markitect/internal/guard"
 	"github.com/Glacius-Labs/Markitect/internal/harness"
-	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/skills"
 )
 
@@ -114,7 +114,7 @@ func TestPluginHooksRunTheLauncher(t *testing.T) {
 	const launcher, path = "${CLAUDE_PLUGIN_ROOT}/bin/markitect", "${CLAUDE_PLUGIN_ROOT}/hooks/path.sh"
 	want := map[string][]group{
 		"SessionStart": {{"", "", path}, {"startup|resume", "", launcher}},
-		"PreToolUse":   {{"Bash", "", launcher}, {run.EditTools, "", launcher}, {run.AgentTools, "", launcher}},
+		"PreToolUse":   {{"Bash", "", launcher}, {guard.EditTools, "", launcher}, {guard.AgentTools, "", launcher}},
 	}
 	for event, groups := range want {
 		got := h.Hooks[event]

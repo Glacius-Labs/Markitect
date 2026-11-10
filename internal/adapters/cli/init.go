@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Glacius-Labs/Markitect/internal/guard"
 	"github.com/Glacius-Labs/Markitect/internal/harness"
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
 	"github.com/Glacius-Labs/Markitect/internal/project"
-	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/skills"
 	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
@@ -218,77 +218,10 @@ func ensureIgnore(ws Workspace) (bool, error) {
 	return true, ws.Write(gitIgnoreFile, []byte(text+add))
 }
 
-// guardHooks hold the rights of the four roles (DEC-100): only the reviewer
-// records verdicts, so that the agent that built does not verify its own work; a
-// subagent writes only what its role may; and the builder starts only the
-// reviewer. The first runs only before a shell command that records, the second
-// before every tool that writes a file, the third before every tool that starts
-// an agent. Each runs in bash, as the plugin's do, since its command is a shell
-// command, also on Windows.
-func guardHooks() []any {
-	hook := func(rule string) []any {
-		h := map[string]any{"type": "command", "shell": "bash", "command": run.HookCommand}
-		if rule != "" {
-			h["if"] = rule
-		}
-		return []any{h}
-	}
-	return []any{
-		map[string]any{"matcher": "Bash", "hooks": hook(run.MarkRule)},
-		map[string]any{"matcher": run.EditTools, "hooks": hook("")},
-		map[string]any{"matcher": run.AgentTools, "hooks": hook("")},
-	}
-}
-
-// guardedHooks returns the settings' hooks with the guard in place of one an
-// earlier markitect wrote, or why it cannot add it without losing what is there.
-func guardedHooks(settings map[string]any) (map[string]any, string) {
-	hooks := map[string]any{}
-	if v, ok := settings["hooks"]; ok {
-		if hooks, ok = v.(map[string]any); !ok {
-			return nil, "they are not an object"
-		}
-	}
-	var pre []any
-	if v, ok := hooks["PreToolUse"]; ok {
-		if pre, ok = v.([]any); !ok {
-			return nil, "its PreToolUse hooks are not a list"
-		}
-	}
-	kept := []any{}
-	for _, entry := range pre {
-		if !ownGuard(entry) {
-			kept = append(kept, entry)
-		}
-	}
-	hooks["PreToolUse"] = append(kept, guardHooks()...)
-	return hooks, ""
-}
-
 // worktreeBase is the base of the worktrees Claude Code makes, which init sets so
 // that a builder in a worktree of its own starts from the owner's branch and not
 // from the repository's default branch.
 const worktreeBase = "head"
-
-// ownGuard says whether a PreToolUse entry is one an earlier markitect wrote: a
-// group whose every hook runs HookCommand. The current one replaces it.
-func ownGuard(entry any) bool {
-	group, ok := entry.(map[string]any)
-	if !ok {
-		return false
-	}
-	hooks, ok := group["hooks"].([]any)
-	if !ok || len(hooks) == 0 {
-		return false
-	}
-	for _, h := range hooks {
-		hook, ok := h.(map[string]any)
-		if !ok || hook["command"] != run.HookCommand {
-			return false
-		}
-	}
-	return true
-}
 
 // ensureSettings adds the hooks to the project's settings, in place of ones an
 // earlier markitect wrote, sets the base of Claude Code's worktrees unless the
@@ -297,19 +230,19 @@ func ownGuard(entry any) bool {
 // and writes the other. Either way it says what to add by hand.
 func (c CLI) ensureSettings(ws Workspace) error {
 	settings := map[string]any{}
-	addHooks := fmt.Sprintf("add the hooks by hand: %q before Bash for %s, before %s and before %s", run.HookCommand, run.MarkRule, run.EditTools, run.AgentTools)
+	addHooks := fmt.Sprintf("add the hooks by hand: %q before Bash for %s, before %s and before %s", guard.HookCommand, guard.MarkRule, guard.EditTools, guard.AgentTools)
 	setBase := fmt.Sprintf("set worktree.baseRef to %q by hand", worktreeBase)
 	lacks := func(why string) error {
-		fmt.Fprintf(c.Stdout, "left %s as it is, %s; %s, and %s\n", run.SettingsFile, why, addHooks, setBase)
+		fmt.Fprintf(c.Stdout, "left %s as it is, %s; %s, and %s\n", guard.SettingsFile, why, addHooks, setBase)
 		return nil
 	}
 	guarded := false
-	if ws.Exists(run.SettingsFile) {
-		data, err := ws.Read(run.SettingsFile)
+	if ws.Exists(guard.SettingsFile) {
+		data, err := ws.Read(guard.SettingsFile)
 		if err != nil {
 			return err
 		}
-		guarded = run.HasGuard(data)
+		guarded = guard.HasGuard(data)
 		dec := json.NewDecoder(bytes.NewReader(data))
 		dec.UseNumber()
 		if err := dec.Decode(&settings); err != nil {
@@ -324,14 +257,14 @@ func (c CLI) ensureSettings(ws Workspace) error {
 	}
 	var said, left []string
 	if !guarded {
-		if hooks, why := guardedHooks(settings); why != "" {
-			left = append(left, fmt.Sprintf("left the hooks in %s as they are, because %s; %s", run.SettingsFile, why, addHooks))
+		if hooks, why := guard.GuardedHooks(settings); why != "" {
+			left = append(left, fmt.Sprintf("left the hooks in %s as they are, because %s; %s", guard.SettingsFile, why, addHooks))
 		} else {
 			settings["hooks"] = hooks
-			said = append(said, fmt.Sprintf("added the hooks that hold the agents' rights to %s", run.SettingsFile))
+			said = append(said, fmt.Sprintf("added the hooks that hold the agents' rights to %s", guard.SettingsFile))
 		}
 	}
-	setBaseRef := fmt.Sprintf("set worktree.baseRef to %q in %s, so that a builder's worktree starts from your branch", worktreeBase, run.SettingsFile)
+	setBaseRef := fmt.Sprintf("set worktree.baseRef to %q in %s, so that a builder's worktree starts from your branch", worktreeBase, guard.SettingsFile)
 	switch w := settings["worktree"].(type) {
 	case nil: // absent, or null
 		settings["worktree"] = map[string]any{"baseRef": worktreeBase}
@@ -342,7 +275,7 @@ func (c CLI) ensureSettings(ws Workspace) error {
 			said = append(said, setBaseRef)
 		}
 	default:
-		left = append(left, fmt.Sprintf("left worktree in %s as it is, because it is not an object; %s", run.SettingsFile, setBase))
+		left = append(left, fmt.Sprintf("left worktree in %s as it is, because it is not an object; %s", guard.SettingsFile, setBase))
 	}
 	for _, line := range left {
 		fmt.Fprintln(c.Stdout, line)
@@ -357,7 +290,7 @@ func (c CLI) ensureSettings(ws Workspace) error {
 	if err := enc.Encode(settings); err != nil {
 		return err
 	}
-	if err := ws.Write(run.SettingsFile, b.Bytes()); err != nil {
+	if err := ws.Write(guard.SettingsFile, b.Bytes()); err != nil {
 		return err
 	}
 	for _, line := range said {

@@ -1,12 +1,21 @@
-package run_test
+package guard_test
 
 import (
 	"encoding/json"
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/guard"
 )
+
+func has(t *testing.T, text string, wants ...string) {
+	t.Helper()
+	for _, w := range wants {
+		if !strings.Contains(text, w) {
+			t.Fatalf("%q not in:\n%s", w, text)
+		}
+	}
+}
 
 func hookInput(t *testing.T, v map[string]any) []byte {
 	t.Helper()
@@ -21,7 +30,7 @@ func hookInput(t *testing.T, v map[string]any) []byte {
 // own work, and neither does the owner's session through an agent.
 func TestGuardLetsOnlyTheReviewerRecord(t *testing.T) {
 	call := func(agentID, agent, command string) string {
-		return string(run.Guard(hookInput(t, map[string]any{
+		return string(guard.Guard(hookInput(t, map[string]any{
 			"agent_id": agentID, "agent_type": agent, "tool_name": "Bash", "tool_input": map[string]any{"command": command},
 		})))
 	}
@@ -33,18 +42,18 @@ func TestGuardLetsOnlyTheReviewerRecord(t *testing.T) {
 		"markitect.exe mark fees/fee@0a1b2c ok",
 		"MARKITECT Mark fees/fee@0a1b2c ok",
 	} {
-		has(t, call("a1", run.BuilderAgent, command), `"permissionDecision":"deny"`, run.ReviewerAgent)
+		has(t, call("a1", guard.BuilderAgent, command), `"permissionDecision":"deny"`, guard.ReviewerAgent)
 		has(t, call("", "", command), `"permissionDecision":"deny"`)
-		if out := call("a2", run.ReviewerAgent, command); out != "" {
+		if out := call("a2", guard.ReviewerAgent, command); out != "" {
 			t.Fatalf("refused the reviewer %q: %s", command, out)
 		}
 	}
 	for _, command := range []string{"markitect status", "markitect status --all", "go test ./...", "cat .claude/agents/markitect-reviewer.md", "echo markitect marked", "markitect markdown x"} {
-		if out := call("a1", run.BuilderAgent, command); out != "" {
+		if out := call("a1", guard.BuilderAgent, command); out != "" {
 			t.Fatalf("refused %q: %s", command, out)
 		}
 	}
-	if out := string(run.Guard([]byte("not json"))); out != "" {
+	if out := string(guard.Guard([]byte("not json"))); out != "" {
 		t.Fatalf("%s", out)
 	}
 }
@@ -55,7 +64,7 @@ func TestGuardLetsOnlyTheReviewerRecord(t *testing.T) {
 // writes. The owner's own session is free.
 func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 	call := func(agentID, agent, tool, key, file string) string {
-		return string(run.Guard(hookInput(t, map[string]any{
+		return string(guard.Guard(hookInput(t, map[string]any{
 			"agent_id": agentID, "agent_type": agent, "tool_name": tool, "tool_input": map[string]any{key: file},
 		})))
 	}
@@ -105,13 +114,13 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 		},
 	}
 	may := map[string]map[string]bool{
-		run.BuilderAgent:    {"code": true, "registry": true},
-		"Markitect-Builder": {"code": true, "registry": true},
-		"general-purpose":   {"code": true, "registry": true},
-		"":                  {"code": true, "registry": true},
-		run.ArchitectAgent:  {"spec": true, "registry": true},
-		run.ReviewerAgent:   {},
-		run.AuditorAgent:    {},
+		guard.BuilderAgent:   {"code": true, "registry": true},
+		"Markitect-Builder":  {"code": true, "registry": true},
+		"general-purpose":    {"code": true, "registry": true},
+		"":                   {"code": true, "registry": true},
+		guard.ArchitectAgent: {"spec": true, "registry": true},
+		guard.ReviewerAgent:  {},
+		guard.AuditorAgent:   {},
 	}
 	for agent, rights := range may {
 		for kind, list := range files {
@@ -131,13 +140,13 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 			}
 		}
 	}
-	has(t, call("a1", run.BuilderAgent, "Edit", "file_path", "/p/.markitect/spec/fee.md"), "the registry pages")
-	has(t, call("a1", run.BuilderAgent, "Edit", "file_path", "/p/.markitect/review.sum"), "markitect mark")
-	has(t, call("a1", run.BuilderAgent, "Edit", "file_path", "/p/.claude/settings.json"), "steers the agents")
-	has(t, call("a1", run.ArchitectAgent, "Write", "file_path", "/p/.markitect/harness.yaml"), "steers the agents")
-	has(t, call("a1", run.ArchitectAgent, "Edit", "file_path", "/p/src/fees.go"), "the builder writes")
-	has(t, call("a1", run.AuditorAgent, "Edit", "file_path", "/p/src/fees.go"), "changes no file")
-	has(t, call("a1", run.BuilderAgent, "NotebookEdit", "notebook_path", "/p/.markitect/x.ipynb"), `"permissionDecision":"deny"`)
+	has(t, call("a1", guard.BuilderAgent, "Edit", "file_path", "/p/.markitect/spec/fee.md"), "the registry pages")
+	has(t, call("a1", guard.BuilderAgent, "Edit", "file_path", "/p/.markitect/review.sum"), "markitect mark")
+	has(t, call("a1", guard.BuilderAgent, "Edit", "file_path", "/p/.claude/settings.json"), "steers the agents")
+	has(t, call("a1", guard.ArchitectAgent, "Write", "file_path", "/p/.markitect/harness.yaml"), "steers the agents")
+	has(t, call("a1", guard.ArchitectAgent, "Edit", "file_path", "/p/src/fees.go"), "the builder writes")
+	has(t, call("a1", guard.AuditorAgent, "Edit", "file_path", "/p/src/fees.go"), "changes no file")
+	has(t, call("a1", guard.BuilderAgent, "NotebookEdit", "notebook_path", "/p/.markitect/x.ipynb"), `"permissionDecision":"deny"`)
 }
 
 // The builder starts only the reviewer, the other roles start no agent, and no
@@ -150,17 +159,17 @@ func TestGuardHoldsWhoStartsWhom(t *testing.T) {
 		if start != "" {
 			input["subagent_type"] = start
 		}
-		return string(run.Guard(hookInput(t, map[string]any{
+		return string(guard.Guard(hookInput(t, map[string]any{
 			"agent_id": agentID, "agent_type": agent, "tool_name": tool, "tool_input": input,
 		})))
 	}
 	allowed := []struct{ id, agent, start string }{
-		{"a1", run.BuilderAgent, run.ReviewerAgent},
+		{"a1", guard.BuilderAgent, guard.ReviewerAgent},
 		{"a1", "general-purpose", "Explore"},
 		{"a1", "general-purpose", ""},
-		{"a1", "general-purpose", run.ReviewerAgent},
-		{"", "", run.BuilderAgent},
-		{"", "", run.ArchitectAgent},
+		{"a1", "general-purpose", guard.ReviewerAgent},
+		{"", "", guard.BuilderAgent},
+		{"", "", guard.ArchitectAgent},
 	}
 	for _, c := range allowed {
 		for _, tool := range []string{"Agent", "Task"} {
@@ -170,17 +179,17 @@ func TestGuardHoldsWhoStartsWhom(t *testing.T) {
 		}
 	}
 	refused := []struct{ agent, start, why string }{
-		{run.BuilderAgent, "", run.ReviewerAgent},
-		{run.BuilderAgent, "general-purpose", run.ReviewerAgent},
-		{run.BuilderAgent, run.ArchitectAgent, run.ReviewerAgent},
-		{run.BuilderAgent, run.BuilderAgent, run.ReviewerAgent},
-		{run.ReviewerAgent, run.ReviewerAgent, "starts no agent"},
-		{run.ArchitectAgent, "Explore", "starts no agent"},
-		{run.AuditorAgent, "", "starts no agent"},
-		{"general-purpose", run.ArchitectAgent, "owner's session"},
-		{"general-purpose", run.BuilderAgent, "owner's session"},
+		{guard.BuilderAgent, "", guard.ReviewerAgent},
+		{guard.BuilderAgent, "general-purpose", guard.ReviewerAgent},
+		{guard.BuilderAgent, guard.ArchitectAgent, guard.ReviewerAgent},
+		{guard.BuilderAgent, guard.BuilderAgent, guard.ReviewerAgent},
+		{guard.ReviewerAgent, guard.ReviewerAgent, "starts no agent"},
+		{guard.ArchitectAgent, "Explore", "starts no agent"},
+		{guard.AuditorAgent, "", "starts no agent"},
+		{"general-purpose", guard.ArchitectAgent, "owner's session"},
+		{"general-purpose", guard.BuilderAgent, "owner's session"},
 		{"general-purpose", "Markitect-Architect", "owner's session"},
-		{"Markitect-Builder", "general-purpose", run.ReviewerAgent},
+		{"Markitect-Builder", "general-purpose", guard.ReviewerAgent},
 	}
 	for _, c := range refused {
 		for _, tool := range []string{"Agent", "Task"} {
@@ -189,7 +198,7 @@ func TestGuardHoldsWhoStartsWhom(t *testing.T) {
 	}
 	// A workflow starts agents of every role, so only the owner's session runs one
 	// (DEC-103).
-	for _, agent := range []string{run.BuilderAgent, run.ReviewerAgent, run.ArchitectAgent, run.AuditorAgent, "general-purpose", ""} {
+	for _, agent := range []string{guard.BuilderAgent, guard.ReviewerAgent, guard.ArchitectAgent, guard.AuditorAgent, "general-purpose", ""} {
 		has(t, call("a1", agent, "Workflow", ""), `"permissionDecision":"deny"`, "owner's session starts a workflow")
 	}
 	if out := call("", "", "Workflow", ""); out != "" {
@@ -199,29 +208,29 @@ func TestGuardHoldsWhoStartsWhom(t *testing.T) {
 
 func TestHasGuard(t *testing.T) {
 	group := func(matcher, rule string) string {
-		return `{"matcher": "` + matcher + `", "hooks": [{"type": "command", "if": "` + rule + `", "command": "` + run.HookCommand + `"}]}`
+		return `{"matcher": "` + matcher + `", "hooks": [{"type": "command", "if": "` + rule + `", "command": "` + guard.HookCommand + `"}]}`
 	}
 	settings := func(groups ...string) string {
 		return `{"hooks": {"PreToolUse": [` + strings.Join(groups, ", ") + `]}}`
 	}
 	for s, want := range map[string]bool{
-		settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group(run.AgentTools, "")): true,
+		settings(group("Bash", guard.MarkRule), group(guard.EditTools, ""), group(guard.AgentTools, "")): true,
 		settings(group("", "")): true,
-		settings(group("Bash", ""), group("Write|Edit|NotebookEdit|MultiEdit|Task|Agent|Workflow", "")):                                                 true,
-		settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group("Agent|Task", "")):                                                        false,
-		settings(group("Bash", run.MarkRule), group(run.EditTools, "")):                                                                                 false,
-		settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group("Agent", "")):                                                             false,
-		settings(group("Bash", run.MarkRule)):                                                                                                           false,
-		settings(group(run.EditTools, ""), group(run.AgentTools, "")):                                                                                   false,
-		settings(group("Bash", run.MarkRule), group("Edit|Write", ""), group(run.AgentTools, "")):                                                       false,
-		settings(group("Bash", "Bash(markitect status*)"), group(run.EditTools, ""), group(run.AgentTools, "")):                                         false,
-		settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group(run.AgentTools, "Agent(markitect-*)")):                                    false,
-		`{"hooks": {"PostToolUse": [` + group("", "") + `]}}`:                                                                                           false,
-		`{"note": "` + run.HookCommand + `"}`:                                                                                                           false,
-		strings.ReplaceAll(settings(group("Bash", run.MarkRule), group(run.EditTools, ""), group(run.AgentTools, "")), run.HookCommand, "my-own-check"): false,
+		settings(group("Bash", ""), group("Write|Edit|NotebookEdit|MultiEdit|Task|Agent|Workflow", "")):                                                         true,
+		settings(group("Bash", guard.MarkRule), group(guard.EditTools, ""), group("Agent|Task", "")):                                                            false,
+		settings(group("Bash", guard.MarkRule), group(guard.EditTools, "")):                                                                                     false,
+		settings(group("Bash", guard.MarkRule), group(guard.EditTools, ""), group("Agent", "")):                                                                 false,
+		settings(group("Bash", guard.MarkRule)):                                                                                                                 false,
+		settings(group(guard.EditTools, ""), group(guard.AgentTools, "")):                                                                                       false,
+		settings(group("Bash", guard.MarkRule), group("Edit|Write", ""), group(guard.AgentTools, "")):                                                           false,
+		settings(group("Bash", "Bash(markitect status*)"), group(guard.EditTools, ""), group(guard.AgentTools, "")):                                             false,
+		settings(group("Bash", guard.MarkRule), group(guard.EditTools, ""), group(guard.AgentTools, "Agent(markitect-*)")):                                      false,
+		`{"hooks": {"PostToolUse": [` + group("", "") + `]}}`:                                                                                                   false,
+		`{"note": "` + guard.HookCommand + `"}`:                                                                                                                 false,
+		strings.ReplaceAll(settings(group("Bash", guard.MarkRule), group(guard.EditTools, ""), group(guard.AgentTools, "")), guard.HookCommand, "my-own-check"): false,
 		"not json": false,
 	} {
-		if got := run.HasGuard([]byte(s)); got != want {
+		if got := guard.HasGuard([]byte(s)); got != want {
 			t.Errorf("%s: %v", s, got)
 		}
 	}

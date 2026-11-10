@@ -16,7 +16,7 @@ This page owns the package contracts and the repository layout. The [spec langua
 
 None of these commands starts an agent, and none needs credentials. The [commands](guides/spec-language.md#commands) section gives their options and exit codes.
 
-`status`, `mark` and `hook` run `cmd/markitect → internal/bootstrap → CLI adapter → the record`. Bootstrap builds [the record](../internal/run/README.md) (`internal/run`) over the folder adapter, with the lock of each project's record in the user's cache folder; the record itself, `.markitect/review.sum`, lies in the project. The driver, by default the owner's own Claude Code session through the skills of [DEC-100](decisions.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role), such as `/markitect-build` and `/markitect-review`, sequentially or through the shipped parallel workflow ([DEC-103](decisions.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)), starts the agents and makes every Git step: nothing in the tool starts or drives an agent, which calls `markitect` like any other tool. `config` reads and writes the harness configuration (`internal/harness`), from which `init` and `update` write the agents' front matter.
+`status` and `mark` run `cmd/markitect → internal/bootstrap → CLI adapter → the record`. Bootstrap builds [the record](../internal/run/README.md) (`internal/run`) over the folder adapter, with the lock of each project's record in the user's cache folder; the record itself, `.markitect/review.sum`, lies in the project. `hook` runs `CLI adapter → the agents' rights`: the adapter reads the call, the environment and the plugin's files, and [`internal/guard`](../internal/guard/README.md) decides over their bytes. The driver, by default the owner's own Claude Code session through the skills of [DEC-100](decisions.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role), such as `/markitect-build` and `/markitect-review`, sequentially or through the shipped parallel workflow ([DEC-103](decisions.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)), starts the agents and makes every Git step: nothing in the tool starts or drives an agent, which calls `markitect` like any other tool. `config` reads and writes the harness configuration (`internal/harness`), from which `init` and `update` write the agents' front matter.
 
 The default driver needs Claude Code on the user's own login: its agents are subagents of the owner's session, with the user's rights, the builder in a worktree of its own and a reviewer alone in the owner's folder ([concept, §7](concept.md#7-how-sure-we-are)).
 
@@ -32,7 +32,8 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 | Registry pages, ownership by path pattern, file accounting and stale realization | `internal/realization` | Spec language |
 | Loading and checking a project's `.markitect/` folder from one set of files | `internal/project` | Spec language, the built-in files, the harness configuration, realization; its own `Repository` port |
 | What a project holds and who links to what, the Package graph, vet | `internal/analysis` | Project and the packages below it |
-| The record: the inputs of each Definition, `review.sum`, `status`, `mark` and the hook | `internal/run` | Project and the packages below it |
+| The record: the inputs of each Definition, `review.sum`, `status` and `mark` | `internal/run` | Project and the packages below it |
+| The agents' rights: which role may write what and start whom, the hook that holds them and its entries in a project's settings | `internal/guard` | Project, for the layout of `.markitect/` |
 | Project-folder, command-line and update adapters; no adapter imports another | `internal/adapters/folder`, `internal/adapters/cli`, `internal/adapters/upgrade` | Their inward consumers and build data |
 | Composition | `internal/bootstrap` | The adapters and the record |
 | Entrypoints | `cmd/markitect` | Bootstrap |
@@ -41,7 +42,7 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 | Test support, test files only | `internal/testkit` | No Markitect package |
 | Standalone: the command smoke | `tools/smoke` | No Markitect package |
 
-The pure packages (`spec`, `realization`, `analysis`) read no files and start no process; their callers hand them bytes. `spec` and `realization` return every error as a diagnostic with a code, which the [spec language guide](guides/spec-language.md) lists.
+The pure packages (`spec`, `realization`, `analysis`, `guard`) read no files and start no process; their callers hand them bytes. `spec` and `realization` return every error as a diagnostic with a code, which the [spec language guide](guides/spec-language.md) lists.
 
 ### Import gate
 

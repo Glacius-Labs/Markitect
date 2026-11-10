@@ -32,7 +32,8 @@ Product code and tests that handle a project's `.markitect/` folder use fixtures
 | Designing a good spec | [What makes a good spec](docs/guides/good-spec.md) |
 | Using Markitect on a project | [Project workflow](docs/guides/project-workflow.md) |
 | Packages, layers and the repository layout | [Architecture](docs/architecture.md) and the generated [code map](docs/development/code-map.md) |
-| The record, `status`, `mark` and the hook | [The record](internal/run/README.md) |
+| The record, `status` and `mark` | [The record](internal/run/README.md) |
+| The agents' rights and the hook | [The agents' rights](internal/guard/README.md) |
 | Releases | [Releasing](docs/releasing.md) |
 | Where Main is and what comes next | [Roadmap](docs/roadmap.md) |
 | Where earlier concepts and records are | [History](docs/history.md) |

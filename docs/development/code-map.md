@@ -20,10 +20,11 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `domain` | Registry pages, ownership and file accounting over a compiled spec. | `spec` | 1 |
 | `project` | Loads and checks a project's Markitect folder from the files of a project folder. | `spec`, `assets`, `harness`, `domain` | 1 |
 | `service` | Questions about a loaded project: what it holds, what depends on what, and vet. | `spec`, `assets`, `domain`, `project` | 1 |
-| `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, status, mark and the hook. | `spec`, `assets`, `domain`, `project` | 1 |
+| `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, status and mark. | `spec`, `assets`, `domain`, `project` | 1 |
+| `guard` | Which role may write what and start whom, the hook that holds it and its entries in a project's settings, over supplied bytes. | `project` | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete project-folder, command-line and update adapters; no adapter imports another. | `spec`, `assets`, `harness`, `domain`, `project`, `service`, `run`, `build` | 3 |
-| `composition` | Constructs the command line with its adapters. | `spec`, `project`, `service`, `run`, `adapter` | 1 |
+| `adapter` | Concrete project-folder, command-line and update adapters; no adapter imports another. | `spec`, `assets`, `harness`, `domain`, `project`, `service`, `run`, `guard`, `build` | 3 |
+| `composition` | Constructs the command line with its adapters. | `spec`, `project`, `service`, `run`, `guard`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `maintenance` | The import gate and the code map, separate from product execution. | nothing | 1 |
 | `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 1 |
@@ -77,6 +78,12 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/run` | Package run is the record of what was verified (DEC-099): for each Definition, .markitect/review.sum holds the inputs at which a reviewer last verified it, modelled on Go's test cache. | [internal/run/README.md](../../internal/run/README.md) |
+
+## The agents' rights
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/guard` | Package guard holds the agents' rights: which role may write what and start whom, the hook that holds them before a tool call (DEC-100), and its entries in a project's Claude Code settings. | [internal/guard/README.md](../../internal/guard/README.md) |
 
 ## Build data
 
