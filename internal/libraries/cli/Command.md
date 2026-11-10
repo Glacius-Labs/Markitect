@@ -9,4 +9,4 @@ A Command Definition describes one command of the project's command-line interfa
 - Link the [[std/Feature]] it exposes.
 - Name its arguments and flags in backticks, with what each means and its default.
 - Name what it prints on success, its output format when another program reads it, and its exit codes.
-- Name every refusal a user can observe: the message or code and the exit status.
+- Name every refusal a user can observe by its exit status and its code, when it has one. State the wording of a message only when a caller relies on it.

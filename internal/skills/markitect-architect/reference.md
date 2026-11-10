@@ -1,12 +1,12 @@
 # Reference: the spec form
 
-A compact summary. The canonical text is `docs/guides/spec-language.md` in the Markitect repository; if they differ, the guide wins.
+A compact summary of the spec language and the tools.
 
 ## Layout
 
 ```text
 .markitect/
-  manifest.yaml        Libraries and versions (std: 1.0.0, rest: 1.0.0, ...)
+  manifest.yaml        Libraries and versions (std: 1.1.0, rest: 1.1.0, ...)
   lock.yaml            Library digests, written by markitect tidy
   spec/                the spec; this folder is the Root Package
     project.md         the project anchor (std/Project)
@@ -104,7 +104,7 @@ All take `--repo DIR`; `check`, `vet`, `list`, `doc`, `status` and `mark` take `
 | Command | Use while you work on the spec |
 |---|---|
 | `init [--name TITLE]` | Once per project: manifest, lock, project anchor, registry page, `AGENTS.md`, `CLAUDE.md`, skills and harness. Makes no repository and commits nothing. Never changes an existing spec file. |
-| `check` | Compile: errors only. A project with nothing registered, where the only errors are `definition.unused`, passes and says that nothing is built yet. |
+| `check [--spec]` | Compile: errors only. `--spec` looks only at the spec and leaves out what the project does not realize yet, which is what a change of the spec asks. A project with nothing registered, where the only errors are `definition.unused`, passes and says that nothing is built yet. |
 | `tidy` | Bring `lock.yaml` in line with the manifest after a manifest or Library change, as `go mod tidy` does. |
 | `doc TARGET` | A Definition with its text, what links to it, what it links to, the files that realize it and its record; or a Package with its public and its internal Definitions apart, its page and files. |
 | `list [--deps]` | The Packages and their Definitions; `--deps` adds each Package's coupling, abstractness and distance from the main sequence, what it depends on and the links behind each dependency. |
@@ -127,4 +127,4 @@ Notes: `vet.unlinked_mention` (a Definition's title or name in another Definitio
 | Manifest and lock | `manifest.syntax`, `manifest.missing`, `lock.mismatch`, `lock.missing`, `lock.syntax` |
 | Links and Packages | `link.unresolved`, `link.syntax`, `link.internal`, `link.downward`, `package.cycle` |
 | Registry and ignore | `file.unregistered`, `registry.front_matter`, `registry.page`, `registry.pattern`, `registry.duplicate_pattern`, `registry.ambiguous_owner`, `registry.wrong_owner`, `registry.duplicate_entry`, `registry.ignored_file`, `registry.git_ignored`, `registry.own_file`, `registry.table`, `registry.link`, `ignore.syntax` |
-| Other | `findings.syntax` |
+| Harness, record and `doc` | `harness.syntax` (`.markitect/harness.yaml` cannot be read; the owner fixes it by hand), `record.unreadable` (a line of `.markitect/review.sum` cannot be read; the owner fixes or removes it), `doc.unknown` (the target of `doc` is neither a Definition nor a Package) |

@@ -55,7 +55,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 
 	out := mustRun(t, r.Dir, "init", "--name", "Lending library")
 	noRepository(t, r.Dir)
-	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/spec/project.md", "wrote .markitect/lock.yaml: std 1.0.0", "installed the skills markitect-architect"} {
+	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/spec/project.md", "wrote .markitect/lock.yaml: std 1.1.0", "installed the skills markitect-architect"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("init output lacks %q:\n%s", want, out)
 		}
@@ -612,13 +612,13 @@ func TestInitInstallsTheHarness(t *testing.T) {
 
 func TestTidyWritesTheLock(t *testing.T) {
 	r := newFolder(t)
-	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.0.0\n  rest: 1.0.0\n  web: 0.1.0\n")
+	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.1.0\n  rest: 1.1.0\n  web: 0.1.0\n")
 	code, _, errOut := run(t, r.Dir, "tidy")
 	if code != 1 || !strings.Contains(errOut, "library.missing") {
 		t.Fatalf("lock without web: %d %s", code, errOut)
 	}
 	r.Write(".markitect/libraries/web/Page.md", "---\nkind: Kind\n---\n# Page\n")
-	if out := mustRun(t, r.Dir, "tidy"); !strings.Contains(out, "rest 1.0.0, std 1.0.0, web 0.1.0") {
+	if out := mustRun(t, r.Dir, "tidy"); !strings.Contains(out, "rest 1.1.0, std 1.1.0, web 0.1.0") {
 		t.Fatalf("lock = %s", out)
 	}
 	if lock := read(t, r.Dir, ".markitect/lock.yaml"); !strings.Contains(lock, "  web:\n    version: 0.1.0\n    digest: sha256:") {

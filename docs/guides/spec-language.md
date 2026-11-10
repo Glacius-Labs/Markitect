@@ -52,7 +52,7 @@ Core offers one thing: the Definition `Kind`. A Kind is a Definition whose `kind
 
 A Library is a folder of Kind Definitions, one `<Name>.md` file each at its top level (`library.file`, `library.not_a_kind`, `library.internal`); a Library's name follows the same rules as other names (`library.name`). A Library Definition may link only to Libraries the manifest names and to `Kind`. No Kind has a special meaning to Markitect.
 
-The standard Libraries ship inside the binary at version 1.0.0:
+The standard Libraries ship inside the binary at version 1.1.0:
 
 | Library | Kinds |
 |---|---|
@@ -67,11 +67,11 @@ Every project uses `std`. A project writes its own Kinds for anything else, one 
 ```yaml
 # .markitect/manifest.yaml
 libraries:
-  std: 1.0.0
-  rest: 1.0.0
+  std: 1.1.0
+  rest: 1.1.0
 ```
 
-The manifest names each Library with its version and nothing else (`manifest.syntax`, `manifest.missing`). A standard Library must have the version this binary ships (`library.version`), and no project folder may replace it (`library.reserved`). Any other named Library must exist under `.markitect/libraries/` (`library.missing`), and every Library folder there must be named (`library.undeclared`).
+The manifest names each Library with its version and nothing else (`manifest.syntax`, `manifest.missing`). A standard Library must have the version this binary ships (`library.version`), and no project folder may replace it (`library.reserved`). A version names one content: when a Kind of a standard Library changes, its version moves, and a project names the new one in its manifest and runs `markitect tidy`. Any other named Library must exist under `.markitect/libraries/` (`library.missing`), and every Library folder there must be named (`library.undeclared`).
 
 `markitect tidy` brings `.markitect/lock.yaml` in line with the manifest, as `go mod tidy` does: it writes each Library's version and the SHA-256 digest of its files. `check` only reads the lock. It refuses a Library whose version or content does not match the lock, and a lock entry the manifest does not name (`lock.mismatch`, `lock.missing`, `lock.syntax`), and says to run `markitect tidy`. `init` and `update` keep the lock current. A new markitect binary whose standard Libraries changed therefore needs a new lock, which shows the change in review.
 

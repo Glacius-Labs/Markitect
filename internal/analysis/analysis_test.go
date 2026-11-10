@@ -58,7 +58,7 @@ func library(t *testing.T) memRepo {
 		std.Files = append(std.Files, spec.File{Path: f.Path, Data: f.Data})
 	}
 	return memRepo{
-		project.ManifestFile:                      "libraries:\n  std: 1.0.0\n",
+		project.ManifestFile:                      "libraries:\n  std: 1.1.0\n",
 		project.LockFile:                          string(spec.RenderLock([]spec.LibrarySource{std})),
 		m + "project.md":                          def("std/Project", "Library", "Parts: [[members]], [[catalog]]."),
 		m + "loan-limit.md":                       def("std/Rule", "Loan limit", "At most `5` open loans."),
