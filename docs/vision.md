@@ -160,7 +160,7 @@ Check an assessment against this table before treating one of these as a finding
 
 | Misreading | Correct reading |
 |---|---|
-| Markitect is a linter or context tool for AI instructions such as rules, skills and `AGENTS.md`. | That is where the name comes from. With Markitect the whole project is architected in Markdown, with delegated realization. Agent instructions are one kind of realization among many. |
+| Markitect is a linter or context tool for AI instructions such as rules, skills and `AGENTS.md`. | That is where the name comes from. With Markitect, people architect the whole project in Markdown, and agents realize it. Agent instructions are one kind of realization among many. |
 | Markitect is a new, unproven formalism. | It builds on proven practice: requirements traceability with suspect links, architecture metrics and Go's conventions. What is new is that the traceability is plain, typed text checked deterministically, that agents realize the spec and gather the evidence, and that the record works like Go's test cache. |
 | The deterministic parts are the product, and agent work is scope creep. | Delegated realization is the purpose, and the tool supports it ([DEC-001](decisions.md#dec-001-delegated-realization-is-the-purpose)). |
 | Markitect orchestrates or steers the agents. | It checks and analyses the spec, says what is to verify and records verdicts. Who starts which agent, when and how often belongs to the driver: the skills, the person's own session or the person ([DEC-096](decisions.md#dec-096-the-tool-computes-and-checks-a-driver-acts)). |
