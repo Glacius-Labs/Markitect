@@ -121,7 +121,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - It is finished when a build would change nothing. This is the loop of a build with the roles turned round: the reviewer verifies every Definition against the project, the architect changes the spec where it is wrong about the project, and the two repeat until nothing is left to verify but what waits for the owner.
 - A Definition that does not hold is one of three things:
   - the spec misread the project, and the spec is corrected;
-  - the project contradicts itself, such as its documentation against a script. The architect does not choose a side: the Definition stays on the list as `fail`, and the owner says which side holds;
+  - the project contradicts itself, such as its documentation against a script. The architect does not settle it: the Definition stays as drafted and on the list as `fail`, and the owner says which side holds before anything is built;
   - the project does something that nothing in it states and that looks like an accident. The spec leaves it unstated, since stating it would make the spec demand it, and the architect names it to the owner.
 - The spec is not a transcription of the project. The question at each artifact is what it holds that should also be in the spec, not what it holds that the spec does not say. Most of what a file holds is then stated as an obligation without its values, or left to the agents.
 - With the owner's acceptance the spec becomes the authority ([DEC-063](#dec-063-the-spec-is-the-authority-and-its-defects-go-to-the-owner)). What the owner confirmed as a defect stays `fail`, and `/markitect-build` repairs it; the spec is not changed to empty the list.

@@ -49,7 +49,7 @@ description: Use when someone mentions Markitect, wants to set it up, start a pr
 
 const personalTail = "\n`markitect` is a command on the path, so there is no need to look for it. `markitect help` lists what it does. If the shell says the command is not found, the binary is missing or its folder is not on the PATH. The Claude Code plugin brings it (`claude plugin marketplace add Glacius-Labs/Claude-Plugins`, then `claude plugin install markitect@glacius-labs`); or download the binary for the system from https://github.com/Glacius-Labs/Markitect/releases and put it on the PATH.\n\n" +
 	"## How to begin\n\n" +
-	"- **An empty folder, a new project or a repository that already has code:** run `markitect init`, then use the `markitect-architect` skill. It starts the spec with the owner, or draws it from the project as it is.\n" +
+	"- **An empty folder, a new project or a project that already exists:** run `markitect init`, then use the `markitect-architect` skill. It starts the spec with the owner, or draws it from the project as it is.\n" +
 	"- **A folder that already has `.markitect/`:** it is set up, and `markitect check` says how it stands; the `markitect-architect` skill changes the spec.\n\n" +
 	"`init` installs that skill into the project, so a session that was open before it does not have it yet. Read `.claude/skills/markitect-architect/SKILL.md` and follow it, or have the user run `/reload-skills`.\n\n" +
 	"## After an upgrade\n\n" +
