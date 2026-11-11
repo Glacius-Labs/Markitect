@@ -38,9 +38,12 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 	if err != nil {
 		return Misused, err
 	}
-	kept, created, err := setup.WriteInstructions(ws, name)
+	kept, unread, created, err := setup.WriteInstructions(ws, name)
 	if kept {
 		fmt.Fprintf(c.Stdout, "left %s as it is; add that this project has a spec in %s, which is the authority\n", setup.InstructionsFile, project.SpecDir)
+	}
+	if unread {
+		fmt.Fprintf(c.Stdout, "left %s as it is; add the line @%s to it, so that Claude Code reads %s\n", setup.ClaudeFile, setup.InstructionsFile, setup.InstructionsFile)
 	}
 	c.created(created)
 	if err != nil {
@@ -55,15 +58,10 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 	if err != nil {
 		return Misused, err
 	}
-	installed, err := setup.InstallSkills(ws)
-	if err != nil {
-		return Misused, err
-	}
-	fmt.Fprintf(c.Stdout, "installed the skills %s into %s\n", strings.Join(installed, ", "), strings.Join(setup.SkillDirs, " and "))
 	if err := setup.InstallHarness(ws, cfg); err != nil {
 		return Misused, err
 	}
-	fmt.Fprintln(c.Stdout, "installed the harness: the build, review, cleanup, bughunt, audit, schedule and config skills, the builder, reviewer, architect and auditor agents, and the parallel workflow")
+	fmt.Fprintln(c.Stdout, "installed the harness in .claude/: the architect, build, review, cleanup, bughunt, audit, schedule and config skills, the builder, reviewer, architect and auditor agents, and the parallel workflow")
 	said, err := setup.EnsureSettings(ws)
 	c.say(said)
 	if err != nil {

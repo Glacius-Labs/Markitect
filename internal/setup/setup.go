@@ -1,5 +1,5 @@
 // Package setup is what Markitect writes into a project: the first files of a
-// new one, the skills and the harness with its agents rendered from the harness
+// new one, the harness with its agents rendered from the harness
 // configuration, the hooks and the worktree base in Claude Code's settings, the
 // record's Git attributes, the ignore line for Claude Code's worktrees and the
 // lock. It works through its own Folder port and prints nothing: each function
@@ -8,6 +8,7 @@ package setup
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/libraries"
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -59,9 +60,10 @@ func StartSpec(f Folder, name string) (created []string, emptySpec bool, err err
 
 // WriteInstructions writes InstructionsFile for the project titled name, unless
 // it is there, and a CLAUDE.md that imports it, unless that is there. It says
-// whether it left an InstructionsFile as it was, and returns the files it
-// created, also when it fails.
-func WriteInstructions(f Folder, name string) (kept bool, created []string, err error) {
+// whether it left an InstructionsFile as it was, and whether a CLAUDE.md that was
+// there does not import it, so that Claude Code does not read it. It returns the
+// files it created, also when it fails.
+func WriteInstructions(f Folder, name string) (kept, unread bool, created []string, err error) {
 	write := func(file string, data []byte) error {
 		if err := f.Write(file, data); err != nil {
 			return err
@@ -72,14 +74,31 @@ func WriteInstructions(f Folder, name string) (kept bool, created []string, err 
 	if f.Exists(InstructionsFile) {
 		kept = true
 	} else if err := write(InstructionsFile, []byte(fmt.Sprintf(instructionsTemplate, name))); err != nil {
-		return kept, created, err
+		return kept, false, created, err
 	}
-	if !f.Exists("CLAUDE.md") {
-		if err := write("CLAUDE.md", []byte("@"+InstructionsFile+"\n")); err != nil {
-			return kept, created, err
+	if !f.Exists(ClaudeFile) {
+		if err := write(ClaudeFile, []byte(importLine+"\n")); err != nil {
+			return kept, false, created, err
+		}
+		return kept, false, created, nil
+	}
+	data, err := f.Read(ClaudeFile)
+	if err != nil {
+		return kept, false, created, err
+	}
+	return kept, !imports(string(data)), created, nil
+}
+
+// imports says whether the text of a CLAUDE.md imports InstructionsFile: a word
+// of it is the import, with or without ./ before the name. A mention in code
+// marks, as in a sentence about the file, is none.
+func imports(text string) bool {
+	for _, word := range strings.Fields(text) {
+		if word == importLine || word == "@./"+InstructionsFile {
+			return true
 		}
 	}
-	return kept, created, nil
+	return false
 }
 
 // manifestTemplate is a new project's manifest.
@@ -89,8 +108,12 @@ libraries:
 `
 
 // InstructionsFile is the file coding agents read when a session starts. Claude
-// Code reads it through CLAUDE.md, which holds only an import of it.
-const InstructionsFile = "AGENTS.md"
+// Code reads it through ClaudeFile, which init writes with only an import of it.
+const (
+	InstructionsFile = "AGENTS.md"
+	ClaudeFile       = "CLAUDE.md"
+	importLine       = "@" + InstructionsFile
+)
 
 // instructionsTemplate tells any session what kind of project this is. The
 // agents read it too, so it holds no process.

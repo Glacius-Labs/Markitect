@@ -59,7 +59,7 @@ func TestReferenceListsTheCodesMarkitectPrints(t *testing.T) {
 	if len(printed) < 50 {
 		t.Fatalf("found only %d codes in the source; the search no longer fits it", len(printed))
 	}
-	reference, err := os.ReadFile("markitect-architect/reference.md")
+	reference, err := os.ReadFile("claude/skills/markitect-architect/reference.md")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +100,7 @@ func TestReferenceListsTheCodesMarkitectPrints(t *testing.T) {
 		}
 	}
 	// The skill itself names only codes the reference explains.
-	skill, err := os.ReadFile("markitect-architect/SKILL.md")
+	skill, err := os.ReadFile("claude/skills/markitect-architect/SKILL.md")
 	if err != nil {
 		t.Fatal(err)
 	}

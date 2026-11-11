@@ -48,7 +48,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/libraries` | Package libraries holds the standard Libraries that ship inside the markitect binary: std, rest and cli, each a folder of Kind Definitions. | [docs/guides/spec-language.md#kinds-and-libraries](../guides/spec-language.md#kinds-and-libraries) |
-| `internal/skills` | Package skills holds what ships inside the markitect binary for agents: the architect skill, which markitect init installs where coding agents look for skills, and the harness of the work for Claude Code: its skills, its four agents and the prompts of its routines (DEC-100), and the workflow of the parallel strategy (DEC-103). | [docs/guides/spec-language.md#commands](../guides/spec-language.md#commands) |
+| `internal/skills` | Package skills holds what ships inside the markitect binary for agents: the harness for Claude Code, which markitect init installs into a project. | [docs/guides/spec-language.md#commands](../guides/spec-language.md#commands) |
 
 ## Harness configuration
 
@@ -90,7 +90,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/setup` | Package setup is what Markitect writes into a project: the first files of a new one, the skills and the harness with its agents rendered from the harness configuration, the hooks and the worktree base in Claude Code's settings, the record's Git attributes, the ignore line for Claude Code's worktrees and the lock. | [docs/guides/project-workflow.md#1-set-up-the-project](../guides/project-workflow.md#1-set-up-the-project) |
+| `internal/setup` | Package setup is what Markitect writes into a project: the first files of a new one, the harness with its agents rendered from the harness configuration, the hooks and the worktree base in Claude Code's settings, the record's Git attributes, the ignore line for Claude Code's worktrees and the lock. | [docs/guides/project-workflow.md#1-set-up-the-project](../guides/project-workflow.md#1-set-up-the-project) |
 
 ## Build data
 

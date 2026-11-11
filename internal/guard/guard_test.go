@@ -100,7 +100,7 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 			`C:\p\.claude\settings.local.json`,
 			"/p/.claude/agents/markitect-reviewer.md",
 			"/p/.claude/skills/markitect-build/SKILL.md",
-			"/p/.agents/skills/markitect-architect/reference.md",
+			"/p/.claude/skills/markitect-architect/reference.md",
 			"/p/.claude/workflows/markitect-parallel.js",
 			"/p/.markitect/harness.yaml",
 			`C:\p\.Markitect\Harness.yaml`,

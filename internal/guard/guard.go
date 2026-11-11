@@ -276,7 +276,7 @@ func steersAgents(segments []string) bool {
 			return true
 		case dir == ".claude" && (next == "hooks" || next == "rules") && i+2 < n:
 			return true
-		case (dir == ".claude" || dir == ".agents") && (next == "agents" || next == "skills" || next == "workflows") && i+2 < n &&
+		case dir == ".claude" && (next == "agents" || next == "skills" || next == "workflows") && i+2 < n &&
 			strings.HasPrefix(strings.ToLower(segments[i+2]), "markitect-"):
 			return true
 		}

@@ -1,1 +1,0 @@
-Start the `markitect-builder` agent with the message "Clean up." and wait for it. It improves the code without changing what the project does, and has the `markitect-reviewer` agent verify again what that put back on the list, until nothing it can settle is left, or three rounds in a row leave the list no shorter than it has been.

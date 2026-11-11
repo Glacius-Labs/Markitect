@@ -10,7 +10,7 @@ import (
 
 // examplePage is the worked example of the architect skill, which an agent that
 // writes a spec copies from.
-const examplePage = "../skills/markitect-architect/examples.md"
+const examplePage = "../skills/claude/skills/markitect-architect/examples.md"
 
 var (
 	// exampleFile finds the path a line gives the block after it: a file of the
