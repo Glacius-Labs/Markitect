@@ -101,7 +101,7 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 
 **Why.** It finds what is both hard to verify and thinly verified. As with CRAP, a Definition of more than about 30 statements stays above the line however much evidence it names: the remedy is to split it.
 
-**Bad and good.** On the record of one first spec of a real project, 114 Definitions with counts, the line of 30 marked two: a Rule recorded `skip` with 9 cases, since its check needs a runner the machine did not have, and a Concept with 16 cases of which the evidence demonstrated 10 ([record](RISK_PR)). A Definition of 12 cases with 8 demonstrated scores about 19 and is not marked.
+**Bad and good.** On the record of one first spec of a real project, 114 Definitions with counts, the line of 30 marked two: a Rule recorded `skip` with 9 cases, since its check needs a runner the machine did not have, and a Concept with 16 cases of which the evidence demonstrated 10 ([record](https://github.com/Glacius-Labs/Markitect/pull/1054)). A Definition of 12 cases with 8 demonstrated scores about 19 and is not marked.
 
 **Signal.** `vet.risk`, a note, for a Definition whose last verdict is an `ok` or a `skip` and whose risk is above 30 ([DEC-106](../decisions.md#dec-106-the-reviewer-counts-and-vet-notes-thin-evidence)). The reviewer records the counts it rests on with `markitect mark … --cases N --covered M`, and `mark` refuses an `ok` or a `skip` without them.
 
