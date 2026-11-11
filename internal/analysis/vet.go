@@ -28,6 +28,11 @@ const (
 	// never fewer than MinHotspot, before vet.hotspot notes it.
 	MaxHotspotShare = 0.1
 	MinHotspot      = 20
+	// MaxRisk is the risk a verified Definition may have before vet.risk notes
+	// it: the line CRAP draws for code. With c one more than the cases a reviewer
+	// counted and e the share of them the evidence demonstrates, the risk is
+	// c² × (1 − e)³ + c.
+	MaxRisk = 30
 )
 
 // Report is what vet finds. Warnings are the measures that were precise on real
@@ -54,10 +59,35 @@ type History struct {
 	// Revisions counts, per Definition, how often its own text changed between
 	// two verdicts on it.
 	Revisions map[string]int
+	// Counts holds, per Definition with an ok or a skip at its text as it is,
+	// what the reviewer counted with it.
+	Counts map[string]Count
+}
+
+// Count is a reviewer's count for one Definition: the cases the Definition
+// demands and how many of them the evidence demonstrates. Skip says that the
+// verdict was a skip, which demonstrates none.
+type Count struct {
+	Cases, Covered int
+	Skip           bool
+}
+
+// Risk is the change risk of a Definition verified with these counts, after
+// CRAP: large and thinly demonstrated is a risk, and so is very large.
+func (c Count) Risk() float64 {
+	comp := float64(1 + c.Cases)
+	uncovered := 0.0
+	switch {
+	case c.Skip:
+		uncovered = 1
+	case c.Cases > 0:
+		uncovered = math.Max(0, 1-float64(c.Covered)/float64(c.Cases))
+	}
+	return comp*comp*uncovered*uncovered*uncovered + comp
 }
 
 // Vet analyses the design of a loaded project like code: coupling, size, hubs
-// and, as notes, unlinked mentions, statements, placement and hotspots.
+// and, as notes, unlinked mentions, statements, placement, hotspots and risk.
 func Vet(p *project.Project, h History) Report {
 	var r Report
 	sp := p.Spec
@@ -116,6 +146,17 @@ func Vet(p *project.Project, h History) Report {
 		}
 		if below := placement(sp, d, in[id]); below != "" {
 			notes.Add("vet.placement", d.File, 0, "every Definition that links to %s lies in %s; it could move down there, unless it binds %s by scope", id, below, spec.PackageName(d.Package))
+		}
+		if c, ok := h.Counts[id]; ok && c.Risk() > MaxRisk {
+			risk := math.Ceil(c.Risk())
+			switch {
+			case c.Cases+1 > MaxRisk:
+				notes.Add("vet.risk", d.File, 0, "%d cases, too many to verify well however much evidence there is (risk %.0f, more than %d); split it along its ideas", c.Cases, risk, MaxRisk)
+			case c.Skip:
+				notes.Add("vet.risk", d.File, 0, "recorded skip with %d cases, and a skip counts none of them as demonstrated (risk %.0f, more than %d); find a way to show them, or split the Definition", c.Cases, risk, MaxRisk)
+			default:
+				notes.Add("vet.risk", d.File, 0, "its ok rests on evidence for %d of its %d cases (risk %.0f, more than %d); the next review demonstrates the others, or the Definition is split", c.Covered, c.Cases, risk, MaxRisk)
+			}
 		}
 		if rev := h.Revisions[id]; rev > 0 && float64(fan*rev) > hotspot {
 			linkers := fmt.Sprintf("%d Definitions link to it or are of it as Kind", fan)

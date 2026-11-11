@@ -3,6 +3,7 @@ package run_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -91,7 +92,13 @@ func listed(st run.Status) string {
 // review marks a verdict as the reviewer does, with markitect mark.
 func (p *plain) review(id, verdict, at string, evidence []string, why string) (string, bool) {
 	p.t.Helper()
-	text, ok, err := p.engine.Mark(context.Background(), run.MarkRequest{Dir: p.dir, Item: id + "@" + at, Verdict: verdict, Evidence: evidence, Why: why})
+	req := run.MarkRequest{Dir: p.dir, Item: id + "@" + at, Verdict: verdict, Evidence: evidence, Why: why}
+	if verdict == run.VerdictOK || verdict == run.VerdictSkip {
+		// The reviewer counts with an ok and a skip; one case, demonstrated.
+		one := 1
+		req.Cases, req.Covered = &one, &one
+	}
+	text, ok, err := p.engine.Mark(context.Background(), req)
 	if err != nil {
 		p.t.Fatalf("mark %s %s: %v", id, verdict, err)
 	}
@@ -681,13 +688,14 @@ func TestErrors(t *testing.T) {
 func TestParallelReviewersLoseNoLine(t *testing.T) {
 	p := newPlain(t)
 	st := p.status(false)
+	one := 1
 	var wg sync.WaitGroup
-	errs := make(chan string, len(st.Items))
+	errs := make(chan string, 2*len(st.Items))
 	for _, it := range st.Items {
 		wg.Add(1)
 		go func(it run.Item) {
 			defer wg.Done()
-			text, ok, err := p.engine.Mark(context.Background(), run.MarkRequest{Dir: p.dir, Item: it.Definition + "@" + it.Fingerprint, Verdict: run.VerdictOK, Evidence: []string{"README.md"}})
+			text, ok, err := p.engine.Mark(context.Background(), run.MarkRequest{Dir: p.dir, Item: it.Definition + "@" + it.Fingerprint, Verdict: run.VerdictOK, Evidence: []string{"README.md"}, Cases: &one, Covered: &one})
 			if err != nil || !ok {
 				errs <- it.Definition + ": " + text
 				if err != nil {
@@ -713,8 +721,8 @@ func TestParallelReviewersLoseNoLine(t *testing.T) {
 func TestCountsAndRevisions(t *testing.T) {
 	p := newPlain(t)
 	p.verifyAll()
-	if rec := p.read(project.ReviewFile); strings.Contains(rec, "revisions") || strings.Contains(rec, "cases") {
-		t.Fatalf("a first verdict counts no revision and no case:\n%s", rec)
+	if rec := p.read(project.ReviewFile); strings.Contains(rec, "revisions") {
+		t.Fatalf("a first verdict counts no revision:\n%s", rec)
 	}
 	mark := func(id, verdict string, cases, covered *int, why string, evidence ...string) string {
 		t.Helper()
@@ -734,21 +742,21 @@ func TestCountsAndRevisions(t *testing.T) {
 		t.Fatalf("no line for %s", id)
 		return run.Line{}
 	}
-	three, two := 3, 2
+	three, two, one := 3, 2, 1
 	p.write(m+"members/member.md", def("std/Concept", "Member", "A person with a card."))
 	mark("members/member", run.VerdictOK, &three, &two, "", "src/members/member.go:1")
-	mark("members/loans/loan", run.VerdictOK, nil, nil, "", "src/members/loans/loan.go:1")
+	mark("members/loans/loan", run.VerdictOK, &one, &one, "", "src/members/loans/loan.go:1")
 	if l := line("members/member"); l.Revisions != 1 || l.Cases == nil || *l.Cases != 3 || l.Covered == nil || *l.Covered != 2 {
 		t.Fatalf("member: %+v", l)
 	}
-	if l := line("members/loans/loan"); l.Revisions != 0 || l.Cases != nil {
+	if l := line("members/loans/loan"); l.Revisions != 0 || l.Cases == nil || *l.Cases != 1 {
 		t.Fatalf("a changed link is no revision of loan: %+v", l)
 	}
 	has(t, p.read(project.ReviewFile), `"cases":3,"covered":2,"revisions":1`)
 	// A changed file is no revision; a fail at a new text is one.
 	p.write("src/members/member.go", "package members\n\ntype Member struct{}\n")
-	mark("members/member", run.VerdictOK, nil, nil, "", "src/members/member.go:3")
-	if l := line("members/member"); l.Revisions != 1 || l.Cases != nil {
+	mark("members/member", run.VerdictOK, &one, &one, "", "src/members/member.go:3")
+	if l := line("members/member"); l.Revisions != 1 || l.Cases == nil || *l.Cases != 1 {
 		t.Fatalf("after a changed file: %+v", l)
 	}
 	p.write(m+"members/member.md", def("std/Concept", "Member", "A person with a card and a locker."))
@@ -766,12 +774,12 @@ func TestCountsAndRevisions(t *testing.T) {
 	}
 	// A verdict on another Definition writes the merged one's matching line with the
 	// most revisions any of its lines counted.
-	mark("catalog/book", run.VerdictOK, nil, nil, "", "src/catalog/book.go:1")
+	mark("catalog/book", run.VerdictOK, &one, &one, "", "src/catalog/book.go:1")
 	if got := run.ParseRecord([]byte(p.read(project.ReviewFile))).Revisions()["members/member"]; got != 5 {
 		t.Fatalf("a verdict on another Definition lost revisions of a merged one: %d", got)
 	}
 	p.write(m+"members/member.md", def("std/Concept", "Member", "A person."))
-	mark("members/member", run.VerdictOK, nil, nil, "", "src/members/member.go:3")
+	mark("members/member", run.VerdictOK, &one, &one, "", "src/members/member.go:3")
 	if l := line("members/member"); l.Revisions != 6 {
 		t.Fatalf("after a merge: %+v", l)
 	}
@@ -782,17 +790,76 @@ func TestCountsAndRevisions(t *testing.T) {
 	if l := line("catalog/book"); l.Revisions != 0 || l.Verdict != run.VerdictFail {
 		t.Fatalf("a gone Definition: %+v", l)
 	}
-	// Counts that cannot be are refused before anything is read.
+	// Counts that cannot be are refused before anything is read, and an ok or a
+	// skip without both counts is refused too: the reviewer counts with them.
 	minus := -1
 	for _, req := range []run.MarkRequest{
 		{Covered: &two},
 		{Cases: &two, Covered: &three},
 		{Cases: &minus},
+		{},
+		{Cases: &two},
+		{Verdict: run.VerdictSkip, Why: "no test can reach it"},
+		{Verdict: run.VerdictSkip, Why: "no test can reach it", Cases: &two},
 	} {
-		req.Dir, req.Item, req.Verdict, req.Evidence = p.dir, "members/member@"+p.item(p.status(true), "members/member").Fingerprint, run.VerdictOK, []string{"README.md"}
+		if req.Verdict == "" {
+			req.Verdict = run.VerdictOK
+		}
+		req.Dir, req.Item, req.Evidence = p.dir, "members/member@"+p.item(p.status(true), "members/member").Fingerprint, []string{"README.md"}
 		if _, _, err := p.engine.Mark(context.Background(), req); !errors.Is(err, run.ErrUsage) {
 			t.Fatalf("%+v: %v", req, err)
 		}
+	}
+	// The record gives vet the counts of an ok or a skip at a Definition's text as
+	// it is.
+	self := func(ids ...string) map[string]string {
+		out := map[string]string{}
+		for _, id := range ids {
+			out[id] = run.Hash([]byte(p.read(m + id + ".md")))
+		}
+		return out
+	}
+	now := self("members/loans/loan", "members/member")
+	counts := run.ParseRecord([]byte(p.read(project.ReviewFile))).Counts(now)
+	if c := counts["members/loans/loan"]; len(c) != 1 || c[0].Cases != 1 || c[0].Covered != 1 || c[0].Skip {
+		t.Fatalf("counts of loan: %+v", c)
+	}
+	if c := counts["members/member"]; len(c) != 1 || c[0].Cases != 1 {
+		t.Fatalf("counts of member, with an ok at its text: %+v", c)
+	}
+	// A line at another text of the Definition is not judged: the Definition has
+	// changed since, and status lists it.
+	p.write(m+"members/member.md", def("std/Concept", "Member", "Somebody."))
+	if _, ok := run.ParseRecord([]byte(p.read(project.ReviewFile))).Counts(self("members/member"))["members/member"]; ok {
+		t.Fatal("a line at another text has counts")
+	}
+	// After a merge the record may hold several lines at one text: all their
+	// counts are returned, an ok's and a skip's alike, and a fail at that text
+	// leaves none, whatever the order.
+	line2 := func(verdict string, cases, covered int) string {
+		return fmt.Sprintf(`{"definition":"x","verdict":%q,"inputs":{"self":"sha256:1"},"why":"w","cases":%d,"covered":%d}`, verdict, cases, covered)
+	}
+	at := map[string]string{"x": "sha256:1"}
+	for _, lines := range [][]string{
+		{line2("ok", 16, 16), line2("skip", 9, 9)},
+		{line2("skip", 9, 9), line2("ok", 16, 16)},
+	} {
+		c := run.ParseRecord([]byte(strings.Join(lines, "\n") + "\n")).Counts(at)["x"]
+		if len(c) != 2 || c[0].Skip == c[1].Skip {
+			t.Fatalf("of two lines at one text: %+v", c)
+		}
+	}
+	for _, lines := range [][]string{
+		{line2("ok", 16, 16), line2("fail", 16, 2)},
+		{line2("fail", 16, 2), line2("ok", 16, 16)},
+	} {
+		if c := run.ParseRecord([]byte(strings.Join(lines, "\n") + "\n")).Counts(at)["x"]; len(c) != 0 {
+			t.Fatalf("an ok beside a fail at one text has counts: %v", lines)
+		}
+	}
+	// A Definition gone from the spec has no cases: its ok needs no counts.
+	if text, ok, err := p.engine.Mark(context.Background(), run.MarkRequest{Dir: p.dir, Item: "catalog/book@" + p.item(p.status(true), "catalog/book").Fingerprint, Verdict: run.VerdictOK}); err != nil || !ok {
+		t.Fatalf("an ok without counts on a gone Definition: %v %s", err, text)
 	}
 }
 

@@ -34,7 +34,7 @@ func (c CLI) vet(_ context.Context, args []string) (int, error) {
 		return Misused, err
 	}
 	c.warnErrors(p)
-	r := analysis.Vet(p, analysis.History{Revisions: revisionsOf(ws)})
+	r := analysis.Vet(p, historyOf(ws, p))
 	if o.json {
 		ds := diagnostics(severityWarning, r.Warnings)
 		for _, n := range r.Notes {
@@ -65,15 +65,36 @@ func (c CLI) vet(_ context.Context, args []string) (int, error) {
 	return OK, nil
 }
 
-// revisionsOf reads from the project's record how often each Definition's own
-// text changed between verdicts; nothing when there is no record. A line it cannot
-// read counts nothing here: status names it.
-func revisionsOf(ws Workspace) map[string]int {
+// historyOf reads from the project's record what vet knows of the spec's past:
+// how often each Definition's own text changed between verdicts, and what the
+// reviewer counted with an ok or a skip on its text as it is. Nothing when there
+// is no record. A line it cannot read counts nothing here: status names it.
+func historyOf(ws Workspace, p *project.Project) analysis.History {
 	data, err := ws.Read(project.ReviewFile)
 	if err != nil {
-		return nil
+		return analysis.History{}
 	}
-	return run.ParseRecord(data).Revisions()
+	rec := run.ParseRecord(data)
+	h := analysis.History{Revisions: rec.Revisions(), Counts: map[string]analysis.Count{}}
+	self := map[string]string{}
+	if p.Spec != nil {
+		for id, d := range p.Spec.Definitions {
+			if d.Library == "" {
+				self[id] = run.Hash(d.Data)
+			}
+		}
+	}
+	// Of several lines at one text, as a merge leaves them, vet judges the one
+	// with the highest risk, whatever their order.
+	for id, counts := range rec.Counts(self) {
+		for i, c := range counts {
+			count := analysis.Count{Cases: c.Cases, Covered: c.Covered, Skip: c.Skip}
+			if i == 0 || count.Risk() > h.Counts[id].Risk() {
+				h.Counts[id] = count
+			}
+		}
+	}
+	return h
 }
 
 // notesLine is the one line plain vet prints for its notes: how many unlinked

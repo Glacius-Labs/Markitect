@@ -14,12 +14,12 @@ The message that starts you names your task. If it names a folder, the project i
 
 `markitect status` prints each item as `DEFINITION@FINGERPRINT`. Record your verdict on it with that item, as in:
 
-    markitect mark members/limit@3f9a1c ok -e src/loans.go:42 -e tests/loans_test.go:88
+    markitect mark members/limit@3f9a1c ok -e src/loans.go:42 -e tests/loans_test.go:88 --cases 4 --covered 4
     markitect mark loans/renewal@81be07 fail -e src/renew.go:30 -m "allows a fourth renewal; the Definition says three"
 
 - Each `-e` names one piece of evidence, a file of the project as `path:line` or `path`.
 - `-m` says why, on one line.
-- `--cases N --covered M` count while you mark, on an `ok` and a `skip`: N is how many distinct cases, conditions and exceptions the Definition demands, and M how many of them your evidence demonstrates. Count them, do not rate them, as in `markitect mark fees/waiver@3f9a1c ok -e src/fees.go:40 -e tests/fees_test.go:12 --cases 7 --covered 5`.
+- `--cases N --covered M` count while you mark, on an `ok` and a `skip`, and `markitect mark` refuses either without them: N is how many distinct cases, conditions and exceptions the Definition demands, and M how many of them your evidence demonstrates. Count them, do not rate them, as in `markitect mark fees/waiver@3f9a1c ok -e src/fees.go:40 -e tests/fees_test.go:12 --cases 7 --covered 5`.
 
 The verdicts:
 

@@ -148,9 +148,16 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 - `check` is the compiler; `vet` is the static analyzer. It warns about coupling and instability per Package, dependencies on less stable Packages, the size of Definitions and Packages, Packages that hold nothing, and hubs: a Definition with fan-in + 1 > max(10, N / 5), Root included, Kinds left out. It exits 1 only with `--strict`.
 - Notes never change the exit code; plain `vet` counts them on one line and `--strict` lists them. They are unlinked mentions, which the auditor triages into missing links and ordinary words, with the mentions a link to which would go against the Package structure or add a dependency counted apart; long Definitions (more than 20 statements); placement; and hotspots, revisions × fan-in > max(20, N / 10), from how often a Definition's own text changed between verdicts.
-- `list --deps` shows Martin's abstractness and distance, as information only. The zone notes and a risk measure wait for real records. Every threshold is provisional, and `vet.unlinked_mention` becomes a warning only once a spec's own measurements show its noise low.
+- `list --deps` shows Martin's abstractness and distance, as information only. The zone notes wait for real records; the risk measure is a note ([DEC-106](#dec-106-the-reviewer-counts-and-vet-notes-thin-evidence)). Every threshold is provisional, and `vet.unlinked_mention` becomes a warning only once a spec's own measurements show its noise low.
 - Links stay strict: the tool reports a missing link and never adds one. A value rule of the project's own is stated once, as a small Definition in the only Package that uses it or at the lowest common parent of those that share it; there is no central page of values.
 - [What makes a good spec](guides/good-spec.md) says what each measure is for.
+
+### DEC-106 The reviewer counts, and `vet` notes thin evidence
+
+- An `ok` says that a Definition is implemented, as the evidence shows. How much of the Definition the evidence shows belongs to that statement: with an `ok` and a `skip` the reviewer counts the cases, conditions and exceptions the Definition demands and how many of them its evidence demonstrates, and `mark` refuses either verdict on a Definition of the spec without both counts. A count is a fact the reviewer reads off the Definition and its evidence, not a rating; it tells the owner how much was shown, and claims nothing about whether the work is right.
+- `vet` notes a Definition whose `ok` or `skip`, at its text as it is, has a risk above 30, as `vet.risk`. The risk is CRAP's, for a Definition: with *c* one more than its cases and *e* the share of them the evidence demonstrates, 0 for a `skip`, it is *c*² × (1 − *e*)³ + *c*. So a Definition is noted when its `ok` rests on evidence for few of many cases, when it was skipped with more than a few, or when it has about 30 cases, however well they are demonstrated.
+- It is a note and never changes an exit code: it says where a verdict is thin, and the owner or the next review decides what to do. The line of 30 is provisional, like every threshold of `vet` ([DEC-102](#dec-102-what-vet-measures)).
+- Why now: real reviewers gave the counts with every verdict in one run, with most in a second and with none in two more, so the record could not be relied on for them; and on the one record that had them all, the line marked 2 of 114 Definitions, both for a reason an owner would want to know ([record](https://github.com/Glacius-Labs/Markitect/pull/1054)).
 
 ## Verification
 
@@ -249,7 +256,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 | ID | Question | Related |
 |---|---|---|
 | OQ-001 | How can dependency observation work across languages and file types, and how is its own coverage reported? | [Roadmap](roadmap.md#later) |
-| OQ-002 | Which thresholds show that a spec is too fine or too coarse? `vet`'s are provisional, and the zones of pain and uselessness and a risk measure wait for real records. | [DEC-102](#dec-102-what-vet-measures) |
+| OQ-002 | Which thresholds show that a spec is too fine or too coarse? `vet`'s are provisional, and the zones of pain and uselessness wait for real records. | [DEC-102](#dec-102-what-vet-measures) |
 | OQ-003 | Which model tiers suffice for which roles, and does the total cost fall? | [DEC-009](#dec-009-how-markitect-is-judged) |
 | OQ-004 | How much does a reviewer on a different model add beyond fresh context? | [DEC-103](#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow) |
 | OQ-005 | Should Markitect be judged over a series of changes on a long-lived project, and what ground truth makes "nothing forgotten" measurable there, for example predeclared affected sets, seeded cross-cutting rules and hidden cases? | [DEC-009](#dec-009-how-markitect-is-judged) |

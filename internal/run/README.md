@@ -40,9 +40,9 @@ The **fingerprint** of an item is the first six characters of the hash of every 
 
 The verdicts are `ok` (implemented, as the evidence shows), `fail` (not, and why), `skip` (verified as far as the project can show, and why) and `spec-problem` (the spec contradicts itself or leaves open behaviour at the project's boundary, and only the owner can settle it). The record holds hashes, not text: an agent that wants what a Definition said before reads it from Git.
 
-Three optional fields, a trial of [DEC-102](../../docs/decisions.md#dec-102-what-vet-measures), are each left out when empty:
+Three more fields are each left out when empty:
 
-- `cases` and `covered`: the reviewer's count of the distinct cases, conditions and exceptions the Definition demands, and of those its evidence demonstrates, as `mark` took them. Nothing reads them yet; they are kept to calibrate a later risk measure.
+- `cases` and `covered`: the reviewer's count of the distinct cases, conditions and exceptions the Definition demands, and of those its evidence demonstrates, as `mark` took them. An `ok` and a `skip` always carry them, and `vet` reads them for `vet.risk`, from the line at the Definition's text as it is; of several such lines, as a merge can leave them until the next `mark` settles them, it judges the one with the highest risk, and none when one of them is a `fail` or a `spec-problem` ([DEC-106](../../docs/decisions.md#dec-106-the-reviewer-counts-and-vet-notes-thin-evidence)).
 - `revisions`: how often the Definition's own text changed between two verdicts on it. `mark` takes the count of the Definition's lines and adds one when none of them has the new line's `self` hash, so a first verdict has none, a change of a link, a file or the evidence adds none, and so does a verdict on a gone Definition, which has no own text. Of several lines, as after a merge, it counts on from the most. `vet` reads it for `vet.hotspot`, as change history without Git.
 
 The record has no format version: the fields are optional, so a line without them reads as no count and no revision, and its counting starts with the next verdict.
@@ -70,15 +70,15 @@ It exits 0 when it lists nothing: then the project compiles and every Definition
 
 ## mark
 
-`markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]… [-m "WHY"] [--cases N [--covered M]]` records a verdict at the state the reviewer read:
+`markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]… [-m "WHY"] [--cases N --covered M]` records a verdict at the state the reviewer read:
 
 ```text
-markitect mark members/limit@3f9a1c ok -e src/loans.go:42 -e tests/loans_test.go:88
+markitect mark members/limit@3f9a1c ok -e src/loans.go:42 -e tests/loans_test.go:88 --cases 4 --covered 4
 markitect mark loans/renewal@81be07 fail -e src/renew.go:30 -m "allows a fourth renewal; the Definition says three"
 ```
 
 - `ok` names at least one piece of evidence with `-e`; `fail`, `skip` and `spec-problem` say why with `-m`, kept on one line.
-- `--cases N` and `--covered M` are counts `mark` takes with any verdict, and the reviewer gives with an `ok` and a `skip`: N cases, conditions and exceptions the Definition demands, M of them demonstrated by its evidence. M needs N and is at most N; both are 0 or more. They go on the line as `cases` and `covered`.
+- `--cases N` and `--covered M` are the reviewer's counts: N cases, conditions and exceptions the Definition demands, M of them demonstrated by its evidence. An `ok` and a `skip` need both, so that the record says how much of a Definition its evidence shows, and `mark` refuses either without them; a `fail` and a `spec-problem` may carry them; a Definition gone from the spec has no cases, so its `ok` needs none. M needs N and is at most N; both are 0 or more. They go on the line as `cases` and `covered`.
 - Evidence is `path` or `path:line`, also `path:line-line` and `path:line:col`. A trailing note in parentheses, such as a test name, is dropped, not stored; a note without them is refused, since `-m` holds the reason. Each file must be a file of the folder, named from the project folder; its hash becomes an input when the verdict is recorded.
 - It refuses, records nothing and exits 1 when the inputs differ from the fingerprint, as when a builder edited a file beside the reviewer or the reviewer's own test run changed one; when evidence is not a file of the folder; when the Definition is unknown; when the spec has errors; or when the record has a line it cannot read. A command it cannot read exits 2.
 - A gone Definition is marked `ok` when its files are removed or have a new basis, which removes its line, or `fail` when not; `skip` is refused.

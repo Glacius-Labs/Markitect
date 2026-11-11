@@ -166,7 +166,7 @@ func verifyAll(markitect func(...string) (string, error), want int) error {
 		}
 		if look, ok := strings.CutPrefix(line, "  look at: "); ok && item != "" {
 			files := strings.Split(look, ", ")
-			if _, err := markitect("mark", item, "ok", "-e", files[len(files)-1]+":1"); err != nil {
+			if _, err := markitect("mark", item, "ok", "-e", files[len(files)-1]+":1", "--cases", "1", "--covered", "1"); err != nil {
 				return err
 			}
 			item = ""
