@@ -38,9 +38,9 @@ const (
 	// model and effort, the strategies and the custom workflows. It is the
 	// owner's, and no agent changes it.
 	HarnessFile = Dir + "/" + harness.FileName
-	// QuestionsFile holds the architect's questions for the owner (DEC-105):
-	// what the spec leaves open until the owner has answered. It is plain
-	// Markdown, nothing compiles it, and it is gone once every question is
+	// QuestionsFile holds what the architect has to ask the owner and the owner
+	// cannot answer at once (DEC-100). It is plain Markdown, nothing compiles
+	// it, the owner's session keeps it, and it is gone once every question is
 	// settled.
 	QuestionsFile = Dir + "/questions.md"
 )

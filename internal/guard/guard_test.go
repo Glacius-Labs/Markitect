@@ -95,6 +95,9 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 		},
 		"record": {"/p/.markitect/review.sum", `C:\p\.MARKITECT\review.sum`},
 		"setup":  {"/p/.markitect/.gitattributes", `C:\p\.Markitect\.gitattributes`},
+		// The questions for the owner are the owner's session's: no subagent
+		// writes them, the architect included.
+		"questions": {"/p/.markitect/questions.md", `C:\p\.Markitect\Questions.md`},
 		"harness": {
 			"/p/.claude/settings.json",
 			`C:\p\.claude\settings.local.json`,
@@ -162,6 +165,7 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 	has(t, call("a1", guard.BuilderAgent, "Edit", "file_path", "/p/.claude/settings.json"), "steers the agents")
 	has(t, call("a1", guard.ArchitectAgent, "Edit", "file_path", "/p/.markitect/.gitattributes"), "init and update")
 	has(t, call("a1", guard.ArchitectAgent, "Write", "file_path", "/p/.markitect/harness.yaml"), "steers the agents")
+	has(t, call("a1", guard.ArchitectAgent, "Write", "file_path", "/p/.markitect/questions.md"), "into your report")
 	has(t, call("a1", guard.ArchitectAgent, "Edit", "file_path", "/p/src/fees.go"), "the builder writes")
 	has(t, call("a1", guard.AuditorAgent, "Edit", "file_path", "/p/src/fees.go"), "changes no file")
 	has(t, call("a1", guard.BuilderAgent, "NotebookEdit", "notebook_path", "/p/.markitect/x.ipynb"), `"permissionDecision":"deny"`)

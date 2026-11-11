@@ -59,7 +59,7 @@ type Status struct {
 	// Unreadable are the lines of the record markitect cannot read.
 	Unreadable []int
 	// Questions says that the architect's questions for the owner wait in
-	// project.QuestionsFile (DEC-105). They are a note: they do not count, and a
+	// project.QuestionsFile (DEC-100). They are a note: they do not count, and a
 	// list limited to a Package leaves them out, since they belong to none.
 	Questions bool
 	// Definitions counts the Definitions of the spec.
@@ -367,7 +367,7 @@ func (s Status) Text() string {
 		if b.Len() > 0 {
 			b.WriteString("\n")
 		}
-		fmt.Fprintf(&b, "Notes: questions for the owner wait in %s.\n", project.QuestionsFile)
+		fmt.Fprintf(&b, "Questions for the owner wait in %s.\n", project.QuestionsFile)
 	}
 	if n := s.ErrorsElsewhere + s.UnreadableElsewhere; n > 0 {
 		var parts []string

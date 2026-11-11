@@ -18,6 +18,8 @@ Look at the folder first, and ask the owner when it could be read two ways.
 - **A project without a spec:** the placeholder, beside code, tests or documentation: [draw the spec from the project](#draw-the-spec-from-the-project).
 - **A spec exists:** [change the spec](#change-the-spec).
 
+If `.markitect/questions.md` exists, read it first: it holds what waits for the owner ([who decides](#who-decides)), and the owner may have answered there.
+
 ## Who decides
 
 The owner accepts every change of the spec. You propose; the owner reads the Markdown diff, or goes through it with you, and merges it.
@@ -28,7 +30,7 @@ The owner accepts every change of the spec. You propose; the owner reads the Mar
 
 Ask one question at a time, in plain words, and say why you ask when it isn't obvious. Skip what the owner has already said. When they are unsure, offer a suggestion and let them accept or change it.
 
-What the owner cannot answer now waits in `.markitect/questions.md`, so that it outlasts the conversation: one numbered point per question, with what you found, where, what the spec says or leaves out, and what you propose. A point the record also holds, as a `fail` or a `spec-problem`, names its Definition. Commit the file with the spec. When the owner has answered a point, change the spec as they said and remove the point, and remove the file with its last point. While the file exists, `markitect status` says so.
+What the owner cannot answer now waits in `.markitect/questions.md`, so that it outlasts the conversation: one numbered point per question, with what you found, where, what the spec says or leaves out, and what you propose. A point about a Definition that `markitect status` lists names that Definition; the record keeps its verdict. The file goes into the same commit as the spec. When the owner has answered a point, change the spec as they said and remove the point, and remove the file with its last point. While the file exists, `markitect status` says so. The owner's session keeps the file, and no agent writes it.
 
 ## Who writes
 
@@ -154,7 +156,7 @@ Every other code is listed in [reference.md](reference.md). A cycle or unresolve
 |---|---|
 | "I'll choose the Packages myself." | Propose them and stop for the owner. |
 | "The requirements don't say, I'll assume the usual." | Stop and ask the owner before writing it. |
-| "The code does it, though it looks like an accident." | Leave it unstated and put it on your list for the owner. |
+| "The code does it, though it looks like an accident." | Leave it unstated and add it to `.markitect/questions.md`. |
 | "The spec doesn't say this yet, so I'll add it." | Ask whether it should be in the spec. Most of what a file holds should not. |
 | "I'll describe how it works inside." | Leave algorithms and data structures to the agents. |
 | "This rule needs a few exceptions." | Split it into several Rules. |
@@ -164,7 +166,7 @@ Every other code is listed in [reference.md](reference.md). A cycle or unresolve
 
 ## Hand over
 
-Report to the owner in a few lines: the diff; the output of `check --spec`, or of plain `check` for a first spec drawn from a project (its summary line), and of `vet` (warnings fixed or justified); the list `status` prints, so the owner sees what the change makes the agents do; and any point the owner chose to leave open. Leave the work as a diff; commit only if the owner asks. Go through it with the owner when they would rather talk it through than read it. Change it until they accept it.
+Report to the owner in a few lines: the diff; the output of `check --spec`, or of plain `check` for a first spec drawn from a project (its summary line), and of `vet` (warnings fixed or justified); the list `status` prints, so the owner sees what the change makes the agents do; what waits for them in `.markitect/questions.md`; and any point the owner chose to leave open. Leave the work as a diff; commit only if the owner asks. Go through it with the owner when they would rather talk it through than read it. Change it until they accept it.
 
 Deleting or renaming a Definition leaves registry entries that name it. That is stale realization, an error of the realization rather than the spec's: `check` lists it apart, and the next build cleans it up. Say so; do not edit the registry pages in a change of the spec, which the builder keeps (only drawing the spec from the project writes them).
 

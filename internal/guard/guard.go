@@ -194,6 +194,8 @@ func writeRefusal(agent string, r rights, file string) string {
 		return fmt.Sprintf("%s is written only by markitect mark, which the %s agent runs.", file, ReviewerAgent)
 	case setupFile:
 		return fmt.Sprintf("%s is written only by markitect init and update; no agent changes it.", file)
+	case questionsFile:
+		return fmt.Sprintf("%s holds the questions for the owner, and the owner's session keeps it. Put your questions into your report, and the session adds them.", file)
 	case harnessFile:
 		return fmt.Sprintf("%s steers the agents: Claude Code's settings, hooks and rules, Markitect's skills, agents, workflows and harness configuration and the project's instruction files are the owner's, and no agent changes them. Say what should change.", file)
 	case registryPage:
@@ -226,12 +228,14 @@ const (
 	recordFile
 	setupFile
 	harnessFile
+	questionsFile
 )
 
 // kindOf says what kind of file a path names, whatever folder it starts from:
 // one in Markitect's folder of a project is a registry page, the record, the
-// record's Git attributes, which init writes, or the spec; one that steers the
-// agents is the harness; any other is code.
+// record's Git attributes, which init writes, the questions for the owner, which
+// the owner's session keeps, or the spec; one that steers the agents is the
+// harness; any other is code.
 func kindOf(file string) int {
 	segments := strings.Split(path.Clean(strings.ReplaceAll(file, `\`, "/")), "/")
 	for i, s := range segments {
@@ -247,6 +251,8 @@ func kindOf(file string) int {
 			return setupFile
 		case lower == strings.ToLower(project.HarnessFile):
 			return harnessFile
+		case lower == strings.ToLower(project.QuestionsFile):
+			return questionsFile
 		case lower == strings.ToLower(project.RootPage), strings.HasPrefix(lower, registry) && strings.HasSuffix(lower, ".md"):
 			return registryPage
 		}
