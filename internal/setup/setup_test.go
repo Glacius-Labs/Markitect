@@ -83,7 +83,7 @@ func TestStartSpecAndInstructions(t *testing.T) {
 	}
 	// A CLAUDE.md of the owner's that does not import AGENTS.md stays as it is,
 	// and the caller learns that Claude Code does not read AGENTS.md through it.
-	for claude, want := range map[string]bool{"# Notes\n": true, "# Notes\n\n@AGENTS.md\n": false} {
+	for claude, want := range map[string]bool{"# Notes\n": true, "The file `@AGENTS.md` is not imported.\n": true, "# Notes\r\n\r\n@AGENTS.md\r\n": false, "See @./AGENTS.md first.\n": false} {
 		own := memory{"CLAUDE.md": claude}
 		_, unread, created, err := WriteInstructions(own, "Library")
 		if err != nil || unread != want || own["CLAUDE.md"] != claude || !reflect.DeepEqual(created, []string{InstructionsFile}) {

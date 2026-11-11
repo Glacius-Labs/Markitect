@@ -9,14 +9,12 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/skills"
 )
 
-// harnessDirs are the folders where a file of Markitect's for agents may lie.
-// The harness is for Claude Code, in .claude/; a copy of a skill in the folder
-// other coding agents read is removed, since Markitect supports none of them.
-var harnessDirs = []string{".claude/agents", ".claude/skills", ".claude/workflows", ".agents/skills"}
+// harnessDirs are the folders of the harness, which is for Claude Code.
+var harnessDirs = []string{".claude/agents", ".claude/skills", ".claude/workflows"}
 
-// InstallHarness writes the harness for Claude Code, its skills, its agents as
-// the configuration sets them and its workflow, and removes every other file of
-// Markitect's in its folders: what the binary no longer ships.
+// InstallHarness writes the harness, its skills, its agents as the configuration
+// sets them and its workflow, and removes every other file in its folders whose
+// name says it is Markitect's: one this binary does not ship.
 func InstallHarness(f Folder, cfg harness.Config) error {
 	want := map[string][]byte{}
 	for _, file := range renderHarness(cfg) {

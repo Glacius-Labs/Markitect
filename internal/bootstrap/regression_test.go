@@ -32,12 +32,10 @@ func TestInitAgainUpdatesSkills(t *testing.T) {
 	r.Write(".claude/skills/markitect-retired/SKILL.md", "an old skill\n")
 	r.Write(".claude/skills/markitect-architect/old-notes.md", "an old file\n")
 	r.Write(".claude/skills/markitect-start/SKILL.md", "a skill merged into markitect-architect\n")
-	r.Write(".agents/skills/markitect-architect/SKILL.md", "the copy an earlier markitect wrote for other agents\n")
 	r.Write(".claude/skills/markitect-design/SKILL.md", "the skill markitect-architect replaced\n")
-	r.Write(".agents/skills/markitect-design/reference.md", "its reference\n")
 	r.Write(".claude/skills/my-own-skill/SKILL.md", "the user's own skill\n")
 	mustRun(t, r.Dir, "init")
-	for _, gone := range []string{".claude/skills/markitect-retired/SKILL.md", ".claude/skills/markitect-architect/old-notes.md", ".claude/skills/markitect-start/SKILL.md", ".agents/skills/markitect-architect/SKILL.md", ".claude/skills/markitect-design/SKILL.md", ".agents/skills/markitect-design/reference.md"} {
+	for _, gone := range []string{".claude/skills/markitect-retired/SKILL.md", ".claude/skills/markitect-architect/old-notes.md", ".claude/skills/markitect-start/SKILL.md", ".claude/skills/markitect-design/SKILL.md"} {
 		if _, err := os.Stat(filepath.Join(r.Dir, filepath.FromSlash(gone))); !os.IsNotExist(err) {
 			t.Errorf("%s was not removed", gone)
 		}

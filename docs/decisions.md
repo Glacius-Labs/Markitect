@@ -172,7 +172,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - Four roles in a 2×2 of rights, held by a hook for subagents; the owner's own session stays free but does not record. The **builder** writes code and the registry pages, not the spec, and may start only the reviewer. The **reviewer** changes nothing and is the only one that records with `mark`. The **architect** writes the spec, the registry pages and the ignore file, not code, and hands its questions back. The **auditor** reads only and reports. No subagent writes the record or what steers the agents.
 - What any agent notices goes into the record as `fail` or `spec-problem`, and nowhere else.
 - Loops have no limit on rounds, but stop when three rounds in a row leave the list of `status` no shorter than it has been. A long list may run in parallel, one builder, reviewer or auditor per Package with a Package-scoped task ([DEC-103](#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)).
-- The builder works in a worktree of its own, so the owner can go on architecting; its work comes back by a merge. Routines work on a branch of their own and land only when they leave nothing worse.
+- The builder works in a worktree of its own, so the owner can go on architecting; its work comes back by a merge. Routines work on a branch of their own and land only when they leave nothing worse, the tests pass and the change is the agents' work alone.
 
 <a id="dec-051-agents-get-tasks-the-orchestrator-owns-the-process"></a>
 

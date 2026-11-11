@@ -86,7 +86,19 @@ func WriteInstructions(f Folder, name string) (kept, unread bool, created []stri
 	if err != nil {
 		return kept, false, created, err
 	}
-	return kept, !strings.Contains(string(data), importLine), created, nil
+	return kept, !imports(string(data)), created, nil
+}
+
+// imports says whether the text of a CLAUDE.md imports InstructionsFile: a word
+// of it is the import, with or without ./ before the name. A mention in code
+// marks, as in a sentence about the file, is none.
+func imports(text string) bool {
+	for _, word := range strings.Fields(text) {
+		if word == importLine || word == "@./"+InstructionsFile {
+			return true
+		}
+	}
+	return false
 }
 
 // manifestTemplate is a new project's manifest.
