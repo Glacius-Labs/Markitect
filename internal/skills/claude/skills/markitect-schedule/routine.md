@@ -24,7 +24,7 @@ Then commit what changed, `.markitect/review.sum` included, in one commit on you
 
 ## 4. Land, only when all three hold
 
-Find the source commit again, as in step 1. If it has moved since you began, merge it into your branch first; on a conflict, abort the merge and go to step 5. Then start the `markitect-reviewer` agent with the message "Verify what markitect status lists." for what the merge put back on the list, and commit its record.
+Find the source commit again, as in step 1. If it has moved since you began, merge it into your branch first; on a conflict, abort the merge and go to step 5. Then run `markitect status`. If it lists a Definition as `changed` or with `no record yet`, because the merge put it back on the list or the builder ended with something no reviewer has seen, start the `markitect-reviewer` agent with the message "Verify what markitect status lists.", and commit its record.
 
 1. **Nothing is worse:** `markitect status` here lists no Definition that it does not also list at the source commit. Look with `markitect status --repo <folder>` in a temporary checkout of the source commit outside the project's folder (`git worktree add --detach`), and remove that checkout afterwards.
 2. **The project's tests pass** here. If you found none, say so.
