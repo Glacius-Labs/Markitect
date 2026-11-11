@@ -490,6 +490,25 @@ func TestOnlySpecProblemsAreForTheOwner(t *testing.T) {
 		t.Fatalf("%v\n%s", err, in.Text())
 	}
 	has(t, in.Text(), "Only spec-problems are left in Package members:")
+	// An error in the realization is the builder's.
+	p.write("src/stray.go", "package stray\n")
+	if st := p.status(false); st.ForTheOwner() || strings.Contains(st.Text(), "Only spec-problems") {
+		t.Fatalf("with an unlisted file:\n%s", st.Text())
+	}
+	p.remove("src/stray.go")
+	if st := p.status(false); !st.ForTheOwner() {
+		t.Fatalf("%s", st.Text())
+	}
+	// A changed input of the Definition puts it back to verify: the line says
+	// what was recorded before, but nothing is recorded at the inputs as they are.
+	p.write("src/members/member.go", "package members\n\n// changed\n")
+	if st := p.status(false); st.ForTheOwner() || strings.Contains(st.Text(), "Only spec-problems") || !strings.Contains(st.Text(), "recorded before: spec-problem") {
+		t.Fatalf("with a changed input:\n%s", st.Text())
+	}
+	p.write("src/members/member.go", "package members\n")
+	if st := p.status(false); !st.ForTheOwner() {
+		t.Fatalf("%s", st.Text())
+	}
 	// A fail beside it is the builder's.
 	all := p.status(true)
 	if _, ok := p.review("loan-limit", run.VerdictFail, p.item(all, "loan-limit").Fingerprint, []string{"src/members/loans/loan.go:3"}, "allows a sixth loan"); !ok {
