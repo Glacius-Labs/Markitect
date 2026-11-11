@@ -38,6 +38,11 @@ const (
 	// model and effort, the strategies and the custom workflows. It is the
 	// owner's, and no agent changes it.
 	HarnessFile = Dir + "/" + harness.FileName
+	// QuestionsFile holds what the architect has to ask the owner and the owner
+	// cannot answer at once (DEC-100). It is plain Markdown, nothing compiles
+	// it, the owner's session keeps it, and it is gone once every question is
+	// settled.
+	QuestionsFile = Dir + "/questions.md"
 )
 
 // Attributes is the content of AttributesFile.
@@ -183,7 +188,7 @@ func Load(repo Repository) (*Project, error) {
 			continue
 		}
 		switch first, rest, _ := strings.Cut(rel, "/"); {
-		case f == ManifestFile, f == LockFile, f == IgnoreFile, f == ReviewFile, f == AttributesFile:
+		case f == ManifestFile, f == LockFile, f == IgnoreFile, f == ReviewFile, f == AttributesFile, f == QuestionsFile:
 		case f == HarnessFile:
 			if data, ok := read(f); ok {
 				if _, err := harness.Parse(data); err != nil {
@@ -210,7 +215,7 @@ func Load(repo Repository) (*Project, error) {
 		case first == "libraries" && strings.Contains(rest, "/"):
 			libraryFiles = append(libraryFiles, f)
 		default:
-			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the harness configuration %s, the registry, the spec, Libraries and the record %s with its %s", Dir, HarnessFile, ReviewFile, AttributesFile)
+			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the harness configuration %s, the questions for the owner %s, the registry, the spec, Libraries and the record %s with its %s", Dir, HarnessFile, QuestionsFile, ReviewFile, AttributesFile)
 		}
 	}
 	local := map[string][]spec.File{}

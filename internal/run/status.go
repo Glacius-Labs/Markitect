@@ -58,6 +58,10 @@ type Status struct {
 	Skipped []Item
 	// Unreadable are the lines of the record markitect cannot read.
 	Unreadable []int
+	// Questions says that the architect's questions for the owner wait in
+	// project.QuestionsFile (DEC-100). They are a note: they do not count, and a
+	// list limited to a Package leaves them out, since they belong to none.
+	Questions bool
 	// Definitions counts the Definitions of the spec.
 	Definitions int
 	// Packages are the spec's Packages with what each has on the list and the
@@ -132,8 +136,12 @@ func (e *Engine) Status(_ context.Context, req StatusRequest) (Status, error) {
 		return Status{}, err
 	}
 	st, err := f.status(ParseRecord(data), req.All)
-	if err != nil || req.Package == "" {
+	if err != nil {
 		return st, err
+	}
+	if req.Package == "" {
+		st.Questions = f.set[project.QuestionsFile]
+		return st, nil
 	}
 	return st.only(req.Package)
 }
@@ -354,6 +362,12 @@ func (s Status) Text() string {
 			b.WriteString("\n")
 		}
 		fmt.Fprintf(&b, "Nothing to verify%s: the spec compiles, and %s verified at %s current inputs.\n", s.inPackage(), every(s.Definitions), plural(s.Definitions, "its", "their"))
+	}
+	if s.Questions {
+		if b.Len() > 0 {
+			b.WriteString("\n")
+		}
+		fmt.Fprintf(&b, "Questions for the owner wait in %s.\n", project.QuestionsFile)
 	}
 	if n := s.ErrorsElsewhere + s.UnreadableElsewhere; n > 0 {
 		var parts []string

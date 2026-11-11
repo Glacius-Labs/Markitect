@@ -442,6 +442,31 @@ func TestChangedEvidenceIsToVerify(t *testing.T) {
 	has(t, p.status(false).Text(), "evidence:README.md (gone)")
 }
 
+// The architect's questions for the owner are a note: status says where they
+// wait while the file exists, they leave it clean, they are no input of any
+// Definition, and a list limited to a Package leaves them out.
+func TestQuestionsAreANote(t *testing.T) {
+	p := newPlain(t)
+	p.verifyAll()
+	if st := p.status(false); st.Questions || strings.Contains(st.Text(), "Questions") {
+		t.Fatalf("questions without a file:\n%s", st.Text())
+	}
+	p.write(project.QuestionsFile, "# Questions\n\n1. Is a member a person or a household?\n")
+	st := p.status(false)
+	if !st.Questions || !st.Clean() || len(st.Items) != 0 {
+		t.Fatalf("%s", st.Text())
+	}
+	has(t, st.Text(), "Nothing to verify", "\nQuestions for the owner wait in .markitect/questions.md.\n")
+	in, err := p.engine.Status(context.Background(), run.StatusRequest{Dir: p.dir, Package: "members"})
+	if err != nil || in.Questions || strings.Contains(in.Text(), "Questions") {
+		t.Fatalf("%v\n%s", err, in.Text())
+	}
+	p.remove(project.QuestionsFile)
+	if st := p.status(false); st.Questions {
+		t.Fatalf("%s", st.Text())
+	}
+}
+
 // fail and spec-problem stay on the list with their reason; skip is a note, and a
 // note alone leaves status clean.
 func TestVerdictsOnTheList(t *testing.T) {

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/guard"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
@@ -42,6 +43,10 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 			skipped = []run.Item{}
 		}
 		unreadable := append([]int{}, st.Unreadable...)
+		questions := ""
+		if st.Questions {
+			questions = project.QuestionsFile
+		}
 		packages := append([]run.PackageItems{}, st.Packages...)
 		if err := c.printJSON(struct {
 			envelope
@@ -56,7 +61,8 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 			Diagnostics       []diagnostic       `json:"diagnostics"`
 			Skipped           []run.Item         `json:"skipped"`
 			Unreadable        []int              `json:"unreadable_lines"`
-		}{newEnvelope("status"), st.Clean(), st.Package, st.ErrorsElsewhere + st.UnreadableElsewhere, st.Definitions, len(st.SpecErrors), len(st.Errors), packages, items, append(append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), diagnostics(severityError, st.RecordErrors())...), skipped, unreadable}); err != nil {
+			Questions         string             `json:"questions,omitempty"`
+		}{newEnvelope("status"), st.Clean(), st.Package, st.ErrorsElsewhere + st.UnreadableElsewhere, st.Definitions, len(st.SpecErrors), len(st.Errors), packages, items, append(append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), diagnostics(severityError, st.RecordErrors())...), skipped, unreadable, questions}); err != nil {
 			return Misused, err
 		}
 	} else {

@@ -58,7 +58,8 @@ const (
 
 // rights are what a subagent of a role may do. A file is code when it lies
 // outside Markitect's folder, a registry page, the record, or else the spec.
-// Nobody writes the record by an edit: markitect mark writes it.
+// Nobody writes the record by an edit: markitect mark writes it. And no
+// subagent writes the questions for the owner, which the owner's session keeps.
 type rights struct {
 	code, spec, registry, mark bool
 	// starts are the agents it may start; any when all.
@@ -115,7 +116,8 @@ var markCommand = regexp.MustCompile(`(?i)(^|[\s;&|("'/\\` + "`" + `])markitect(
 //   - a subagent writes only what its role may: the builder and any other
 //     subagent code and the registry pages, the architect the spec and the
 //     registry pages, the reviewer and the auditor nothing, and nobody the
-//     record, which mark writes, or the files that steer the agents;
+//     record, which mark writes, the questions for the owner, which the
+//     owner's session keeps, or the files that steer the agents;
 //   - the builder starts only the reviewer, the other roles start no agent, no
 //     subagent starts the builder or the architect, and none runs a workflow.
 //
@@ -194,6 +196,8 @@ func writeRefusal(agent string, r rights, file string) string {
 		return fmt.Sprintf("%s is written only by markitect mark, which the %s agent runs.", file, ReviewerAgent)
 	case setupFile:
 		return fmt.Sprintf("%s is written only by markitect init and update; no agent changes it.", file)
+	case questionsFile:
+		return fmt.Sprintf("%s holds the questions for the owner, and the owner's session keeps it: no agent writes it. A question for the owner you put into your report.", file)
 	case harnessFile:
 		return fmt.Sprintf("%s steers the agents: Claude Code's settings, hooks and rules, Markitect's skills, agents, workflows and harness configuration and the project's instruction files are the owner's, and no agent changes them. Say what should change.", file)
 	case registryPage:
@@ -226,12 +230,14 @@ const (
 	recordFile
 	setupFile
 	harnessFile
+	questionsFile
 )
 
 // kindOf says what kind of file a path names, whatever folder it starts from:
 // one in Markitect's folder of a project is a registry page, the record, the
-// record's Git attributes, which init writes, or the spec; one that steers the
-// agents is the harness; any other is code.
+// record's Git attributes, which init writes, the questions for the owner, which
+// the owner's session keeps, or the spec; one that steers the agents is the
+// harness; any other is code.
 func kindOf(file string) int {
 	segments := strings.Split(path.Clean(strings.ReplaceAll(file, `\`, "/")), "/")
 	for i, s := range segments {
@@ -247,6 +253,8 @@ func kindOf(file string) int {
 			return setupFile
 		case lower == strings.ToLower(project.HarnessFile):
 			return harnessFile
+		case lower == strings.ToLower(project.QuestionsFile):
+			return questionsFile
 		case lower == strings.ToLower(project.RootPage), strings.HasPrefix(lower, registry) && strings.HasSuffix(lower, ".md"):
 			return registryPage
 		}

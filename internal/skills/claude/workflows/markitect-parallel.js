@@ -16,9 +16,10 @@ export const meta = {
 // Markitect's parallel driver (DEC-103). Every strategy, this one and a custom
 // one alike, keeps one contract:
 //   - it takes args {mode, focus, all, into}: mode is build, cleanup, bughunt,
-//     review or audit; focus what the user asked to focus on; all, for review,
-//     every Definition; into, for the modes that change code, the branch the
-//     session merges the run into, which the run must not work on;
+//     review or audit; focus what the user asked to focus on or to leave
+//     alone; all, for review, every Definition; into, for the modes that change
+//     code, the branch the session merges the run into, which the run must not
+//     work on;
 //   - it reads what to do from `markitect status --json`, whose packages give
 //     each Package's items and the Packages it depends on, as list --deps has
 //     them;
@@ -44,7 +45,7 @@ const ARGS = typeof args === "string" ? JSON.parse(args) : args || {}
 const MODES = ["build", "cleanup", "bughunt", "review", "audit"]
 const MODE = ARGS.mode
 if (!MODES.includes(MODE)) throw new Error(`args.mode is one of ${MODES.join(", ")}, not ${JSON.stringify(MODE)}`)
-const FOCUS = ARGS.focus ? ` Focus on what the user asked for: ${ARGS.focus}` : ""
+const FOCUS = ARGS.focus ? ` What the user asked for: ${ARGS.focus}` : ""
 const ALL = Boolean(ARGS.all)
 const WRITES = MODE === "build" || MODE === "cleanup" || MODE === "bughunt"
 if (WRITES && !ARGS.into) throw new Error("args.into names the branch the session merges the run into; the run works on a branch of its own")

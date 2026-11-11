@@ -18,6 +18,8 @@ Look at the folder first, and ask the owner when it could be read two ways.
 - **A project without a spec:** the placeholder, beside code, tests or documentation: [draw the spec from the project](#draw-the-spec-from-the-project).
 - **A spec exists:** [change the spec](#change-the-spec).
 
+If `.markitect/questions.md` exists, read it first: it holds what waits for the owner ([who decides](#who-decides)), and the owner may have answered there.
+
 ## Who decides
 
 The owner accepts every change of the spec. You propose; the owner reads the Markdown diff, or goes through it with you, and merges it.
@@ -28,9 +30,11 @@ The owner accepts every change of the spec. You propose; the owner reads the Mar
 
 Ask one question at a time, in plain words, and say why you ask when it isn't obvious. Skip what the owner has already said. When they are unsure, offer a suggestion and let them accept or change it.
 
+What the owner cannot answer now waits in `.markitect/questions.md`, so that it outlasts the conversation: one numbered point per question, with what you found, where, what the spec says or leaves out, and what you propose. A point about a Definition that `markitect status` lists names that Definition; the record keeps its verdict. The file goes into the same commit as the spec. When the owner has answered a point, change the spec as they said and remove the point, and remove the file with its last point. While the file exists, `markitect status` says so. The owner's session keeps the file, and no agent writes it.
+
 ## Who writes
 
-You write the spec, in the owner's session, where the conversation is. Hand a large draft to the `markitect-architect` agent when you can start it: a first spec drawn from a large project, which it drafts one Package at a time, or a change that takes much reading. Start it with what to write, the Packages the owner agreed and all the owner's answers so far. It follows this skill, writes only under `.markitect/`, decides nothing the owner left open and hands its questions back in its report. Take the questions to the owner, then continue the agent or start it again with all the answers so far, and read its draft before you hand it over.
+You write the spec, in the owner's session, where the conversation is. Hand a large draft to the `markitect-architect` agent when you can start it: a first spec drawn from a large project, which it drafts one Package at a time, or a change that takes much reading. Start it with what to write, the Packages the owner agreed and all the owner's answers so far. It follows this skill, writes only under `.markitect/`, decides nothing the owner left open and hands its questions back in its report. Take the questions to the owner, or add them to `.markitect/questions.md` when the owner is not there to answer, then continue the agent or start it again with all the answers so far, and read its draft before you hand it over.
 
 If you are the `markitect-architect` agent, your agent file says how you use this skill. Any other subagent changes nothing under `.markitect/` and says in its report what should change.
 
@@ -56,18 +60,18 @@ The project as it is becomes the spec: read what is, and state it as what should
    - **State it with its values** when a caller relies on the value: inputs and their validation, returned and stored data shapes, status and exit codes, stored data and its order, and whatever the documentation or a recorded decision states as intended.
    - **State the obligation without its values** when the project must do it but nobody depends on how exactly: that a request times out, not after how many seconds.
    - **Leave it** when a caller can observe it but cannot reasonably depend on it: message wording, generated identifier formats, which failure is reported when several apply, field order, and all internal structure, names, wiring and algorithms.
-3. **Do not invent intent.** Where the project contradicts itself, such as its documentation against a script, or where a rule seems to hold only by habit, ask the owner which one the spec should state. Where the project does something that nothing in it states and that looks accidental or wrong, do not write it down as intended: leave it unstated and keep it on a list for the owner.
+3. **Do not invent intent.** Where the project contradicts itself, such as its documentation against a script, or where a rule seems to hold only by habit, ask the owner which one the spec should state. Where the project does something that nothing in it states and that looks accidental or wrong, do not write it down as intended: leave it unstated and add it to `.markitect/questions.md` ([who decides](#who-decides)).
 4. **Choose Packages from the project's real areas:** a folder or module with one responsibility, a clear boundary and its own tests, usually one level under the root. Prefer few; do not split what always changes together. Root holds the anchor, the layout and build conventions as Rules, the architecture, shared Kinds, and the files that serve everything. The spec has no cycles: if the code has one, ask the owner which direction to state. Propose the cut and stop for the owner's answer.
 5. **Write the Definitions,** Root first, then one Package at a time, running `markitect check --spec` after each.
 6. **Write the registry.** `markitect check` names every file still unaccounted for (`file.unregistered`), so its output is your to-do list. One page per Package (`.markitect/registry/<package path>.md`) with `paths` that claim its code, tests and documentation; Root's page (`.markitect/registry.md`) lists what no one claims. List every file in its owner's table with the Definitions it realizes (tests too) and a short reason; a file that serves several Packages belongs to their lowest common parent. A file that realizes nothing is where to ask the question of step 2 once more. Files that belong to no Package, such as the license, generated or vendored files and lock files, go into `.markitect/ignore`, one pattern per line. Never ignore real source or documentation to make `check` pass.
 7. **Have it verified.** Tell the owner that a reviewer now reads the whole project once more. With their word, which covers the later rounds too, commit the draft on its branch, so that the record follows the spec it verified, and run `/markitect-review --all`. In a folder without Git, commit nothing. Then settle each Definition `markitect status` still lists:
    - **The spec misread the project:** nothing in the project states what the Definition says, and what is looks intended. Correct the spec to what is.
    - **The project contradicts itself:** one artifact states what the Definition says, and another does otherwise. Leave the Definition as it is: rewriting it to the other side would choose for the owner. It stays `fail` with the reviewer's reason, and the owner says which side holds.
-   - **What is looks like an accident:** do not correct the spec to it. Narrow the Definition until it says nothing about that case, and add the point to your list for the owner.
-   - **A `spec-problem`:** where the draft contradicts itself, correct the side that misread the project; if each side comes from an artifact, the project contradicts itself, and it waits for the owner. Where the reviewer names behaviour the spec does not cover, ask the question of step 2: state it if it should be in the spec, and otherwise leave it for the owner with your proposal to keep it free.
+   - **What is looks like an accident:** do not correct the spec to it. Narrow the Definition until it says nothing about that case, and add the point to `.markitect/questions.md`.
+   - **A `spec-problem`:** where the draft contradicts itself, correct the side that misread the project; if each side comes from an artifact, the project contradicts itself, and it waits for the owner. Where the reviewer names behaviour the spec does not cover, ask the question of step 2: state it if it should be in the spec, and otherwise leave it for the owner and add your proposal to keep it free to `.markitect/questions.md`.
 
    Commit, and run `/markitect-review` again. Repeat until `status` lists only what waits for the owner or for `/markitect-build`, and stop when three rounds in a row have not made the list shorter.
-8. **Hand over** as [below](#hand-over), adding the Packages you chose and why, what you left free on purpose, each Definition still on the list with its question for the owner, what the reviewer could not show and recorded as `skip`, what you left unstated because it looks like an accident, and the ignored files. Ask the owner to answer before `/markitect-build` runs: a build repairs every `fail` toward the spec as it stands. When the owner has answered, state the side they chose. Where they call an accident intended, state it, and where they call it a defect, state what should be instead. Where they keep free what the spec leaves out, say so in one sentence in the nearest Definition, so that the next review can record `ok`. A confirmed defect stays on the list, and `/markitect-build` repairs it: do not change the spec to empty the list.
+8. **Hand over** as [below](#hand-over), adding the Packages you chose and why, what you left free on purpose, what the reviewer could not show and recorded as `skip`, the ignored files, and where the questions wait: `.markitect/questions.md` holds each Definition still on the list with its question, and what you left unstated because it looks like an accident. Ask the owner to answer before `/markitect-build` runs: a build repairs every `fail` toward the spec as it stands. When the owner has answered, state the side they chose. Where they call an accident intended, state it, and where they call it a defect, state what should be instead. Where they keep free what the spec leaves out, say so in one sentence in the nearest Definition, so that the next review can record `ok`. A confirmed defect stays on the list, and `/markitect-build` repairs it: do not change the spec to empty the list.
 
 On a large project, the architect agent can draw one Package at a time, Root first ([who writes](#who-writes)).
 
@@ -152,7 +156,7 @@ Every other code is listed in [reference.md](reference.md). A cycle or unresolve
 |---|---|
 | "I'll choose the Packages myself." | Propose them and stop for the owner. |
 | "The requirements don't say, I'll assume the usual." | Stop and ask the owner before writing it. |
-| "The code does it, though it looks like an accident." | Leave it unstated and put it on your list for the owner. |
+| "The code does it, though it looks like an accident." | Leave it unstated and add it to `.markitect/questions.md`. |
 | "The spec doesn't say this yet, so I'll add it." | Ask whether it should be in the spec. Most of what a file holds should not. |
 | "I'll describe how it works inside." | Leave algorithms and data structures to the agents. |
 | "This rule needs a few exceptions." | Split it into several Rules. |
@@ -162,7 +166,7 @@ Every other code is listed in [reference.md](reference.md). A cycle or unresolve
 
 ## Hand over
 
-Report to the owner in a few lines: the diff; the output of `check --spec`, or of plain `check` for a first spec drawn from a project (its summary line), and of `vet` (warnings fixed or justified); the list `status` prints, so the owner sees what the change makes the agents do; and any point the owner chose to leave open. Leave the work as a diff; commit only if the owner asks. Go through it with the owner when they would rather talk it through than read it. Change it until they accept it.
+Report to the owner in a few lines: the diff; the output of `check --spec`, or of plain `check` for a first spec drawn from a project (its summary line), and of `vet` (warnings fixed or justified); the list `status` prints, so the owner sees what the change makes the agents do; what waits for them in `.markitect/questions.md`; and any point the owner chose to leave open. Leave the work as a diff; commit only if the owner asks. Go through it with the owner when they would rather talk it through than read it. Change it until they accept it.
 
 Deleting or renaming a Definition leaves registry entries that name it. That is stale realization, an error of the realization rather than the spec's: `check` lists it apart, and the next build cleans it up. Say so; do not edit the registry pages in a change of the spec, which the builder keeps (only drawing the spec from the project writes them).
 
