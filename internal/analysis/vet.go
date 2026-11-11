@@ -59,8 +59,8 @@ type History struct {
 	// Revisions counts, per Definition, how often its own text changed between
 	// two verdicts on it.
 	Revisions map[string]int
-	// Counts holds, per Definition whose last verdict is an ok or a skip, what
-	// the reviewer counted with it.
+	// Counts holds, per Definition with an ok or a skip at its text as it is,
+	// what the reviewer counted with it.
 	Counts map[string]Count
 }
 

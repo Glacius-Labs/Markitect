@@ -293,7 +293,7 @@ func TestVetHotspot(t *testing.T) {
 		m+"members/member.md: vet.hotspot: its own text changed 11 times between verdicts, and 2 Definitions link to it or are of it as Kind, so its changes put about 22 back on the list to verify, more than a tenth of the spec; split what changes from what relies on it")
 }
 
-// vet.risk notes a Definition whose last ok or skip rests on thin evidence, by
+// vet.risk notes a Definition whose ok or skip rests on thin evidence, by
 // the reviewer's counts in the record: c² × (1 − e)³ + c above 30, with c one
 // more than its cases and e the share of them the evidence demonstrates.
 func TestVetRisk(t *testing.T) {

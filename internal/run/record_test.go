@@ -810,8 +810,8 @@ func TestCountsAndRevisions(t *testing.T) {
 			t.Fatalf("%+v: %v", req, err)
 		}
 	}
-	// The record gives vet the counts of the last ok or skip, and none for a
-	// Definition whose last line is a fail.
+	// The record gives vet the counts of an ok or a skip at a Definition's text as
+	// it is.
 	self := func(ids ...string) map[string]string {
 		out := map[string]string{}
 		for _, id := range ids {
@@ -821,11 +821,11 @@ func TestCountsAndRevisions(t *testing.T) {
 	}
 	now := self("members/loans/loan", "members/member")
 	counts := run.ParseRecord([]byte(p.read(project.ReviewFile))).Counts(now)
-	if c, ok := counts["members/loans/loan"]; !ok || c.Cases != 1 || c.Covered != 1 || c.Skip {
-		t.Fatalf("counts of loan: %+v %v", c, ok)
+	if c := counts["members/loans/loan"]; len(c) != 1 || c[0].Cases != 1 || c[0].Covered != 1 || c[0].Skip {
+		t.Fatalf("counts of loan: %+v", c)
 	}
-	if c, ok := counts["members/member"]; !ok || c.Cases != 1 {
-		t.Fatalf("counts of member, whose last line is an ok: %+v %v", c, ok)
+	if c := counts["members/member"]; len(c) != 1 || c[0].Cases != 1 {
+		t.Fatalf("counts of member, with an ok at its text: %+v", c)
 	}
 	// A line at another text of the Definition is not judged: the Definition has
 	// changed since, and status lists it.
@@ -833,18 +833,19 @@ func TestCountsAndRevisions(t *testing.T) {
 	if _, ok := run.ParseRecord([]byte(p.read(project.ReviewFile))).Counts(self("members/member"))["members/member"]; ok {
 		t.Fatal("a line at another text has counts")
 	}
-	// After a merge the record may hold two lines at one text: the one that
-	// demonstrates less counts, whatever their order, and a fail at that text
-	// leaves none.
+	// After a merge the record may hold several lines at one text: all their
+	// counts are returned, an ok's and a skip's alike, and a fail at that text
+	// leaves none, whatever the order.
 	line2 := func(verdict string, cases, covered int) string {
 		return fmt.Sprintf(`{"definition":"x","verdict":%q,"inputs":{"self":"sha256:1"},"why":"w","cases":%d,"covered":%d}`, verdict, cases, covered)
 	}
 	at := map[string]string{"x": "sha256:1"}
 	for _, lines := range [][]string{
-		{line2("ok", 16, 16), line2("ok", 16, 2)},
-		{line2("ok", 16, 2), line2("ok", 16, 16)},
+		{line2("ok", 16, 16), line2("skip", 9, 9)},
+		{line2("skip", 9, 9), line2("ok", 16, 16)},
 	} {
-		if c := run.ParseRecord([]byte(strings.Join(lines, "\n") + "\n")).Counts(at)["x"]; c.Covered != 2 {
+		c := run.ParseRecord([]byte(strings.Join(lines, "\n") + "\n")).Counts(at)["x"]
+		if len(c) != 2 || c[0].Skip == c[1].Skip {
 			t.Fatalf("of two lines at one text: %+v", c)
 		}
 	}
@@ -852,7 +853,7 @@ func TestCountsAndRevisions(t *testing.T) {
 		{line2("ok", 16, 16), line2("fail", 16, 2)},
 		{line2("fail", 16, 2), line2("ok", 16, 16)},
 	} {
-		if _, ok := run.ParseRecord([]byte(strings.Join(lines, "\n") + "\n")).Counts(at)["x"]; ok {
+		if c := run.ParseRecord([]byte(strings.Join(lines, "\n") + "\n")).Counts(at)["x"]; len(c) != 0 {
 			t.Fatalf("an ok beside a fail at one text has counts: %v", lines)
 		}
 	}

@@ -67,7 +67,7 @@ func (c CLI) vet(_ context.Context, args []string) (int, error) {
 
 // historyOf reads from the project's record what vet knows of the spec's past:
 // how often each Definition's own text changed between verdicts, and what the
-// reviewer counted with the ok or skip on its text as it is. Nothing when there
+// reviewer counted with an ok or a skip on its text as it is. Nothing when there
 // is no record. A line it cannot read counts nothing here: status names it.
 func historyOf(ws Workspace, p *project.Project) analysis.History {
 	data, err := ws.Read(project.ReviewFile)
@@ -84,8 +84,15 @@ func historyOf(ws Workspace, p *project.Project) analysis.History {
 			}
 		}
 	}
-	for id, c := range rec.Counts(self) {
-		h.Counts[id] = analysis.Count{Cases: c.Cases, Covered: c.Covered, Skip: c.Skip}
+	// Of several lines at one text, as a merge leaves them, vet judges the one
+	// with the highest risk, whatever their order.
+	for id, counts := range rec.Counts(self) {
+		for i, c := range counts {
+			count := analysis.Count{Cases: c.Cases, Covered: c.Covered, Skip: c.Skip}
+			if i == 0 || count.Risk() > h.Counts[id].Risk() {
+				h.Counts[id] = count
+			}
+		}
 	}
 	return h
 }

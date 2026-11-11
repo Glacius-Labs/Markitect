@@ -42,7 +42,7 @@ The verdicts are `ok` (implemented, as the evidence shows), `fail` (not, and why
 
 Three more fields are each left out when empty:
 
-- `cases` and `covered`: the reviewer's count of the distinct cases, conditions and exceptions the Definition demands, and of those its evidence demonstrates, as `mark` took them. An `ok` and a `skip` always carry them, and `vet` reads them for `vet.risk`, from the line at the Definition's text as it is ([DEC-106](../../docs/decisions.md#dec-106-the-reviewer-counts-and-vet-notes-thin-evidence)).
+- `cases` and `covered`: the reviewer's count of the distinct cases, conditions and exceptions the Definition demands, and of those its evidence demonstrates, as `mark` took them. An `ok` and a `skip` always carry them, and `vet` reads them for `vet.risk`, from the line at the Definition's text as it is; of several such lines, as a merge can leave them until the next `mark` settles them, it judges the one with the highest risk, and none when one of them is a `fail` or a `spec-problem` ([DEC-106](../../docs/decisions.md#dec-106-the-reviewer-counts-and-vet-notes-thin-evidence)).
 - `revisions`: how often the Definition's own text changed between two verdicts on it. `mark` takes the count of the Definition's lines and adds one when none of them has the new line's `self` hash, so a first verdict has none, a change of a link, a file or the evidence adds none, and so does a verdict on a gone Definition, which has no own text. Of several lines, as after a merge, it counts on from the most. `vet` reads it for `vet.hotspot`, as change history without Git.
 
 The record has no format version: the fields are optional, so a line without them reads as no count and no revision, and its counting starts with the next verdict.

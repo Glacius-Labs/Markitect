@@ -68,33 +68,29 @@ type Counts struct {
 	Skip bool
 }
 
-// Counts returns, per Definition, what the reviewer counted with the ok or skip
+// Counts returns, per Definition, what reviewers counted with each ok or skip
 // the record holds for the Definition's own text as it is: self gives each
 // Definition's hash now, as Hash makes it. A line at another text speaks of a
-// Definition that has changed since, and a Definition whose line at this text is
-// a fail or a spec-problem, or carries no counts, has none. After a merge the
-// record may hold several lines for one Definition; of those at this text the
-// one with the least demonstrated counts, as the more careful reading.
-func (r Record) Counts(self map[string]string) map[string]Counts {
-	out := map[string]Counts{}
-	settled := map[string]bool{}
+// Definition that has changed since, and a Definition with a fail or a
+// spec-problem at this text, or with a line there that carries no counts, has
+// none. After a merge the record may hold several lines for one Definition, so
+// a Definition may have several counts; whoever reads them chooses.
+func (r Record) Counts(self map[string]string) map[string][]Counts {
+	out := map[string][]Counts{}
+	none := map[string]bool{}
 	for _, l := range r.Lines {
 		h, ok := self[l.Definition]
 		if !ok || l.Inputs[InputSelf] != h {
 			continue
 		}
 		if (l.Verdict != VerdictOK && l.Verdict != VerdictSkip) || l.Cases == nil || l.Covered == nil {
-			settled[l.Definition] = true
-			delete(out, l.Definition)
+			none[l.Definition] = true
 			continue
 		}
-		if settled[l.Definition] {
-			continue
-		}
-		c := Counts{Cases: *l.Cases, Covered: *l.Covered, Skip: l.Verdict == VerdictSkip}
-		if old, has := out[l.Definition]; !has || c.Covered < old.Covered || (c.Skip && !old.Skip) {
-			out[l.Definition] = c
-		}
+		out[l.Definition] = append(out[l.Definition], Counts{Cases: *l.Cases, Covered: *l.Covered, Skip: l.Verdict == VerdictSkip})
+	}
+	for id := range none {
+		delete(out, id)
 	}
 	return out
 }

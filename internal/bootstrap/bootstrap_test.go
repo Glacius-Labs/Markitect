@@ -900,6 +900,16 @@ func TestDocAndVetDocuments(t *testing.T) {
 	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 0 || !strings.Contains(out, ".markitect/spec/project.md: vet.risk: its ok rests on evidence for 2 of its 9 cases (risk 58, more than 30)") {
 		t.Fatalf("vet --strict with a thin ok: %d %s", code, out)
 	}
+	// Of two lines at that text, as a merge leaves them, vet judges the riskier
+	// one, whatever their order.
+	thin := fmt.Sprintf(`{"definition":"project","verdict":"ok","inputs":{"self":"sha256:%x"},"cases":16,"covered":10}`, self)
+	full := fmt.Sprintf(`{"definition":"project","verdict":"ok","inputs":{"self":"sha256:%x"},"cases":4,"covered":4}`, self)
+	for _, rec := range []string{thin + "\n" + full + "\n", full + "\n" + thin + "\n"} {
+		r.Write(".markitect/review.sum", rec)
+		if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 0 || !strings.Contains(out, "vet.risk: its ok rests on evidence for 10 of its 16 cases (risk 33, more than 30)") {
+			t.Fatalf("vet --strict with two lines at one text: %d %s", code, out)
+		}
+	}
 	if code, _, errOut := run(t, r.Dir, "tidy", "--json"); code != 2 || !strings.Contains(errOut, "-json") {
 		t.Fatalf("tidy --json: %d %s", code, errOut)
 	}
