@@ -788,7 +788,7 @@ func TestStatusAndMarkThroughTheCommandLine(t *testing.T) {
 			t.Fatalf("%v: %d %s", args, code, errOut)
 		}
 	}
-	if code, out, _ := run(t, r.Dir, "mark", item, "ok", "-e", "tests/missing_test.go:3"); code != 1 || !strings.Contains(out, "tests/missing_test.go") {
+	if code, out, _ := run(t, r.Dir, "mark", item, "ok", "-e", "tests/missing_test.go:3", "--cases", "1", "--covered", "1"); code != 1 || !strings.Contains(out, "tests/missing_test.go") {
 		t.Fatalf("mark with missing evidence: %d\n%s", code, out)
 	}
 	// The flags may stand before the item and the verdict, too, and the counts of
@@ -825,11 +825,11 @@ func TestStatusAndMarkThroughTheCommandLine(t *testing.T) {
 		Recorded bool
 		Message  string
 	}
-	if code, out, _ := run(t, r.Dir, "mark", "--json", item, "ok", "-e", "README.md:3"); code != 0 || json.Unmarshal([]byte(out), &marked) != nil || marked.Kind != "mark" || !marked.Recorded {
+	if code, out, _ := run(t, r.Dir, "mark", "--json", item, "ok", "-e", "README.md:3", "--cases", "1", "--covered", "1"); code != 0 || json.Unmarshal([]byte(out), &marked) != nil || marked.Kind != "mark" || !marked.Recorded {
 		t.Fatalf("mark --json: %d %s", code, out)
 	}
 	r.Write("README.md", "# A project\n\nIt lends books, records and games.\n")
-	if code, out, _ := run(t, r.Dir, "mark", item, "ok", "-e", "README.md:3", "--json"); code != 1 || json.Unmarshal([]byte(out), &marked) != nil || marked.Recorded || !strings.Contains(marked.Message, "Run markitect status again") {
+	if code, out, _ := run(t, r.Dir, "mark", item, "ok", "-e", "README.md:3", "--cases", "1", "--covered", "1", "--json"); code != 1 || json.Unmarshal([]byte(out), &marked) != nil || marked.Recorded || !strings.Contains(marked.Message, "Run markitect status again") {
 		t.Fatalf("mark --json at a stale fingerprint: %d %s", code, out)
 	}
 	r.Write(".markitect/review.sum", read(t, r.Dir, ".markitect/review.sum")+"not json\n")
@@ -883,6 +883,12 @@ func TestDocAndVetDocuments(t *testing.T) {
 	r.Write(".markitect/review.sum", `{"definition":"project","verdict":"ok","inputs":{"self":"sha256:0"},"revisions":21}`+"\n")
 	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 0 || !strings.Contains(out, ".markitect/spec/project.md: vet.hotspot: its own text changed 21 times between verdicts, and 1 Definition links to it or is of it as Kind, so its changes put about 21 back") {
 		t.Fatalf("vet --strict with a hotspot: %d %s", code, out)
+	}
+	// vet reads the reviewer's counts from the record too: an ok on evidence for
+	// 2 of 9 cases is a risk. A note leaves the exit code alone.
+	r.Write(".markitect/review.sum", `{"definition":"project","verdict":"ok","inputs":{"self":"sha256:0"},"cases":9,"covered":2}`+"\n")
+	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 0 || !strings.Contains(out, ".markitect/spec/project.md: vet.risk: its ok rests on evidence for 2 of its 9 cases (risk 57, more than 30)") {
+		t.Fatalf("vet --strict with a thin ok: %d %s", code, out)
 	}
 	if code, _, errOut := run(t, r.Dir, "tidy", "--json"); code != 2 || !strings.Contains(errOut, "-json") {
 		t.Fatalf("tidy --json: %d %s", code, errOut)

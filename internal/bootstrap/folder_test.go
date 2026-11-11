@@ -102,7 +102,7 @@ func verifyAll(t *testing.T, dir string) {
 		}
 		if look, ok := strings.CutPrefix(line, "  look at: "); ok && item != "" {
 			files := strings.Split(look, ", ")
-			mustRun(t, dir, "mark", item, "ok", "-e", files[len(files)-1]+":1")
+			mustRun(t, dir, "mark", item, "ok", "-e", files[len(files)-1]+":1", "--cases", "1", "--covered", "1")
 			item = ""
 		}
 	}

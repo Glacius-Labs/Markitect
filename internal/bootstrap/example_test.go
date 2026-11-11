@@ -129,7 +129,7 @@ func TestArchitectExampleIsWhatTheToolsPrint(t *testing.T) {
 	// Verified once, the change of the limit the page describes lists what it
 	// says.
 	for _, item := range listed(r) {
-		mustRun(t, r.Dir, "mark", item, "ok", "-e", "README.md")
+		mustRun(t, r.Dir, "mark", item, "ok", "-e", "README.md", "--cases", "1", "--covered", "1")
 	}
 	mustRun(t, r.Dir, "status")
 	const limit = ".markitect/spec/members/loan-limit.md"

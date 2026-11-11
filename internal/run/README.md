@@ -73,12 +73,12 @@ It exits 0 when it lists nothing: then the project compiles and every Definition
 `markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]… [-m "WHY"] [--cases N [--covered M]]` records a verdict at the state the reviewer read:
 
 ```text
-markitect mark members/limit@3f9a1c ok -e src/loans.go:42 -e tests/loans_test.go:88
+markitect mark members/limit@3f9a1c ok -e src/loans.go:42 -e tests/loans_test.go:88 --cases 4 --covered 4
 markitect mark loans/renewal@81be07 fail -e src/renew.go:30 -m "allows a fourth renewal; the Definition says three"
 ```
 
 - `ok` names at least one piece of evidence with `-e`; `fail`, `skip` and `spec-problem` say why with `-m`, kept on one line.
-- `--cases N` and `--covered M` are counts `mark` takes with any verdict, and the reviewer gives with an `ok` and a `skip`: N cases, conditions and exceptions the Definition demands, M of them demonstrated by its evidence. M needs N and is at most N; both are 0 or more. They go on the line as `cases` and `covered`.
+- `--cases N` and `--covered M` are the reviewer's counts: N cases, conditions and exceptions the Definition demands, M of them demonstrated by its evidence. An `ok` and a `skip` need both, so that the record says how much of a Definition its evidence shows, and `mark` refuses either without them; a `fail` and a `spec-problem` may carry them; a Definition gone from the spec has no cases, so its `ok` needs none. M needs N and is at most N; both are 0 or more. They go on the line as `cases` and `covered`.
 - Evidence is `path` or `path:line`, also `path:line-line` and `path:line:col`. A trailing note in parentheses, such as a test name, is dropped, not stored; a note without them is refused, since `-m` holds the reason. Each file must be a file of the folder, named from the project folder; its hash becomes an input when the verdict is recorded.
 - It refuses, records nothing and exits 1 when the inputs differ from the fingerprint, as when a builder edited a file beside the reviewer or the reviewer's own test run changed one; when evidence is not a file of the folder; when the Definition is unknown; when the spec has errors; or when the record has a line it cannot read. A command it cannot read exits 2.
 - A gone Definition is marked `ok` when its files are removed or have a new basis, which removes its line, or `fail` when not; `skip` is refused.

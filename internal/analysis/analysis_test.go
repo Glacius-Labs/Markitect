@@ -293,6 +293,48 @@ func TestVetHotspot(t *testing.T) {
 		m+"members/member.md: vet.hotspot: its own text changed 11 times between verdicts, and 2 Definitions link to it or are of it as Kind, so its changes put about 22 back on the list to verify, more than a tenth of the spec; split what changes from what relies on it")
 }
 
+// vet.risk notes a Definition whose last ok or skip rests on thin evidence, by
+// the reviewer's counts in the record: c² × (1 − e)³ + c above 30, with c one
+// more than its cases and e the share of them the evidence demonstrates.
+func TestVetRisk(t *testing.T) {
+	r := library(t)
+	risk := func(counts map[string]Count) []string {
+		t.Helper()
+		return noteLines(Vet(loadRepo(t, r), History{Counts: counts}).Notes, "vet.risk")
+	}
+	// 12 cases with 8 demonstrated is about 19; 7 cases all demonstrated is 8; a
+	// skip of 3 cases is 20; a Definition the record has no counts for is not judged.
+	if got := risk(map[string]Count{
+		"members/member": {Cases: 12, Covered: 8},
+		"catalog/book":   {Cases: 7, Covered: 7},
+		"catalog/shelf":  {Cases: 3, Skip: true},
+	}); len(got) != 0 {
+		t.Fatalf("below the line: %v", got)
+	}
+	expectLines(t, risk(map[string]Count{
+		"members/member": {Cases: 16, Covered: 10},
+		"catalog/book":   {Cases: 9, Covered: 9, Skip: true},
+		"catalog/shelf":  {Cases: 30, Covered: 30},
+	}),
+		m+"catalog/book.md: vet.risk: recorded skip with 9 cases, so none of them is demonstrated (risk 110, more than 30); find a way to show them, or split the Definition",
+		m+"catalog/shelf.md: vet.risk: 30 cases, too many to verify well however much evidence there is (risk 31, more than 30); split it along its ideas",
+		m+"members/member.md: vet.risk: its ok rests on evidence for 10 of its 16 cases (risk 32, more than 30); the next review demonstrates the others, or the Definition is split")
+	// The measure itself, at the values the guide gives.
+	for _, c := range []struct {
+		count Count
+		want  float64
+	}{
+		{Count{Cases: 7, Covered: 2}, 31.3},
+		{Count{Cases: 7, Covered: 4}, 13.0},
+		{Count{Cases: 0}, 1},
+		{Count{Cases: 0, Skip: true}, 2},
+	} {
+		if got := c.count.Risk(); got < c.want-0.05 || got > c.want+0.05 {
+			t.Errorf("%+v: risk %.2f, want %.1f", c.count, got, c.want)
+		}
+	}
+}
+
 // vet.unlinked_mention finds a Definition's title or name in another one's prose
 // without a link, from the text and the structure alone.
 func TestVetUnlinkedMentions(t *testing.T) {

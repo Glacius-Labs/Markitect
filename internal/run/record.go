@@ -59,6 +59,31 @@ func (r Record) Revisions() map[string]int {
 	return out
 }
 
+// Counts is what a reviewer counted with an ok or a skip: the cases the
+// Definition demands and how many of them the evidence demonstrates.
+type Counts struct {
+	Cases, Covered int
+	// Skip says that the verdict was a skip: verified as far as the project can
+	// show.
+	Skip bool
+}
+
+// Counts returns, per Definition, the counts of the last line the record holds
+// for it, when that line is an ok or a skip that carries them. A Definition
+// whose last line is a fail or a spec-problem, or an older line without counts,
+// has none.
+func (r Record) Counts() map[string]Counts {
+	out := map[string]Counts{}
+	for _, l := range r.Lines {
+		if (l.Verdict == VerdictOK || l.Verdict == VerdictSkip) && l.Cases != nil && l.Covered != nil {
+			out[l.Definition] = Counts{Cases: *l.Cases, Covered: *l.Covered, Skip: l.Verdict == VerdictSkip}
+		} else {
+			delete(out, l.Definition)
+		}
+	}
+	return out
+}
+
 // revisions is the count of a new line at inputs now, after the lines the record
 // held for its Definition: theirs, one more when its own text is none of theirs.
 // A gone Definition has no own text, so a verdict on it adds none.

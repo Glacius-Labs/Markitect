@@ -34,7 +34,7 @@ func (c CLI) vet(_ context.Context, args []string) (int, error) {
 		return Misused, err
 	}
 	c.warnErrors(p)
-	r := analysis.Vet(p, analysis.History{Revisions: revisionsOf(ws)})
+	r := analysis.Vet(p, historyOf(ws))
 	if o.json {
 		ds := diagnostics(severityWarning, r.Warnings)
 		for _, n := range r.Notes {
@@ -65,15 +65,21 @@ func (c CLI) vet(_ context.Context, args []string) (int, error) {
 	return OK, nil
 }
 
-// revisionsOf reads from the project's record how often each Definition's own
-// text changed between verdicts; nothing when there is no record. A line it cannot
-// read counts nothing here: status names it.
-func revisionsOf(ws Workspace) map[string]int {
+// historyOf reads from the project's record what vet knows of the spec's past:
+// how often each Definition's own text changed between verdicts, and what the
+// reviewer counted with its last ok or skip. Nothing when there is no record. A
+// line it cannot read counts nothing here: status names it.
+func historyOf(ws Workspace) analysis.History {
 	data, err := ws.Read(project.ReviewFile)
 	if err != nil {
-		return nil
+		return analysis.History{}
 	}
-	return run.ParseRecord(data).Revisions()
+	rec := run.ParseRecord(data)
+	h := analysis.History{Revisions: rec.Revisions(), Counts: map[string]analysis.Count{}}
+	for id, c := range rec.Counts() {
+		h.Counts[id] = analysis.Count{Cases: c.Cases, Covered: c.Covered, Skip: c.Skip}
+	}
+	return h
 }
 
 // notesLine is the one line plain vet prints for its notes: how many unlinked

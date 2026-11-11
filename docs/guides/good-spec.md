@@ -97,13 +97,13 @@ In code the Package is the unit that is released and depended on. In Markitect t
 
 **Rule.** The larger a Definition, the more evidence its `ok` should name. A large Definition verified on one pointer is a risk, as a complex function without tests is.
 
-CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, with *comp* the cyclomatic complexity and *cov* the share covered by tests; above 30 is a risk. Its analogue for a Definition recorded `ok` or `skip` in `.markitect/review.sum`: *c* is 1 + the cases, conditions and exceptions the reviewer counted for the Definition, or 1 + its statements until a count exists. *e* is the share of those cases the reviewer found its evidence demonstrates, or, until it records that, the evidence pointers divided by *c*, at most 1. A `skip` has *e* 0. So *risk = c² × (1 − e)³ + c*. A Definition of 7 cases (*c* 8) with 2 of them demonstrated scores 64 × 0.36 + 8 ≈ 31; with 4, about 13.
+CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, with *comp* the cyclomatic complexity and *cov* the share covered by tests; above 30 is a risk. Its analogue for a Definition recorded `ok` or `skip` in `.markitect/review.sum`: *c* is 1 + the cases, conditions and exceptions the reviewer counted for the Definition, and *e* is the share of those cases the reviewer found its evidence demonstrates. A `skip` has *e* 0. So *risk = c² × (1 − e)³ + c*. A Definition of 7 cases (*c* 8) with 2 of them demonstrated scores 64 × 0.36 + 8 ≈ 31; with 4, about 13.
 
 **Why.** It finds what is both hard to verify and thinly verified. As with CRAP, a Definition of more than about 30 statements stays above the line however much evidence it names: the remedy is to split it.
 
-**Bad and good.** No record of a real build exists for Makerspace yet, so there are no measured examples. Without any record, 73 of its 115 Definitions would score above 30, which is why the measure only looks at Definitions recorded `ok` or `skip`.
+**Bad and good.** On the record of one first spec of a real project, 114 Definitions with counts, the line of 30 marked two: a Rule recorded `skip` with 9 cases, since its check needs a runner the machine did not have, and a Concept with 16 cases of which the evidence demonstrated 10 ([record](RISK_PR)). A Definition of 12 cases with 8 demonstrated scores about 19 and is not marked.
 
-**Signal.** `vet.risk` waits until the record of real builds can calibrate it ([DEC-102](../decisions.md#dec-102-what-vet-measures)). The reviewer already records the counts it rests on, with `markitect mark … --cases N --covered M`.
+**Signal.** `vet.risk`, a note, for a Definition whose last verdict is an `ok` or a `skip` and whose risk is above 30 ([DEC-106](../decisions.md#dec-106-the-reviewer-counts-and-vet-notes-thin-evidence)). The reviewer records the counts it rests on with `markitect mark … --cases N --covered M`, and `mark` refuses an `ok` or a `skip` without them.
 
 ## Accidental complexity
 
@@ -211,6 +211,6 @@ The member's identity links the identifier's format, and the field relies on the
 | Unlinked mentions | A Definition's name in another's prose, with no link | 233 pairs, 52–65 % real in a sample | 863, 57–70 % | `vet.unlinked_mention` |
 | Size | Words in a Definition's body | median 88, max 430 | 99, 995 | `vet.definition_size` |
 | Statements | List items and table rows | median 6, max 25 | 7, 67 | `vet.statements` |
-| Risk | c² × (1 − e)³ + c | no record yet | no record yet | `vet.risk` waits for data |
+| Risk | c² × (1 − e)³ + c | no record yet | no record yet | `vet.risk`, from the reviewer's counts in the record |
 
 [The spec language guide](spec-language.md#vet-warnings-and-notes) lists `vet`'s warnings and notes with their thresholds, and [DEC-102](../decisions.md#dec-102-what-vet-measures) records which are warnings, which are notes and which are not built yet.
