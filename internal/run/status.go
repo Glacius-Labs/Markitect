@@ -102,6 +102,23 @@ func (s Status) Clean() bool {
 	return len(s.SpecErrors) == 0 && len(s.Items) == 0 && len(s.Errors) == 0 && len(s.Unreadable) == 0
 }
 
+// ForTheOwner says that something is to verify and all of it waits for the
+// owner: every item is a spec-problem recorded at the inputs as they are, and
+// nothing else is left, no error, no unreadable line and no item that changed,
+// is gone or is in conflict. No builder settles that, so a driver can bring
+// the work back.
+func (s Status) ForTheOwner() bool {
+	if len(s.Items) == 0 || len(s.SpecErrors) > 0 || len(s.Errors) > 0 || len(s.Unreadable) > 0 || s.ErrorsElsewhere+s.UnreadableElsewhere > 0 {
+		return false
+	}
+	for _, it := range s.Items {
+		if it.State != StateSpecProblem {
+			return false
+		}
+	}
+	return true
+}
+
 // StatusRequest is one call of status.
 type StatusRequest struct {
 	Dir string
@@ -363,11 +380,14 @@ func (s Status) Text() string {
 		}
 		fmt.Fprintf(&b, "Nothing to verify%s: the spec compiles, and %s verified at %s current inputs.\n", s.inPackage(), every(s.Definitions), plural(s.Definitions, "its", "their"))
 	}
+	if s.ForTheOwner() {
+		fmt.Fprintf(&b, "\nOnly spec-problems are left%s: they wait for the owner, and no builder settles them.\n", s.inPackage())
+	}
 	if s.Questions {
 		if b.Len() > 0 {
 			b.WriteString("\n")
 		}
-		fmt.Fprintf(&b, "Questions for the owner wait in %s.\n", project.QuestionsFile)
+		fmt.Fprintf(&b, "The architect's questions for the owner wait in %s.\n", project.QuestionsFile)
 	}
 	if n := s.ErrorsElsewhere + s.UnreadableElsewhere; n > 0 {
 		var parts []string

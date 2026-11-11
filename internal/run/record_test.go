@@ -448,7 +448,7 @@ func TestChangedEvidenceIsToVerify(t *testing.T) {
 func TestQuestionsAreANote(t *testing.T) {
 	p := newPlain(t)
 	p.verifyAll()
-	if st := p.status(false); st.Questions || strings.Contains(st.Text(), "Questions") {
+	if st := p.status(false); st.Questions || strings.Contains(st.Text(), "questions") {
 		t.Fatalf("questions without a file:\n%s", st.Text())
 	}
 	p.write(project.QuestionsFile, "# Questions\n\n1. Is a member a person or a household?\n")
@@ -456,13 +456,65 @@ func TestQuestionsAreANote(t *testing.T) {
 	if !st.Questions || !st.Clean() || len(st.Items) != 0 {
 		t.Fatalf("%s", st.Text())
 	}
-	has(t, st.Text(), "Nothing to verify", "\nQuestions for the owner wait in .markitect/questions.md.\n")
+	has(t, st.Text(), "Nothing to verify", "\nThe architect's questions for the owner wait in .markitect/questions.md.\n")
 	in, err := p.engine.Status(context.Background(), run.StatusRequest{Dir: p.dir, Package: "members"})
-	if err != nil || in.Questions || strings.Contains(in.Text(), "Questions") {
+	if err != nil || in.Questions || strings.Contains(in.Text(), "questions") {
 		t.Fatalf("%v\n%s", err, in.Text())
 	}
 	p.remove(project.QuestionsFile)
 	if st := p.status(false); st.Questions {
+		t.Fatalf("%s", st.Text())
+	}
+}
+
+// When every item is a spec-problem recorded at the inputs as they are, status
+// says that only they are left: a builder settles none of them. A fail beside
+// them, a changed input of one of them or an error in the realization ends that.
+func TestOnlySpecProblemsAreForTheOwner(t *testing.T) {
+	p := newPlain(t)
+	p.verifyAll()
+	if st := p.status(false); st.ForTheOwner() {
+		t.Fatalf("a clean status is for the owner:\n%s", st.Text())
+	}
+	st := p.status(true)
+	if _, ok := p.review("members/member", run.VerdictSpecProblem, p.item(st, "members/member").Fingerprint, nil, "is a member a person or a household?"); !ok {
+		t.Fatal("spec-problem not recorded")
+	}
+	st = p.status(false)
+	if listed(st) != "members/member" || !st.ForTheOwner() || st.Clean() {
+		t.Fatalf("%s", st.Text())
+	}
+	has(t, st.Text(), "\nOnly spec-problems are left: they wait for the owner, and no builder settles them.\n")
+	in, err := p.engine.Status(context.Background(), run.StatusRequest{Dir: p.dir, Package: "members"})
+	if err != nil || !in.ForTheOwner() {
+		t.Fatalf("%v\n%s", err, in.Text())
+	}
+	has(t, in.Text(), "Only spec-problems are left in Package members:")
+	// An error in the realization is the builder's.
+	p.write("src/stray.go", "package stray\n")
+	if st := p.status(false); st.ForTheOwner() || strings.Contains(st.Text(), "Only spec-problems") {
+		t.Fatalf("with an unlisted file:\n%s", st.Text())
+	}
+	p.remove("src/stray.go")
+	if st := p.status(false); !st.ForTheOwner() {
+		t.Fatalf("%s", st.Text())
+	}
+	// A changed input of the Definition puts it back to verify: the line says
+	// what was recorded before, but nothing is recorded at the inputs as they are.
+	p.write("src/members/member.go", "package members\n\n// changed\n")
+	if st := p.status(false); st.ForTheOwner() || strings.Contains(st.Text(), "Only spec-problems") || !strings.Contains(st.Text(), "recorded before: spec-problem") {
+		t.Fatalf("with a changed input:\n%s", st.Text())
+	}
+	p.write("src/members/member.go", "package members\n")
+	if st := p.status(false); !st.ForTheOwner() {
+		t.Fatalf("%s", st.Text())
+	}
+	// A fail beside it is the builder's.
+	all := p.status(true)
+	if _, ok := p.review("loan-limit", run.VerdictFail, p.item(all, "loan-limit").Fingerprint, []string{"src/members/loans/loan.go:3"}, "allows a sixth loan"); !ok {
+		t.Fatal("fail not recorded")
+	}
+	if st := p.status(false); st.ForTheOwner() || strings.Contains(st.Text(), "Only spec-problems") {
 		t.Fatalf("%s", st.Text())
 	}
 }
@@ -483,7 +535,7 @@ func TestVerdictsOnTheList(t *testing.T) {
 		t.Fatal("skip not recorded")
 	}
 	st = p.status(false)
-	if listed(st) != "loan-limit,members/member" || st.Clean() {
+	if listed(st) != "loan-limit,members/member" || st.Clean() || st.ForTheOwner() || strings.Contains(st.Text(), "Only spec-problems") {
 		t.Fatalf("%s", st.Text())
 	}
 	has(t, st.Text(), "  fail: allows a sixth loan\n", "  spec-problem: is a member a person or a household?\n", "Notes: skipped", "catalog/book: no test can reach the printer")

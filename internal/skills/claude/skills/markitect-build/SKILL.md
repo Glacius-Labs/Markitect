@@ -1,6 +1,6 @@
 ---
 name: markitect-build
-description: Build the spec as it stands. The markitect-builder agent works in a worktree of its own, makes the project match the spec for what markitect status lists, and starts the markitect-reviewer agent, which verifies each item and records it; a long list is built in parallel, per Package. The work comes back to this branch when nothing is left to verify. Use when the user says the spec is ready to build or apply.
+description: Build the spec as it stands. The markitect-builder agent works in a worktree of its own, makes the project match the spec for what markitect status lists, and starts the markitect-reviewer agent, which verifies each item and records it; a long list is built in parallel, per Package. The work comes back to this branch when nothing is left to verify but spec-problems, which wait for the owner. Use when the user says the spec is ready to build or apply.
 disable-model-invocation: true
 allowed-tools: Bash(markitect status), Bash(markitect status *), Bash(markitect config strategy.build)
 ---
@@ -14,9 +14,9 @@ In a Git repository the work starts from the last commit of this branch, so it h
 
 **When the work has ended,** run `markitect status --repo <its folder>`. If its worktree is gone, because nothing changed, run `markitect status` here instead, skip the commit and the merge, and report. Commit what is uncommitted in its folder in one commit on its branch, `.markitect/review.sum` included; a parallel run has committed its work already. Then:
 
-- **If status lists nothing there,** merge its branch into the current branch here, then remove its worktree and branch. If Git refuses, because of uncommitted changes in the way or a conflict, abort the merge, leave the branch as it is and tell the user.
-- **Otherwise,** leave the work on its branch and ask the user whether to merge it as it stands; `markitect status` here then lists what remains.
+- **If status lists nothing there, or says that only spec-problems are left,** merge its branch into the current branch here, then remove its worktree and branch: a spec-problem waits for the owner, no builder settles it, and it stays on the list here. If Git refuses, because of uncommitted changes in the way or a conflict, abort the merge, leave the branch as it is and tell the user.
+- **Otherwise,** something is left that the builder did not settle: leave the work on its branch and ask the user whether to merge it as it stands; `markitect status` here then lists what remains.
 
 Push nothing. In a folder that is not a Git repository, commit nothing and say that the work is ready to commit.
 
-Then tell the user in a line or two how it ended: whether status lists nothing, and if not, what is left and which spec-problems wait for the owner. A workflow returns how it stopped and the strands it could not merge, each with its branch: name them. If status lists errors in the spec, offer to fix them with the user.
+Then tell the user in a line or two how it ended: whether status lists nothing, and if not, what is left and which spec-problems wait for the owner, each with its question. A workflow returns how it stopped and the strands it could not merge, each with its branch: name them. If status lists errors in the spec, offer to fix them with the user.
