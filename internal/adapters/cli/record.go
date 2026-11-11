@@ -51,6 +51,7 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 		if err := c.printJSON(struct {
 			envelope
 			Clean             bool               `json:"clean"`
+			ForTheOwner       bool               `json:"for_the_owner"`
 			Package           string             `json:"package,omitempty"`
 			NotListed         int                `json:"not_listed,omitempty"`
 			Definitions       int                `json:"definitions"`
@@ -62,7 +63,7 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 			Skipped           []run.Item         `json:"skipped"`
 			Unreadable        []int              `json:"unreadable_lines"`
 			Questions         string             `json:"questions,omitempty"`
-		}{newEnvelope("status"), st.Clean(), st.Package, st.ErrorsElsewhere + st.UnreadableElsewhere, st.Definitions, len(st.SpecErrors), len(st.Errors), packages, items, append(append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), diagnostics(severityError, st.RecordErrors())...), skipped, unreadable, questions}); err != nil {
+		}{newEnvelope("status"), st.Clean(), st.ForTheOwner(), st.Package, st.ErrorsElsewhere + st.UnreadableElsewhere, st.Definitions, len(st.SpecErrors), len(st.Errors), packages, items, append(append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), diagnostics(severityError, st.RecordErrors())...), skipped, unreadable, questions}); err != nil {
 			return Misused, err
 		}
 	} else {

@@ -13,8 +13,6 @@ The latest release, 0.27.0, carries the whole concept on Claude Code: the spec w
 | 1. Use it on a real project | The first spec of a real project is accepted by its owner: the questions of its first spec are answered, and changes of the project go through the spec, over a series of changes | A series of changes ends with nothing left to verify without the owner, and what it showed is in its PR |
 | 2. Make it reliable | The 5× Makerspace project's eight change steps on Sonnet, with their hidden cases, which are kept at [`b8fd2c94`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools). Failures are fixed in the tool contract, not with more prompt text ([DEC-051](decisions.md#dec-051-agents-get-tasks-not-process)) | Two clean passes in a row: every step ends with nothing left to verify without the owner, every hidden case passes, and no refusal of the hook was overridden. Whether that is the finish line is open ([OQ-014](decisions.md#open-questions)) |
 
-Before step 2, read the nine finished launches of an earlier reviewing test at the 5× size. They are in `%LOCALAPPDATA%\markitect-test1` on the maintainer's machine, not in the repository, and unread; they may say at no new cost whether one reviewer catches known bugs at that size.
-
 ## Later
 
 Agreed directions that are not scheduled.

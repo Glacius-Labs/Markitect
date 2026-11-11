@@ -467,6 +467,39 @@ func TestQuestionsAreANote(t *testing.T) {
 	}
 }
 
+// When every item is a spec-problem recorded at the inputs as they are, status
+// says that only they are left: a builder settles none of them. A fail beside
+// them, a changed input of one of them or an error in the realization ends that.
+func TestOnlySpecProblemsAreForTheOwner(t *testing.T) {
+	p := newPlain(t)
+	p.verifyAll()
+	if st := p.status(false); st.ForTheOwner() {
+		t.Fatalf("a clean status is for the owner:\n%s", st.Text())
+	}
+	st := p.status(true)
+	if _, ok := p.review("members/member", run.VerdictSpecProblem, p.item(st, "members/member").Fingerprint, nil, "is a member a person or a household?"); !ok {
+		t.Fatal("spec-problem not recorded")
+	}
+	st = p.status(false)
+	if listed(st) != "members/member" || !st.ForTheOwner() || st.Clean() {
+		t.Fatalf("%s", st.Text())
+	}
+	has(t, st.Text(), "\nOnly spec-problems are left: they wait for the owner, and no builder settles them.\n")
+	in, err := p.engine.Status(context.Background(), run.StatusRequest{Dir: p.dir, Package: "members"})
+	if err != nil || !in.ForTheOwner() {
+		t.Fatalf("%v\n%s", err, in.Text())
+	}
+	has(t, in.Text(), "Only spec-problems are left in Package members:")
+	// A fail beside it is the builder's.
+	all := p.status(true)
+	if _, ok := p.review("loan-limit", run.VerdictFail, p.item(all, "loan-limit").Fingerprint, []string{"src/members/loans/loan.go:3"}, "allows a sixth loan"); !ok {
+		t.Fatal("fail not recorded")
+	}
+	if st := p.status(false); st.ForTheOwner() || strings.Contains(st.Text(), "Only spec-problems") {
+		t.Fatalf("%s", st.Text())
+	}
+}
+
 // fail and spec-problem stay on the list with their reason; skip is a note, and a
 // note alone leaves status clean.
 func TestVerdictsOnTheList(t *testing.T) {
@@ -483,7 +516,7 @@ func TestVerdictsOnTheList(t *testing.T) {
 		t.Fatal("skip not recorded")
 	}
 	st = p.status(false)
-	if listed(st) != "loan-limit,members/member" || st.Clean() {
+	if listed(st) != "loan-limit,members/member" || st.Clean() || st.ForTheOwner() || strings.Contains(st.Text(), "Only spec-problems") {
 		t.Fatalf("%s", st.Text())
 	}
 	has(t, st.Text(), "  fail: allows a sixth loan\n", "  spec-problem: is a member a person or a household?\n", "Notes: skipped", "catalog/book: no test can reach the printer")

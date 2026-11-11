@@ -109,7 +109,7 @@ All take `--repo DIR`; `check`, `vet`, `list`, `doc`, `status` and `mark` take `
 | `tidy` | Bring `lock.yaml` in line with the manifest after a manifest or Library change, as `go mod tidy` does. |
 | `doc TARGET` | A Definition with its text, what links to it, what it links to, the files that realize it and its record; or a Package with its public and its internal Definitions apart, its page and files. |
 | `list [--deps]` | The Packages and their Definitions; `--deps` adds each Package's coupling, abstractness and distance from the main sequence, what it depends on and the links behind each dependency. |
-| `status [--all] [--package P]` | What is to verify: each Definition whose text, Kind, links, files or evidence changed since a reviewer last verified it, or that has no record yet, with what changed and where to look. Needs a project that compiles. A last line says when `.markitect/questions.md` exists. |
+| `status [--all] [--package P]` | What is to verify: each Definition whose text, Kind, links, files or evidence changed since a reviewer last verified it, or that has no record yet, with what changed and where to look. Needs a project that compiles. One line says when only spec-problems are left, and a last one when `.markitect/questions.md` exists. |
 | `vet [--strict]` | Warnings about the spec's design, as `file:line: code: message`, and one line that counts its notes; `--strict` lists the notes too. Exit 1 only with `--strict` and a warning; notes never change it. |
 
 ## Warnings and notes (`vet`)
