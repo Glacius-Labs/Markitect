@@ -116,7 +116,7 @@ All take `--repo DIR`; `check`, `vet`, `list`, `doc`, `status` and `mark` take `
 
 Warnings: `vet.coupling` (more than 5 dependencies), `vet.unstable_dependency` (depends on a less stable Package), `vet.definition_size` (over 1000 words), `vet.package_size` (over 25 Definitions), `vet.hub` (a Definition other than a Kind, Root's included, whose change alone would put more than a fifth of the spec, and more than 10 Definitions, back on the list to verify), `vet.thin_package` (no Definitions and one child), `vet.no_paths` (a Package other than Root claims no path pattern, so it owns no file).
 
-Notes: `vet.unlinked_mention` (a Definition's title or name in another Definition's prose with no link to it; also where a link would close a Package cycle or add a Package dependency), `vet.statements` (over 20 list items and table rows), `vet.placement` (every Definition that links to it lies in one Package below it), `vet.hotspot` (how often its own text changed between verdicts, times what links to it, is above a tenth of the spec and 20).
+Notes: `vet.unlinked_mention` (a Definition's title or name in another Definition's prose with no link to it; also where a link would close a Package cycle or add a Package dependency), `vet.statements` (over 20 list items and table rows), `vet.placement` (every Definition that links to it lies in one Package below it), `vet.hotspot` (how often its own text changed between verdicts, times what links to it, is above a tenth of the spec and 20), `vet.risk` (its last `ok` or `skip` rests on evidence for too few of the cases the reviewer counted, or it has too many cases to verify well).
 
 ## Error codes
 

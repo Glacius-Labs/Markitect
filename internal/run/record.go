@@ -59,6 +59,42 @@ func (r Record) Revisions() map[string]int {
 	return out
 }
 
+// Counts is what a reviewer counted with an ok or a skip: the cases the
+// Definition demands and how many of them the evidence demonstrates.
+type Counts struct {
+	Cases, Covered int
+	// Skip says that the verdict was a skip: verified as far as the project can
+	// show.
+	Skip bool
+}
+
+// Counts returns, per Definition, what reviewers counted with each ok or skip
+// the record holds for the Definition's own text as it is: self gives each
+// Definition's hash now, as Hash makes it. A line at another text speaks of a
+// Definition that has changed since, and a Definition with a fail or a
+// spec-problem at this text, or with a line there that carries no counts, has
+// none. After a merge the record may hold several lines for one Definition, so
+// a Definition may have several counts; whoever reads them chooses.
+func (r Record) Counts(self map[string]string) map[string][]Counts {
+	out := map[string][]Counts{}
+	none := map[string]bool{}
+	for _, l := range r.Lines {
+		h, ok := self[l.Definition]
+		if !ok || l.Inputs[InputSelf] != h {
+			continue
+		}
+		if (l.Verdict != VerdictOK && l.Verdict != VerdictSkip) || l.Cases == nil || l.Covered == nil {
+			none[l.Definition] = true
+			continue
+		}
+		out[l.Definition] = append(out[l.Definition], Counts{Cases: *l.Cases, Covered: *l.Covered, Skip: l.Verdict == VerdictSkip})
+	}
+	for id := range none {
+		delete(out, id)
+	}
+	return out
+}
+
 // revisions is the count of a new line at inputs now, after the lines the record
 // held for its Definition: theirs, one more when its own text is none of theirs.
 // A gone Definition has no own text, so a verdict on it adds none.

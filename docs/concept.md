@@ -122,7 +122,7 @@ These are for whoever drives the agents, and for CI. They start no agent, keep n
 | Command | Called by | Does |
 |---|---|---|
 | `markitect status` | The builder, the reviewer, the skills, the owner and CI | What is to verify, with which inputs changed, where to look and each item's fingerprint. `--all` lists every Definition, and `--package P` only the items of one Package, for a strand of a parallel run. Exit 1 when it lists something; notes, such as a `skip` or an outdated harness, never change the exit code |
-| `markitect mark` | The reviewer | Records `ok`, `fail`, `skip` or `spec-problem` on one Definition at the fingerprint `status` printed, as in `markitect mark members/limit@3f9a1c ok -e src/loans.go:42`, with its evidence or why ([§6](#6-the-record)). `--cases N --covered M` adds the reviewer's count of cases |
+| `markitect mark` | The reviewer | Records `ok`, `fail`, `skip` or `spec-problem` on one Definition at the fingerprint `status` printed, as in `markitect mark members/limit@3f9a1c ok -e src/loans.go:42 --cases 4 --covered 4`, with its evidence and the reviewer's counts, or why ([§6](#6-the-record)). An `ok` and a `skip` carry the reviewer's counts, `--cases N --covered M` |
 | `markitect hook` | Hooks only | The check of [§9](#9-the-harness) |
 
 **The folder.** Every command reads the project folder by walking it, without what the project's `.gitignore` files exclude, read as plain text ([the folder](../internal/run/README.md#the-folder)). So ignored build output does not count, and a folder needs no repository. Files that Markitect's own ignore file lists are walked like any other; they need no registry row and are no input.
@@ -145,7 +145,7 @@ A spec is judged like code, so it gets the same kind of analysis code gets. `che
 | A Definition all of whose users lie in one Package below it | Misplaced code | Notes `vet.placement` |
 | Change hotspots: revisions between verdicts times fan-in | Churn | Notes `vet.hotspot`; the record counts revisions, since the tool reads no Git history |
 | Abstractness and distance from the main sequence | Martin's metrics | Shown by `list --deps`, no warning |
-| Size against what tests cover | CRAP | Not yet: the reviewer's case counts on `mark` are the first data |
+| Size against what the evidence demonstrates | CRAP | Notes `vet.risk`, from the reviewer's counts on `mark` |
 | The spec's dependencies against the code's imports | Architecture tests | Not yet |
 
 **Package cycles are a compile error**, as in Go. [The spec language guide](guides/spec-language.md#vet-warnings-and-notes) gives every code and threshold, and [what makes a good spec](guides/good-spec.md) says what each measure is for.
@@ -177,7 +177,7 @@ The owner architects the project until the spec looks right, then uses `/markite
 
 ## 6. The record
 
-`.markitect/review.sum` is the record of what was verified, committed with the project like `go.sum` ([the record](../internal/run/README.md#the-record-file)). It holds one line per Definition, sorted, each a JSON object: the verdict, the hash of each input ([§3](#how-status-works)), the evidence the reviewer gave, why, and optionally the reviewer's counts of cases and the number of revisions.
+`.markitect/review.sum` is the record of what was verified, committed with the project like `go.sum` ([the record](../internal/run/README.md#the-record-file)). It holds one line per Definition, sorted, each a JSON object: the verdict, the hash of each input ([§3](#how-status-works)), the evidence the reviewer gave, why, with an `ok` or a `skip` the reviewer's counts of cases, and the number of revisions.
 
 | Verdict | Means |
 |---|---|
@@ -323,7 +323,7 @@ So a review that records a new `fail` does not land: its branch holds the record
 
 **Shown in real runs, on small projects.** Agents started by the owner's own session made three small Makerspace changes: the skill's prompt makes the session start the builder, the builder starts the reviewer as its own subagent and waits for it, the hook fires inside subagents, and a planted bug and a planted contradiction were caught ([trials](https://github.com/Glacius-Labs/Markitect/blob/d0c23a31efc928e95f3acc0633deb01a5f887884/docs/validation/lean-trials-20261107.md)). Those trials ran an earlier form of the flow, before the record. The parallel strategy built a project of 6 Definitions twice, the second time on a release with the plugin alone, with the merges, the reviews and the record working and a planted defect caught ([record](https://github.com/Glacius-Labs/Markitect/blob/d0c23a31efc928e95f3acc0633deb01a5f887884/docs/validation/parallel-strategy-20261108.md)). With the plugin alone, the guard holds ([probe](https://github.com/Glacius-Labs/Markitect/blob/d0c23a31efc928e95f3acc0633deb01a5f887884/docs/validation/project-hooks-20261108.md)).
 
-**Not yet shown:** the record, the skills and the roles on a real project over a series of changes; a bug hunt, a cleanup, an audit and the routines; the `vet` notes and the reviewer's counts on a real build's record; a long list in parallel; a crash or a conflicting merge; a change larger than about 64 items; how often the owner's manual permission mode stops a builder. These are covered by tests only. The [roadmap](roadmap.md#current-steps) tries them next.
+**Not yet shown:** the record, the skills and the roles on a real project over a series of changes; a bug hunt, a cleanup, an audit and the routines; the `vet` notes on a real build's record, and a reviewer that meets `mark`'s demand for its counts; a long list in parallel; a crash or a conflicting merge; a change larger than about 64 items; how often the owner's manual permission mode stops a builder. These are covered by tests only. The [roadmap](roadmap.md#current-steps) tries them next.
 
 **What the evidence does and doesn't cover:**
 

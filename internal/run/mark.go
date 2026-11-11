@@ -121,6 +121,8 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 		return refuse("%s is gone from the spec: its files are removed or have a new basis (ok), or not (fail).", req.definition)
 	case it.State != StateGone && req.Verdict == VerdictOK && len(evidence) == 0:
 		return "", false, fmt.Errorf("%w: ok names its evidence with -e, such as -e src/fees.go:40", ErrUsage)
+	case it.State != StateGone && (req.Verdict == VerdictOK || req.Verdict == VerdictSkip) && (req.Cases == nil || req.Covered == nil):
+		return "", false, fmt.Errorf("%w: %s counts the cases the Definition demands and how many of them the evidence demonstrates, with --cases N --covered M; a Definition that demands no case counts 0 and 0", ErrUsage, req.Verdict)
 	}
 	line := Line{Definition: req.definition, Verdict: req.Verdict, Why: req.Why, Inputs: Inputs{}, Cases: req.Cases, Covered: req.Covered}
 	for k, h := range inputs {
