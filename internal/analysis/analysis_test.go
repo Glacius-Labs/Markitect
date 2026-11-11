@@ -316,9 +316,17 @@ func TestVetRisk(t *testing.T) {
 		"catalog/book":   {Cases: 9, Covered: 9, Skip: true},
 		"catalog/shelf":  {Cases: 30, Covered: 30},
 	}),
-		m+"catalog/book.md: vet.risk: recorded skip with 9 cases, so none of them is demonstrated (risk 110, more than 30); find a way to show them, or split the Definition",
+		m+"catalog/book.md: vet.risk: recorded skip with 9 cases, and a skip counts none of them as demonstrated (risk 110, more than 30); find a way to show them, or split the Definition",
 		m+"catalog/shelf.md: vet.risk: 30 cases, too many to verify well however much evidence there is (risk 31, more than 30); split it along its ideas",
-		m+"members/member.md: vet.risk: its ok rests on evidence for 10 of its 16 cases (risk 32, more than 30); the next review demonstrates the others, or the Definition is split")
+		m+"members/member.md: vet.risk: its ok rests on evidence for 10 of its 16 cases (risk 33, more than 30); the next review demonstrates the others, or the Definition is split")
+	// Thirty cases and more are too many whatever is demonstrated, also when
+	// some are not; and the risk is printed rounded up, never as the line itself.
+	expectLines(t, risk(map[string]Count{
+		"members/member": {Cases: 31, Covered: 30},
+		"catalog/book":   {Cases: 28, Covered: 25},
+	}),
+		m+"catalog/book.md: vet.risk: its ok rests on evidence for 25 of its 28 cases (risk 31, more than 30); the next review demonstrates the others, or the Definition is split",
+		m+"members/member.md: vet.risk: 31 cases, too many to verify well however much evidence there is (risk 33, more than 30); split it along its ideas")
 	// The measure itself, at the values the guide gives.
 	for _, c := range []struct {
 		count Count
@@ -328,6 +336,8 @@ func TestVetRisk(t *testing.T) {
 		{Count{Cases: 7, Covered: 4}, 13.0},
 		{Count{Cases: 0}, 1},
 		{Count{Cases: 0, Skip: true}, 2},
+		// A hand-edited record may claim more than every case: no negative risk.
+		{Count{Cases: 4, Covered: 9}, 5},
 	} {
 		if got := c.count.Risk(); got < c.want-0.05 || got > c.want+0.05 {
 			t.Errorf("%+v: risk %.2f, want %.1f", c.count, got, c.want)

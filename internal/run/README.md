@@ -40,9 +40,9 @@ The **fingerprint** of an item is the first six characters of the hash of every 
 
 The verdicts are `ok` (implemented, as the evidence shows), `fail` (not, and why), `skip` (verified as far as the project can show, and why) and `spec-problem` (the spec contradicts itself or leaves open behaviour at the project's boundary, and only the owner can settle it). The record holds hashes, not text: an agent that wants what a Definition said before reads it from Git.
 
-Three optional fields, a trial of [DEC-102](../../docs/decisions.md#dec-102-what-vet-measures), are each left out when empty:
+Three more fields are each left out when empty:
 
-- `cases` and `covered`: the reviewer's count of the distinct cases, conditions and exceptions the Definition demands, and of those its evidence demonstrates, as `mark` took them. Nothing reads them yet; they are kept to calibrate a later risk measure.
+- `cases` and `covered`: the reviewer's count of the distinct cases, conditions and exceptions the Definition demands, and of those its evidence demonstrates, as `mark` took them. An `ok` and a `skip` always carry them, and `vet` reads them for `vet.risk`, from the line at the Definition's text as it is ([DEC-106](../../docs/decisions.md#dec-106-the-reviewer-counts-and-vet-notes-thin-evidence)).
 - `revisions`: how often the Definition's own text changed between two verdicts on it. `mark` takes the count of the Definition's lines and adds one when none of them has the new line's `self` hash, so a first verdict has none, a change of a link, a file or the evidence adds none, and so does a verdict on a gone Definition, which has no own text. Of several lines, as after a merge, it counts on from the most. `vet` reads it for `vet.hotspot`, as change history without Git.
 
 The record has no format version: the fields are optional, so a line without them reads as no count and no revision, and its counting starts with the next verdict.
@@ -70,7 +70,7 @@ It exits 0 when it lists nothing: then the project compiles and every Definition
 
 ## mark
 
-`markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]… [-m "WHY"] [--cases N [--covered M]]` records a verdict at the state the reviewer read:
+`markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]… [-m "WHY"] [--cases N --covered M]` records a verdict at the state the reviewer read:
 
 ```text
 markitect mark members/limit@3f9a1c ok -e src/loans.go:42 -e tests/loans_test.go:88 --cases 4 --covered 4

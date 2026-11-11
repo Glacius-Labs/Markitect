@@ -76,7 +76,7 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 }
 
 // markUsage is mark's usage line.
-const markUsage = `markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m "WHY"] [--cases N [--covered M]]`
+const markUsage = `markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m "WHY"] [--cases N --covered M]`
 
 // mark records a verdict at the state status printed. Exit 1 means it refused and
 // recorded nothing: the inputs changed since, or evidence does not exist. The

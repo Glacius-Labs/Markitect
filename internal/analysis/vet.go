@@ -81,13 +81,13 @@ func (c Count) Risk() float64 {
 	case c.Skip:
 		uncovered = 1
 	case c.Cases > 0:
-		uncovered = 1 - float64(c.Covered)/float64(c.Cases)
+		uncovered = math.Max(0, 1-float64(c.Covered)/float64(c.Cases))
 	}
 	return comp*comp*uncovered*uncovered*uncovered + comp
 }
 
 // Vet analyses the design of a loaded project like code: coupling, size, hubs
-// and, as notes, unlinked mentions, statements, placement and hotspots.
+// and, as notes, unlinked mentions, statements, placement, hotspots and risk.
 func Vet(p *project.Project, h History) Report {
 	var r Report
 	sp := p.Spec
@@ -148,13 +148,14 @@ func Vet(p *project.Project, h History) Report {
 			notes.Add("vet.placement", d.File, 0, "every Definition that links to %s lies in %s; it could move down there, unless it binds %s by scope", id, below, spec.PackageName(d.Package))
 		}
 		if c, ok := h.Counts[id]; ok && c.Risk() > MaxRisk {
+			risk := math.Ceil(c.Risk())
 			switch {
+			case c.Cases+1 > MaxRisk:
+				notes.Add("vet.risk", d.File, 0, "%d cases, too many to verify well however much evidence there is (risk %.0f, more than %d); split it along its ideas", c.Cases, risk, MaxRisk)
 			case c.Skip:
-				notes.Add("vet.risk", d.File, 0, "recorded skip with %d %s, so none of them is demonstrated (risk %.0f, more than %d); find a way to show them, or split the Definition", c.Cases, plural(c.Cases, "case", "cases"), c.Risk(), MaxRisk)
-			case c.Covered == c.Cases:
-				notes.Add("vet.risk", d.File, 0, "%d cases, too many to verify well however much evidence there is (risk %.0f, more than %d); split it along its ideas", c.Cases, c.Risk(), MaxRisk)
+				notes.Add("vet.risk", d.File, 0, "recorded skip with %d cases, and a skip counts none of them as demonstrated (risk %.0f, more than %d); find a way to show them, or split the Definition", c.Cases, risk, MaxRisk)
 			default:
-				notes.Add("vet.risk", d.File, 0, "its ok rests on evidence for %d of its %d cases (risk %.0f, more than %d); the next review demonstrates the others, or the Definition is split", c.Covered, c.Cases, c.Risk(), MaxRisk)
+				notes.Add("vet.risk", d.File, 0, "its ok rests on evidence for %d of its %d cases (risk %.0f, more than %d); the next review demonstrates the others, or the Definition is split", c.Covered, c.Cases, risk, MaxRisk)
 			}
 		}
 		if rev := h.Revisions[id]; rev > 0 && float64(fan*rev) > hotspot {

@@ -3,6 +3,7 @@ package run_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -811,12 +812,53 @@ func TestCountsAndRevisions(t *testing.T) {
 	}
 	// The record gives vet the counts of the last ok or skip, and none for a
 	// Definition whose last line is a fail.
-	counts := run.ParseRecord([]byte(p.read(project.ReviewFile))).Counts()
+	self := func(ids ...string) map[string]string {
+		out := map[string]string{}
+		for _, id := range ids {
+			out[id] = run.Hash([]byte(p.read(m + id + ".md")))
+		}
+		return out
+	}
+	now := self("members/loans/loan", "members/member")
+	counts := run.ParseRecord([]byte(p.read(project.ReviewFile))).Counts(now)
 	if c, ok := counts["members/loans/loan"]; !ok || c.Cases != 1 || c.Covered != 1 || c.Skip {
 		t.Fatalf("counts of loan: %+v %v", c, ok)
 	}
-	if _, ok := counts["catalog/book"]; ok {
-		t.Fatalf("a Definition whose last line is a fail has counts: %+v", counts)
+	if c, ok := counts["members/member"]; !ok || c.Cases != 1 {
+		t.Fatalf("counts of member, whose last line is an ok: %+v %v", c, ok)
+	}
+	// A line at another text of the Definition is not judged: the Definition has
+	// changed since, and status lists it.
+	p.write(m+"members/member.md", def("std/Concept", "Member", "Somebody."))
+	if _, ok := run.ParseRecord([]byte(p.read(project.ReviewFile))).Counts(self("members/member"))["members/member"]; ok {
+		t.Fatal("a line at another text has counts")
+	}
+	// After a merge the record may hold two lines at one text: the one that
+	// demonstrates less counts, whatever their order, and a fail at that text
+	// leaves none.
+	line2 := func(verdict string, cases, covered int) string {
+		return fmt.Sprintf(`{"definition":"x","verdict":%q,"inputs":{"self":"sha256:1"},"why":"w","cases":%d,"covered":%d}`, verdict, cases, covered)
+	}
+	at := map[string]string{"x": "sha256:1"}
+	for _, lines := range [][]string{
+		{line2("ok", 16, 16), line2("ok", 16, 2)},
+		{line2("ok", 16, 2), line2("ok", 16, 16)},
+	} {
+		if c := run.ParseRecord([]byte(strings.Join(lines, "\n") + "\n")).Counts(at)["x"]; c.Covered != 2 {
+			t.Fatalf("of two lines at one text: %+v", c)
+		}
+	}
+	for _, lines := range [][]string{
+		{line2("ok", 16, 16), line2("fail", 16, 2)},
+		{line2("fail", 16, 2), line2("ok", 16, 16)},
+	} {
+		if _, ok := run.ParseRecord([]byte(strings.Join(lines, "\n") + "\n")).Counts(at)["x"]; ok {
+			t.Fatalf("an ok beside a fail at one text has counts: %v", lines)
+		}
+	}
+	// A Definition gone from the spec has no cases: its ok needs no counts.
+	if text, ok, err := p.engine.Mark(context.Background(), run.MarkRequest{Dir: p.dir, Item: "catalog/book@" + p.item(p.status(true), "catalog/book").Fingerprint, Verdict: run.VerdictOK}); err != nil || !ok {
+		t.Fatalf("an ok without counts on a gone Definition: %v %s", err, text)
 	}
 }
 

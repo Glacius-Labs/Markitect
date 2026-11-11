@@ -24,7 +24,7 @@ The rules below each name their **signal**: a warning or a note of `markitect ve
 | [Stable abstractions](#stable-dependencies-and-stable-abstractions) | What many depend on is a form or vocabulary that rarely changes | `vet.hub`, `vet.hotspot`; abstractness and distance in `list --deps` |
 | [Cohesion and coupling](#cohesion-and-coupling) | A Package's Definitions link each other; it depends on few Packages | `vet.coupling`; auditor |
 | [Complexity](#complexity-of-a-definition) | One idea per Definition, a few hundred words, a dozen statements | `vet.definition_size`, `vet.statements` |
-| [Evidence for complexity](#evidence-for-complexity-a-crap-analogue) | The larger a Definition, the more evidence its `ok` names | The reviewer's counts on `mark`; `vet.risk` waits for data |
+| [Evidence for complexity](#evidence-for-complexity-a-crap-analogue) | The larger a Definition, the more evidence its `ok` names | `vet.risk`, from the reviewer's counts on `mark` |
 | [Accidental complexity](#accidental-complexity) | Write only what good documentation would state | `definition.unused`, `vet.thin_package`; auditor |
 | [Abstraction levels](#one-level-of-abstraction-per-definition) | One level per Definition | Auditor |
 | [Placement](#everything-has-its-place) | Each Definition in the lowest Package that holds all its users; Root minimal | `vet.package_size`, `vet.placement`, `vet.hub` |
@@ -99,11 +99,11 @@ In code the Package is the unit that is released and depended on. In Markitect t
 
 CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, with *comp* the cyclomatic complexity and *cov* the share covered by tests; above 30 is a risk. Its analogue for a Definition recorded `ok` or `skip` in `.markitect/review.sum`: *c* is 1 + the cases, conditions and exceptions the reviewer counted for the Definition, and *e* is the share of those cases the reviewer found its evidence demonstrates. A `skip` has *e* 0. So *risk = c² × (1 − e)³ + c*. A Definition of 7 cases (*c* 8) with 2 of them demonstrated scores 64 × 0.36 + 8 ≈ 31; with 4, about 13.
 
-**Why.** It finds what is both hard to verify and thinly verified. As with CRAP, a Definition of more than about 30 statements stays above the line however much evidence it names: the remedy is to split it.
+**Why.** It finds what is both hard to verify and thinly verified. As with CRAP, a Definition of 30 cases or more stays above the line however much evidence it names: the remedy is to split it.
 
 **Bad and good.** On the record of one first spec of a real project, 114 Definitions with counts, the line of 30 marked two: a Rule recorded `skip` with 9 cases, since its check needs a runner the machine did not have, and a Concept with 16 cases of which the evidence demonstrated 10 ([record](https://github.com/Glacius-Labs/Markitect/pull/1054)). A Definition of 12 cases with 8 demonstrated scores about 19 and is not marked.
 
-**Signal.** `vet.risk`, a note, for a Definition whose last verdict is an `ok` or a `skip` and whose risk is above 30 ([DEC-106](../decisions.md#dec-106-the-reviewer-counts-and-vet-notes-thin-evidence)). The reviewer records the counts it rests on with `markitect mark … --cases N --covered M`, and `mark` refuses an `ok` or a `skip` without them.
+**Signal.** `vet.risk`, a note, for a Definition whose `ok` or `skip`, at its text as it is, has a risk above 30 ([DEC-106](../decisions.md#dec-106-the-reviewer-counts-and-vet-notes-thin-evidence)). The reviewer records the counts it rests on with `markitect mark … --cases N --covered M`, and `mark` refuses an `ok` or a `skip` without them.
 
 ## Accidental complexity
 

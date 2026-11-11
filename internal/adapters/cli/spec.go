@@ -34,7 +34,7 @@ func (c CLI) vet(_ context.Context, args []string) (int, error) {
 		return Misused, err
 	}
 	c.warnErrors(p)
-	r := analysis.Vet(p, historyOf(ws))
+	r := analysis.Vet(p, historyOf(ws, p))
 	if o.json {
 		ds := diagnostics(severityWarning, r.Warnings)
 		for _, n := range r.Notes {
@@ -67,16 +67,24 @@ func (c CLI) vet(_ context.Context, args []string) (int, error) {
 
 // historyOf reads from the project's record what vet knows of the spec's past:
 // how often each Definition's own text changed between verdicts, and what the
-// reviewer counted with its last ok or skip. Nothing when there is no record. A
-// line it cannot read counts nothing here: status names it.
-func historyOf(ws Workspace) analysis.History {
+// reviewer counted with the ok or skip on its text as it is. Nothing when there
+// is no record. A line it cannot read counts nothing here: status names it.
+func historyOf(ws Workspace, p *project.Project) analysis.History {
 	data, err := ws.Read(project.ReviewFile)
 	if err != nil {
 		return analysis.History{}
 	}
 	rec := run.ParseRecord(data)
 	h := analysis.History{Revisions: rec.Revisions(), Counts: map[string]analysis.Count{}}
-	for id, c := range rec.Counts() {
+	self := map[string]string{}
+	if p.Spec != nil {
+		for id, d := range p.Spec.Definitions {
+			if d.Library == "" {
+				self[id] = run.Hash(d.Data)
+			}
+		}
+	}
+	for id, c := range rec.Counts(self) {
 		h.Counts[id] = analysis.Count{Cases: c.Cases, Covered: c.Covered, Skip: c.Skip}
 	}
 	return h

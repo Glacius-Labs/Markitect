@@ -3,7 +3,9 @@ package bootstrap
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -783,6 +785,9 @@ func TestStatusAndMarkThroughTheCommandLine(t *testing.T) {
 		{"mark", item, "ok", "-e", "README.md", "--covered", "2"},
 		{"mark", item, "ok", "-e", "README.md", "--cases=2", "--covered=3"},
 		{"mark", item, "ok", "-e", "README.md", "--cases"},
+		{"mark", item, "ok", "-e", "README.md"},
+		{"mark", item, "ok", "-e", "README.md", "--cases", "2"},
+		{"mark", item, "skip", "-m", "no test can reach it"},
 	} {
 		if code, _, errOut := run(t, r.Dir, args...); code != 2 || !strings.Contains(errOut, "usage: markitect mark") {
 			t.Fatalf("%v: %d %s", args, code, errOut)
@@ -887,7 +892,12 @@ func TestDocAndVetDocuments(t *testing.T) {
 	// vet reads the reviewer's counts from the record too: an ok on evidence for
 	// 2 of 9 cases is a risk. A note leaves the exit code alone.
 	r.Write(".markitect/review.sum", `{"definition":"project","verdict":"ok","inputs":{"self":"sha256:0"},"cases":9,"covered":2}`+"\n")
-	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 0 || !strings.Contains(out, ".markitect/spec/project.md: vet.risk: its ok rests on evidence for 2 of its 9 cases (risk 57, more than 30)") {
+	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 0 || strings.Contains(out, "vet.risk") {
+		t.Fatalf("vet judges a line at another text of the Definition: %d %s", code, out)
+	}
+	self := sha256.Sum256(bytes.ReplaceAll([]byte(read(t, r.Dir, ".markitect/spec/project.md")), []byte("\r\n"), []byte("\n")))
+	r.Write(".markitect/review.sum", fmt.Sprintf(`{"definition":"project","verdict":"ok","inputs":{"self":"sha256:%x"},"cases":9,"covered":2}`, self)+"\n")
+	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 0 || !strings.Contains(out, ".markitect/spec/project.md: vet.risk: its ok rests on evidence for 2 of its 9 cases (risk 58, more than 30)") {
 		t.Fatalf("vet --strict with a thin ok: %d %s", code, out)
 	}
 	if code, _, errOut := run(t, r.Dir, "tidy", "--json"); code != 2 || !strings.Contains(errOut, "-json") {
