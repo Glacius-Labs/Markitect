@@ -83,7 +83,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 ### DEC-079 The spec is as explicit as good documentation
 
 - A statement belongs in the spec when good documentation of the project would state it that explicitly: domain concepts, features, interfaces such as REST endpoints and CLI commands, rules, decisions and the architecture. Loops, maps and data structures stay with the agents.
-- The binding part is what callers rely on: inputs and their validation, data shapes, status and exit codes, stored data. Detail a caller can observe but not reasonably depend on, such as message wording or identifier formats, is free unless the project fixes it, in its documentation or by a test through the interface callers use. This holds for the first spec of an existing project too ([DEC-105](#dec-105-a-first-spec-of-an-existing-project-states-what-is-as-what-should-be)).
+- The binding part is what callers rely on: inputs and their validation, data shapes, status and exit codes, stored data. Detail a caller can observe but not reasonably depend on, such as message wording or identifier formats, is free unless the project fixes it. This holds for the first spec of an existing project too ([DEC-105](#dec-105-a-first-spec-of-an-existing-project-states-what-is-as-what-should-be)).
 - The project's owner decides the architecture, and the spec encodes it as its own structure: Packages, their links and their file ownership.
 - Granularity is the author's choice. Markitect measures and warns; it imposes nothing ([DEC-102](#dec-102-what-vet-measures)).
 
