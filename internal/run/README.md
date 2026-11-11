@@ -62,7 +62,7 @@ The record is a record, not a proof: a line written by hand shows in the diff, a
 - the errors in the realization: a file neither listed nor ignored, a stale registry row, an unused Definition;
 - the lines of the record it cannot read, each as a diagnostic `.markitect/review.sum:LINE: record.unreadable: …`.
 
-Each item is printed as `DEFINITION@FINGERPRINT`, which the reviewer copies into `mark`, and names where to look: the Definition's file, its row files and the evidence of its last line. A Definition recorded `skip` is a note. A spec with errors gives no list: there is none until it compiles. `--all` lists every Definition, to verify everything again.
+Each item is printed as `DEFINITION@FINGERPRINT`, which the reviewer copies into `mark`, and names where to look: the Definition's file, its row files and the evidence of its last line. A Definition recorded `skip` is a note. So is one line that says that the architect's questions for the owner wait in `.markitect/questions.md`, while that file exists; a list limited to a Package leaves it out. A spec with errors gives no list: there is none until it compiles. `--all` lists every Definition, to verify everything again.
 
 `--package P` limits the list to the items whose Definition lies directly in the Package of that name, `Root` for the one at the top. A strand of a [parallel run](../../docs/concept.md#10-drivers) asks for its part this way. The errors in the realization and the lines of the record it cannot read belong to no Package, so it leaves them out and says how many there are. It then exits 0 when nothing is to verify in that Package, whatever the others hold. A Package the spec does not have is a usage error.
 

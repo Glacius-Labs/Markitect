@@ -122,8 +122,9 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - A Definition that does not hold is one of three things:
   - the spec misread the project, and the spec is corrected;
   - the project contradicts itself, such as its documentation against a script. The architect does not settle it: the Definition stays as drafted and on the list as `fail`, and the owner says which side holds before anything is built;
-  - the project does something that nothing in it states and that looks like an accident. The spec leaves it unstated, since stating it would make the spec demand it, and the architect names it to the owner.
+  - the project does something that nothing in it states and that looks like an accident. The spec leaves it unstated, since stating it would make the spec demand it, and the architect asks the owner.
 - The spec is not a transcription of the project. The question at each artifact is what it holds that should also be in the spec, not what it holds that the spec does not say. Most of what a file holds is then stated as an obligation without its values, or left to the agents.
+- What waits for the owner is kept in `.markitect/questions.md`, committed with the spec: one numbered point per question, with what was found, where, what the spec says or leaves out, and the architect's proposal. The record holds what does not hold, and this file what the spec does not say yet. A point leaves the file when the owner has answered it, the file goes with its last point, and `status` says while it is there.
 - With the owner's acceptance the spec becomes the authority ([DEC-063](#dec-063-the-spec-is-the-authority-and-its-defects-go-to-the-owner)). What the owner confirmed as a defect stays `fail`, and `/markitect-build` repairs it; the spec is not changed to empty the list.
 
 ## The tool

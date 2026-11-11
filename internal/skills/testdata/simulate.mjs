@@ -315,7 +315,7 @@ for (const bad of [{}, { mode: "deploy" }, { mode: "cleanup" }, undefined]) {
   const auditors = calls.filter((c) => c.opts.agentType === "markitect-auditor")
   assert.strictEqual(auditors.length, 7)
   assert(auditors.some((c) => c.prompt.startsWith("Audit the spec across Packages")))
-  assert(auditors.every((c) => c.prompt.includes("Focus on what the user asked for: fees")))
+  assert(auditors.every((c) => c.prompt.includes("What the user asked for: fees")))
   assert.strictEqual(result.stopped, "audited")
 }
 

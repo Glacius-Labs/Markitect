@@ -104,6 +104,16 @@ func TestLoadNormalizesCRLF(t *testing.T) {
 	}
 }
 
+// The architect's questions for the owner have a place in the layout, and
+// nothing compiles them.
+func TestLoadQuestionsFile(t *testing.T) {
+	r := valid(t)
+	r.files[QuestionsFile] = "# Questions\n\n1. [[no/such]] Is a member a person or a household?\n"
+	if p := load(t, r); len(p.Errors) != 0 {
+		t.Fatalf("the questions file is refused:\n%v", p.Errors)
+	}
+}
+
 func TestLoadUnknownOwnFiles(t *testing.T) {
 	r := valid(t)
 	r.files[Dir+"/notes.txt"] = "x"
