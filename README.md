@@ -56,7 +56,7 @@ For a new project, make an empty folder, run `git init` in it and open Claude Co
 
 1. **Set it up.** Ask Claude to set up Markitect. It runs `markitect init`, which writes `.markitect/` with the first page of the spec, `AGENTS.md` and `CLAUDE.md`, and in `.claude/` the skills, the four agents and the hooks that hold their rights. It commits nothing. If Claude Code's sandbox blocks the plugin's first download, let that call run outside it.
 2. **Architect the project.** Run `/markitect-architect`. If the session does not offer it yet, run `/reload-skills` or start a new session. It asks what the project is, one question at a time, and writes the spec with you. Read the Markdown diff, or go through it with your session, and commit it together with what `init` wrote.
-3. **Build it.** Run `/markitect-build`. Your session starts a builder in a worktree of its own, and a fresh reviewer verifies each Definition. When nothing is left to verify, your session commits the work with its record and merges it into your branch. It pushes nothing.
+3. **Build it.** Run `/markitect-build`. Your session starts a builder in a worktree of its own, and a fresh reviewer verifies each Definition. When nothing is left to verify but `spec-problem`s, which wait for you, your session commits the work with its record and merges it into your branch. It pushes nothing.
 
 In a project that already exists, `/markitect-architect` draws a first spec from the project as it is, with you, and has a reviewer verify it against the project. The [project workflow](docs/guides/project-workflow.md) covers every step, option and error.
 
@@ -67,7 +67,7 @@ In a project that already exists, `/markitect-architect` draws a first spec from
 3. **A builder agent does the work.** It changes code, tests and documentation for what the list holds and keeps the registry current. A hook keeps it out of the spec and the record.
 4. **A fresh reviewer verifies it.** It reads the spec, the list and the code, and treats what the builder tells it as claims to check. It records each item: `ok` with its evidence, `fail`, `skip`, or `spec-problem` with the question for you.
 5. **The builder repairs what failed** and has it verified again. It stops when three rounds in a row leave the list no shorter than it has been.
-6. **Nothing left.** Your session commits the work with the record and merges it into your branch.
+6. **Nothing left for a builder.** Your session commits the work with the record and merges it into your branch.
 
 The record, `.markitect/review.sum`, works like Go's test cache: a verdict holds until one of its inputs changes, so a later change puts back on the list only what it reaches. Every file of the project is listed with the Definitions it builds, or explicitly ignored.
 
@@ -106,7 +106,7 @@ Markitect needs Claude Code. Pick one way to get the `markitect` command:
 
 ## Status
 
-Markitect is built, released and covered by tests. An earlier form of the build and review flow passed three small real changes, and the parallel workflow passed two real runs on a project of 6 Definitions. A real project, planted defects and reliability on Sonnet over a series of changes come next ([roadmap](docs/roadmap.md#current-steps)).
+Markitect is built, released and covered by tests. An earlier form of the build and review flow passed three small real changes, and the parallel workflow passed two real runs on a project of 6 Definitions. A review has found planted defects behind weakened tests on one small project. A real project and reliability on Sonnet over a series of changes come next ([roadmap](docs/roadmap.md#current-steps)).
 
 ### Limits
 
