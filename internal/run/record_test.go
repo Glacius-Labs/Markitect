@@ -448,7 +448,7 @@ func TestChangedEvidenceIsToVerify(t *testing.T) {
 func TestQuestionsAreANote(t *testing.T) {
 	p := newPlain(t)
 	p.verifyAll()
-	if st := p.status(false); st.Questions || strings.Contains(st.Text(), "Questions") {
+	if st := p.status(false); st.Questions || strings.Contains(st.Text(), "questions") {
 		t.Fatalf("questions without a file:\n%s", st.Text())
 	}
 	p.write(project.QuestionsFile, "# Questions\n\n1. Is a member a person or a household?\n")
@@ -456,9 +456,9 @@ func TestQuestionsAreANote(t *testing.T) {
 	if !st.Questions || !st.Clean() || len(st.Items) != 0 {
 		t.Fatalf("%s", st.Text())
 	}
-	has(t, st.Text(), "Nothing to verify", "\nQuestions for the owner wait in .markitect/questions.md.\n")
+	has(t, st.Text(), "Nothing to verify", "\nThe architect's questions for the owner wait in .markitect/questions.md.\n")
 	in, err := p.engine.Status(context.Background(), run.StatusRequest{Dir: p.dir, Package: "members"})
-	if err != nil || in.Questions || strings.Contains(in.Text(), "Questions") {
+	if err != nil || in.Questions || strings.Contains(in.Text(), "questions") {
 		t.Fatalf("%v\n%s", err, in.Text())
 	}
 	p.remove(project.QuestionsFile)

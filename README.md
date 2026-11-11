@@ -56,7 +56,7 @@ For a new project, make an empty folder, run `git init` in it and open Claude Co
 
 1. **Set it up.** Ask Claude to set up Markitect. It runs `markitect init`, which writes `.markitect/` with the first page of the spec, `AGENTS.md` and `CLAUDE.md`, and in `.claude/` the skills, the four agents and the hooks that hold their rights. It commits nothing. If Claude Code's sandbox blocks the plugin's first download, let that call run outside it.
 2. **Architect the project.** Run `/markitect-architect`. If the session does not offer it yet, run `/reload-skills` or start a new session. It asks what the project is, one question at a time, and writes the spec with you. Read the Markdown diff, or go through it with your session, and commit it together with what `init` wrote.
-3. **Build it.** Run `/markitect-build`. Your session starts a builder in a worktree of its own, and a fresh reviewer verifies each Definition. When nothing is left to verify, your session commits the work with its record and merges it into your branch. It pushes nothing.
+3. **Build it.** Run `/markitect-build`. Your session starts a builder in a worktree of its own, and a fresh reviewer verifies each Definition. When nothing is left to verify but questions for you, your session commits the work with its record and merges it into your branch. It pushes nothing.
 
 In a project that already exists, `/markitect-architect` draws a first spec from the project as it is, with you, and has a reviewer verify it against the project. The [project workflow](docs/guides/project-workflow.md) covers every step, option and error.
 

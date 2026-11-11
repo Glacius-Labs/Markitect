@@ -14,9 +14,9 @@ In a Git repository the work starts from the last commit of this branch, so it h
 
 **When the work has ended,** run `markitect status --repo <its folder>`. If its worktree is gone, because nothing changed, run `markitect status` here instead, skip the commit and the merge, and report. Commit what is uncommitted in its folder in one commit on its branch, `.markitect/review.sum` included; a parallel run has committed its work already. Then:
 
-- **If status lists nothing there,** merge its branch into the current branch here, then remove its worktree and branch. If Git refuses, because of uncommitted changes in the way or a conflict, abort the merge, leave the branch as it is and tell the user.
-- **Otherwise,** leave the work on its branch and ask the user whether to merge it as it stands; `markitect status` here then lists what remains.
+- **If status lists nothing there, or nothing but spec-problems,** merge its branch into the current branch here: a spec-problem waits for the owner, no builder settles it, and nothing was built for it. Then remove its worktree and branch. If Git refuses, because of uncommitted changes in the way or a conflict, abort the merge, leave the branch as it is and tell the user.
+- **Otherwise,** a `fail` or an unverified Definition is left that the builder did not settle: leave the work on its branch and ask the user whether to merge it as it stands; `markitect status` here then lists what remains.
 
 Push nothing. In a folder that is not a Git repository, commit nothing and say that the work is ready to commit.
 
-Then tell the user in a line or two how it ended: whether status lists nothing, and if not, what is left and which spec-problems wait for the owner. A workflow returns how it stopped and the strands it could not merge, each with its branch: name them. If status lists errors in the spec, offer to fix them with the user.
+Then tell the user in a line or two how it ended: whether status lists nothing, and if not, what is left and which spec-problems wait for the owner, each with its question. A workflow returns how it stopped and the strands it could not merge, each with its branch: name them. If status lists errors in the spec, offer to fix them with the user.
