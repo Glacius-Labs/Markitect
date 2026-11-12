@@ -16,7 +16,7 @@ func TestLockAndCheckReadTheSameLibraryFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 	r.Write("README.md", "# Project\n")
-	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.2.0\n  web: 0.1.0\n")
+	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.1.0\n  web: 0.1.0\n")
 	r.Write(".markitect/libraries/web/Page.md", "---\nkind: Kind\n---\n# Page\n")
 	r.Write(".markitect/libraries/web/Page.md.swp", "editor swap file\n")
 	r.Write(".markitect/registry.md", read(t, r.Dir, ".markitect/registry.md")+"| `README.md` | [[project]] | Overview |\n")

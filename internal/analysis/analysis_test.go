@@ -49,11 +49,11 @@ func def(kind, title, body string) string {
 }
 
 // pkg makes a folder of a fixture a Package: it adds the anchor, the
-// Definition of the folder's own name.
+// Definition of kind Package that carries the folder's name.
 func pkg(r memRepo, paths ...string) {
 	for _, path := range paths {
 		name := path[strings.LastIndexByte(path, '/')+1:]
-		r[m+path+"/"+name+".md"] = def("std/Package", "Part "+name, "")
+		r[m+path+"/"+name+".md"] = def("Package", "Part "+name, "")
 	}
 }
 
@@ -67,15 +67,15 @@ func library(t *testing.T) memRepo {
 		std.Files = append(std.Files, spec.File{Path: f.Path, Data: f.Data})
 	}
 	return memRepo{
-		project.ManifestFile:                      "libraries:\n  std: 1.2.0\n",
+		project.ManifestFile:                      "libraries:\n  std: 1.1.0\n",
 		project.LockFile:                          string(spec.RenderLock([]spec.LibrarySource{std})),
 		m + "project.md":                          def("std/Project", "Library", "Parts: [[members]], [[catalog]]."),
 		m + "loan-limit.md":                       def("std/Rule", "Loan limit", "At most `5` open loans."),
-		m + "members/members.md":                  def("std/Package", "Members", "Who may borrow."),
+		m + "members/members.md":                  def("Package", "Members", "Who may borrow."),
 		m + "members/member.md":                   def("std/Concept", "Member", "A person."),
-		m + "members/loans/loans.md":              def("std/Package", "Loans", "What is lent out."),
+		m + "members/loans/loans.md":              def("Package", "Loans", "What is lent out."),
 		m + "members/loans/loan.md":               def("std/Concept", "Loan", "A [[members/member]] borrows."),
-		m + "catalog/catalog.md":                  def("std/Package", "Catalog", "What can be borrowed."),
+		m + "catalog/catalog.md":                  def("Package", "Catalog", "What can be borrowed."),
 		m + "catalog/book.md":                     def("std/Concept", "Book", "Lent to a [[members/member]]."),
 		m + "catalog/shelf.md":                    def("std/Concept", "Shelf", "Holds books."),
 		project.RootPage:                          table + "| README.md | [[project]] [[members/member]] | Overview |\n",
@@ -237,7 +237,7 @@ func TestVetThinPackage(t *testing.T) {
 	r := library(t)
 	pkg(r, "wrapper", "wrapper/inner")
 	r[m+"wrapper/inner/i.md"] = def("std/Rule", "I", "")
-	// A folder that only sorts adds no level of Packages: members/rules is none.
+	// A folder that is no Package adds no level of Packages: members/rules is none.
 	r[m+"members/rules/late.md"] = def("std/Rule", "Late", "")
 	ds := vetCodes(t, r)
 	expectWarning(t, ds, "vet.thin_package", "wrapper holds only its anchor and one child, wrapper/inner")
@@ -413,14 +413,14 @@ func TestVetUnlinkedMentions(t *testing.T) {
 	}
 	// The anchor's name still covers its words: "book catalog" does not name
 	// the book inside it.
-	r[m+"catalog/catalog.md"] = def("std/Package", "Book catalog", "What can be borrowed.")
+	r[m+"catalog/catalog.md"] = def("Package", "Book catalog", "What can be borrowed.")
 	r[m+"catalog/shelf.md"] = def("std/Concept", "Shelf", "A part of the book catalog.")
 	for _, line := range noteLines(vetNotes(t, r, nil), "vet.unlinked_mention") {
 		if strings.Contains(line, "catalog/shelf.md") {
 			t.Fatalf("a word inside the name of a Package reported: %s", line)
 		}
 	}
-	r[m+"catalog/catalog.md"] = def("std/Package", "Catalog", "What can be borrowed.")
+	r[m+"catalog/catalog.md"] = def("Package", "Catalog", "What can be borrowed.")
 	// A linked Definition's name covers the words: "members" beside a linked
 	// members/member is no mention of members/member, nor of anything else.
 	r[m+"catalog/book.md"] = def("std/Concept", "Book", "Lent to [[members/member]]s; members queue.")

@@ -6,8 +6,12 @@ import (
 	"strings"
 )
 
-// CoreKind is the one Definition Core offers: the Kind of every Kind.
-const CoreKind = "Kind"
+// CoreKind and CorePackage are the two Definitions Core offers: the Kind of
+// every Kind, and the Kind of the Definition that makes its folder a Package.
+const (
+	CoreKind    = "Kind"
+	CorePackage = "Package"
+)
 
 // RootPackage is the path of the Root Package, the spec folder itself.
 const RootPackage = ""
@@ -39,10 +43,11 @@ type Source struct {
 type Spec struct {
 	Definitions map[string]*Definition // by ID: "members/member", "std/Rule", "Kind"
 	Packages    map[string]*Package    // by path; RootPackage is ""
-	// Sorting holds the folders of the spec that are no Package: they hold no
-	// anchor, and what lies in them belongs to the Package above.
-	Sorting   map[string]bool
-	Libraries map[string]*Library
+	// PlainFolders holds the folders of the spec that are no Package. Such a
+	// folder is a namespace and nothing more: what lies in it belongs to the
+	// Package above.
+	PlainFolders map[string]bool
+	Libraries    map[string]*Library
 	// Edges are the explicit dependencies between Packages: from, to, and the
 	// links that make them. The implicit edge from a child to its parent is
 	// not listed.
@@ -56,9 +61,9 @@ type Library struct {
 	Definitions []string
 }
 
-// Package is one part of the spec: the spec folder itself, or a folder that
-// holds a Definition of its own name, its anchor. A folder without an anchor
-// only sorts, and what lies in it belongs to the Package above.
+// Package is one module of the spec: the spec folder itself, or a folder
+// that holds its anchor, a Definition of kind Package that carries the
+// folder's name. Any other folder is a namespace of the Package above.
 type Package struct {
 	Path        string
 	Parent      string   // the Package above, which need not be the folder above
@@ -67,10 +72,11 @@ type Package struct {
 	Anchor      string   // the Definition that says what the Package is; "" for Root
 }
 
-// Definition is one Markdown file of the spec, of a Library, or Core's Kind.
+// Definition is one Markdown file of the spec or of a Library, or one of
+// Core's two: Kind and Package.
 type Definition struct {
 	ID       string
-	Library  string // "" for the project's spec, "core" for Kind
+	Library  string // "" for the project's spec, "core" for Kind and Package
 	Package  string // Package path for the project's spec
 	File     string // repository-relative file
 	Kind     string // resolved Kind ID; "" when it does not resolve
@@ -136,6 +142,15 @@ func (s *Spec) PackageOf(id string) string {
 	return RootPackage
 }
 
+// WhyNoPackage says, for a folder that is no Package, what it lacks: an
+// anchor, or the kind Package on the Definition that carries its name.
+func (s *Spec) WhyNoPackage(folder string) string {
+	if d := s.Definitions[AnchorOf(folder)]; d != nil && d.Own() {
+		return "its Definition " + AnchorOf(folder) + " is not of kind Package"
+	}
+	return "it holds no Definition of kind Package, " + AnchorOf(folder) + ".md"
+}
+
 // FolderOf returns the folder a path lies in: "" for a path at the top.
 func FolderOf(p string) string {
 	if i := strings.LastIndexByte(p, '/'); i >= 0 {
@@ -144,7 +159,7 @@ func FolderOf(p string) string {
 	return RootPackage
 }
 
-// AnchorOf returns the ID a Package's anchor has: the folder's own name inside
+// AnchorOf returns the ID a Package's anchor has: the folder's name inside
 // the folder, such as members/members for the Package members.
 func AnchorOf(pkg string) string {
 	return pkg + "/" + pkg[strings.LastIndexByte(pkg, '/')+1:]

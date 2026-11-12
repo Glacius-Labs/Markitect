@@ -23,8 +23,8 @@ internal/catalog/{book.go, loans.go, loans_test.go}
 
 ```yaml
 libraries:
-  std: 1.2.0
-  rest: 1.2.0
+  std: 1.1.0
+  rest: 1.1.0
 ```
 
 ## Root: anchor and Rules
@@ -79,11 +79,11 @@ The project needs no Kind of its own. A project Kind earns its place when severa
 
 The anchor, Concepts, the member's identity, a value rule that is internal, a Rule only this Package follows, a Feature and an Endpoint. Links are full paths even inside the Package.
 
-`spec/members/members.md` is the Package's anchor: the Definition that carries the folder's name makes the folder a Package, and says what it is responsible for and what it keeps to itself. A folder without one, such as `spec/members/endpoints/`, would only sort Definitions of `members`.
+`spec/members/members.md` is the Package's anchor: a Definition of kind `Package` that carries the folder's name makes the folder a Package, and says what it is responsible for and what it keeps to itself. A folder without one, such as `spec/members/endpoints/`, would be a namespace of `members` and nothing more.
 
 ```markdown
 ---
-kind: std/Package
+kind: Package
 ---
 # Members
 
@@ -179,7 +179,7 @@ Exposes [[members/register-member]] over HTTP.
 
 ```markdown
 ---
-kind: std/Package
+kind: Package
 ---
 # Catalog
 

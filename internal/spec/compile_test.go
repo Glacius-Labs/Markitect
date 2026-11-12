@@ -15,9 +15,10 @@ func def(kind, body string) string {
 	return "---\nkind: " + kind + "\n---\n" + body
 }
 
-// anchor is the anchor of a Package: the Definition of the folder's own name.
+// anchor is the anchor of a Package: the Definition of kind Package that
+// carries its folder's name.
 func anchor(title string) string {
-	return def("std/Concept", "# "+title+"\n")
+	return def("Package", "# "+title+"\n")
 }
 
 func compile(t *testing.T, files map[string]string, libs ...LibrarySource) (*Spec, Diagnostics) {
@@ -99,7 +100,9 @@ func TestCompileValidSpec(t *testing.T) {
 	}
 }
 
-func TestCompileAFolderWithoutAnAnchorOnlySorts(t *testing.T) {
+// A folder is a namespace and nothing more: what lies in it belongs to the
+// Package above. A Package is the folder its anchor lies in.
+func TestCompileAFolderIsANamespace(t *testing.T) {
 	m, ds := compile(t, map[string]string{
 		"project.md":                     def("std/Concept", "# Lending library\n\nIts aim is [[goals/fast]]; its parts are [[members]] and [[catalog]].\n"),
 		"goals/fast.md":                  def("std/Rule", "# Fast\n"),
@@ -144,8 +147,8 @@ func TestCompileAFolderWithoutAnAnchorOnlySorts(t *testing.T) {
 	if got := strings.Join(m.Packages[RootPackage].Definitions, ","); got != "goals/fast,project" {
 		t.Fatalf("Root holds %q", got)
 	}
-	// The two sort folders of members make no edge between them, and the
-	// link from catalog is an edge between the Packages.
+	// The two folders of members make no edge between them, and the link from
+	// catalog is an edge between the Packages.
 	if len(m.Edges["members"]) != 0 || len(m.Edges["catalog"]["members"]) != 1 {
 		t.Fatalf("edges = %+v", m.Edges)
 	}
@@ -157,27 +160,93 @@ func TestCompileAFolderWithoutAnAnchorOnlySorts(t *testing.T) {
 	}
 }
 
-// An anchor carries the folder's name exactly. A file that differs from it
-// only in case is refused, since the folder would silently only sort; and an
-// anchor whose front matter is broken still makes its folder a Package.
-func TestCompileAnchorNames(t *testing.T) {
+// A thing with parts is a folder that holds a Definition of its own name and
+// its parts beside it. That makes no Package: the thing, its parts and the
+// Definitions around them link each other freely, as in one namespace tree.
+func TestCompileAThingWithPartsIsNoPackage(t *testing.T) {
 	m, ds := compile(t, map[string]string{
-		"Members/members.md": anchor("Members"),
-		"Members/member.md":  def("std/Rule", "# Member\n"),
-		"catalog/catalog.md": "---\nkind: std/Concept\n# never closed\n",
-		"catalog/book.md":    def("std/Rule", "# Book\n"),
+		"members/members.md":                             anchor("Members"),
+		"members/operations/lend/lend.md":                def("std/Rule", "# Lend\n\nAllowed when [[members/operations/lend/conditions/in-stock]].\n"),
+		"members/operations/lend/conditions/in-stock.md": def("std/Rule", "# In stock\n\nA condition of [[members/operations/lend/lend]].\n"),
+		"members/rules/stock.md":                         def("std/Rule", "# Stock\n\nSee [[members/operations/lend/conditions/in-stock]].\n"),
 	})
-	expect(t, ds, "spec.anchor", ".markitect/spec/Members/members.md: spec.anchor: this file differs from the name of its folder only in case, so it is no anchor and Members only sorts; a Package's anchor carries the folder's name exactly, Members/Members.md")
-	expect(t, ds, "definition.front_matter", "catalog/catalog.md")
+	clean(t, ds)
+	if got := strings.Join(m.SortedPackages(), ","); got != ",members" {
+		t.Fatalf("Packages = %q", got)
+	}
+	if !m.PlainFolders["members/operations/lend"] || m.Definitions["members/operations/lend/lend"].Package != "members" {
+		t.Fatalf("lend is not a plain folder of members: %v", m.PlainFolders)
+	}
+	if len(m.Edges) != 0 {
+		t.Fatalf("links inside one Package made edges: %+v", m.Edges)
+	}
+	// The folder itself is no link target, and the message names the thing.
+	_, ds = compile(t, map[string]string{
+		"members/members.md":              anchor("Members"),
+		"members/operations/lend/lend.md": def("std/Rule", "# Lend\n"),
+		"members/rules/stock.md":          def("std/Rule", "# Stock\n\nSee [[members/operations/lend]].\n"),
+	})
+	expect(t, ds, "link.unresolved", `link "members/operations/lend" names a folder, which is no Package; the Definition of that name is members/operations/lend/lend`)
+}
+
+// A broken anchor is one error: its folder stays a Package, so what lies in
+// it and what links to it report nothing of their own. A kind that names an
+// anchor is no Kind, and Core's two Kinds are written as they are.
+func TestCompileABrokenAnchorIsOneError(t *testing.T) {
+	m, ds := compile(t, map[string]string{
+		"project.md":         def("std/Rule", "# Project\n\nParts: [[catalog]].\n"),
+		"catalog/catalog.md": "---\nkind: Package\n# never closed\n",
+		"catalog/book.md":    def("std/Rule", "# Book\n\nBorrowed by a [[members/member]].\n"),
+		"members/members.md": anchor("Members"),
+		"members/member.md":  def("std/Rule", "# Member\n"),
+	})
+	if len(ds) != 1 || ds[0].Code != "definition.front_matter" {
+		t.Fatalf("one broken anchor must give one error, got:\n%v", ds)
+	}
+	if m.Packages["catalog"] == nil || m.Definitions["catalog/book"].Package != "catalog" {
+		t.Fatalf("Packages = %v", m.SortedPackages())
+	}
+	_, ds = compile(t, map[string]string{
+		"members/members.md": anchor("Members"),
+		"members/chair.md":   def("members/members", "# Chair, whose kind is an anchor\n"),
+		"members/clerk.md":   def("package", "# Clerk, whose kind is misspelt\n"),
+	})
+	expect(t, ds, "kind.not_a_kind", "members/chair.md:2")
+	expect(t, ds, "kind.unresolved", `kind "package" resolves to nothing; Core's two Kinds are written Kind and Package`)
 	if len(ds) != 2 {
 		t.Fatalf("diagnostics:\n%v", ds)
 	}
-	if m.Packages["Members"] != nil || m.Packages["catalog"] == nil || m.Definitions["catalog/book"].Package != "catalog" {
-		t.Fatalf("Packages = %v", m.SortedPackages())
+}
+
+// An anchor carries the name of its folder, and the spec folder needs none.
+func TestCompilePackageDefinitions(t *testing.T) {
+	m, ds := compile(t, map[string]string{
+		"root.md":            anchor("Root"),
+		"members/about.md":   anchor("Members"),
+		"members/member.md":  def("std/Rule", "# Member\n"),
+		"Catalog/catalog.md": anchor("Catalog"),
+		"loans/loans.md":     anchor("Loans"),
+		"loans/loan.md":      def("Package.md", "# Loan, a second anchor\n"),
+		"Package/x.md":       def("std/Rule", "# In a folder named as Core's Package\n"),
+		"usage.md":           def("std/Rule", "# Usage\n\nAn anchor is a [[Package]] and of a [[Kind]].\n"),
+	})
+	expect(t, ds, "spec.package", ".markitect/spec/root.md: spec.package: a Package Definition makes the folder it lies in a Package; the spec folder is the Root Package already")
+	expect(t, ds, "spec.package", ".markitect/spec/members/about.md: spec.package: a Package Definition carries the name of its folder, so this one is members/members.md")
+	expect(t, ds, "spec.package", ".markitect/spec/Catalog/catalog.md: spec.package: a Package Definition carries the name of its folder, so this one is Catalog/Catalog.md")
+	expect(t, ds, "spec.package", ".markitect/spec/loans/loan.md: spec.package: a Package Definition carries the name of its folder, so this one is loans/loans.md")
+	expect(t, ds, "spec.reserved", `"Package" is Core's Package`)
+	if len(ds) != 5 {
+		t.Fatalf("diagnostics:\n%v", ds)
+	}
+	if got := strings.Join(m.SortedPackages(), ","); got != ",loans" {
+		t.Fatalf("Packages = %q", got)
+	}
+	if got := m.Definitions["loans/loans"]; got.Kind != CorePackage || m.Definitions[CorePackage].Kind != CoreKind {
+		t.Fatalf("the anchor is of %q", got.Kind)
 	}
 }
 
-func TestCompileASortFolderIsNoLinkTarget(t *testing.T) {
+func TestCompileAFolderIsNoLinkTarget(t *testing.T) {
 	_, ds := compile(t, map[string]string{
 		"project.md":                 def("std/Rule", "# Project\n\nSee [[members/rules]] and [[catalog]].\n"),
 		"members/members.md":         anchor("Members"),
@@ -187,11 +256,10 @@ func TestCompileASortFolderIsNoLinkTarget(t *testing.T) {
 		"members/kinds/treasurer.md": def("members/kinds", "# Treasurer\n"),
 		"catalog/book.md":            def("std/Rule", "# Book\n\nNot for [[members/rules/secret]].\n"),
 	})
-	expect(t, ds, "link.unresolved", `link "members/rules" names a folder that only sorts: it holds no Definition of its own name, members/rules/rules.md`)
-	expect(t, ds, "link.unresolved", `link "catalog" names a folder that only sorts`)
-	expect(t, ds, "link.unresolved", "so it is no Package; link a Definition in it or the Package above")
-	expect(t, ds, "kind.unresolved", `kind "members/kinds" names a folder that only sorts: it holds no Definition of its own name, members/kinds/kinds.md, so it is no Package; name a Kind in it`)
-	// catalog has no page, so its book lies in Root, above members.
+	expect(t, ds, "link.unresolved", `link "members/rules" names a folder that is no Package: it holds no Definition of kind Package, members/rules/rules.md; link a Definition in it or the Package above`)
+	expect(t, ds, "link.unresolved", `link "catalog" names a folder that is no Package`)
+	expect(t, ds, "kind.unresolved", `kind "members/kinds" names a folder that is no Package: it holds no Definition of kind Package, members/kinds/kinds.md; name a Kind in it`)
+	// catalog has no anchor, so its book lies in Root, above members.
 	expect(t, ds, "link.downward", "Root links down to members/rules/secret")
 	if len(ds) != 4 {
 		t.Fatalf("diagnostics:\n%v", ds)
@@ -391,7 +459,10 @@ func TestCompileLibraryErrors(t *testing.T) {
 		{Path: "Link.md", Data: []byte("---\nkind: Kind\n---\n# Link\n\nInto the spec: [[members/member]], other Library: [[rest/Endpoint]].\n")},
 	}}
 	_, ds := compile(t, map[string]string{"members/member.md": def("std/Rule", "# Member\n")}, bad,
-		LibrarySource{Name: "Bad Name", Dir: "x"})
+		LibrarySource{Name: "Bad Name", Dir: "x"}, LibrarySource{Name: "Package", Dir: "y"},
+		LibrarySource{Name: "parts", Version: "1.0.0", Dir: "parts", Files: []File{{Path: "Area.md", Data: []byte("---\nkind: Package\n---\n# Area, an anchor in a Library\n")}}})
+	expect(t, ds, "library.name", `"Package" cannot name a Library`)
+	expect(t, ds, "library.not_a_kind", "parts/Area.md")
 	expect(t, ds, "library.internal", "Page.md")
 	expect(t, ds, "library.not_a_kind", "Home.md")
 	expect(t, ds, "library.file", "nested/Thing.md")

@@ -5,7 +5,7 @@ description: Use to architect a project in Markdown with its owner - to start a 
 
 # Architecting the project
 
-A Markitect spec is typed documentation: Markdown files in `.markitect/spec/` that state what the project is and must do, the way good documentation would. Each file is a Definition of some Kind; a folder that holds a Definition of its own name, its anchor, is a Package, and any other folder only sorts; a link names its target by path. `markitect check` compiles the structure. The agents that build the spec never change it.
+A Markitect spec is typed documentation: Markdown files in `.markitect/spec/` that state what the project is and must do, the way good documentation would. Each file is a Definition of some Kind; a folder is a namespace, and a Package is a folder that holds its anchor, a Definition of kind `Package`; a link names its target by path. `markitect check` compiles the structure. The agents that build the spec never change it.
 
 Read [reference.md](reference.md) for the form, the Kinds, the commands and the error codes, and [examples.md](examples.md) for a spec that compiles.
 
@@ -55,7 +55,7 @@ Then replace the placeholder in `project.md` with what the project is, for whom,
 
 The project as it is becomes the spec: read what is, and state it as what should be, the way a good maintainer would document it: what the project is, which areas it has, what callers rely on. The first spec is finished when a build would change nothing, so a reviewer verifies it against the project before you hand it over. You also write the registry, so every file has one owner. You change only `.markitect/`; the project stays as it is.
 
-1. **Read the project,** every artifact and not only the code: the README and documentation, the entry points, the folder structure and what imports what, the tests, the scripts, the build, CI and deployment files, the configuration. Documentation and tests show what the authors intend; code and scripts show what exists. Add `rest: 1.2.0` or `cli: 1.2.0` to the manifest when the project has such interfaces, then run `markitect tidy`.
+1. **Read the project,** every artifact and not only the code: the README and documentation, the entry points, the folder structure and what imports what, the tests, the scripts, the build, CI and deployment files, the configuration. Documentation and tests show what the authors intend; code and scripts show what exists. Add `rest: 1.1.0` or `cli: 1.1.0` to the manifest when the project has such interfaces, then run `markitect tidy`.
 2. **Ask of each artifact what it holds that should also be in the spec,** not what it holds that the spec does not say, which would make the spec a transcription. There are three answers, and most of what a file holds gets one of the last two.
    - **State it with its values** when a caller relies on the value: inputs and their validation, returned and stored data shapes, status and exit codes, stored data and its order, and whatever the documentation or a recorded decision states as intended.
    - **State the obligation without its values** when the project must do it but nobody depends on how exactly: that a request times out, not after how many seconds. Do not retell a file: of an example configuration, a set of alert rules or a test script, state what it must cover, not its lines.
@@ -100,8 +100,8 @@ Use the tools while you work, not only at the end:
 Knowledge sits broad at the top and deep below. An agent working on a Package reads it, everything its parents define and the public Definitions it links to.
 
 - **Root** (the spec folder itself): the project anchor (`std/Project`), project-wide Rules, layout conventions (where code and tests live), the architecture, shared Kinds.
-- **One Package per real area** of the system, with a single responsibility and its own code folder. Its anchor (`members/members.md`, a `std/Package`) says what it is responsible for and what it keeps to itself; without the anchor the folder is no Package. It holds that area's Concepts, Features and interfaces (`rest/Endpoint`, `cli/Command`) and the Rules only it follows. Do not make a Package of an anchor and one Definition.
-- **A folder without an anchor only sorts.** Its Definitions belong to the Package above, keep the folder in their path (`members/rules/loan-limit`), and make no dependency among themselves. Nothing links to such a folder.
+- **One Package per real area** of the system, with a single responsibility and its own code folder. Its anchor (`members/members.md`, of kind `Package`) says what it is responsible for and what it keeps to itself; without the anchor the folder is no Package. It holds that area's Concepts, Features and interfaces (`rest/Endpoint`, `cli/Command`) and the Rules only it follows. Do not make a Package of an anchor and one Definition.
+- **A folder is a namespace.** Below a Package, folders order its Definitions, by Kind (`members/rules/loan-limit`) or as a thing with its parts (`members/operations/lend/lend.md` beside `members/operations/lend/conditions/`). They belong to the Package, keep the folder in their path, and make no dependency among themselves. Nothing links to a folder that is no Package.
 - **Shared things go to the lowest common parent** of the Packages that use them. A Kind used by several Packages sits at Root, because using a Kind is a dependency.
 - **Dependencies point up or sideways, never down, and never in a circle.** A link to an ancestor's Definition is free. A link to another Package's Definition is a dependency; keep them few. A parent may name a child Package (`[[members]]`), not a Definition inside it.
 - **Mark a Definition `internal: true`** when only its own Package should link to it.

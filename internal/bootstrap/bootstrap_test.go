@@ -57,7 +57,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 
 	out := mustRun(t, r.Dir, "init", "--name", "Lending library")
 	noRepository(t, r.Dir)
-	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/spec/project.md", "wrote .markitect/lock.yaml: std 1.2.0", "installed the harness in .claude/: the architect, build"} {
+	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/spec/project.md", "wrote .markitect/lock.yaml: std 1.1.0", "installed the harness in .claude/: the architect, build"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("init output lacks %q:\n%s", want, out)
 		}
@@ -75,8 +75,8 @@ func TestCommandsEndToEnd(t *testing.T) {
 	}
 
 	r.Write(".markitect/spec/loan-limit.md", "---\nkind: std/Rule\n---\n# Loan limit\n\nAt most `5` open loans, for [[members]].\n")
-	// members is a Package by its anchor, the Definition of the folder's name.
-	r.Write(".markitect/spec/members/members.md", "---\nkind: std/Package\n---\n# Members\n\nWho may borrow.\n")
+	// members is a Package by its anchor, a Definition of kind Package.
+	r.Write(".markitect/spec/members/members.md", "---\nkind: Package\n---\n# Members\n\nWho may borrow.\n")
 	r.Write(".markitect/spec/members/member.md", "---\nkind: std/Concept\n---\n# Member\n\nA person who borrows.\n")
 	r.Write(".markitect/registry.md", read(t, r.Dir, ".markitect/registry.md")+"| `README.md` | [[project]], [[loan-limit]] | Overview |\n")
 	r.Write(".markitect/registry/members.md", "---\npaths: [src/members/**]\n---\n# Registry: members\n\n| File | Realizes | Why |\n|---|---|---|\n| `src/members/member.go` | [[members/members]], [[members/member]] | The Package and its type |\n")
@@ -122,10 +122,10 @@ func TestCommandsEndToEnd(t *testing.T) {
 	if code, _, errOut := run(t, r.Dir, "doc", "members/nobody"); code != 1 || !strings.Contains(errOut, "neither a Definition nor a Package") {
 		t.Fatalf("doc of nothing: %d %s", code, errOut)
 	}
-	// A folder without an anchor is neither, and doc says that it only sorts.
+	// A folder without an anchor is neither, and doc says that it is no Package.
 	r.Write(".markitect/spec/members/rules/late.md", "---\nkind: std/Rule\n---\n# Late\n\nA [[members/member]] is late after `14` days.\n")
-	if code, _, errOut := run(t, r.Dir, "doc", "members/rules"); code != 1 || !strings.Contains(errOut, "members/rules is a folder that only sorts") {
-		t.Fatalf("doc of a sort folder: %d %s", code, errOut)
+	if code, _, errOut := run(t, r.Dir, "doc", "members/rules"); code != 1 || !strings.Contains(errOut, "members/rules is a folder that is no Package: it holds no Definition of kind Package, members/rules/rules.md") {
+		t.Fatalf("doc of a folder: %d %s", code, errOut)
 	}
 	wantAll(t, mustRun(t, r.Dir, "doc", "members/rules/late"), "members/rules/late: Late (std/Rule)\n", "Package members, .markitect/spec/members/rules/late.md\n")
 	if err := os.RemoveAll(filepath.Join(r.Dir, ".markitect", "spec", "members", "rules")); err != nil {
@@ -630,13 +630,13 @@ func TestInitInstallsTheHarness(t *testing.T) {
 
 func TestTidyWritesTheLock(t *testing.T) {
 	r := newFolder(t)
-	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.2.0\n  rest: 1.2.0\n  web: 0.1.0\n")
+	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.1.0\n  rest: 1.1.0\n  web: 0.1.0\n")
 	code, _, errOut := run(t, r.Dir, "tidy")
 	if code != 1 || !strings.Contains(errOut, "library.missing") {
 		t.Fatalf("lock without web: %d %s", code, errOut)
 	}
 	r.Write(".markitect/libraries/web/Page.md", "---\nkind: Kind\n---\n# Page\n")
-	if out := mustRun(t, r.Dir, "tidy"); !strings.Contains(out, "rest 1.2.0, std 1.2.0, web 0.1.0") {
+	if out := mustRun(t, r.Dir, "tidy"); !strings.Contains(out, "rest 1.1.0, std 1.1.0, web 0.1.0") {
 		t.Fatalf("lock = %s", out)
 	}
 	if lock := read(t, r.Dir, ".markitect/lock.yaml"); !strings.Contains(lock, "  web:\n    version: 0.1.0\n    digest: sha256:") {
@@ -661,7 +661,7 @@ func TestAStandardLibraryMovesWithTheBinary(t *testing.T) {
 	}
 	r := old()
 	code, out, _ := run(t, r.Dir, "check")
-	wantAll(t, out, ".markitect/manifest.yaml:3: library.version: this markitect ships std 1.2.0, not 1.0.0; markitect tidy names 1.2.0 in the manifest", ".markitect/manifest.yaml:4: library.version: this markitect ships rest 1.2.0, not 0.9.0")
+	wantAll(t, out, ".markitect/manifest.yaml:3: library.version: this markitect ships std 1.1.0, not 1.0.0; markitect tidy names 1.1.0 in the manifest", ".markitect/manifest.yaml:4: library.version: this markitect ships rest 1.1.0, not 0.9.0")
 	if code != 1 || strings.Contains(out, "lock.mismatch") || strings.Contains(out, "kind.unresolved") || strings.Count(out, "library.version") != 2 {
 		t.Fatalf("check on an earlier version: %d\n%s", code, out)
 	}
@@ -669,10 +669,10 @@ func TestAStandardLibraryMovesWithTheBinary(t *testing.T) {
 		t.Fatalf("version on an earlier version:\n%s", out)
 	}
 	wantAll(t, mustRun(t, r.Dir, "tidy"),
-		".markitect/manifest.yaml now names std 1.2.0, where it named 1.0.0",
-		".markitect/manifest.yaml now names rest 1.2.0, where it named 0.9.0",
-		"wrote .markitect/lock.yaml: rest 1.2.0, std 1.2.0")
-	if got, want := read(t, r.Dir, ".markitect/manifest.yaml"), strings.NewReplacer("1.0.0", "1.2.0", "0.9.0", "1.2.0").Replace(earlier); got != want {
+		".markitect/manifest.yaml now names std 1.1.0, where it named 1.0.0",
+		".markitect/manifest.yaml now names rest 1.1.0, where it named 0.9.0",
+		"wrote .markitect/lock.yaml: rest 1.1.0, std 1.1.0")
+	if got, want := read(t, r.Dir, ".markitect/manifest.yaml"), strings.NewReplacer("1.0.0", "1.1.0", "0.9.0", "1.1.0").Replace(earlier); got != want {
 		t.Fatalf("the manifest after tidy:\n%s", got)
 	}
 	mustRun(t, r.Dir, "check")
@@ -682,16 +682,16 @@ func TestAStandardLibraryMovesWithTheBinary(t *testing.T) {
 
 	// update does the same, and says so.
 	r = old()
-	wantAll(t, mustRun(t, r.Dir, "update", "--files"), ".markitect/manifest.yaml now names std 1.2.0, where it named 1.0.0", "lock: rewritten")
+	wantAll(t, mustRun(t, r.Dir, "update", "--files"), ".markitect/manifest.yaml now names std 1.1.0, where it named 1.0.0", "lock: rewritten")
 	mustRun(t, r.Dir, "check")
 
 	// The version is written where it stands, whatever else the line holds: in
 	// quotes, in flow style behind a project Library of the same version, or on
 	// a line of its own.
 	for before, after := range map[string]string{
-		"libraries:\r\n  \"std\" :   '1.0.0'   # 1.0.0 was the first\r\n": "libraries:\r\n  \"std\" :   '1.2.0'   # 1.0.0 was the first\r\n",
-		"libraries: {web: 1.0.0, std: 1.0.0}\n":                           "libraries: {web: 1.0.0, std: 1.2.0}\n",
-		"libraries:\n  std:\n    1.0.0\n  web: 1.0.0\n":                   "libraries:\n  std:\n    1.2.0\n  web: 1.0.0\n",
+		"libraries:\r\n  \"std\" :   '1.0.0'   # 1.0.0 was the first\r\n": "libraries:\r\n  \"std\" :   '1.1.0'   # 1.0.0 was the first\r\n",
+		"libraries: {web: 1.0.0, std: 1.0.0}\n":                           "libraries: {web: 1.0.0, std: 1.1.0}\n",
+		"libraries:\n  std:\n    1.0.0\n  web: 1.0.0\n":                   "libraries:\n  std:\n    1.1.0\n  web: 1.0.0\n",
 	} {
 		r = old()
 		if strings.Contains(before, "web") {
@@ -926,10 +926,10 @@ func TestDocAndVetDocuments(t *testing.T) {
 	}
 	// A Package's public Definitions are what it publishes; doc shows them
 	// apart from its internal ones, in its text and its document.
-	r.Write(".markitect/spec/members/members.md", "---\nkind: std/Package\n---\n# Members\n\nWho may borrow.\n")
+	r.Write(".markitect/spec/members/members.md", "---\nkind: Package\n---\n# Members\n\nWho may borrow.\n")
 	r.Write(".markitect/spec/members/member.md", "---\nkind: std/Concept\n---\n# Member\n\nA person who borrows.\n")
 	r.Write(".markitect/spec/members/limit.md", "---\nkind: std/Rule\ninternal: true\n---\n# Limit\n\nA [[members/member]] borrows at most five items.\n")
-	wantAll(t, mustRun(t, r.Dir, "doc", "members"), "\nPublic Definitions:\n  members/member: Member (std/Concept)\n  members/members: Members (std/Package)\n", "\nInternal Definitions:\n  members/limit: Limit (std/Rule)\n")
+	wantAll(t, mustRun(t, r.Dir, "doc", "members"), "\nPublic Definitions:\n  members/member: Member (std/Concept)\n  members/members: Members (Package)\n", "\nInternal Definitions:\n  members/limit: Limit (std/Rule)\n")
 	var members struct {
 		Package struct {
 			Definitions []struct {

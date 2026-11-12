@@ -198,7 +198,7 @@ func TestStatusCountsItemsPerPackage(t *testing.T) {
 			t.Fatalf("after a spec-problem: %+v", pk)
 		}
 	}
-	if broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 1.2.0\n", project.SpecDir + "/x.md": "no front matter\n"}).status(false); len(broken.Packages) != 0 {
+	if broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 1.1.0\n", project.SpecDir + "/x.md": "no front matter\n"}).status(false); len(broken.Packages) != 0 {
 		t.Fatalf("a spec with errors has Packages: %+v", broken.Packages)
 	}
 }
@@ -260,16 +260,16 @@ func TestStatusOfOnePackage(t *testing.T) {
 		t.Fatalf("a Package the spec does not have: %v", err)
 	}
 	// A spec with errors has no list to limit, whatever Package is asked for.
-	broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 1.2.0\n", project.SpecDir + "/x.md": "no front matter\n"})
+	broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 1.1.0\n", project.SpecDir + "/x.md": "no front matter\n"})
 	if st, err := broken.engine.Status(context.Background(), run.StatusRequest{Dir: broken.dir, Package: "nowhere"}); err != nil || len(st.SpecErrors) == 0 {
 		t.Fatalf("a spec with errors: %v\n%s", err, st.Text())
 	}
 }
 
-// A folder without an anchor only sorts: the Definitions in it
+// A folder without an anchor is only a namespace: the Definitions in it
 // belong to the Package above, to its Definitions and its items, also once one
 // is gone, and the folder is no Package of its own in status.
-func TestStatusCountsASortFolderForThePackageAbove(t *testing.T) {
+func TestStatusCountsAFolderForThePackageAbove(t *testing.T) {
 	files := library()
 	files[m+"members/rules/limit.md"] = def("std/Rule", "Limit", "At most `5` open loans a [[members/member]].")
 	files[project.RegistryDir+"/members.md"] += "| src/members/limit.go | [[members/rules/limit]] | Limit |\n"
@@ -290,7 +290,7 @@ func TestStatusCountsASortFolderForThePackageAbove(t *testing.T) {
 				return pk
 			}
 			if strings.HasPrefix(pk.Package, "members/") && pk.Package != "members/loans" {
-				t.Fatalf("a folder that only sorts is a Package: %+v", st.Packages)
+				t.Fatalf("a folder without an anchor is a Package: %+v", st.Packages)
 			}
 		}
 		t.Fatalf("no Package members: %+v", st.Packages)
@@ -298,13 +298,13 @@ func TestStatusCountsASortFolderForThePackageAbove(t *testing.T) {
 	}
 	st := p.status(false)
 	if pk := members(st); pk.Definitions != 3 || pk.Items != 3 || len(st.Packages) != 4 {
-		t.Fatalf("members with a sort folder: %+v of %+v", pk, st.Packages)
+		t.Fatalf("members with a folder below it: %+v of %+v", pk, st.Packages)
 	}
 	if of("members").Definitions != 3 || listed(of("members")) != "members/member,members/members,members/rules/limit" {
 		t.Fatalf("status of members:\n%s", of("members").Text())
 	}
 	if _, err := p.engine.Status(context.Background(), run.StatusRequest{Dir: p.dir, Package: "members/rules"}); !errors.Is(err, run.ErrUsage) {
-		t.Fatalf("a sort folder is no Package to ask for: %v", err)
+		t.Fatalf("a folder without an anchor is no Package to ask for: %v", err)
 	}
 	// Gone, the Definition is still counted for the Package above its folder.
 	p.verifyAll()
@@ -312,7 +312,7 @@ func TestStatusCountsASortFolderForThePackageAbove(t *testing.T) {
 	st = p.status(false)
 	gone := p.item(st, "members/rules/limit")
 	if gone.State != run.StateGone || len(st.Packages) != 4 {
-		t.Fatalf("a gone Definition of a sort folder:\n%s", st.Text())
+		t.Fatalf("a gone Definition of a folder below a Package:\n%s", st.Text())
 	}
 	if pk := members(st); pk.Definitions != 2 || pk.Items != 1 {
 		t.Fatalf("the gone item is not members': %+v", pk)
@@ -417,7 +417,7 @@ func TestAChangedKindReachesItsDefinitions(t *testing.T) {
 // of its Kinds is to verify.
 func TestALibraryCountsByItsLockDigest(t *testing.T) {
 	files := library()
-	files[project.ManifestFile] = "libraries:\n  std: 1.2.0\n  web: 0.1.0\n"
+	files[project.ManifestFile] = "libraries:\n  std: 1.1.0\n  web: 0.1.0\n"
 	files[project.LibraryDir+"/web/Page.md"] = "---\nkind: Kind\n---\n# Page\n"
 	files[project.LibraryDir+"/web/Form.md"] = "---\nkind: Kind\n---\n# Form\n"
 	files[m+"catalog/search.md"] = def("web/Form", "Search", "Finds a [[catalog/book]].")

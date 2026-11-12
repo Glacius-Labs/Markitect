@@ -33,18 +33,18 @@ func library() map[string]string {
 		std.Files = append(std.Files, spec.File{Path: f.Path, Data: f.Data})
 	}
 	return map[string]string{
-		project.ManifestFile:                      "libraries:\n  std: 1.2.0\n",
+		project.ManifestFile:                      "libraries:\n  std: 1.1.0\n",
 		project.LockFile:                          string(spec.RenderLock([]spec.LibrarySource{std})),
 		".claude/agents/markitect-reviewer.md":    "---\nname: markitect-reviewer\n---\nReview.\n",
 		".claude/agents/markitect-builder.md":     "---\nname: markitect-builder\n---\nBuild.\n",
 		".claude/settings.json":                   `{"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "command -v markitect >/dev/null 2>&1 || exit 0; markitect hook pretool"}]}]}}` + "\n",
 		m + "project.md":                          def("std/Project", "Library", "Parts: [[members]], [[catalog]]."),
 		m + "loan-limit.md":                       def("std/Rule", "Loan limit", "At most `5` open loans."),
-		m + "members/members.md":                  def("std/Package", "Members", "The people who borrow."),
+		m + "members/members.md":                  def("Package", "Members", "The people who borrow."),
 		m + "members/member.md":                   def("std/Concept", "Member", "A person."),
-		m + "members/loans/loans.md":              def("std/Package", "Loans", "What a member has borrowed."),
+		m + "members/loans/loans.md":              def("Package", "Loans", "What a member has borrowed."),
 		m + "members/loans/loan.md":               def("std/Concept", "Loan", "A [[members/member]] borrows."),
-		m + "catalog/catalog.md":                  def("std/Package", "Catalog", "The books the library holds."),
+		m + "catalog/catalog.md":                  def("Package", "Catalog", "The books the library holds."),
 		m + "catalog/book.md":                     def("std/Concept", "Book", "A book has a title."),
 		project.RootPage:                          table + "| README.md | [[project]] | Overview |\n",
 		project.RegistryDir + "/members.md":       "---\npaths: [src/members/**]\n---\n" + table + "| src/members/member.go | [[members/member]], [[members/members]] | Member |\n",

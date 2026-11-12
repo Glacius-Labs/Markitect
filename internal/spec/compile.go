@@ -12,7 +12,20 @@ const coreBody = `# Kind
 
 A Kind says what a Definition is and how it is used. Every Definition names
 its Kind in its front matter; a Kind is itself a Definition whose Kind is
-Kind. Core offers nothing else.
+Kind. Core offers this Kind and Package, and nothing else.
+`
+
+const corePackageBody = `# Package
+
+A Package Definition makes the folder it lies in a Package, a module of the
+project, and carries the folder's name: members/members.md for the Package
+members. It says what the Package is responsible for, so that no two Packages
+are responsible for the same thing, and what it keeps to itself. It does not
+list what the Package contains or depends on.
+
+It is verified like every Definition: the files the Package owns do what it
+is responsible for, and they rely on nothing of another Package that no link
+of its Definitions declares.
 `
 
 // Compile parses and checks a spec with its Libraries. The returned
@@ -21,15 +34,16 @@ Kind. Core offers nothing else.
 func Compile(src Source) (*Spec, Diagnostics) {
 	c := &compiler{
 		spec: &Spec{
-			Definitions: map[string]*Definition{},
-			Packages:    map[string]*Package{RootPackage: {Path: RootPackage}},
-			Libraries:   map[string]*Library{},
-			Edges:       map[string]map[string][]Use{},
-			Sorting:     map[string]bool{},
+			Definitions:  map[string]*Definition{},
+			Packages:     map[string]*Package{RootPackage: {Path: RootPackage}},
+			Libraries:    map[string]*Library{},
+			Edges:        map[string]map[string][]Use{},
+			PlainFolders: map[string]bool{},
 		},
 		rawKind: map[string]rawKind{},
 	}
 	c.spec.Definitions[CoreKind] = &Definition{ID: CoreKind, Library: "core", Kind: CoreKind, Title: CoreKind, File: "core/Kind.md", Data: []byte(coreBody), Words: Words([]byte(coreBody))}
+	c.spec.Definitions[CorePackage] = &Definition{ID: CorePackage, Library: "core", Kind: CoreKind, Title: CorePackage, File: "core/Package.md", Data: []byte(corePackageBody), Words: Words([]byte(corePackageBody))}
 	for _, lib := range src.Libraries {
 		c.loadLibrary(lib)
 	}
@@ -56,11 +70,12 @@ type compiler struct {
 	diags   Diagnostics
 	rawKind map[string]rawKind // Definition ID -> kind as written
 	raw     map[string][]RawLink
+	pages   map[string]parsed // by file, parsed once
 }
 
 func (c *compiler) loadLibrary(lib LibrarySource) {
-	if !ValidSegment(lib.Name) || lib.Name == CoreKind {
-		c.diags.Add("library.name", lib.Dir, 0, "%q cannot name a Library: use letters, digits, - and _, and not %q", lib.Name, CoreKind)
+	if !ValidSegment(lib.Name) || lib.Name == CoreKind || lib.Name == CorePackage {
+		c.diags.Add("library.name", lib.Dir, 0, "%q cannot name a Library: use letters, digits, - and _, and neither %q nor %q", lib.Name, CoreKind, CorePackage)
 		return
 	}
 	c.spec.Libraries[lib.Name] = &Library{Name: lib.Name, Version: lib.Version}
@@ -103,18 +118,22 @@ func (c *compiler) loadSpec(src Source) {
 	}
 	files := append([]File(nil), src.Files...)
 	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
-	// A folder is a Package when it holds a Definition of its own name.
-	anchored, misspelled := map[string]bool{}, map[string]string{}
+	// A folder is a namespace. It is a Package when it holds its anchor: a
+	// Definition of kind Package that carries the folder's name.
+	anchored := map[string]bool{}
 	for _, f := range files {
-		if id, ok := strings.CutSuffix(f.Path, ".md"); ok && ValidPath(id) {
-			folder := FolderOf(id)
-			switch {
-			case folder == RootPackage:
-			case id == AnchorOf(folder):
-				anchored[folder] = true
-			case strings.EqualFold(id, AnchorOf(folder)):
-				misspelled[folder] = path.Join(src.Dir, f.Path)
-			}
+		id, ok := strings.CutSuffix(f.Path, ".md")
+		if !ok || !ValidPath(id) || !c.declaresPackage(path.Join(src.Dir, f.Path), f.Data) {
+			continue
+		}
+		file := path.Join(src.Dir, f.Path)
+		switch folder := FolderOf(id); {
+		case folder == RootPackage:
+			c.diags.Add("spec.package", file, 0, "a Package Definition makes the folder it lies in a Package; the spec folder is the Root Package already")
+		case id != AnchorOf(folder):
+			c.diags.Add("spec.package", file, 0, "a Package Definition carries the name of its folder, so this one is %s.md", AnchorOf(folder))
+		default:
+			anchored[folder] = true
 		}
 	}
 	top := map[string]bool{}
@@ -138,7 +157,7 @@ func (c *compiler) loadSpec(src Source) {
 			}
 			folder = strings.TrimPrefix(folder+"/"+s, "/")
 			if !anchored[folder] {
-				c.spec.Sorting[folder] = true
+				c.spec.PlainFolders[folder] = true
 				continue
 			}
 			if _, ok := c.spec.Packages[folder]; !ok {
@@ -154,8 +173,8 @@ func (c *compiler) loadSpec(src Source) {
 		}
 		if _, taken := c.spec.Definitions[id]; taken {
 			what := "a Library Kind"
-			if id == CoreKind {
-				what = "Core's Kind"
+			if id == CoreKind || id == CorePackage {
+				what = "Core's " + id
 			}
 			c.diags.Add("spec.reserved", file, 0, "%s is already the ID of %s; choose another name", id, what)
 			continue
@@ -166,13 +185,6 @@ func (c *compiler) loadSpec(src Source) {
 		}
 		d.Package = pkg
 		c.spec.Packages[pkg].Definitions = append(c.spec.Packages[pkg].Definitions, id)
-	}
-	// A Definition that differs from its folder's name only in case looks like
-	// an anchor and is none.
-	for folder, file := range misspelled {
-		if !anchored[folder] {
-			c.diags.Add("spec.anchor", file, 0, "this file differs from the name of its folder only in case, so it is no anchor and %s only sorts; a Package's anchor carries the folder's name exactly, %s.md", folder, AnchorOf(folder))
-		}
 	}
 	for folder, byKey := range names {
 		for _, entries := range byKey {
@@ -196,9 +208,49 @@ func (c *compiler) loadSpec(src Source) {
 	}
 }
 
+// declaresPackage reports whether a Definition file names Core's Package as
+// its kind. Front matter that cannot be read is searched for the line itself,
+// so that a broken anchor stays one error and its folder a Package.
+func (c *compiler) declaresPackage(file string, data []byte) bool {
+	page, err := c.page(file, data)
+	if err == nil {
+		node := page.Front["kind"]
+		return node != nil && node.Kind == yaml.ScalarNode && isCorePackage(node.Value)
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		if value, ok := strings.CutPrefix(strings.TrimSpace(line), "kind:"); ok {
+			return isCorePackage(strings.Trim(strings.TrimSpace(value), `"'`))
+		}
+	}
+	return false
+}
+
+func isCorePackage(kind string) bool {
+	return strings.TrimSuffix(strings.TrimSpace(kind), ".md") == CorePackage
+}
+
+// page parses a file once: loadSpec reads the kind of every file before it
+// reads the Definitions.
+func (c *compiler) page(file string, data []byte) (Page, error) {
+	if p, ok := c.pages[file]; ok {
+		return p.page, p.err
+	}
+	page, err := ParsePage(data)
+	if c.pages == nil {
+		c.pages = map[string]parsed{}
+	}
+	c.pages[file] = parsed{page, err}
+	return page, err
+}
+
+type parsed struct {
+	page Page
+	err  error
+}
+
 func (c *compiler) reserved(dir, name string) {
-	if name == CoreKind {
-		c.diags.Add("spec.reserved", path.Join(dir, name), 0, "%q is Core's Kind; choose another top-level name", name)
+	if name == CoreKind || name == CorePackage {
+		c.diags.Add("spec.reserved", path.Join(dir, name), 0, "%q is Core's %s; choose another top-level name", name, name)
 	}
 	if _, ok := c.spec.Libraries[name]; ok {
 		c.diags.Add("spec.reserved", path.Join(dir, name), 0, "%q is the name of a Library; links to %s/... would be ambiguous", name, name)
@@ -208,7 +260,7 @@ func (c *compiler) reserved(dir, name string) {
 // parseDefinition reads one Definition file. It returns nil when the file is
 // unusable; the reason is then a diagnostic.
 func (c *compiler) parseDefinition(id, file string, data []byte) *Definition {
-	page, err := ParsePage(data)
+	page, err := c.page(file, data)
 	if err != nil {
 		// Keep the Definition, so that links to it still resolve and one
 		// broken file reports one error.
@@ -273,7 +325,7 @@ func (c *compiler) resolve() {
 		if k := c.rawKind[id]; k.value != "" {
 			link := c.resolveLink(d, k.value, k.line, true)
 			if link.Target != "" {
-				if link.Package || link.Target != CoreKind && c.rawKind[link.Target].value != CoreKind {
+				if link.Package || link.Target != CoreKind && link.Target != CorePackage && c.rawKind[link.Target].value != CoreKind {
 					c.diags.Add("kind.not_a_kind", d.File, k.line, "%s is not a Kind: a Kind is a Definition whose kind is Kind", k.value)
 				} else {
 					d.Kind = link.Target
@@ -304,8 +356,8 @@ func (c *compiler) resolveLink(d *Definition, raw string, line int, kind bool) L
 	}
 	first, _, nested := strings.Cut(target, "/")
 	switch {
-	case target == CoreKind:
-		link.Target = CoreKind
+	case target == CoreKind || target == CorePackage:
+		link.Target = target
 	case c.spec.Libraries[first] != nil:
 		if _, ok := c.spec.Definitions[target]; ok && nested {
 			link.Target = target
@@ -314,19 +366,27 @@ func (c *compiler) resolveLink(d *Definition, raw string, line int, kind bool) L
 			return link
 		}
 	case d.Library != "":
-		c.diags.Add(code, d.File, line, "%s %q: a Library Definition may link only to Libraries the manifest names and to Kind", what, raw)
+		c.diags.Add(code, d.File, line, "%s %q: a Library Definition may link only to Libraries the manifest names and to Core's Kind and Package", what, raw)
 		return link
 	default:
 		if def, ok := c.spec.Definitions[target]; ok && def.Own() {
 			link.Target = target
 		} else if _, ok := c.spec.Packages[target]; ok {
 			link.Target, link.Package = target, true
-		} else if c.spec.Sorting[target] {
+		} else if c.spec.PlainFolders[target] {
 			instead := "link a Definition in it or the Package above"
 			if kind {
 				instead = "name a Kind in it"
 			}
-			c.diags.Add(code, d.File, line, "%s %q names a folder that only sorts: it holds no Definition of its own name, %s.md, so it is no Package; %s", what, raw, AnchorOf(target), instead)
+			if own := c.spec.Definitions[AnchorOf(target)]; own != nil && own.Own() && !kind {
+				// A thing with parts: the folder holds the Definition that names it.
+				c.diags.Add(code, d.File, line, "%s %q names a folder, which is no Package; the Definition of that name is %s", what, raw, AnchorOf(target))
+				return link
+			}
+			c.diags.Add(code, d.File, line, "%s %q names a folder that is no Package: %s; %s", what, raw, c.spec.WhyNoPackage(target), instead)
+			return link
+		} else if strings.EqualFold(target, CoreKind) || strings.EqualFold(target, CorePackage) {
+			c.diags.Add(code, d.File, line, "%s %q resolves to nothing; Core's two Kinds are written %s and %s", what, raw, CoreKind, CorePackage)
 			return link
 		} else {
 			c.diags.Add(code, d.File, line, "%s %q resolves to no Definition, Package or Library Kind; paths start at the spec folder", what, raw)
