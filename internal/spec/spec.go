@@ -6,8 +6,12 @@ import (
 	"strings"
 )
 
-// CoreKind is the one Definition Core offers: the Kind of every Kind.
-const CoreKind = "Kind"
+// CoreKind and CorePackage are the two Definitions Core offers: the Kind of
+// every Kind, and the Kind of the Definition that makes its folder a Package.
+const (
+	CoreKind    = "Kind"
+	CorePackage = "Package"
+)
 
 // RootPackage is the path of the Root Package, the spec folder itself.
 const RootPackage = ""
@@ -39,9 +43,9 @@ type Source struct {
 type Spec struct {
 	Definitions map[string]*Definition // by ID: "members/member", "std/Rule", "Kind"
 	Packages    map[string]*Package    // by path; RootPackage is ""
-	// Sorting holds the folders of the spec that are no Package: they hold no
-	// anchor, and what lies in them belongs to the Package above.
-	Sorting   map[string]bool
+	// Folders holds the folders of the spec that are no Package. A folder is a
+	// namespace and nothing more: what lies in it belongs to the Package above.
+	Folders   map[string]bool
 	Libraries map[string]*Library
 	// Edges are the explicit dependencies between Packages: from, to, and the
 	// links that make them. The implicit edge from a child to its parent is
@@ -56,9 +60,9 @@ type Library struct {
 	Definitions []string
 }
 
-// Package is one part of the spec: the spec folder itself, or a folder that
-// holds a Definition of its own name, its anchor. A folder without an anchor
-// only sorts, and what lies in it belongs to the Package above.
+// Package is one module of the spec: the spec folder itself, or a folder
+// that holds its anchor, a Definition of kind Package that carries the
+// folder's name. Any other folder is a namespace of the Package above.
 type Package struct {
 	Path        string
 	Parent      string   // the Package above, which need not be the folder above
@@ -144,7 +148,7 @@ func FolderOf(p string) string {
 	return RootPackage
 }
 
-// AnchorOf returns the ID a Package's anchor has: the folder's own name inside
+// AnchorOf returns the ID a Package's anchor has: the folder's name inside
 // the folder, such as members/members for the Package members.
 func AnchorOf(pkg string) string {
 	return pkg + "/" + pkg[strings.LastIndexByte(pkg, '/')+1:]

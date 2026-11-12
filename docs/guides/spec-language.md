@@ -11,9 +11,9 @@ This guide is the canonical description of the spec language of the [concept](..
   spec/                the spec; this folder is the Root Package
     project.md         the project anchor (std/Project)
     members/           a Package, because it holds its anchor
-      members.md       the anchor of members (std/Package): ID members/members
+      members.md       the anchor of members (kind Package): ID members/members
       member.md        a Definition: ID members/member
-      rules/           a folder without an anchor: it only sorts
+      rules/           a folder: a namespace, no Package
         loan-limit.md  a Definition of members: ID members/rules/loan-limit
   registry.md          Root's registry page
   registry/
@@ -52,26 +52,26 @@ A [[members/member|member]] reserves a [[equipment/machine|machine]] for a slot.
 
 ## Packages and folders
 
-A Package is a part of the project. The spec folder itself is the Root Package. Below it, a folder is a Package when it holds a Definition of its own name, its anchor: `members/members.md` makes `members` a Package, and `members/loans/loans.md` makes `members/loans` one ([DEC-107](../decisions.md#dec-107-a-folder-is-a-package-by-its-anchor-any-other-folder-only-sorts)).
+A folder is a namespace, as in C#: it gives the Definitions in it their path and means nothing else. A project orders its Definitions in folders as it reads best, and Markitect prescribes no layout. A thing with parts is by custom a folder that holds a Definition of its own name and its parts beside it: `operations/lend/lend.md` with `operations/lend/conditions/`.
 
-- **The anchor says what the Package is:** what it is responsible for and what it keeps to itself. It is an ordinary Definition of any Kind, `std/Package` in the standard Library. It is verified like every Definition, a file realizes it or a Definition links to it (`definition.unused`), and a link to the Package does not link it. It carries the folder's name exactly: a file that differs from it only in case is an error (`spec.anchor`). Root is a Package without one by name: what the project is, the project's anchor `project.md` says by convention, and the tool gives that file no meaning of its own.
-- **A folder without an anchor only sorts.** Its Definitions belong to the nearest Package above it, and to Root when there is none. Their IDs keep the folder, `members/rules/loan-limit`, and nothing else changes: scope, visibility and dependencies are the Package's, so the Definitions in two such folders of one Package link each other freely.
-- **A folder that only sorts is not a part of the project.** A link to it resolves to nothing (`link.unresolved`), and a registry page for it belongs to no Package (`stale.page`).
-- **A Package may lie in a folder that only sorts.** `members/concepts/card/card.md` makes `members/concepts/card` a Package whose parent is `members`.
+A Package is a module of the project, as a project is in C#: the unit of dependencies, of visibility and of file ownership. The spec folder itself is the Root Package. Below it, a folder is a Package when it holds its anchor, a Definition of kind `Package` that carries the folder's name: `members/members.md` makes `members` a Package ([DEC-107](../decisions.md#dec-107-a-folder-is-a-namespace-a-package-is-declared-by-its-anchor)).
 
-A project sorts a Package's Definitions as it reads best, by Kind or not at all; Markitect prescribes no layout.
+- **The anchor says what the Package is:** what it is responsible for and what it keeps to itself. It is verified like every Definition, a file realizes it or a Definition links to it (`definition.unused`), and a link to the Package does not link it. A Definition of kind `Package` that does not carry its folder's name, or lies at the top of the spec folder, is an error (`spec.package`). Root needs none: what the project is, the project's anchor `project.md` says by convention, and the tool gives that file no meaning of its own.
+- **What lies in a folder belongs to the nearest Package above it,** and to Root when there is none. Scope, visibility and dependencies are that Package's, so the Definitions in two folders of one Package link each other freely.
+- **A folder that is no Package is no part of the project.** A link to it resolves to nothing (`link.unresolved`), and a registry page for it belongs to no Package (`stale.page`).
+- **A Package may lie in any folder.** `members/concepts/card/card.md` of kind `Package` makes `members/concepts/card` a Package whose parent is `members`.
 
 ## Kinds and Libraries
 
-Core offers one thing: the Definition `Kind`. A Kind is a Definition whose `kind` is `Kind`; its body says what it is and how it is used. Every other Definition's `kind` names a Kind by path (`kind.unresolved`, `kind.not_a_kind`).
+Core offers two Definitions: `Kind` and `Package`. A Kind is a Definition whose `kind` is `Kind`; its body says what it is and how it is used. Every other Definition's `kind` names a Kind by path (`kind.unresolved`, `kind.not_a_kind`). `Package` is the Kind of an anchor, the Definition that makes its folder a [Package](#packages-and-folders).
 
-A Library is a folder of Kind Definitions, one `<Name>.md` file each at its top level (`library.file`, `library.not_a_kind`, `library.internal`); a Library's name follows the same rules as other names (`library.name`). A Library Definition may link only to Libraries the manifest names and to `Kind`. No Kind has a special meaning to Markitect.
+A Library is a folder of Kind Definitions, one `<Name>.md` file each at its top level (`library.file`, `library.not_a_kind`, `library.internal`); a Library's name follows the same rules as other names (`library.name`). A Library Definition may link only to Libraries the manifest names and to `Kind`. No Kind of a Library has a special meaning to Markitect.
 
-The standard Libraries ship inside the binary at version 1.2.0:
+The standard Libraries ship inside the binary at version 1.1.0:
 
 | Library | Kinds |
 |---|---|
-| `std` | [Project](../../internal/libraries/std/Project.md), [Package](../../internal/libraries/std/Package.md), [Rule](../../internal/libraries/std/Rule.md), [Concept](../../internal/libraries/std/Concept.md), [Feature](../../internal/libraries/std/Feature.md), [Decision](../../internal/libraries/std/Decision.md) |
+| `std` | [Project](../../internal/libraries/std/Project.md), [Rule](../../internal/libraries/std/Rule.md), [Concept](../../internal/libraries/std/Concept.md), [Feature](../../internal/libraries/std/Feature.md), [Decision](../../internal/libraries/std/Decision.md) |
 | `rest` | [Endpoint](../../internal/libraries/rest/Endpoint.md) |
 | `cli` | [Command](../../internal/libraries/cli/Command.md) |
 
@@ -82,8 +82,8 @@ Every project uses `std`. A project writes its own Kinds for anything else, one 
 ```yaml
 # .markitect/manifest.yaml
 libraries:
-  std: 1.2.0
-  rest: 1.2.0
+  std: 1.1.0
+  rest: 1.1.0
 ```
 
 The manifest names each Library with its version and nothing else (`manifest.syntax`, `manifest.missing`). A standard Library must have the version this binary ships (`library.version`), and no project folder may replace it (`library.reserved`). A version names one content: when a Kind of a standard Library changes, the version of the standard Libraries moves, and `markitect tidy` and `markitect update` name the new one in the manifest before they write the lock. Any other named Library must exist under `.markitect/libraries/` (`library.missing`), and every Library folder there must be named (`library.undeclared`).
@@ -94,8 +94,8 @@ The manifest names each Library with its version and nothing else (`manifest.syn
 
 A link names its target by path: `[[members/member]]` inside the spec, `[[std/Rule]]` for a Library Kind, `[[members]]` for a Package. A label after `|` and a section after `#` are allowed and ignored for resolution: `[[members/member#Status|member]]`. In a Markdown table, write the label's bar as `\|`. Links inside code spans and code blocks are text, not links. There are no imports and no relative links: a link to a Definition in the same Package still names its full path, `[[members/member]]` from inside `members/`.
 
-- A path whose first name is a Library the manifest names is a Library link. No top-level folder or Definition of the spec may have a Library's name, or the name `Kind` (`spec.reserved`).
-- A link that resolves to nothing, or that is not a path of valid names (`../x`, `/x`), is an error (`link.unresolved`, `link.syntax`). A folder that only sorts is nothing a link resolves to.
+- A path whose first name is a Library the manifest names is a Library link. No top-level folder or Definition of the spec may have a Library's name, or the name `Kind` or `Package` (`spec.reserved`).
+- A link that resolves to nothing, or that is not a path of valid names (`../x`, `/x`), is an error (`link.unresolved`, `link.syntax`). A folder that is no Package is nothing a link resolves to.
 
 **Every link is a relation** ([DEC-104](../decisions.md#dec-104-a-link-is-never-decorative-identity-and-surface-are-written-as-code-writes-them)). The spec behaves like code, and code has no "see also", so a link is never decorative. A link to a Definition says that the source relies on what the target states: a change to the target puts the source back on the list of `status`. A link to a Package says that the source's module depends on that module or, down the tree, says something about a part of the parent's organization. The Kind, the tree with its visibility, the registry and the evidence state the other relations. A link that would only help a reader find something does not belong in the spec; navigation belongs in documentation rendered from it. The [guide to a good spec](good-spec.md#every-link-is-a-relation) shows how identities, a module's surface and the modules it uses are written under this rule.
 
@@ -115,7 +115,7 @@ A cycle is broken by moving the shared concept into a common parent, or by inver
 
 ### Registry pages
 
-Every Package may have one registry page: `.markitect/registry.md` for Root, `.markitect/registry/<package path>.md` for the others. A folder that only sorts has none: the files that realize its Definitions are listed, like every file, on the page of the Package that owns them. The front matter names the path patterns the Package owns; a table lists every file it owns with the Definitions the file realizes and why.
+Every Package may have one registry page: `.markitect/registry.md` for Root, `.markitect/registry/<package path>.md` for the others. A folder that is no Package has none: the files that realize its Definitions are listed, like every file, on the page of the Package that owns them. The front matter names the path patterns the Package owns; a table lists every file it owns with the Definitions the file realizes and why.
 
 ```markdown
 ---
@@ -147,7 +147,7 @@ When the owner deletes a Definition, a file or a Package, the registry still nam
 |---|---|
 | `stale.definition` | a registry link to a Definition that no longer exists |
 | `stale.file` | an entry for a file that no longer exists |
-| `stale.page` | the page of a Package that no longer exists, or of a folder that only sorts, and each file still listed only there |
+| `stale.page` | the page of a Package that no longer exists, or of a folder that is no Package, and each file still listed only there |
 
 `check` fails on each, in its group of errors in the realization, as it does on a file the registry does not list and on a Definition nothing links to and no file realizes (`definition.unused`). `check --spec` looks only at the spec itself.
 

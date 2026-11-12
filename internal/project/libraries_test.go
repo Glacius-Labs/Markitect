@@ -9,7 +9,7 @@ import (
 
 func TestStandardLibrariesCompile(t *testing.T) {
 	var src spec.Source
-	want := map[string][]string{"std": {"Concept.md", "Decision.md", "Feature.md", "Package.md", "Project.md", "Rule.md"}, "rest": {"Endpoint.md"}, "cli": {"Command.md"}}
+	want := map[string][]string{"std": {"Concept.md", "Decision.md", "Feature.md", "Project.md", "Rule.md"}, "rest": {"Endpoint.md"}, "cli": {"Command.md"}}
 	for _, name := range libraries.Names() {
 		files, ok := libraries.Files(name)
 		if !ok {
@@ -40,11 +40,11 @@ func TestStandardLibrariesCompile(t *testing.T) {
 // needs a new Library version and a new expected digest here.
 func TestStandardLibraryDigests(t *testing.T) {
 	want := map[string]string{
-		"std":  "sha256:7a2d23e215f0c38ecf41bb09f45706fff9d3957cee5521564c4681186fa8156d",
+		"std":  "sha256:b07b0e8fc89be74688e6565d6109028823c0da56d4e084cc422b86c62e3c176c",
 		"rest": "sha256:adab445700aa3b4a4bd60a90d57facccd1841848945206acafa37630e12938c6",
 		"cli":  "sha256:f4dd204b6c16a842d1b9725d382d517651cfea63dcf4c0180ef8164da04c0f2c",
 	}
-	if libraries.Version != "1.2.0" {
+	if libraries.Version != "1.1.0" {
 		t.Fatalf("version %s: update the pinned digests with the version", libraries.Version)
 	}
 	for _, name := range libraries.Names() {

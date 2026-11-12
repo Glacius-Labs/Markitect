@@ -79,7 +79,7 @@ type Refreshed struct {
 	// Lock says the lock differs, or the manifest with it.
 	Lock bool
 	// Named are the standard Libraries the manifest names at the version this
-	// binary ships, where it named another: "std 1.2.0, where it named 1.0.0".
+	// binary ships, where it named another: "std 1.1.0, where it named 1.0.0".
 	Named []string
 	// LockProblems are the errors of the manifest, which keep the lock as it is:
 	// it names a Library the binary cannot supply.

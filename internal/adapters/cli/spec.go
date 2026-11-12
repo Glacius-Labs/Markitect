@@ -210,8 +210,8 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 		return OK, nil
 	}
 	var ds spec.Diagnostics
-	if p.Spec.Sorting[target] {
-		ds.Add("doc.unknown", "", 0, "%s is a folder that only sorts: it holds no Definition of its own name, so it is neither a Definition nor a Package of the spec", target)
+	if p.Spec.Folders[target] {
+		ds.Add("doc.unknown", "", 0, "%s is a folder and no Package: it holds no Definition of kind Package, so it is neither a Definition nor a Package of the spec", target)
 	} else {
 		ds.Add("doc.unknown", "", 0, "%s is neither a Definition nor a Package of the spec", target)
 	}

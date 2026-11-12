@@ -254,11 +254,11 @@ func addRealizationErrors(ds *spec.Diagnostics, sp *spec.Spec, reg *realization.
 			case "stale.file":
 				ds.Add(s.Code, s.PageFile, s.Line, "%s no longer exists", s.File)
 			case "stale.page":
-				// The folder may still be there and only sort: it has no anchor.
-				sorts := sp != nil && sp.Sorting[s.Package]
+				// The folder may still be there, as a namespace and no Package.
+				sorts := sp != nil && sp.Folders[s.Package]
 				switch {
 				case s.File == "" && sorts:
-					ds.Add(s.Code, s.PageFile, 0, "%s is a folder that only sorts, so this page belongs to no Package: it holds no Definition of its own name, %s.md", s.Package, spec.AnchorOf(s.Package))
+					ds.Add(s.Code, s.PageFile, 0, "%s is a folder and no Package, so this page belongs to none: it holds no Definition of kind Package, %s.md", s.Package, spec.AnchorOf(s.Package))
 				case s.File == "":
 					ds.Add(s.Code, s.PageFile, 0, "the Package of this page no longer exists")
 				case sorts:

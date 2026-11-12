@@ -6,14 +6,14 @@ A compact summary of the spec language and the tools.
 
 ```text
 .markitect/
-  manifest.yaml        Libraries and versions (std: 1.2.0, rest: 1.2.0, ...)
+  manifest.yaml        Libraries and versions (std: 1.1.0, rest: 1.1.0, ...)
   lock.yaml            Library digests, written by markitect tidy
   spec/                the spec; this folder is the Root Package
     project.md         the project anchor (std/Project)
     members/           a Package, because it holds its anchor
-      members.md       the anchor of members (std/Package)
+      members.md       the anchor of members (kind Package)
       <name>.md
-      rules/<name>.md  a folder without an anchor only sorts: still members
+      rules/<name>.md  a folder is a namespace: still members
   registry.md          Root's registry page
   registry/<package path>.md
   ignore               files that belong to no Package, if any
@@ -31,7 +31,7 @@ One Markdown file with YAML front matter.
 - File name without `.md` is the name, the path below `spec/` is the ID (`members/member`). Names: letters, digits, `-`, `_`, starting with a letter or digit (`spec.name`).
 - Body: one level-1 heading, the title, first; no second one (`definition.title`); then prose. Exact values in backticks.
 - The spec folder holds only `.md` files and folders (`spec.file`). Two entries differing only in case, or `member.md` beside `member/`, collide (`spec.collision`).
-- A folder is a Package when it holds a Definition of its own name, its anchor: `members/members.md` makes `members` one. Any other folder only sorts: its Definitions belong to the nearest Package above, and Root if there is none. The anchor carries the folder's name exactly, also in case (`spec.anchor`).
+- A folder is a namespace: it gives its Definitions their path. It is a Package when it holds its anchor, a Definition of kind `Package` that carries the folder's name: `members/members.md` makes `members` one (`spec.package` for another name, or at the top of the spec folder). What lies in any other folder belongs to the nearest Package above, and to Root if there is none.
 - A top-level name may not be a Library name or `Kind` (`spec.reserved`).
 
 ## Kinds and Libraries
@@ -41,7 +41,7 @@ A Kind is a Definition with `kind: Kind`; its body says what a Definition of tha
 | Kind | Use for |
 |---|---|
 | `std/Project` | The project's anchor, at Root: what the project is, for whom, the Packages, what is out of scope. |
-| `std/Package` | The anchor of a Package: what it is responsible for and what it keeps to itself. |
+| `Package` | Core's own, written without a Library: the anchor of a Package, what it is responsible for and what it keeps to itself. |
 | `std/Rule` | Something every artifact in its scope must satisfy: policies, conventions, layout, quality. |
 | `std/Concept` | One domain thing: what it is, its attributes, relations, states, invariants. |
 | `std/Feature` | One use case: who does what, the outcome and every refusal a caller sees. |
@@ -49,11 +49,11 @@ A Kind is a Definition with `kind: Kind`; its body says what a Definition of tha
 | `rest/Endpoint` | One HTTP operation: title `METHOD /path`, request, each response with status and error codes; links its Feature. |
 | `cli/Command` | One command as typed: arguments, flags, output, exit codes, refusals; links its Feature. |
 
-A project writes its own Kinds as small files (`kind: Kind`) anywhere in its spec; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. The standard Libraries ship in the binary, all at one version, as in `std: 1.2.0`. After a manifest change run `markitect tidy`.
+A project writes its own Kinds as small files (`kind: Kind`) anywhere in its spec; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. The standard Libraries ship in the binary, all at one version, as in `std: 1.1.0`. After a manifest change run `markitect tidy`.
 
 ## Links, scope, visibility, cycles
 
-- A link is `[[path]]`: the full path from the spec folder, even inside the same Package (`[[members/member]]`), `[[std/Rule]]` for a Library Kind, `[[members]]` for a Package, never a folder that only sorts. Optional `#section` and `|label` do not matter for resolution. In a Markdown table write the label's bar as `\|`. Links in code spans and code blocks are text. No imports, no relative links.
+- A link is `[[path]]`: the full path from the spec folder, even inside the same Package (`[[members/member]]`), `[[std/Rule]]` for a Library Kind, `[[members]]` for a Package, never a folder that is none. Optional `#section` and `|label` do not matter for resolution. In a Markdown table write the label's bar as `\|`. Links in code spans and code blocks are text. No imports, no relative links.
 - **Scope is location.** What a Package defines reaches its whole subtree; a Rule at Root binds the project.
 - **Visibility.** Public unless `internal: true`; then only its own Package and Packages below may link to it or use it as a Kind (`link.internal`). Reading is not restricted: agents read internal Definitions, and registry entries may link any Definition.
 - **Dependencies.** A link from Package A to a Definition in, or to, another Package B is an edge A to B; using a Kind is an edge. Every Package also has an implicit edge to its parent. Linking up to an ancestor's Definition is free. A parent may link to a child Package but not to a Definition inside it (`link.downward`). Links to Library Kinds make no edge. A cycle of edges is an error (`package.cycle`).
@@ -128,7 +128,7 @@ Notes: `vet.unlinked_mention` (a Definition's title or name in another Definitio
 | Group | Codes |
 |---|---|
 | Project | `project.file` (a file under `.markitect/` has no place in the layout), `project.read` |
-| Definition and spec | `definition.front_matter`, `definition.title`, `spec.name`, `spec.file`, `spec.collision`, `spec.anchor`, `spec.reserved` |
+| Definition and spec | `definition.front_matter`, `definition.title`, `spec.name`, `spec.file`, `spec.collision`, `spec.package`, `spec.reserved` |
 | Kind and Library | `kind.unresolved`, `kind.not_a_kind`, `library.name`, `library.file`, `library.not_a_kind`, `library.internal`, `library.version`, `library.reserved`, `library.missing`, `library.undeclared` |
 | Manifest and lock | `manifest.syntax`, `manifest.missing`, `lock.mismatch`, `lock.missing`, `lock.syntax` |
 | Links and Packages | `link.unresolved`, `link.syntax`, `link.internal`, `link.downward`, `package.cycle` |

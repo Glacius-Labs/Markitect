@@ -42,8 +42,8 @@ func TestLockRoundTripAndMismatch(t *testing.T) {
 	expect(t, VerifyLock("lock.yaml", lock, []LibrarySource{changed}), "lock.mismatch", "does not match the digest")
 
 	newer := stdKinds
-	newer.Version = "1.2.0"
-	expect(t, VerifyLock("lock.yaml", lock, []LibrarySource{newer}), "lock.mismatch", "the lock pins std 1.0.0, but the manifest names 1.2.0")
+	newer.Version = "1.1.0"
+	expect(t, VerifyLock("lock.yaml", lock, []LibrarySource{newer}), "lock.mismatch", "the lock pins std 1.0.0, but the manifest names 1.1.0")
 
 	extra := LibrarySource{Name: "cli", Version: "1.0.0"}
 	ds = VerifyLock("lock.yaml", lock, []LibrarySource{stdKinds, extra})
