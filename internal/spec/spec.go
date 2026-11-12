@@ -48,6 +48,9 @@ type Spec struct {
 	// Package above.
 	PlainFolders map[string]bool
 	Libraries    map[string]*Library
+	// HasParts holds the Definitions that are a whole: at least one other
+	// Definition is a part of each.
+	HasParts map[string]bool
 	// Edges are the explicit dependencies between Packages: from, to, and the
 	// links that make them. The implicit edge from a child to its parent is
 	// not listed.
@@ -91,6 +94,11 @@ type Definition struct {
 	// Links holds the front matter's Kind reference first (Kind is true),
 	// then every body link.
 	Links []Link
+	// Fields are the labelled fields of the text, in order.
+	Fields []Field
+	// Schema is what a Kind declares about its Definitions; nil for a
+	// Definition that is no Kind and for a Kind that declares nothing.
+	Schema *Schema
 }
 
 // Link is one resolved reference of a Definition.
@@ -100,6 +108,9 @@ type Link struct {
 	Package bool   // the target is a Package
 	Kind    bool   // the front matter's kind
 	Line    int
+	// Field is the label of the field the link stands in; "" for a link in
+	// the text before the first field.
+	Field string
 }
 
 // Use is one link that makes a Package depend on another.
@@ -206,6 +217,46 @@ func (s *Spec) Parts(id string) []string {
 		return a < b
 	})
 	return out
+}
+
+// Units returns what is built and verified as one: every Definition of the
+// spec that is no part of another, or that has parts of its own, with the
+// parts it covers, sorted. A thing with parts is one unit with its parts; a
+// part that is itself a thing with parts is a unit of its own and is not
+// covered by the thing above it.
+func (s *Spec) Units() map[string][]string {
+	parts := map[string][]string{}
+	own := s.OwnDefinitions()
+	for _, id := range own {
+		if whole := s.Definitions[id].Whole; whole != "" {
+			parts[whole] = append(parts[whole], id)
+		}
+	}
+	units := map[string][]string{}
+	for _, id := range own {
+		if s.Definitions[id].Whole != "" && len(parts[id]) == 0 {
+			continue
+		}
+		covered := []string{}
+		for _, part := range parts[id] {
+			if len(parts[part]) == 0 {
+				covered = append(covered, part)
+			}
+		}
+		units[id] = covered
+	}
+	return units
+}
+
+// UnitOf returns the unit that covers a Definition of the spec: the
+// Definition itself, or the whole it is a part of when it has no parts of
+// its own.
+func (s *Spec) UnitOf(id string) string {
+	d := s.Definitions[id]
+	if d == nil || d.Whole == "" || s.HasParts[id] {
+		return id
+	}
+	return d.Whole
 }
 
 // WhyNoPackage says, for a folder that is no Package, what it lacks: an

@@ -33,7 +33,7 @@ func library() map[string]string {
 		std.Files = append(std.Files, spec.File{Path: f.Path, Data: f.Data})
 	}
 	return map[string]string{
-		project.ManifestFile:                      "libraries:\n  std: 1.1.0\n",
+		project.ManifestFile:                      "libraries:\n  std: 2.0.0\n",
 		project.LockFile:                          string(spec.RenderLock([]spec.LibrarySource{std})),
 		".claude/agents/markitect-reviewer.md":    "---\nname: markitect-reviewer\n---\nReview.\n",
 		".claude/agents/markitect-builder.md":     "---\nname: markitect-builder\n---\nBuild.\n",

@@ -1,11 +1,16 @@
 ---
 kind: Kind
+fields:
+parts:
+  attributes: std/Attribute
+  states: std/State
+  invariants: std/Invariant
+  conditions: std/Condition
 ---
 # Concept
 
-A Concept Definition explains one thing of the project's domain: what it is, what it consists of, how it relates to other Concepts, and which states it can be in.
+A Concept Definition says in one sentence what one thing the system manages is. It lives in the Package of its area, under `concepts/`, and links the Concepts it relies on, in its sentence or through its parts.
 
-- Name the attributes a caller relies on and their meaning; exact values go in backticks.
-- Link another Concept where this one relies on what it states, from the specific to the general: a loan links the member it relies on, or only the member's identifier when that is all it uses, and the member does not link its loans.
-- State the invariants that always hold for it. Rules that hold across several Concepts are [[std/Rule|Rules]] of their own.
-- Leave data structures, storage and algorithms to the realization; describe what good documentation of the domain would describe.
+Its [[std/Attribute|Attributes]], [[std/State|States]] and [[std/Invariant|Invariants]] lie under `attributes/`, `states/` and `invariants/`; [[std/Condition|Conditions]] that several Operations on it check lie under `conditions/`. A Concept does not list its Operations.
+
+Verified when its parts are and what its sentence states holds.

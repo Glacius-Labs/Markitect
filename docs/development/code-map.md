@@ -47,7 +47,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/libraries` | Package libraries holds the standard Libraries that ship inside the markitect binary: std, rest and cli, each a folder of Kind Definitions. | [docs/guides/spec-language.md#kinds-and-libraries](../guides/spec-language.md#kinds-and-libraries) |
+| `internal/libraries` | Package libraries holds the standard Libraries that ship inside the markitect binary, each a folder of Kind Definitions: std, the Kinds of a project's description. | [docs/guides/spec-language.md#kinds-and-libraries](../guides/spec-language.md#kinds-and-libraries) |
 | `internal/skills` | Package skills holds what ships inside the markitect binary for agents: the harness for Claude Code, which markitect init installs into a project. | [docs/guides/spec-language.md#commands](../guides/spec-language.md#commands) |
 
 ## Harness configuration

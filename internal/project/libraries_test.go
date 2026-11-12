@@ -9,7 +9,7 @@ import (
 
 func TestStandardLibrariesCompile(t *testing.T) {
 	var src spec.Source
-	want := map[string][]string{"std": {"Concept.md", "Decision.md", "Feature.md", "Project.md", "Rule.md"}, "rest": {"Endpoint.md"}, "cli": {"Command.md"}}
+	want := map[string][]string{"std": {"Action.md", "Alternative.md", "Assumption.md", "Attribute.md", "Component.md", "Concept.md", "Concern.md", "Condition.md", "Connector.md", "Consequence.md", "Constraint.md", "Decision.md", "Deployment.md", "Display.md", "Error.md", "Exclusion.md", "Expectation.md", "ExternalSystem.md", "Goal.md", "Interface.md", "Invariant.md", "Limit.md", "Message.md", "Need.md", "Offer.md", "Operation.md", "Outcome.md", "Page.md", "Project.md", "Provision.md", "Quality.md", "Reaction.md", "Refusal.md", "Requirement.md", "Result.md", "Route.md", "Rule.md", "Scenario.md", "Shape.md", "Stakeholder.md", "State.md", "Strategy.md", "Task.md", "Term.md", "Wish.md"}}
 	for _, name := range libraries.Names() {
 		files, ok := libraries.Files(name)
 		if !ok {
@@ -40,11 +40,9 @@ func TestStandardLibrariesCompile(t *testing.T) {
 // needs a new Library version and a new expected digest here.
 func TestStandardLibraryDigests(t *testing.T) {
 	want := map[string]string{
-		"std":  "sha256:b07b0e8fc89be74688e6565d6109028823c0da56d4e084cc422b86c62e3c176c",
-		"rest": "sha256:adab445700aa3b4a4bd60a90d57facccd1841848945206acafa37630e12938c6",
-		"cli":  "sha256:f4dd204b6c16a842d1b9725d382d517651cfea63dcf4c0180ef8164da04c0f2c",
+		"std": "sha256:0d3345b3c2e27b8a912efddd70618183566eb3892d61e0edc74fe3df806575cb",
 	}
-	if libraries.Version != "1.1.0" {
+	if libraries.Version != "2.0.0" {
 		t.Fatalf("version %s: update the pinned digests with the version", libraries.Version)
 	}
 	for _, name := range libraries.Names() {

@@ -25,7 +25,7 @@ type Folder interface {
 }
 
 // StartSpec writes what a project lacks of its first files: the manifest with
-// std, the project anchor titled name when the spec folder is empty, and Root's
+// std, the project Definition titled name when the spec folder is empty, and Root's
 // registry page. It never changes a file that is there. It returns the files it
 // created, in order, also when it fails, and whether the spec folder was empty.
 func StartSpec(f Folder, name string) (created []string, emptySpec bool, err error) {
@@ -127,7 +127,7 @@ kind: std/Project
 ---
 # %s
 
-What this project is, for whom, and what it deliberately does not do.
+What this project is and the problem it removes.
 `
 
 const rootPageTemplate = `# Registry: Root

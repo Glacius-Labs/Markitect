@@ -60,7 +60,8 @@ func TestDocViews(t *testing.T) {
 	// A thing is shown whole: its parts with their text, a folder's parts
 	// together, in the order the thing links them and then by ID.
 	r := library(t)
-	r[m+"catalog/operations/lend/lend.md"] = def("std/Feature", "Lend", "First [[catalog/operations/lend/conditions/free]].")
+	r[m+"feature.md"] = def("Kind", "Feature", "One thing a user can do.")
+	r[m+"catalog/operations/lend/lend.md"] = def("feature", "Lend", "First [[catalog/operations/lend/conditions/free]].")
 	r[m+"catalog/operations/lend/conditions/free.md"] = def("std/Rule", "Free", "Nobody holds it.")
 	r[m+"catalog/operations/lend/conditions/an-earlier-name.md"] = def("std/Rule", "An earlier name", "By name it comes first.")
 	r[m+"catalog/operations/lend/outcomes/lent.md"] = def("std/Rule", "Lent", "Somebody holds it.")
@@ -78,7 +79,7 @@ func TestDocViews(t *testing.T) {
 	}
 	// Folders come in the order the thing links their parts, and a part that
 	// has parts of its own sits with its siblings, its parts after it.
-	r[m+"catalog/operations/lend/lend.md"] = def("std/Feature", "Lend", "Afterwards [[catalog/operations/lend/outcomes/lent]]; first [[catalog/operations/lend/conditions/free]].")
+	r[m+"catalog/operations/lend/lend.md"] = def("feature", "Lend", "Afterwards [[catalog/operations/lend/outcomes/lent]]; first [[catalog/operations/lend/conditions/free]].")
 	r[m+"catalog/operations/lend/outcomes/due/due.md"] = def("std/Rule", "Due", "It is due.")
 	r[m+"catalog/operations/lend/outcomes/due/after.md"] = def("std/Rule", "After", "After `14` days.")
 	q = loadRepo(t, r)
@@ -110,8 +111,8 @@ func TestDocViews(t *testing.T) {
 	// its place in the order and with the thing it is a part of; and the text
 	// is shown with each link by its label or by the title of what it names.
 	r[m+"catalog/book/book.md"] = def("std/Concept", "Book", "Lent to a [[members/member]].")
-	r[m+"catalog/book/conditions/exists.md"] = def("std/Rule", "Book exists", "A [[catalog/book]] with this `isbn` exists.")
-	r[m+"catalog/operations/lend/lend.md"] = def("std/Feature", "Lend", "Checked: [[catalog/book/conditions/exists]], then [[catalog/operations/lend/conditions/free|that it is free]]; see `[[catalog/book]]`.\n\n```\n[[catalog/book]]\n```\n\nIn [[members]], a `[[catalog/book]]` is a [[ catalog/book ]].\n\n~~~\n[[catalog/book]]\n~~~")
+	r[m+"catalog/book/conditions/exists.md"] = def("std/Condition", "Book exists", "A [[catalog/book]] with this `isbn` exists.")
+	r[m+"catalog/operations/lend/lend.md"] = def("feature", "Lend", "Checked: [[catalog/book/conditions/exists]], then [[catalog/operations/lend/conditions/free|that it is free]]; see `[[catalog/book]]`.\n\n```\n[[catalog/book]]\n```\n\nIn [[members]], a `[[catalog/book]]` is a [[ catalog/book ]].\n\n~~~\n[[catalog/book]]\n~~~")
 	delete(r, m+"catalog/book.md")
 	r[project.RegistryDir+"/catalog.md"] = "---\npaths: [src/catalog/**]\n---\n" + table + "| src/catalog/book.go | [[catalog/book]] [[catalog/shelf]] [[catalog/catalog]] | Types |\n"
 	q = loadRepo(t, r)

@@ -12,7 +12,7 @@ import (
 
 // codeGroups are the first parts of the codes markitect prints: a diagnostic's
 // code is a group, a dot and a name.
-const codeGroups = "definition|spec|kind|library|manifest|lock|link|package|project|registry|file|ignore|harness|record|stale|vet|doc"
+const codeGroups = "definition|spec|kind|field|part|library|manifest|lock|link|package|project|registry|file|ignore|harness|record|stale|vet|doc"
 
 var (
 	codeInSource = regexp.MustCompile(`"((?:` + codeGroups + `)\.[a-z_]+)"`)

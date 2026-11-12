@@ -4,7 +4,7 @@ A Markitect spec is judged like code ([founding intent](../vision.md#founding-in
 
 ## Why design matters here: links are the build graph
 
-Each Definition is a unit of verification, and its inputs are its own text, its Kind, the Definitions it links to, its registry rows and the evidence ([DEC-099](../decisions.md#dec-099-a-record-of-what-was-verified)). So the links say what a change puts back on the list of `markitect status`. A change has two costs:
+A Definition with its parts is a unit of verification, and its inputs are its own text and that of its parts, their Kinds, the Definitions they link to, their registry rows and the evidence ([DEC-099](../decisions.md#dec-099-a-record-of-what-was-verified)). So the links say what a change puts back on the list of `markitect status`. A change has two costs:
 
 - **Verification:** the changed Definition and every Definition that links to it, or is of it as Kind, go back on the list. That is one step of links, its **fan-in**.
 - **Review by the author:** what may need to change in the spec with it, which is everything that reaches it along the links, its **every-link reach**.
@@ -139,9 +139,9 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 
 **Bad.** Makerspace's Root holds 21 Definitions, among them a module: the refusal codes, audit and authorization, and `list-audit-entries`, an Operation. The Root Kind `Operation` links `audit`, `audit-entry`, `authorization` and `refusal-codes`, so none of them can move down, and `audit-entry` in turn needs the formats at Root.
 
-**Good.** Each area's Concepts sit in its area Package, and the two shared Kinds sit at Root. The formats are used by Root's own Rules (`time`, `money`) and by `audit-entry`, so their lowest common parent is Root: split there, as thirteen Definitions, every link is exact. Split into a `values/` Package instead, they show as an edge from each module, but Root's five users can no longer link them, and a change to a format stops reaching them. At Root they make Root 33 Definitions, and `vet.package_size` warns: the sign that Root holds a module, which only moving the module and the Kind's links out would cure.
+**Good.** Each area's Concepts sit in its area Package, and the two shared Kinds sit at Root. The formats are used by Root's own Rules (`time`, `money`) and by `audit-entry`, so their lowest common parent is Root: split there, as thirteen Definitions, every link is exact. Split into a `values/` Package instead, they show as an edge from each module, but Root's five users can no longer link them, and a change to a format stops reaching them. At Root they make Root 33 Definitions: the sign that Root holds a module, which only moving the module and the Kind's links out would cure.
 
-**Signal.** `vet.package_size` warns above 25 Definitions, Root included and the parts of a thing not counted. `vet.placement` notes, shown with `--strict`, a Definition whose users all lie below it in one Package. `vet.hub` counts Root, which the earlier `vet.reach` skipped.
+**Signal.** `vet.package_size` warns above 25 Definitions of a Package, the parts of a thing not counted; Root is measured only in a spec without Packages, since what binds the whole project cannot move out of it. `vet.placement` notes, shown with `--strict`, a Definition whose users all lie below it in one Package. `vet.hub` counts Root, which the earlier `vet.reach` skipped.
 
 ## Say it once, link exactly what you use
 
@@ -160,7 +160,7 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 - `blocked`: flag
 ```
 
-**Good: one Definition per format, linked where it is used.** Split into thirteen Definitions at Root, the lowest common parent of their users, a change to one format lists between 2 and 52 Definitions, a median of 5. Each format is a `std/Concept`; there is no Kind for values ([DEC-102](../decisions.md#dec-102-what-vet-measures)). A format only one Package uses belongs in that Package.
+**Good: one Definition per format, linked where it is used.** Split into thirteen Definitions at Root, the lowest common parent of their users, a change to one format lists between 2 and 52 Definitions, a median of 5. Each format is a Definition of its own, a `std/Rule`; there is no Kind for values ([DEC-102](../decisions.md#dec-102-what-vet-measures)). A format only one Package uses belongs in that Package.
 
 ```markdown
 **Fields:**

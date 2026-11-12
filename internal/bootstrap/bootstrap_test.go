@@ -57,7 +57,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 
 	out := mustRun(t, r.Dir, "init", "--name", "Lending library")
 	noRepository(t, r.Dir)
-	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/spec/project.md", "wrote .markitect/lock.yaml: std 1.1.0", "installed the harness in .claude/: the architect, build"} {
+	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/spec/project.md", "wrote .markitect/lock.yaml: std 2.0.0", "installed the harness in .claude/: the architect, build"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("init output lacks %q:\n%s", want, out)
 		}
@@ -95,7 +95,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 	}
 	// With no record, every Definition is to verify.
 	code, out, _ = run(t, r.Dir, "status")
-	if code != 1 || !strings.Contains(out, "To verify (4 of 4 Definitions)") || !strings.Contains(out, "\nloan-limit@") {
+	if code != 1 || !strings.Contains(out, "To verify (4 of 4 items)") || !strings.Contains(out, "\nloan-limit@") {
 		t.Fatalf("status before a review: %d\n%s", code, out)
 	}
 	verifyAll(t, r.Dir)
@@ -110,7 +110,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 	// A changed Rule is to verify again, and nothing else is.
 	r.Write(".markitect/spec/loan-limit.md", "---\nkind: std/Rule\n---\n# Loan limit\n\nAt most `3` open loans, for [[members]].\n")
 	code, out, _ = run(t, r.Dir, "status")
-	if code != 1 || !strings.Contains(out, "To verify (1 of 4 Definitions)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self\n") {
+	if code != 1 || !strings.Contains(out, "To verify (1 of 4 items)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self\n") {
 		t.Fatalf("status after a change of the spec: %d\n%s", code, out)
 	}
 
@@ -213,7 +213,7 @@ func TestCheckGroupsItsErrors(t *testing.T) {
 	mustRun(t, r.Dir, "init", "--name", "Demo")
 	r.Write("src/stray.go", "package stray\n")
 	code, out, _ := run(t, r.Dir, "check")
-	if code != 1 || !strings.Contains(out, "src/stray.go: file.unregistered: ") || !strings.Contains(out, "2 errors: 0 in the spec, for the owner to settle; 2 in the realization") {
+	if code != 1 || !strings.Contains(out, "src/stray.go: file.unregistered: ") || !strings.Contains(out, "1 error: 0 in the spec, for the owner to settle; 1 in the realization") {
 		t.Fatalf("check on a project with a stray file: %d\n%s", code, out)
 	}
 	if out := mustRun(t, r.Dir, "check", "--spec"); !strings.HasPrefix(out, "ok:") {
@@ -637,13 +637,13 @@ func TestInitInstallsTheHarness(t *testing.T) {
 
 func TestTidyWritesTheLock(t *testing.T) {
 	r := newFolder(t)
-	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.1.0\n  rest: 1.1.0\n  web: 0.1.0\n")
+	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 2.0.0\n  web: 0.1.0\n")
 	code, _, errOut := run(t, r.Dir, "tidy")
 	if code != 1 || !strings.Contains(errOut, "library.missing") {
 		t.Fatalf("lock without web: %d %s", code, errOut)
 	}
 	r.Write(".markitect/libraries/web/Page.md", "---\nkind: Kind\n---\n# Page\n")
-	if out := mustRun(t, r.Dir, "tidy"); !strings.Contains(out, "rest 1.1.0, std 1.1.0, web 0.1.0") {
+	if out := mustRun(t, r.Dir, "tidy"); !strings.Contains(out, "std 2.0.0, web 0.1.0") {
 		t.Fatalf("lock = %s", out)
 	}
 	if lock := read(t, r.Dir, ".markitect/lock.yaml"); !strings.Contains(lock, "  web:\n    version: 0.1.0\n    digest: sha256:") {
@@ -659,7 +659,7 @@ func TestTidyWritesTheLock(t *testing.T) {
 // binary supplies no other; version says the project is out of date until then.
 func TestAStandardLibraryMovesWithTheBinary(t *testing.T) {
 	emptyHome(t)
-	const earlier = "# The Libraries this project uses.\nlibraries:\n  std: 1.0.0 # the first\n  rest: 0.9.0\n"
+	const earlier = "# The Libraries this project uses.\nlibraries:\n  std: 1.0.0 # the first\n"
 	old := func() *plainFolder {
 		r := newFolder(t)
 		mustRun(t, r.Dir, "init")
@@ -668,18 +668,17 @@ func TestAStandardLibraryMovesWithTheBinary(t *testing.T) {
 	}
 	r := old()
 	code, out, _ := run(t, r.Dir, "check")
-	wantAll(t, out, ".markitect/manifest.yaml:3: library.version: this markitect ships std 1.1.0, not 1.0.0; markitect tidy names 1.1.0 in the manifest", ".markitect/manifest.yaml:4: library.version: this markitect ships rest 1.1.0, not 0.9.0")
-	if code != 1 || strings.Contains(out, "lock.mismatch") || strings.Contains(out, "kind.unresolved") || strings.Count(out, "library.version") != 2 {
+	wantAll(t, out, ".markitect/manifest.yaml:3: library.version: this markitect ships std 2.0.0, not 1.0.0; markitect tidy names 2.0.0 in the manifest")
+	if code != 1 || strings.Contains(out, "lock.mismatch") || strings.Contains(out, "kind.unresolved") || strings.Count(out, "library.version") != 1 {
 		t.Fatalf("check on an earlier version: %d\n%s", code, out)
 	}
 	if _, out, _ := run(t, r.Dir, "version"); !strings.Contains(out, "project: out of date") {
 		t.Fatalf("version on an earlier version:\n%s", out)
 	}
 	wantAll(t, mustRun(t, r.Dir, "tidy"),
-		".markitect/manifest.yaml now names std 1.1.0, where it named 1.0.0",
-		".markitect/manifest.yaml now names rest 1.1.0, where it named 0.9.0",
-		"wrote .markitect/lock.yaml: rest 1.1.0, std 1.1.0")
-	if got, want := read(t, r.Dir, ".markitect/manifest.yaml"), strings.NewReplacer("1.0.0", "1.1.0", "0.9.0", "1.1.0").Replace(earlier); got != want {
+		".markitect/manifest.yaml now names std 2.0.0, where it named 1.0.0",
+		"wrote .markitect/lock.yaml: std 2.0.0")
+	if got, want := read(t, r.Dir, ".markitect/manifest.yaml"), strings.NewReplacer("1.0.0", "2.0.0").Replace(earlier); got != want {
 		t.Fatalf("the manifest after tidy:\n%s", got)
 	}
 	mustRun(t, r.Dir, "check")
@@ -689,16 +688,16 @@ func TestAStandardLibraryMovesWithTheBinary(t *testing.T) {
 
 	// update does the same, and says so.
 	r = old()
-	wantAll(t, mustRun(t, r.Dir, "update", "--files"), ".markitect/manifest.yaml now names std 1.1.0, where it named 1.0.0", "lock: rewritten")
+	wantAll(t, mustRun(t, r.Dir, "update", "--files"), ".markitect/manifest.yaml now names std 2.0.0, where it named 1.0.0", "lock: rewritten")
 	mustRun(t, r.Dir, "check")
 
 	// The version is written where it stands, whatever else the line holds: in
 	// quotes, in flow style behind a project Library of the same version, or on
 	// a line of its own.
 	for before, after := range map[string]string{
-		"libraries:\r\n  \"std\" :   '1.0.0'   # 1.0.0 was the first\r\n": "libraries:\r\n  \"std\" :   '1.1.0'   # 1.0.0 was the first\r\n",
-		"libraries: {web: 1.0.0, std: 1.0.0}\n":                           "libraries: {web: 1.0.0, std: 1.1.0}\n",
-		"libraries:\n  std:\n    1.0.0\n  web: 1.0.0\n":                   "libraries:\n  std:\n    1.1.0\n  web: 1.0.0\n",
+		"libraries:\r\n  \"std\" :   '1.0.0'   # 1.0.0 was the first\r\n": "libraries:\r\n  \"std\" :   '2.0.0'   # 1.0.0 was the first\r\n",
+		"libraries: {web: 1.0.0, std: 1.0.0}\n":                           "libraries: {web: 1.0.0, std: 2.0.0}\n",
+		"libraries:\n  std:\n    1.0.0\n  web: 1.0.0\n":                   "libraries:\n  std:\n    2.0.0\n  web: 1.0.0\n",
 	} {
 		r = old()
 		if strings.Contains(before, "web") {
@@ -763,7 +762,7 @@ func TestStatusAndMarkThroughTheCommandLine(t *testing.T) {
 
 	// Limited to a Package, status prints that Package's part, and --json names
 	// the Package; one the spec does not have is a usage error.
-	if code, out, _ := run(t, r.Dir, "status", "--package", "Root"); code != 1 || !strings.Contains(out, "To verify in Package Root (1 of 1 Definition)") || !strings.Contains(out, item) {
+	if code, out, _ := run(t, r.Dir, "status", "--package", "Root"); code != 1 || !strings.Contains(out, "To verify in Package Root (1 of 1 item)") || !strings.Contains(out, item) {
 		t.Fatalf("status --package Root: %d\n%s", code, out)
 	}
 	var limited struct {

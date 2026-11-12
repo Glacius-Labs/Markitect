@@ -1,6 +1,6 @@
 # The record
 
-`internal/run` holds the record of what was verified ([DEC-099](../../docs/decisions.md#dec-099-a-record-of-what-was-verified), [concept, §6](../../docs/concept.md#6-the-record)). Like Go's test cache, it keeps for each Definition the state at which a reviewer last verified it, and so says what is left to verify. The tool supports agent work and does not steer it: it computes, checks and records, and decides nothing about who works when. Whoever drives the agents (a skill, a workflow or a person) starts them and makes every Git step. Nothing here starts or drives an agent, and nothing uses Git ([DEC-096](../../docs/decisions.md#dec-096-the-tool-computes-and-checks-a-driver-acts), [DEC-097](../../docs/decisions.md#dec-097-markitect-uses-no-git)).
+`internal/run` holds the record of what was verified ([DEC-099](../../docs/decisions.md#dec-099-a-record-of-what-was-verified), [concept, §6](../../docs/concept.md#6-the-record)). Like Go's test cache, it keeps for each item the state at which a reviewer last verified it, where an item is a Definition that is no part of another, with its parts ([DEC-111](../../docs/decisions.md#dec-111-a-thing-with-parts-is-built-and-verified-as-one)), and so says what is left to verify. The tool supports agent work and does not steer it: it computes, checks and records, and decides nothing about who works when. Whoever drives the agents (a skill, a workflow or a person) starts them and makes every Git step. Nothing here starts or drives an agent, and nothing uses Git ([DEC-096](../../docs/decisions.md#dec-096-the-tool-computes-and-checks-a-driver-acts), [DEC-097](../../docs/decisions.md#dec-097-markitect-uses-no-git)).
 
 | Package | Role |
 | --- | --- |
@@ -14,14 +14,15 @@ The project folder is the nearest folder with `.markitect/manifest.yaml`. Its fi
 
 ## The inputs
 
-A Definition's inputs are everything its verification depended on, each by its SHA-256:
+An item is what is verified as one: a Definition that is no part of another, with its parts. A part that has parts of its own is an item of its own, and the thing above it does not cover it ([`spec.Units`](../spec/spec.go)). An item's inputs are everything its verification depended on, each by its SHA-256:
 
 | Key | Input |
 |---|---|
 | `self` | The Definition's own text |
-| `kind:ID` | Its Kind |
-| `link:ID` | A Definition it links to |
-| `file:PATH` | A file whose registry row names it |
+| `part:ID` | The text of a part it covers |
+| `kind:ID` | Its Kind, or the Kind of a part |
+| `link:ID` | A Definition that it or a part links to, outside the item |
+| `file:PATH` | A file whose registry row names it or a part |
 | `evidence:PATH` | A file the reviewer gave as evidence |
 
 A Definition of the spec counts by its text. A Library Definition counts by its Library's digest in the lock, so that a newer binary changes nothing until the lock is written again; a Library counts as one, as a Go module does, so a change of one Kind of a committed Library puts the Definitions of all its Kinds on the list. Core's `Kind` and `Package` change only with the tool and are no inputs, and neither is a link to a Package. Line endings do not count in a text file's hash, so a checkout on another system matches.
@@ -55,7 +56,7 @@ The record is a record, not a proof: a line written by hand shows in the diff, a
 
 `markitect status [--all] [--package P]` reads the folder and the record and changes nothing. It lists:
 
-- every Definition with a changed input or no record, with which inputs changed: `changed: self, file:src/x.go (new), evidence:tests/x_test.go (gone)`;
+- every item with a changed input or no record, with which inputs changed: `changed: self, part:members/operations/lend/conditions/in-stock, file:src/x.go (new), evidence:tests/x_test.go (gone)`; an item with parts says how many it has and that `markitect doc` shows it whole;
 - every Definition recorded `fail` or `spec-problem` at its inputs as they are, with why; a changed one also says what was recorded before;
 - every Definition gone from the spec that still has a line, with the files that line names: are they removed, or do they have a new basis?
 - every conflict;

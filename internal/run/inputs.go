@@ -12,16 +12,20 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
-// The inputs of a Definition: everything its verification depended on, each by
-// its hash. A change of any input puts the Definition back on the list. They
-// reach what a change touches at distance 0 and 1: a Definition that changed,
-// one that links to a changed Definition or is of a changed Kind, one whose
-// files changed, and one whose registry rows gained or lost it.
+// The inputs of a unit: everything its verification depended on, each by its
+// hash. A unit is what is verified as one (spec.Units): a Definition that is no
+// part of another, with the parts it covers. A change of any input puts the
+// unit back on the list. The inputs reach what a change touches at distance 0
+// and 1: a Definition or a part of it that changed, one that links to a
+// changed Definition or is of a changed Kind, one whose files changed, and one
+// whose registry rows gained or lost it.
 
-// Keys of the inputs: the Definition's own text, its Kind, a Definition it links
-// to, a file a registry row names for it, and a file a reviewer gave as evidence.
+// Keys of the inputs: the Definition's own text, a part it covers, a Kind of
+// either, a Definition either links to, a file a registry row names for
+// either, and a file a reviewer gave as evidence.
 const (
 	InputSelf     = "self"
+	InputPart     = "part:"
 	InputKind     = "kind:"
 	InputLink     = "link:"
 	InputFile     = "file:"
@@ -79,8 +83,8 @@ type state struct {
 	hash func(file string) (string, error)
 }
 
-// inputs computes the inputs of every Definition of the project's spec, without
-// evidence.
+// inputs computes the inputs of every unit of the project's spec, without
+// evidence, by the Definition that names the unit.
 func (s state) inputs() (map[string]Inputs, error) {
 	sp := s.p.Spec
 	rows := map[string][]string{}
@@ -92,29 +96,37 @@ func (s state) inputs() (map[string]Inputs, error) {
 		}
 	}
 	out := map[string]Inputs{}
-	for _, id := range sp.OwnDefinitions() {
-		d := sp.Definitions[id]
-		in := Inputs{InputSelf: Hash(d.Data)}
-		for _, l := range d.Links {
-			if l.Target == "" || l.Package || l.Target == d.ID {
-				continue
-			}
-			v, ok := s.linked(l.Target)
-			if !ok {
-				continue
-			}
-			key := InputLink + l.Target
-			if l.Kind {
-				key = InputKind + l.Target
-			}
-			in[key] = v
+	units := sp.Units()
+	for _, id := range sortedKeys(units) {
+		in := Inputs{InputSelf: Hash(sp.Definitions[id].Data)}
+		within := map[string]bool{id: true}
+		for _, part := range units[id] {
+			within[part] = true
+			in[InputPart+part] = Hash(sp.Definitions[part].Data)
 		}
-		for _, file := range rows[id] {
-			h, err := s.hash(file)
-			if err != nil {
-				return nil, err
+		for _, member := range append([]string{id}, units[id]...) {
+			for _, l := range sp.Definitions[member].Links {
+				// A link inside the unit adds nothing: its target is an input already.
+				if l.Target == "" || l.Package || within[l.Target] {
+					continue
+				}
+				v, ok := s.linked(l.Target)
+				if !ok {
+					continue
+				}
+				key := InputLink + l.Target
+				if l.Kind {
+					key = InputKind + l.Target
+				}
+				in[key] = v
 			}
-			in[InputFile+file] = hashOrGone(h)
+			for _, file := range rows[member] {
+				h, err := s.hash(file)
+				if err != nil {
+					return nil, err
+				}
+				in[InputFile+file] = hashOrGone(h)
+			}
 		}
 		out[id] = in
 	}

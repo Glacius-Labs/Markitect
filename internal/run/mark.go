@@ -113,6 +113,8 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 		inputs = v.goneInputs[req.definition]
 	}
 	switch {
+	case !ok && f.cur.Spec.UnitOf(req.definition) != req.definition:
+		return refuse("%s is a part of %s, which is verified as one with its parts: record the verdict on that item, as markitect status prints it.", req.definition, f.cur.Spec.UnitOf(req.definition))
 	case !ok:
 		return refuse("%s is no Definition of the spec, and the record has no line for it.", req.definition)
 	case !strings.HasPrefix(inputs.fingerprint(), req.at):
@@ -168,7 +170,7 @@ func clean(rec Record, v view, except string) []Line {
 	var out []Line
 	for id, lines := range rec.byDefinition() {
 		switch {
-		case id == except:
+		case id == except, v.covered[id]:
 		case len(lines) == 1:
 			out = append(out, lines[0])
 		case v.items[id].State == StateGone:

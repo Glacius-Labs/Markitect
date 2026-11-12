@@ -67,7 +67,7 @@ func library(t *testing.T) memRepo {
 		std.Files = append(std.Files, spec.File{Path: f.Path, Data: f.Data})
 	}
 	return memRepo{
-		project.ManifestFile:                      "libraries:\n  std: 1.1.0\n",
+		project.ManifestFile:                      "libraries:\n  std: 2.0.0\n",
 		project.LockFile:                          string(spec.RenderLock([]spec.LibrarySource{std})),
 		m + "project.md":                          def("std/Project", "Library", "Parts: [[members]], [[catalog]]."),
 		m + "loan-limit.md":                       def("std/Rule", "Loan limit", "At most `5` open loans."),
@@ -115,8 +115,15 @@ func TestRefs(t *testing.T) {
 	if strings.Join(got, ",") != want {
 		t.Fatalf("refs = %v", got)
 	}
+	// The Definitions of the Kind, then the Kinds of the Library that link it.
 	kinds, _ := Refs(p, "std/Concept")
-	if len(kinds) != 5 || kinds[0].Via != "kind" {
+	uses := 0
+	for _, k := range kinds {
+		if k.Via == "kind" {
+			uses++
+		}
+	}
+	if uses != 4 || kinds[0].Via != "kind" {
 		t.Fatalf("kind refs = %+v", kinds)
 	}
 	pkg, _ := Refs(p, "members")
@@ -234,7 +241,8 @@ func TestVetSizes(t *testing.T) {
 	// The parts of a thing do not count: thirty conditions of one Operation
 	// leave members as small as it was.
 	r = library(t)
-	r[m+"members/operations/lend/lend.md"] = def("std/Feature", "Lend", "")
+	r[m+"feature.md"] = def("Kind", "Feature", "One thing a user can do.")
+	r[m+"members/operations/lend/lend.md"] = def("feature", "Lend", "")
 	for i := 0; i < 30; i++ {
 		r[m+fmt.Sprintf("members/operations/lend/conditions/c%02d.md", i)] = def("std/Rule", "C", "")
 	}
@@ -435,7 +443,8 @@ func TestVetUnlinkedMentions(t *testing.T) {
 	r[m+"catalog/catalog.md"] = def("Package", "Catalog", "What can be borrowed.")
 	// A part speaks of the thing it is a part of without linking it; another
 	// Definition that names the thing is noted as before.
-	r[m+"catalog/operations/lend/lend.md"] = def("std/Feature", "Lend", "A copy goes home.")
+	r[m+"feature.md"] = def("Kind", "Feature", "One thing a user can do.")
+	r[m+"catalog/operations/lend/lend.md"] = def("feature", "Lend", "A copy goes home.")
 	r[m+"catalog/operations/lend/conditions/free.md"] = def("std/Rule", "Free", "To lend it, nobody else holds it.")
 	r[m+"catalog/shelf.md"] = def("std/Concept", "Shelf", "What the library can lend.")
 	part, other := false, false

@@ -39,6 +39,7 @@ func Compile(src Source) (*Spec, Diagnostics) {
 			Libraries:    map[string]*Library{},
 			Edges:        map[string]map[string][]Use{},
 			PlainFolders: map[string]bool{},
+			HasParts:     map[string]bool{},
 		},
 		rawKind: map[string]rawKind{},
 	}
@@ -50,6 +51,8 @@ func Compile(src Source) (*Spec, Diagnostics) {
 	c.loadSpec(src)
 	c.wholes()
 	c.resolve()
+	c.checkSchemaRefs()
+	c.checkSchemas()
 	c.checkCycles()
 	for _, p := range c.spec.Packages {
 		sort.Strings(p.Children)
@@ -71,7 +74,10 @@ type compiler struct {
 	diags   Diagnostics
 	rawKind map[string]rawKind // Definition ID -> kind as written
 	raw     map[string][]RawLink
+	fields  map[string][]RawField
 	pages   map[string]parsed // by file, parsed once
+	// schemaRefs are the Kinds that the declarations of Kinds name.
+	schemaRefs []schemaRef
 }
 
 func (c *compiler) loadLibrary(lib LibrarySource) {
@@ -227,6 +233,7 @@ func (c *compiler) wholes() {
 		for ; at != RootPackage && c.spec.Packages[at] == nil; at = FolderOf(at) {
 			if thing, ok := c.spec.Thing(at); ok && thing != id {
 				d.Whole = thing
+				c.spec.HasParts[thing] = true
 				break
 			}
 		}
@@ -298,25 +305,55 @@ func (c *compiler) parseDefinition(id, file string, data []byte) *Definition {
 	d := &Definition{ID: id, File: file, Data: data, Words: Words(page.Body)}
 	kind := rawKind{line: max(page.FrontLine, 1)}
 	if page.FrontLine == 0 {
-		c.diags.Add("definition.front_matter", file, 1, "a Definition starts with front matter that names its kind, such as kind: std/Feature between two lines ---")
+		c.diags.Add("definition.front_matter", file, 1, "a Definition starts with front matter that names its kind, such as kind: std/Rule between two lines ---")
 	}
+	var declaredFields, declaredParts, declaredLinks, declaredRealized, declaredBinds *yaml.Node
 	for key, node := range page.Front {
 		switch key {
+		case "fields":
+			declaredFields = node
+		case "parts":
+			declaredParts = node
+		case "links":
+			declaredLinks = node
+		case "realized":
+			declaredRealized = node
+		case "binds":
+			declaredBinds = node
 		case "kind":
 			if node.Kind != yaml.ScalarNode || node.Tag != "!!str" || strings.TrimSpace(node.Value) == "" {
-				c.diags.Add("definition.front_matter", file, node.Line, "kind must be a path such as std/Feature")
+				c.diags.Add("definition.front_matter", file, node.Line, "kind must be a path such as std/Rule")
 				continue
 			}
 			kind = rawKind{value: strings.TrimSuffix(strings.TrimSpace(node.Value), ".md"), line: node.Line}
 		case "internal":
-			if node.Kind != yaml.ScalarNode || node.Tag != "!!bool" {
+			internal, ok := yamlBool(node)
+			if !ok {
 				c.diags.Add("definition.front_matter", file, node.Line, "internal must be true or false")
 				continue
 			}
-			d.Internal = node.Value == "true"
+			d.Internal = internal
 		default:
-			c.diags.Add("definition.front_matter", file, node.Line, "unknown front matter key %q: a Definition's front matter holds only kind and internal", key)
+			c.diags.Add("definition.front_matter", file, node.Line, "unknown front matter key %q: a Definition's front matter holds only kind and internal, and a Kind's also fields, parts, links, realized and binds", key)
 		}
+	}
+	// A Kind may declare the fields and the parts of its Definitions, and
+	// that no file realizes them.
+	declared := []*yaml.Node{declaredFields, declaredParts, declaredLinks, declaredRealized, declaredBinds}
+	declares := false
+	for _, node := range declared {
+		if node == nil {
+			continue
+		}
+		declares = true
+		if kind.value != CoreKind {
+			c.diags.Add("definition.front_matter", file, node.Line, "only a Kind declares fields, parts, links, realized and binds: this Definition's kind is not Kind")
+			declares = false
+			break
+		}
+	}
+	if declares {
+		d.Schema = c.parseSchema(file, page.FrontLine, declaredFields, declaredParts, declaredLinks, declaredRealized, declaredBinds)
 	}
 	if kind.value == "" && page.FrontLine != 0 {
 		if _, ok := page.Front["kind"]; !ok {
@@ -331,9 +368,13 @@ func (c *compiler) parseDefinition(id, file string, data []byte) *Definition {
 	c.spec.Definitions[id] = d
 	c.rawKind[id] = kind
 	if c.raw == nil {
-		c.raw = map[string][]RawLink{}
+		c.raw, c.fields = map[string][]RawLink{}, map[string][]RawField{}
 	}
 	c.raw[id] = page.Links()
+	c.fields[id] = page.Fields()
+	for _, f := range c.fields[id] {
+		d.Fields = append(d.Fields, Field{Label: f.Label, Line: f.Line})
+	}
 	return d
 }
 
@@ -362,7 +403,13 @@ func (c *compiler) resolve() {
 			c.diags.Add("library.not_a_kind", d.File, c.rawKind[id].line, "a Library holds only Kinds; this Definition's kind must be Kind")
 		}
 		for _, raw := range c.raw[id] {
-			d.Links = append(d.Links, c.resolveLink(d, raw.Target, raw.Line, false))
+			link := c.resolveLink(d, raw.Target, raw.Line, false)
+			for _, f := range c.fields[id] {
+				if raw.Start >= f.Start && raw.Start < f.End {
+					link.Field = f.Label
+				}
+			}
+			d.Links = append(d.Links, link)
 		}
 	}
 }

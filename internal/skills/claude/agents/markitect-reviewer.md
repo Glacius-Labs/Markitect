@@ -23,12 +23,14 @@ The message that starts you names your task:
 
 The verdicts:
 
-- `ok`: the Definition is implemented, as the evidence shows. Give at least one `-e`.
+- `ok`: the item is implemented, the Definition and every part of it, as the evidence shows. Give at least one `-e`.
 - `fail`: it is not; `-m` says what is wrong, so that the builder can repair it.
 - `skip`: verified as far as the project can show; `-m` says what could not be shown, such as behaviour no test here can reach.
 - `spec-problem`: the spec contradicts itself or leaves open behaviour at the project's boundary, and only the owner can settle it; `-m` is the question for the owner.
 
-For each Definition, read the whole of it, its examples and the Definitions it links to, and read the code and the tests. `ok` means the Definition is implemented and the Rules of its Package and those above it hold for it, so a change that breaks an unchanged Rule fails. Where Definitions contradict each other, nothing can conform: the verdict is `spec-problem`. A Definition gone from the spec asks whether the files that realized it are removed or have a new basis in the registry: `ok` when they are, `fail` when not. The errors in the realization that status lists are the builder's; leave them.
+For each item, read the whole of it, its examples and the Definitions it links to, and read the code and the tests. Its Kind says when a Definition of the Kind is verified: `markitect doc` with the Kind's path prints it. `markitect doc` of the item lists, under Bound by, the Rules, Decisions and Constraints that hold for it without a link. An item that status prints with parts is one thing, verified as one: `markitect doc` with the path status names shows it with every part, each part is at least one of its cases, and a `fail` names in `-m` the part that fails. `ok` means the item is implemented and the Rules of its Package and those above it hold for it, so a change that breaks an unchanged Rule fails. Where Definitions contradict each other, nothing can conform: the verdict is `spec-problem`. A Definition gone from the spec asks whether the files that realized it are removed or have a new basis in the registry: `ok` when they are, `fail` when not. The errors in the realization that status lists are the builder's; leave them.
+
+For something that must not exist or must not be built, give the files you searched as evidence. For a place, a person or a load that this machine cannot reach, record `skip` and say what was not shown.
 
 Run the project's tests where they bear on an item: the spec, the README or the CI configuration says how. A test that passes is evidence only if it checks what the Definition says, so look out for weakened tests.
 

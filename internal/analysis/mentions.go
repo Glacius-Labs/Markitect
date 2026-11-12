@@ -38,6 +38,18 @@ func unlinkedMentions(p *project.Project) []Note {
 		}
 	}
 	reach := reachability{sp: sp, seen: map[string]map[string]bool{}}
+	linkedBy := map[string]map[string]bool{}
+	for _, id := range ids {
+		unit := sp.UnitOf(id)
+		if linkedBy[unit] == nil {
+			linkedBy[unit] = map[string]bool{}
+		}
+		for _, l := range sp.Definitions[id].Links {
+			if t := sp.Definitions[l.Target]; !l.Package && t != nil && t.Own() {
+				linkedBy[unit][l.Target] = true
+			}
+		}
+	}
 	var out []Note
 	for _, x := range ids {
 		d := sp.Definitions[x]
@@ -47,18 +59,32 @@ func unlinkedMentions(p *project.Project) []Note {
 		}
 		text, lines := page.Prose()
 		toks := tokenize(text)
-		linked := map[string]bool{}
-		for _, l := range d.Links {
-			if t := sp.Definitions[l.Target]; !l.Package && t != nil && t.Own() {
-				linked[l.Target] = true
-			}
-		}
+		// A thing with parts is read and verified as one, so what the whole or
+		// one of its parts links is linked for all of it.
+		linked := linkedBy[sp.UnitOf(x)]
 		// Each target's first mention that no linked Definition's name covers, as a
 		// line of the file.
 		first := map[string]int{}
-		for _, s := range longestFirst(spans(toks, byFirst)) {
+		found := longestFirst(spans(toks, byFirst))
+		// Several Definitions may carry one name, such as a Concept and the page
+		// that shows it. A mention names one of them: the nearest, which is one
+		// in the Definition's own Package, then one in a Package above it, then
+		// the first by ID.
+		nearest := map[int]string{}
+		for _, s := range found {
+			if !mayLink(d, sp.Definitions[s.id]) || !kindMayLink(sp, d, sp.Definitions[s.id]) {
+				continue // what it may not link is no candidate
+			}
+			if other, ok := nearest[s.start]; !ok || nearer(sp, d, s.id, other) {
+				nearest[s.start] = s.id
+			}
+		}
+		for _, s := range found {
 			dd := s.id
 			t := sp.Definitions[dd]
+			if nearest[s.start] != dd {
+				continue
+			}
 			// An anchor carries its Package's name, a word of the domain that prose
 			// uses freely: naming it is no reliance on the anchor's text. Its name
 			// still covers the words, so that no shorter name inside it is reported.
@@ -67,6 +93,17 @@ func unlinkedMentions(p *project.Project) []Note {
 			}
 			// A part speaks of the thing it is a part of without linking it.
 			if sp.IsPartOf(x, dd) {
+				continue
+			}
+			// A part's name is a word of its whole, such as Name or State, which
+			// prose elsewhere uses freely: only what is no part is reported.
+			if t.Whole != "" {
+				continue
+			}
+			// What no file realizes is given or wanted, such as a Term or a group
+			// of people: its name is a word of the project, and every sentence
+			// about the customer does not rely on the Definition of that name.
+			if kind := sp.Definitions[t.Kind]; kind != nil && kind.Schema != nil && kind.Schema.Unrealized {
 				continue
 			}
 			if _, ok := first[dd]; ok || covered(s.words, linked, nameList) {
@@ -107,6 +144,48 @@ func unlinkedMentions(p *project.Project) []Note {
 		}
 	}
 	return out
+}
+
+// kindMayLink says whether the Kind of d lets it link t somewhere: a Kind that
+// names the Kinds its Definitions may link rules the others out, unless one of
+// its fields names them, so a mention of one of those is no missing link.
+func kindMayLink(sp *spec.Spec, d, t *spec.Definition) bool {
+	kind := sp.Definitions[d.Kind]
+	if kind == nil || kind.Schema == nil || kind.Schema.Broken || !kind.Schema.Limited {
+		return true
+	}
+	lists := [][]string{kind.Schema.Links}
+	for _, f := range kind.Schema.Fields {
+		if f.Limited {
+			lists = append(lists, f.Links)
+		}
+	}
+	for _, list := range lists {
+		for _, allowed := range list {
+			if allowed == t.Kind {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// nearer says whether Definition a lies nearer to d than b does: in d's own
+// Package before a Package above it, before any other, and by ID among equals.
+func nearer(sp *spec.Spec, d *spec.Definition, a, b string) bool {
+	rank := func(id string) int {
+		switch pkg := sp.Definitions[id].Package; {
+		case pkg == d.Package:
+			return 0
+		case spec.Within(d.Package, pkg):
+			return 1
+		}
+		return 2
+	}
+	if ra, rb := rank(a), rank(b); ra != rb {
+		return ra < rb
+	}
+	return a < b
 }
 
 // named is one name of a Definition, as lowercase words.

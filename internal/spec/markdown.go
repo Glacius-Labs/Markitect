@@ -172,6 +172,69 @@ func (p Page) LinksIn(root ast.Node) []RawLink {
 	return links
 }
 
+// RawField is a labelled field of the body as written: a bold label ending
+// in a colon, such as **Satisfies:**, at the start of a line of a paragraph
+// at the top level. It reaches to the next field, or to the end of the body.
+type RawField struct {
+	Label string
+	Line  int
+	// Start and End bound the field in the page's Body.
+	Start, End int
+}
+
+// Fields returns the labelled fields of the body, in order.
+func (p Page) Fields() []RawField {
+	if p.Root == nil {
+		return nil
+	}
+	var fields []RawField
+	for n := p.Root.FirstChild(); n != nil; n = n.NextSibling() {
+		para, ok := n.(*ast.Paragraph)
+		if !ok {
+			continue
+		}
+		// A label starts a line: it is the paragraph's first inline, or follows
+		// a line break.
+		atLineStart := true
+		for c := para.FirstChild(); c != nil; c = c.NextSibling() {
+			if strong, ok := c.(*ast.Emphasis); ok && atLineStart && strong.Level == 2 {
+				label, colon := strings.CutSuffix(p.InlineText(strong), ":")
+				label = strings.TrimSpace(label)
+				if start, found := firstText(strong); colon && label != "" && found && start >= 2 {
+					// Back to the two characters that open the bold label; a code
+					// span or an escape may stand between them and the first text.
+					for start > 2 && !opensBold(p.Body[start-2:start]) && p.Body[start-1] != '\n' {
+						start--
+					}
+					start -= 2
+					if len(fields) > 0 {
+						fields[len(fields)-1].End = start
+					}
+					fields = append(fields, RawField{Label: label, Line: p.Line(start), Start: start, End: len(p.Body)})
+				}
+			}
+			t, isText := c.(*ast.Text)
+			atLineStart = isText && (t.SoftLineBreak() || t.HardLineBreak())
+		}
+	}
+	return fields
+}
+
+func opensBold(two []byte) bool { return string(two) == "**" || string(two) == "__" }
+
+// firstText returns the body offset of the first text below an inline node.
+func firstText(n ast.Node) (int, bool) {
+	start, found := 0, false
+	_ = ast.Walk(n, func(c ast.Node, entering bool) (ast.WalkStatus, error) {
+		if t, ok := c.(*ast.Text); ok && entering {
+			start, found = t.Segment.Start, true
+			return ast.WalkStop, nil
+		}
+		return ast.WalkContinue, nil
+	})
+	return start, found
+}
+
 // RawText returns the source text of a node's inline content as written,
 // from its first text to its last, so that a path such as pkg/__init__.py is
 // not read as emphasis.

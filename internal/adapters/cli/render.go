@@ -13,13 +13,24 @@ import (
 
 // renderList prints each Package, then its Definitions indented below it; with
 // --deps a Package's coupling, abstractness and distance and what it depends on,
-// and each Definition's links.
-func renderList(pkgs []analysis.ListedPackage) string {
+// and each Definition's links. With packagesOnly it prints the Packages alone,
+// a dependency as one line with the number of links behind it, so that the
+// structure of a large spec fits a screen.
+func renderList(pkgs []analysis.ListedPackage, packagesOnly bool) string {
 	var b strings.Builder
 	for _, p := range pkgs {
 		b.WriteString(p.Name)
 		if p.Deps != nil {
 			fmt.Fprintf(&b, " (Ca %d, Ce %d, instability %.2f, abstractness %.2f, distance %.2f)", p.Deps.Afferent, p.Deps.Efferent, p.Deps.Instability, p.Deps.Abstractness, p.Deps.Distance)
+		}
+		if packagesOnly {
+			fmt.Fprintf(&b, ", %d %s\n", len(p.Definitions), plural(len(p.Definitions), "Definition", "Definitions"))
+			if p.Deps != nil {
+				for _, d := range p.Deps.DependsOn {
+					fmt.Fprintf(&b, "  depends on %s (%d %s)\n", d.Package, len(d.Uses), plural(len(d.Uses), "link", "links"))
+				}
+			}
+			continue
 		}
 		b.WriteString("\n")
 		if p.Deps != nil {
@@ -88,8 +99,64 @@ func renderDocDefinition(d analysis.DocDefinition) string {
 			fmt.Fprintf(&b, "    %s\n", line)
 		}
 	}
+	// What a Kind declares stands in its front matter, which the text above
+	// leaves out.
+	if s := d.Declares; s != nil {
+		if s.Fields != nil {
+			b.WriteString("\nDeclares the fields:\n")
+			for _, f := range s.Fields {
+				line := f.Name
+				if f.Required {
+					line += ", required"
+				}
+				switch {
+				case f.Links == nil:
+				case len(f.Links) == 0:
+					line += ", links nothing"
+				default:
+					line += ", links " + strings.Join(f.Links, ", ")
+				}
+				fmt.Fprintf(&b, "  %s\n", line)
+			}
+			if len(s.Fields) == 0 {
+				b.WriteString("  none\n")
+			}
+		}
+		if s.Parts != nil {
+			b.WriteString("\nDeclares the parts:\n")
+			for _, p := range s.Parts {
+				where := "under " + p.Folder + "/"
+				if p.Folder == spec.DirectParts {
+					where = "in the folder itself"
+				}
+				fmt.Fprintf(&b, "  %s: %s\n", where, strings.Join(p.Kinds, ", "))
+			}
+			if len(s.Parts) == 0 {
+				b.WriteString("  none\n")
+			}
+		}
+		switch {
+		case s.Links == nil:
+		case len(s.Links) == 0:
+			b.WriteString("\nDeclares that it links nothing.\n")
+		default:
+			fmt.Fprintf(&b, "\nDeclares that it links only: %s\n", strings.Join(s.Links, ", "))
+		}
+		if s.Binds {
+			b.WriteString("\nDeclares that a Definition of this Kind binds its Package and those below it without a link.\n")
+		}
+		if s.Unrealized {
+			b.WriteString("\nDeclares that no file realizes a Definition of this Kind.\n")
+		}
+	}
 	if len(d.Links) > 0 {
 		fmt.Fprintf(&b, "\nLinks to: %s\n", strings.Join(d.Links, ", "))
+	}
+	if len(d.BoundBy) > 0 {
+		b.WriteString("\nBound by, without a link, as everything in its Package:\n")
+		for _, o := range d.BoundBy {
+			fmt.Fprintf(&b, "  %s\n", definitionLine(o))
+		}
 	}
 	if len(d.LinkedFrom) > 0 {
 		b.WriteString("\nLinked from:\n")

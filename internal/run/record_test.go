@@ -137,7 +137,7 @@ func TestStatusEmptiesAsTheReviewerRecords(t *testing.T) {
 			t.Fatalf("%+v", it)
 		}
 	}
-	has(t, st.Text(), "To verify (8 of 8 Definitions)", "members/loans/loan@"+p.item(st, "members/loans/loan").Fingerprint+"\n", "no record yet", "look at: .markitect/spec/members/loans/loan.md, src/members/loans/loan.go")
+	has(t, st.Text(), "To verify (8 of 8 items)", "members/loans/loan@"+p.item(st, "members/loans/loan").Fingerprint+"\n", "no record yet", "look at: .markitect/spec/members/loans/loan.md, src/members/loans/loan.go")
 	p.verifyAll()
 	has(t, p.status(false).Text(), "Nothing to verify: the spec compiles, and all 8 Definitions are verified at their current inputs.")
 	rec := p.read(project.ReviewFile)
@@ -198,7 +198,7 @@ func TestStatusCountsItemsPerPackage(t *testing.T) {
 			t.Fatalf("after a spec-problem: %+v", pk)
 		}
 	}
-	if broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 1.1.0\n", project.SpecDir + "/x.md": "no front matter\n"}).status(false); len(broken.Packages) != 0 {
+	if broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 2.0.0\n", project.SpecDir + "/x.md": "no front matter\n"}).status(false); len(broken.Packages) != 0 {
 		t.Fatalf("a spec with errors has Packages: %+v", broken.Packages)
 	}
 }
@@ -260,7 +260,7 @@ func TestStatusOfOnePackage(t *testing.T) {
 		t.Fatalf("a Package the spec does not have: %v", err)
 	}
 	// A spec with errors has no list to limit, whatever Package is asked for.
-	broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 1.1.0\n", project.SpecDir + "/x.md": "no front matter\n"})
+	broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 2.0.0\n", project.SpecDir + "/x.md": "no front matter\n"})
 	if st, err := broken.engine.Status(context.Background(), run.StatusRequest{Dir: broken.dir, Package: "nowhere"}); err != nil || len(st.SpecErrors) == 0 {
 		t.Fatalf("a spec with errors: %v\n%s", err, st.Text())
 	}
@@ -347,20 +347,115 @@ func TestStatusCountsAFolderForThePackageAbove(t *testing.T) {
 	}
 }
 
+// A thing with parts is verified as one: status lists the whole with its
+// parts and no part alone, a change of a part or of a file a part's row names
+// lists the whole, a verdict on a part is refused, and a part needs no row of
+// its own. A part with parts of its own is a thing of its own.
+func TestAThingWithPartsIsVerifiedAsOne(t *testing.T) {
+	files := library()
+	files[m+"catalog/operations/lend/lend.md"] = def("std/Rule", "Lend", "A copy goes home.")
+	files[m+"catalog/operations/lend/free.md"] = def("std/Rule", "Free", "Nobody holds it; see [[catalog/book]].")
+	files[m+"catalog/operations/lend/due/due.md"] = def("std/Rule", "Due", "It comes back.")
+	files[m+"catalog/operations/lend/due/after.md"] = def("std/Rule", "After", "After `14` days.")
+	files[m+"catalog/operations/lend/alone/alone.md"] = def("std/Rule", "Alone", "A part in a folder of its name, with no parts.")
+	files[project.RegistryDir+"/catalog.md"] += "| src/catalog/lend.go | [[catalog/operations/lend]], [[catalog/operations/lend/due/after]] | Lending |\n"
+	files["src/catalog/lend.go"] = "package catalog\n"
+	p := newPlainOf(t, files)
+	if errs := p.status(false).Errors; len(errs) != 0 {
+		t.Fatalf("a part needs no row of its own:\n%v", errs)
+	}
+	st := p.status(false)
+	lend, due := p.item(st, "catalog/operations/lend/lend"), p.item(st, "catalog/operations/lend/due/due")
+	if got := strings.Join(lend.Parts, ","); got != "catalog/operations/lend/alone/alone,catalog/operations/lend/free" {
+		t.Fatalf("parts of lend = %q", got)
+	}
+	if got := strings.Join(due.Parts, ","); got != "catalog/operations/lend/due/after" {
+		t.Fatalf("parts of due = %q", got)
+	}
+	if strings.Contains(listed(st), "lend/free") || strings.Contains(listed(st), "due/after") || st.Units != 10 || st.Definitions != 13 {
+		t.Fatalf("listed %q, %d units of %d Definitions", listed(st), st.Units, st.Definitions)
+	}
+	has(t, st.Text(), "To verify (10 of 10 items)", "catalog/operations/lend/lend@"+lend.Fingerprint+"\n  with its 2 parts, verified as one; markitect doc catalog/operations/lend shows it whole\n",
+		"catalog/operations/lend/due/due@"+due.Fingerprint+"\n  with its 1 part, verified as one; markitect doc catalog/operations/lend/due shows it whole\n")
+	for _, pkg := range st.Packages {
+		if pkg.Package == "catalog" && (pkg.Units != 4 || pkg.Definitions != 7) {
+			t.Fatalf("catalog: %+v", pkg)
+		}
+	}
+	if text, ok := p.review("catalog/operations/lend/free", run.VerdictOK, lend.Fingerprint, []string{"src/catalog/lend.go"}, ""); ok || !strings.Contains(text, "catalog/operations/lend/free is a part of catalog/operations/lend/lend, which is verified as one with its parts") {
+		t.Fatalf("a verdict on a part: %v %s", ok, text)
+	}
+	p.verifyAll()
+	if st := p.status(false); !st.Clean() {
+		t.Fatalf("not clean after verifying everything:\n%s", st.Text())
+	}
+	// A part changes: its whole is listed, and what the part links is not.
+	p.write(m+"catalog/operations/lend/free.md", def("std/Rule", "Free", "Nobody holds or has reserved it; see [[catalog/book]]."))
+	st = p.status(false)
+	if got := listed(st); got != "catalog/operations/lend/lend" {
+		t.Fatalf("after a change of a part, listed %q", got)
+	}
+	has(t, st.Text(), "changed: part:catalog/operations/lend/free")
+	p.verifyAll()
+	// What a part links changes: the whole is listed with it.
+	p.write(m+"catalog/book.md", def("std/Concept", "Book", "A book has a title and an author."))
+	if got := listed(p.status(false)); got != "catalog/book,catalog/operations/lend/lend" {
+		t.Fatalf("after a change of what a part links, listed %q", got)
+	}
+	p.verifyAll()
+	// The file a row names for a part of the inner thing changes: that thing is
+	// listed, and so is the outer one, whose row names the file too.
+	p.write("src/catalog/lend.go", "package catalog\n\nconst Days = 14\n")
+	if got := listed(p.status(false)); got != "catalog/operations/lend/due/due,catalog/operations/lend/lend" {
+		t.Fatalf("after a change of the file, listed %q", got)
+	}
+	p.verifyAll()
+	// A part is removed: its whole changed, and nothing is gone.
+	p.remove(m + "catalog/operations/lend/alone/alone.md")
+	st = p.status(false)
+	if got := listed(st); got != "catalog/operations/lend/lend" || p.item(st, "catalog/operations/lend/lend").State != run.StateChanged {
+		t.Fatalf("after a part is removed, listed %q", got)
+	}
+	has(t, st.Text(), "part:catalog/operations/lend/alone/alone (gone)")
+	// A line on a part, as a record of an earlier markitect holds it, names
+	// nothing that is gone.
+	p.verifyAll()
+	record := p.read(project.ReviewFile)
+	line := ""
+	for _, l := range strings.Split(record, "\n") {
+		if strings.Contains(l, `"catalog/operations/lend/lend"`) {
+			line = strings.Replace(l, `"catalog/operations/lend/lend"`, `"catalog/operations/lend/free"`, 1)
+		}
+	}
+	if line == "" {
+		t.Fatalf("no line of lend in:\n%s", record)
+	}
+	p.write(project.ReviewFile, record+line+"\n")
+	if st := p.status(false); !st.Clean() {
+		t.Fatalf("a line on a part:\n%s", st.Text())
+	}
+	// The next verdict drops it.
+	p.write("src/catalog/lend.go", "package catalog\n\nconst Days = 21\n")
+	p.verifyAll()
+	if got := p.read(project.ReviewFile); strings.Contains(got, `"definition":"catalog/operations/lend/free"`) {
+		t.Fatalf("the line on a part outlives the next verdict:\n%s", got)
+	}
+}
+
 // A link to the folder of a thing with parts relies on the thing: a change of
 // the whole reaches the Definition that links the folder, and a change of a
-// part does not.
+// part lists the whole alone.
 func TestAChangedWholeReachesWhatLinksItsFolder(t *testing.T) {
 	files := library()
 	files[m+"members/rules/fees/fees.md"] = def("std/Rule", "Fees", "A fee per day.")
-	files[m+"members/rules/fees/amounts/per-day.md"] = def("std/Rule", "Per day", "`1` euro.")
+	files[m+"members/rules/fees/per-day.md"] = def("std/Rule", "Per day", "`1` euro.")
 	files[m+"catalog/book.md"] = def("std/Concept", "Book", "A book has a title, and [[members/rules/fees]] apply.")
-	files[project.RegistryDir+"/members.md"] += "| src/members/fees.go | [[members/rules/fees]], [[members/rules/fees/amounts/per-day]] | Fees |\n"
+	files[project.RegistryDir+"/members.md"] += "| src/members/fees.go | [[members/rules/fees]], [[members/rules/fees/per-day]] | Fees |\n"
 	files["src/members/fees.go"] = "package members\n"
 	p := newPlainOf(t, files)
 	p.verifyAll()
-	p.write(m+"members/rules/fees/amounts/per-day.md", def("std/Rule", "Per day", "`2` euros."))
-	if got := listed(p.status(false)); got != "members/rules/fees/amounts/per-day" {
+	p.write(m+"members/rules/fees/per-day.md", def("std/Rule", "Per day", "`2` euros."))
+	if got := listed(p.status(false)); got != "members/rules/fees/fees" {
 		t.Fatalf("after a change of a part, listed %q", got)
 	}
 	p.verifyAll()
@@ -440,7 +535,7 @@ func TestAChangedKindReachesItsDefinitions(t *testing.T) {
 // of its Kinds is to verify.
 func TestALibraryCountsByItsLockDigest(t *testing.T) {
 	files := library()
-	files[project.ManifestFile] = "libraries:\n  std: 1.1.0\n  web: 0.1.0\n"
+	files[project.ManifestFile] = "libraries:\n  std: 2.0.0\n  web: 0.1.0\n"
 	files[project.LibraryDir+"/web/Page.md"] = "---\nkind: Kind\n---\n# Page\n"
 	files[project.LibraryDir+"/web/Form.md"] = "---\nkind: Kind\n---\n# Form\n"
 	files[m+"catalog/search.md"] = def("web/Form", "Search", "Finds a [[catalog/book]].")
