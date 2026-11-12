@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"sort"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -92,6 +93,23 @@ type Status struct {
 	// any, and ItemsElsewhere counts the items that list leaves out.
 	Slice          []string
 	ItemsElsewhere int
+	// Binding names, for the items as listed, what binds them without a link:
+	// for each Package from which at least one listed item is bound, the
+	// Definitions that bind it, Root first, then by name. Empty when no listed
+	// item is bound.
+	Binding []Binding
+	// boundBy holds the Packages that bind each item, and binds the Definitions
+	// that bind each Package, whatever is listed; Binding is cut from them for
+	// the list as it is printed.
+	boundBy map[string][]string
+	binds   map[string][]string
+}
+
+// Binding is a Package with the Definitions that bind it and what lies in it
+// and below it (DEC-113).
+type Binding struct {
+	Package     string   `json:"package"`
+	Definitions []string `json:"definitions"`
 }
 
 // PackageItems is one Package with the items of status whose Definition
@@ -189,11 +207,16 @@ func (e *Engine) Status(_ context.Context, req StatusRequest) (Status, error) {
 	}
 	switch {
 	case len(req.Slice) > 0:
-		return st.inSlice(req.Slice)
+		st, err = st.inSlice(req.Slice)
 	case req.Package != "":
-		return st.only(req.Package)
+		st, err = st.only(req.Package)
+	default:
+		st.Questions = f.set[project.QuestionsFile]
 	}
-	st.Questions = f.set[project.QuestionsFile]
+	if err != nil {
+		return st, err
+	}
+	st.Binding = st.bindingOfItems()
 	return st, nil
 }
 
@@ -393,7 +416,36 @@ func (f *folder) status(rec Record, all bool) (Status, error) {
 	}
 	st.Errors = f.cur.RealizationErrors()
 	st.Packages = packageItems(f.cur.Spec, st.Items)
+	st.boundBy, st.binds = map[string][]string{}, map[string][]string{}
+	for _, it := range st.Items {
+		if packages := v.now[it.Definition].Files(InputBound); len(packages) > 0 {
+			st.boundBy[it.Definition] = packages
+		}
+	}
+	for name, dir := range v.dirs {
+		st.binds[name] = sortedKeys(dir.Binds)
+	}
 	return st, nil
+}
+
+// bindingOfItems names what binds the items as they are listed, by Package:
+// Root first, then by name.
+func (s Status) bindingOfItems() []Binding {
+	names := map[string]bool{}
+	for _, it := range s.Items {
+		for _, name := range s.boundBy[it.Definition] {
+			names[name] = true
+		}
+	}
+	var out []Binding
+	for _, name := range sortedKeys(names) {
+		if len(s.binds[name]) > 0 {
+			out = append(out, Binding{Package: name, Definitions: s.binds[name]})
+		}
+	}
+	root := spec.PackageName(spec.RootPackage)
+	sort.SliceStable(out, func(i, j int) bool { return out[i].Package == root && out[j].Package != root })
+	return out
 }
 
 // packageNamed returns the name of the Package a Definition ID belongs to,
@@ -465,6 +517,15 @@ func (s Status) Text() string {
 		fmt.Fprintf(&b, "To verify%s (%d of %d %s):\n\n", s.inPackage(), len(s.Items), s.Units, plural(s.Units, "item", "items"))
 		for _, it := range s.Items {
 			b.WriteString(it.text())
+		}
+	}
+	if len(s.Binding) > 0 {
+		if b.Len() > 0 {
+			b.WriteString("\n")
+		}
+		b.WriteString("What binds these items without a link; each is verified against it, and markitect doc ID prints one:\n\n")
+		for _, bd := range s.Binding {
+			fmt.Fprintf(&b, "%s: %s\n", bd.Package, strings.Join(bd.Definitions, ", "))
 		}
 	}
 	if len(s.Errors) > 0 {

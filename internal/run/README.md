@@ -72,6 +72,7 @@ The record is a record, not a proof: a line written by hand shows in the diff, a
 - every Definition recorded `fail` or `spec-problem` at its inputs as they are, with why; a changed one also says what was recorded before;
 - every Definition gone from the spec that still has a line, with the files that line names: are they removed, or do they have a new basis?
 - every conflict;
+- below the items, what binds them without a link, for the list as it is printed: each Package that binds at least one listed item, Root first, with the Definitions that bind it, as `Root: architecture/rules/faults, architecture/rules/layout`; the JSON has them as `binding`;
 - the errors in the realization: a file neither listed nor ignored, a stale registry row, an unused Definition;
 - the lines of the record it cannot read, each as a diagnostic `.markitect/review.sum:LINE: record.unreadable: …`.
 

@@ -192,6 +192,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - Where the record no longer holds the directory a line names, or the line has no `bound:` input, as in a record of an earlier release, `status` names the Package, as in `bound:Root (new)`. Such a record lists each bound item once more.
 - The item of a binding Definition verifies what the Definition asks for itself and that nothing that exists contradicts it; what it binds is verified against it item by item, as `std/Rule`, `std/Decision` and `std/Constraint` say. The binding Definition's own item as the one verdict on the whole project was the alternative. It puts the trust into one verdict whose evidence cannot enumerate the project.
 - `vet.hub` counts links: what a Definition binds by its place is no finding.
+- `status` names below its list what binds the listed items, by Package, since every builder and reviewer reads the list and not every one asks `doc` about each item.
 - It rests on reviewers verifying an item against what binds it, which `doc` lists. In one small real run the reviewers read the whole project at once and did not look at what binds each item, which is sound where a project can be read at once. Where a review of everything turns an `ok` on a larger project, the item of a binding Definition gets a closing review on the whole project.
 
 ## The tool

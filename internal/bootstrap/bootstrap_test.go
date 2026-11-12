@@ -187,12 +187,17 @@ func TestCommandsEndToEnd(t *testing.T) {
 		t.Fatalf("vet --json: %d %s", code, out)
 	}
 	var stated struct {
-		Kind        string
-		Clean       bool
-		Items       []struct{ Definition, State, Fingerprint string }
+		Kind    string
+		Clean   bool
+		Items   []struct{ Definition, State, Fingerprint string }
+		Binding []struct {
+			Package     string
+			Definitions []string
+		}
 		Diagnostics []struct{ Severity, Code string }
 	}
-	if code, out, _ := run(t, r.Dir, "status", "--json"); code != 1 || json.Unmarshal([]byte(out), &stated) != nil || stated.Kind != "status" || stated.Clean || len(stated.Items) != 4 || stated.Items[0].Definition != "loan-limit" || len(stated.Diagnostics) != 1 || stated.Diagnostics[0].Code != "definition.unused" {
+	if code, out, _ := run(t, r.Dir, "status", "--json"); code != 1 || json.Unmarshal([]byte(out), &stated) != nil || stated.Kind != "status" || stated.Clean || len(stated.Items) != 4 || stated.Items[0].Definition != "loan-limit" || len(stated.Diagnostics) != 1 || stated.Diagnostics[0].Code != "definition.unused" ||
+		len(stated.Binding) != 1 || stated.Binding[0].Package != "Root" || strings.Join(stated.Binding[0].Definitions, ",") != "loan-limit" {
 		t.Fatalf("status --json: %d %s", code, out)
 	}
 
@@ -201,6 +206,9 @@ func TestCommandsEndToEnd(t *testing.T) {
 	code, out, _ = run(t, r.Dir, "status")
 	if code != 1 || !strings.Contains(out, "there is no list until it compiles") {
 		t.Fatalf("status on errors: %d %s", code, out)
+	}
+	if _, out, _ := run(t, r.Dir, "status", "--json"); !strings.Contains(out, `"binding": []`) {
+		t.Fatalf("status --json with no list has no empty binding: %s", out)
 	}
 	code, _, errOut := run(t, r.Dir, "vet")
 	if code != 0 || !strings.Contains(errOut, "the spec has") {

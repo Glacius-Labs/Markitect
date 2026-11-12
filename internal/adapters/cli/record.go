@@ -65,6 +65,7 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 		}
 		packages := append([]run.PackageItems{}, st.Packages...)
 		plan := append([]run.Slice{}, st.Slices...)
+		binding := append([]run.Binding{}, st.Binding...)
 		if err := c.printJSON(struct {
 			envelope
 			Clean             bool               `json:"clean"`
@@ -79,11 +80,12 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 			Packages          []run.PackageItems `json:"packages"`
 			Slices            []run.Slice        `json:"slices"`
 			Items             []run.Item         `json:"items"`
+			Binding           []run.Binding      `json:"binding"`
 			Diagnostics       []diagnostic       `json:"diagnostics"`
 			Skipped           []run.Item         `json:"skipped"`
 			Unreadable        []int              `json:"unreadable_lines"`
 			Questions         string             `json:"questions,omitempty"`
-		}{newEnvelope("status"), st.Clean(), st.ForTheOwner(), st.Package, st.Slice, st.ItemsElsewhere + st.ErrorsElsewhere + st.UnreadableElsewhere, st.Definitions, st.Units, len(st.SpecErrors), len(st.Errors), packages, plan, items, append(append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), diagnostics(severityError, st.RecordErrors())...), skipped, unreadable, questions}); err != nil {
+		}{newEnvelope("status"), st.Clean(), st.ForTheOwner(), st.Package, st.Slice, st.ItemsElsewhere + st.ErrorsElsewhere + st.UnreadableElsewhere, st.Definitions, st.Units, len(st.SpecErrors), len(st.Errors), packages, plan, items, binding, append(append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), diagnostics(severityError, st.RecordErrors())...), skipped, unreadable, questions}); err != nil {
 			return Misused, err
 		}
 	} else if slices {
