@@ -63,7 +63,7 @@ In a project that already exists, `/markitect-architect` draws a first spec from
 ## How it works
 
 1. **You change the spec,** by hand or with `/markitect-architect`, which asks first when something is open.
-2. **`markitect status` makes the list.** It lists the Definitions the change reaches: those it edits, those that link to them, and those whose files changed.
+2. **`markitect status` makes the list.** It lists the Definitions the change reaches: those it edits, those that link to them, those a changed Rule binds, and those whose files changed.
 3. **A builder agent does the work.** It changes code, tests and documentation for what the list holds and keeps the registry current. A hook keeps it out of the spec and the record.
 4. **A fresh reviewer verifies it.** It reads the spec, the list and the code, and treats what the builder tells it as claims to check. It records each item: `ok` with its evidence, `fail`, `skip`, or `spec-problem` with the question for you.
 5. **The builder repairs what failed** and has it verified again. It stops when three rounds in a row leave the list no shorter than it has been.
@@ -92,7 +92,7 @@ kind: std/Rule
 For [[lending/borrow]], the resulting current open-loan count of the member must not exceed the loan limit.
 ```
 
-You change `5` to `3`. `markitect status` lists the Rule and every Definition that links to it, such as borrowing, returning and the overdue reminders, each with the files that build them. The `catalog` and `members` Packages are not reached. `/markitect-build` has the builder work on that list, and the reviewer then checks each item against the spec.
+You change `5` to `3`. `markitect status` lists the Rule, every Definition that links to it, such as borrowing, returning and the overdue reminders, and every other Definition of the `lending` Package, which the Rule binds, each with the files that build them and with the Rule named as what changed. The `catalog` and `members` Packages are not reached. `/markitect-build` has the builder work on that list, and the reviewer then checks each item against the spec.
 
 ## Install
 

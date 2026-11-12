@@ -119,16 +119,17 @@ func (s *smoke) specCommands() error {
 		return fmt.Errorf("the record is not as expected:\n%s", tail(readFile(repo, ".markitect/review.sum")))
 	}
 
-	// A change of the spec: the loan limit drops from five to three. Only the Rule itself
-	// is to verify again: nothing links to it, and no file changed.
+	// A change of the spec: the loan limit drops from five to three. The Rule is to
+	// verify again, and so is everything it binds, which names it: every item a file
+	// realizes. The project, which no file realizes, is not.
 	limit := filepath.Join(repo, ".markitect", "spec", "loan-limit.md")
 	if err := os.WriteFile(limit, []byte(strings.Replace(smokeSpec[".markitect/spec/loan-limit.md"], "`5`", "`3`", 1)), 0o644); err != nil {
 		return err
 	}
-	if out, err := markitect("status"); err == nil || !strings.Contains(out, "To verify (1 of 6 items)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self") {
+	if out, err := markitect("status"); err == nil || !strings.Contains(out, "To verify (5 of 6 items)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self") || strings.Count(out, "changed: bound:loan-limit\n") != 4 {
 		return fmt.Errorf("status after the change of the loan limit: %v\n%s", err, tail(out))
 	}
-	if err := verifyAll(markitect, 1); err != nil {
+	if err := verifyAll(markitect, 5); err != nil {
 		return err
 	}
 

@@ -23,11 +23,14 @@ An item is what is verified as one: a Definition that is no part of another, wit
 | `kind:ID` | Its Kind, or the Kind of a part |
 | `link:ID` | A Definition that it or a part links to, outside the item |
 | `file:PATH` | A file whose registry row names it or a part |
+| `bound:PACKAGE` | What binds it in its Package or in a Package above it, `bound:Root` for Root: the digest of the Package's directory |
 | `evidence:PATH` | A file the reviewer gave as evidence |
 
 A Definition of the spec counts by its text. A Library Definition counts by its Library's digest in the lock, so that a newer binary changes nothing until the lock is written again; a Library counts as one, as a Go module does, so a change of one Kind of a committed Library puts the Definitions of all its Kinds on the list. Core's `Kind` and `Package` change only with the tool and are no inputs, and neither is a link to a Package. Line endings do not count in a text file's hash, so a checkout on another system matches.
 
-This reaches what the [concept](../../docs/concept.md#how-status-works) puts at distance 0 and 1: a Definition that changed, one that links to a changed Definition or is of a changed Kind, one whose files changed, and one whose registry rows gained or lost it. A changed Rule above a Package reaches only itself and what links to it. A change of a row's reason, or of a file the ignore file lists, reaches nothing. The one difference, the Library counted as a whole, lists more, never less.
+**What binds** ([DEC-113](../../docs/decisions.md#dec-113-what-binds-is-an-input-of-what-it-binds)). What binds a Package is each item that lies in the Package itself and whose Kind declares `binds: true`, such as a `std/Rule` ([`spec.Binding`](../spec/schema.go)). The Package's **directory** maps each of them, by its ID, to the hash of its text and the texts of the parts it covers, and its digest is the SHA-256 of the directory in the order of the IDs. An item a file realizes carries `bound:P` for its Package and for each Package above it that has a directory, the binding things themselves included. What no file realizes is bound by nothing: an item whose Kind declares `realized: false`, such as a Goal, and a Kind ([`spec.Bound`](../spec/schema.go)).
+
+This reaches what the [concept](../../docs/concept.md#how-status-works) puts at distance 0 and 1: a Definition that changed, one that links to a changed Definition or is of a changed Kind, one whose files changed, one whose registry rows gained or lost it, and one that a changed Definition binds. A changed Rule reaches itself and every item it binds, which is everything built when the Rule is Root's. A change of a row's reason, or of a file the ignore file lists, reaches nothing. The one difference, the Library counted as a whole, lists more, never less.
 
 The **fingerprint** of an item is the first six characters of the hash of every input but the evidence, which the reviewer chooses after it read the item. `mark` also takes a longer prefix of the hash.
 
@@ -36,8 +39,16 @@ The **fingerprint** of an item is the first six characters of the hash of every 
 `.markitect/review.sum` is part of the project's fixed layout and committed with it, like `go.sum`. It holds one line per Definition, sorted, each a JSON object with the Definition, the verdict, the inputs with their full hashes, the evidence as `path` or `path:line` and the reason on one line:
 
 ```text
-{"definition":"members/loans/loan","verdict":"ok","inputs":{"evidence:src/members/loans/loan.go":"sha256:…","file:src/members/loans/loan.go":"sha256:…","kind:std/Concept":"sha256:…","link:members/member":"sha256:…","self":"sha256:…"},"evidence":["src/members/loans/loan.go:3"]}
+{"definition":"members/loans/loan","verdict":"ok","inputs":{"bound:Root":"sha256:…","evidence:src/members/loans/loan.go":"sha256:…","file:src/members/loans/loan.go":"sha256:…","kind:std/Concept":"sha256:…","link:members/member":"sha256:…","self":"sha256:…"},"evidence":["src/members/loans/loan.go:3"]}
 ```
+
+After the lines, sorted, come the directories the lines name, one per Package and digest: the Package, the digest, and each binding thing with its hash. `status` reads the directory a line names to say which binding Definition changed since, also once that Definition is verified again:
+
+```text
+{"bound":"Root","digest":"sha256:…","binds":{"architecture/rules/persistence":"sha256:…","loan-limit":"sha256:…"}}
+```
+
+A directory whose digest is not that of what it binds is a line markitect cannot read, like any other broken line.
 
 The verdicts are `ok` (implemented, as the evidence shows), `fail` (not, and why), `skip` (verified as far as the project can show, and why) and `spec-problem` (the spec contradicts itself or leaves open behaviour at the project's boundary, and only the owner can settle it). The record holds hashes, not text: an agent that wants what a Definition said before reads it from Git.
 
@@ -46,9 +57,9 @@ Three more fields are each left out when empty:
 - `cases` and `covered`: the reviewer's count of the distinct cases, conditions and exceptions the Definition demands, and of those its evidence demonstrates, as `mark` took them. An `ok` and a `skip` always carry them, and `vet` reads them for `vet.risk`, from the line at the Definition's text as it is; of several such lines, as a merge can leave them until the next `mark` settles them, it judges the one with the highest risk, and none when one of them is a `fail` or a `spec-problem` ([DEC-106](../../docs/decisions.md#dec-106-the-reviewer-counts-and-vet-notes-thin-evidence)).
 - `revisions`: how often the Definition's own text changed between two verdicts on it. `mark` takes the count of the Definition's lines and adds one when none of them has the new line's `self` hash, so a first verdict has none, a change of a link, a file or the evidence adds none, and so does a verdict on a gone Definition, which has no own text. Of several lines, as after a merge, it counts on from the most. `vet` reads it for `vet.hotspot`, as change history without Git.
 
-The record has no format version: the fields are optional, so a line without them reads as no count and no revision, and its counting starts with the next verdict.
+The record has no format version: the fields are optional, so a line without them reads as no count and no revision, and its counting starts with the next verdict. A line written before what binds was an input has no `bound:` input, so its item, where something binds it, is listed once, with each Package that binds it as new, such as `bound:Root (new)`.
 
-**Merging.** `init` and `update` write `.markitect/.gitattributes` with `review.sum merge=union`, which also joins the layout, so Git keeps the lines of both sides of a merge. Of several lines for one Definition, `status` takes the one whose inputs match the folder; two that match with different verdicts are a conflict to verify again. A line markitect cannot read, such as a broken one written by hand, is an error until the owner fixes or removes it.
+**Merging.** `init` and `update` write `.markitect/.gitattributes` with `review.sum merge=union`, which also joins the layout, so Git keeps the lines of both sides of a merge. Of several lines for one Definition, `status` takes the one whose inputs match the folder; two that match with different verdicts are a conflict to verify again. The directories of both sides are kept, a directory twice is the same line, and the next `mark` drops what no line names. A line markitect cannot read, such as a broken one written by hand, is an error until the owner fixes or removes it.
 
 The record is a record, not a proof: a line written by hand shows in the diff, and [the hook](../guard/README.md#the-hook) keeps agents from writing one.
 
@@ -57,6 +68,7 @@ The record is a record, not a proof: a line written by hand shows in the diff, a
 `markitect status [--all] [--package P] [--slices [--size N]] [--slice A,B]` reads the folder and the record and changes nothing. It lists:
 
 - every item with a changed input or no record, with which inputs changed: `changed: self, part:members/operations/lend/conditions/in-stock, file:src/x.go (new), evidence:tests/x_test.go (gone)`; an item with parts says how many it has and that `markitect doc` shows it whole;
+- for a changed `bound:P`, in place of the Package, each binding Definition that differs between the directory the line names and the directory now, the item itself left out: `changed: bound:architecture/rules/persistence`, with `(new)` for one the line's directory lacks and `(gone)` for one the directory now lacks. Where the line has no `bound:P`, or the record no longer holds the directory it names, it names the Package: `bound:Root (new)`, `bound:Root`;
 - every Definition recorded `fail` or `spec-problem` at its inputs as they are, with why; a changed one also says what was recorded before;
 - every Definition gone from the spec that still has a line, with the files that line names: are they removed, or do they have a new basis?
 - every conflict;
@@ -84,7 +96,7 @@ markitect mark loans/renewal@81be07 fail -e src/renew.go:30 -m "allows a fourth 
 - It refuses, records nothing and exits 1 when the inputs differ from the fingerprint, as when a builder edited a file beside the reviewer or the reviewer's own test run changed one; when evidence is not a file of the folder; when the Definition is unknown; when the spec has errors; or when the record has a line it cannot read. A command it cannot read exits 2.
 - A gone Definition is marked `ok` when its files are removed or have a new basis, which removes its line, or `fail` when not; `skip` is refused.
 
-It writes under a lock in the user's cache folder (`markitect/locks/`, one per project folder), reading the folder and the record afresh, and replaces the record as one whole file in one step, so parallel reviewers, such as one per Package, lose no line. It writes the file clean: one line per Definition, the matching one of several, both of a conflict, the closest when none matches, and one line for a gone Definition with every file its lines named. Each line it keeps counts the most revisions any line of its Definition counted, so a merge loses none.
+It writes under a lock in the user's cache folder (`markitect/locks/`, one per project folder), reading the folder and the record afresh, and replaces the record as one whole file in one step, so parallel reviewers, such as one per Package, lose no line. It writes the file clean: one line per Definition, the matching one of several, both of a conflict, the closest when none matches, and one line for a gone Definition with every file its lines named. Each line it keeps counts the most revisions any line of its Definition counted, so a merge loses none. With the new line it writes the directories its `bound:` inputs name, and it keeps only the directories some line names, each once.
 
 ## The agents and skills
 
@@ -94,4 +106,4 @@ The skills are plain prompts with no injected command, so no exit code can abort
 
 ## Tests
 
-`record_test.go` plays the builder and the reviewer on plain folders without Git while `status` says what is to verify: what a change reaches, the Kind and the Library, the fingerprint and evidence, the verdicts, the counts of cases and the revisions, a gone Definition, merged lines and conflicts, an unreadable line, errors, and parallel reviewers. `lock_test.go` covers the lock.
+`record_test.go` plays the builder and the reviewer on plain folders without Git while `status` says what is to verify: what a change reaches, the Kind and the Library, the fingerprint and evidence, the verdicts, the counts of cases and the revisions, a gone Definition, merged lines and conflicts, an unreadable line, errors, and parallel reviewers. `bound_test.go` covers what binds: what a changed Rule reaches and how `status` names it, a record without `bound:` inputs, and the directories in the record. `lock_test.go` covers the lock.

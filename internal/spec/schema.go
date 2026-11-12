@@ -333,6 +333,15 @@ func (c *compiler) schemaOf(d *Definition) *Schema {
 	return nil
 }
 
+// declared returns what the Kind of a Definition declares, or nil: nil too
+// when the declaration has an error of its own, which holds no Definition.
+func (s *Spec) declared(d *Definition) *Schema {
+	if k := s.Definitions[d.Kind]; k != nil && k.Schema != nil && !k.Schema.Broken {
+		return k.Schema
+	}
+	return nil
+}
+
 // VerifiedLast says whether a Definition is built and verified last, on the
 // whole project: its Kind declares last, or declares that no file realizes
 // its Definitions, which can then only be judged on what the others built.
@@ -341,8 +350,39 @@ func (s *Spec) VerifiedLast(id string) bool {
 	if d == nil {
 		return false
 	}
-	kind := s.Definitions[d.Kind]
-	return kind != nil && kind.Schema != nil && !kind.Schema.Broken && (kind.Schema.Last || kind.Schema.Unrealized)
+	schema := s.declared(d)
+	return schema != nil && (schema.Last || schema.Unrealized)
+}
+
+// Binding returns, by Package path, what binds the Package and every Package
+// below it without a link (DEC-110, DEC-113): each unit whose Definition lies
+// in the Package itself and whose Kind declares binds, sorted. A Package that
+// has none is left out.
+func (s *Spec) Binding() map[string][]string {
+	out := map[string][]string{}
+	for id := range s.Units() {
+		d := s.Definitions[id]
+		if schema := s.declared(d); schema != nil && schema.Binds {
+			out[d.Package] = append(out[d.Package], id)
+		}
+	}
+	for _, ids := range out {
+		sort.Strings(ids)
+	}
+	return out
+}
+
+// Bound says whether what binds a Definition's Package binds the Definition:
+// whether a file realizes the unit it belongs to, so that what is said of what
+// is built holds for it (DEC-113). Nothing binds a Definition of a Kind that
+// declares that no file realizes it, such as a Goal, nor a Kind.
+func (s *Spec) Bound(id string) bool {
+	d := s.Definitions[s.UnitOf(id)]
+	if d == nil || !d.Own() || d.Kind == CoreKind {
+		return false
+	}
+	schema := s.declared(d)
+	return schema == nil || !schema.Unrealized
 }
 
 // PartFolder returns the folder a part lies in below its whole, as a Kind

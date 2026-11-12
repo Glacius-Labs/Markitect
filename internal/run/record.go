@@ -112,14 +112,33 @@ func revisions(before []Line, now Inputs) int {
 	return n
 }
 
-// Record is the record of a project: its lines, and the lines it could not read,
-// such as one written by hand, with their line numbers.
-type Record struct {
-	Lines      []Line
-	Unreadable []int
+// Directory is what bound a Package and every Package below it when a line
+// was written: each binding thing of the Package by its ID, with the hash of
+// its text and the texts of the parts it covers (DEC-113). Its digest is the
+// input bound: of the Package on the lines of what it binds, and the record
+// keeps the directory beside them, so that status can name the binding
+// Definition that changed once that Definition is verified again.
+type Directory struct {
+	// Bound is the Package's name, Root for the one at the top.
+	Bound  string            `json:"bound"`
+	Digest string            `json:"digest"`
+	Binds  map[string]string `json:"binds"`
 }
 
-// ParseRecord reads a record: one JSON object per line.
+// key names a directory by its Package and its digest.
+func (d Directory) key() string { return d.Bound + "\x00" + d.Digest }
+
+// Record is the record of a project: its lines, the directories they name, and
+// the lines it could not read, such as one written by hand, with their line
+// numbers.
+type Record struct {
+	Lines       []Line
+	Directories []Directory
+	Unreadable  []int
+}
+
+// ParseRecord reads a record: one JSON object per line, a verdict or a
+// directory.
 func ParseRecord(data []byte) Record {
 	var r Record
 	for i, raw := range strings.Split(string(project.Normalize(data)), "\n") {
@@ -127,13 +146,25 @@ func ParseRecord(data []byte) Record {
 			continue
 		}
 		var l Line
-		if err := json.Unmarshal([]byte(raw), &l); err != nil || !validLine(l) {
-			r.Unreadable = append(r.Unreadable, i+1)
+		if err := json.Unmarshal([]byte(raw), &l); err == nil && validLine(l) {
+			r.Lines = append(r.Lines, l)
 			continue
 		}
-		r.Lines = append(r.Lines, l)
+		var d Directory
+		if err := json.Unmarshal([]byte(raw), &d); err == nil && validDirectory(d) {
+			r.Directories = append(r.Directories, d)
+			continue
+		}
+		r.Unreadable = append(r.Unreadable, i+1)
 	}
 	return r
+}
+
+// validDirectory says whether a directory names its Package, binds something
+// and has the digest of what it binds, so that one changed by hand is not
+// taken for what bound a line.
+func validDirectory(d Directory) bool {
+	return d.Bound != "" && len(d.Binds) > 0 && d.Digest == digest(d.Binds)
 }
 
 func validLine(l Line) bool {
@@ -152,13 +183,39 @@ func knownVerdict(v string) bool {
 	return false
 }
 
-// Render writes the lines as the record holds them: one JSON object per line,
-// sorted, with no line twice.
-func Render(lines []Line) []byte {
+// Render writes the record as its file holds it: one JSON object per line, the
+// lines sorted and after them the directories they name, sorted, with no line
+// twice. A directory that no line names is left out.
+func (r Record) Render() []byte {
+	named := map[string]bool{}
+	var lines []any
+	for _, l := range r.Lines {
+		lines = append(lines, l)
+		for k, h := range l.Inputs {
+			if name, ok := strings.CutPrefix(k, InputBound); ok {
+				named[Directory{Bound: name, Digest: h}.key()] = true
+			}
+		}
+	}
+	var dirs []any
+	for _, d := range r.Directories {
+		if named[d.key()] {
+			dirs = append(dirs, d)
+		}
+	}
+	out := append(sortedLines(lines), sortedLines(dirs)...)
+	if len(out) == 0 {
+		return nil
+	}
+	return []byte(strings.Join(out, "\n") + "\n")
+}
+
+// sortedLines writes each value as one line, sorted, with no line twice.
+func sortedLines(values []any) []string {
 	var out []string
 	seen := map[string]bool{}
-	for _, l := range lines {
-		data, err := marshal(l)
+	for _, v := range values {
+		data, err := marshal(v)
 		if err != nil || seen[data] {
 			continue
 		}
@@ -166,18 +223,15 @@ func Render(lines []Line) []byte {
 		out = append(out, data)
 	}
 	sort.Strings(out)
-	if len(out) == 0 {
-		return nil
-	}
-	return []byte(strings.Join(out, "\n") + "\n")
+	return out
 }
 
 // marshal writes one line without escaping <, > and &, which a reason may hold.
-func marshal(l Line) (string, error) {
+func marshal(v any) (string, error) {
 	var b bytes.Buffer
 	enc := json.NewEncoder(&b)
 	enc.SetEscapeHTML(false)
-	if err := enc.Encode(l); err != nil {
+	if err := enc.Encode(v); err != nil {
 		return "", err
 	}
 	return strings.TrimRight(b.String(), "\n"), nil

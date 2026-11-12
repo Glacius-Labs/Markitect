@@ -146,7 +146,8 @@ func Vet(p *project.Project, h History) Report {
 			r.Warnings.Add("vet.definition_size", d.File, 0, "%d words (more than %d); split it or move detail the spec does not need to the realization", d.Words, MaxDefinitionWords)
 		}
 		// A Kind's change concerns all its Definitions by design, so a Kind is no
-		// hub (DEC-102).
+		// hub (DEC-102). A hub is counted by its links: what a Definition binds
+		// by its place is declared, and no finding (DEC-113).
 		if d.Kind != spec.CoreKind && float64(fan+1) > hub {
 			r.Warnings.Add("vet.hub", d.File, 0, "%d Definitions link to %s or are of it as Kind, so a change to it alone puts %d of the spec's %d back on the list to verify (more than a fifth); link the smallest Definition that holds what they use, and keep this one small and settled", fan, id, fan+1, total)
 		}

@@ -25,6 +25,15 @@ func TestRenderDocShowsWhatBinds(t *testing.T) {
 	if got != want {
 		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
 	}
+	// Nothing binds a Definition that no file realizes, and doc says nothing
+	// of what binds it.
+	goal := renderDocDefinition(analysis.DocDefinition{
+		ListedDefinition: analysis.ListedDefinition{ID: "purpose/goals/lend", Title: "Lend", Kind: "std/Goal", File: "lend.md"},
+		Package:          "Root", Text: "# Lend\n",
+	})
+	if strings.Contains(goal, "Bound by") {
+		t.Fatalf("doc of a Goal:\n%s", goal)
+	}
 	kind := renderDocDefinition(analysis.DocDefinition{
 		ListedDefinition: analysis.ListedDefinition{ID: "std/Constraint", Title: "Constraint", Kind: "Kind", File: "std/Constraint.md"},
 		Library:          "std", Text: "# Constraint\n",

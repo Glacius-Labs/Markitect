@@ -149,10 +149,19 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 	}
 	lines := clean(rec, v, req.definition)
 	removed := it.State == StateGone && req.Verdict == VerdictOK
+	dirs := rec.Directories
 	if !removed {
 		lines = append(lines, line)
+		// The directories the new line names, so that status can say later
+		// which binding Definition changed since.
+		for k := range line.Inputs {
+			if name, ok := strings.CutPrefix(k, InputBound); ok {
+				dirs = append(dirs, v.dirs[name])
+			}
+		}
 	}
-	if err := writeAtomic(filepath.Join(f.root, filepath.FromSlash(project.Dir)), filepath.Base(project.ReviewFile), Render(lines)); err != nil {
+	written := Record{Lines: lines, Directories: dirs}.Render()
+	if err := writeAtomic(filepath.Join(f.root, filepath.FromSlash(project.Dir)), filepath.Base(project.ReviewFile), written); err != nil {
 		return "", false, err
 	}
 	if removed {
