@@ -124,9 +124,14 @@ func (s Status) Clean() bool {
 // owner: every item is a spec-problem recorded at the inputs as they are, and
 // nothing else is left, no error, no unreadable line and no item that changed,
 // is gone or is in conflict. No builder settles that, so a driver can bring
-// the work back.
+// the work back. For a slice it says so of the slice: the errors in the
+// realization and the lines of the record it leaves out are the last
+// slice's, and do not count.
 func (s Status) ForTheOwner() bool {
-	if len(s.Items) == 0 || len(s.SpecErrors) > 0 || len(s.Errors) > 0 || len(s.Unreadable) > 0 || s.ErrorsElsewhere+s.UnreadableElsewhere > 0 {
+	if len(s.Items) == 0 || len(s.SpecErrors) > 0 || len(s.Errors) > 0 || len(s.Unreadable) > 0 {
+		return false
+	}
+	if len(s.Slice) == 0 && s.ErrorsElsewhere+s.UnreadableElsewhere > 0 {
 		return false
 	}
 	for _, it := range s.Items {
@@ -452,8 +457,21 @@ func (s Status) Text() string {
 		}
 		fmt.Fprintf(&b, "The architect's questions for the owner wait in %s.\n", project.QuestionsFile)
 	}
-	if n := s.ItemsElsewhere; n > 0 {
-		fmt.Fprintf(&b, "\nNot listed: %d %s of other slices; markitect status lists %s.\n", n, plural(n, "item", "items"), plural(n, "it", "them"))
+	if len(s.Slice) > 0 {
+		var parts []string
+		if n := s.ItemsElsewhere; n > 0 {
+			parts = append(parts, fmt.Sprintf("%d %s of other slices", n, plural(n, "item", "items")))
+		}
+		if n := s.ErrorsElsewhere; n > 0 {
+			parts = append(parts, fmt.Sprintf("%d %s that no file realizes yet", n, plural(n, "Definition", "Definitions")))
+		}
+		if n := s.UnreadableElsewhere; n > 0 {
+			parts = append(parts, fmt.Sprintf("%d %s of the record that markitect cannot read", n, plural(n, "line", "lines")))
+		}
+		if len(parts) > 0 {
+			fmt.Fprintf(&b, "\nNot listed: %s; markitect status lists all of it.\n", strings.Join(parts, ", "))
+		}
+		return b.String()
 	}
 	if n := s.ErrorsElsewhere + s.UnreadableElsewhere; n > 0 {
 		var parts []string

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
@@ -19,7 +20,11 @@ type Slice struct {
 	// their dependencies. It is empty for the last slice, which holds
 	// whatever is left then.
 	Packages []string `json:"packages"`
-	// Items counts the items of the slice that a builder can settle.
+	// Through names the Packages its command lists: its own and every
+	// Package before them in that order, so that what an earlier slice left,
+	// or what this one puts back on the list there, is its work too.
+	Through []string `json:"through"`
+	// Items counts the items of its own Packages that a builder can settle.
 	Items int `json:"items"`
 	// Rest marks the last slice: the items that are verified last, on the
 	// whole project, the errors in the realization and what an earlier slice
@@ -104,26 +109,31 @@ func planSlices(sp *spec.Spec, items []Item, size int) []Slice {
 	if total == 0 {
 		return nil
 	}
-	rest := Slice{Packages: []string{}, Items: total, Rest: true, Command: "markitect status"}
+	rest := Slice{Packages: []string{}, Through: []string{}, Items: total, Rest: true, Command: "markitect status"}
 	if total <= size {
 		return []Slice{rest}
 	}
 	var out []Slice
+	// passed holds the Packages taken so far, in order: a slice's command
+	// names them all.
+	var passed []string
 	cur := Slice{}
 	flush := func() {
 		if len(cur.Packages) > 0 {
-			cur.Command = "markitect status --slice " + strings.Join(cur.Packages, ",")
+			cur.Through = append([]string{}, passed...)
+			cur.Command = "markitect status --slice " + strings.Join(cur.Through, ",")
 			out = append(out, cur)
 		}
 		cur = Slice{}
 	}
 	for _, p := range packageOrder(sp) {
 		n := perPackage[p]
+		if n > 0 && cur.Items > 0 && cur.Items+n > size {
+			flush()
+		}
+		passed = append(passed, spec.PackageName(p))
 		if n == 0 {
 			continue
-		}
-		if cur.Items > 0 && cur.Items+n > size {
-			flush()
 		}
 		cur.Packages = append(cur.Packages, spec.PackageName(p))
 		cur.Items += n
@@ -137,9 +147,10 @@ func planSlices(sp *spec.Spec, items []Item, size int) []Slice {
 }
 
 // inSlice limits status to one slice: to the items of the named Packages
-// that are not verified last. What belongs to no slice of Packages, the
-// errors in the realization and the lines of the record markitect cannot
-// read, it leaves out and counts, as a list limited to a Package does.
+// that are not verified last, with the errors in the realization that
+// whoever builds now has to settle. The other items, the Definitions that
+// no file realizes yet and the lines of the record markitect cannot read
+// it leaves out and counts.
 func (s Status) inSlice(names []string) (Status, error) {
 	if len(s.SpecErrors) > 0 {
 		s.Slice = names
@@ -165,7 +176,17 @@ func (s Status) inSlice(names []string) (Status, error) {
 	}
 	s.ItemsElsewhere = len(s.Items) - len(items)
 	s.Items, s.Skipped = items, nil
-	s.ErrorsElsewhere, s.Errors = len(s.Errors), nil
+	// An error in the realization is the work of whoever builds now, such as
+	// a file no registry page lists, and a slice is not settled with it. A
+	// Definition that no file realizes yet is the one error that a later
+	// slice settles by building it.
+	var errs spec.Diagnostics
+	for _, d := range s.Errors {
+		if d.Code != project.CodeUnused {
+			errs = append(errs, d)
+		}
+	}
+	s.ErrorsElsewhere, s.Errors = len(s.Errors)-len(errs), errs
 	s.UnreadableElsewhere, s.Unreadable = len(s.Unreadable), nil
 	return s, nil
 }
@@ -190,7 +211,11 @@ func (s Status) Plan() string {
 			fmt.Fprintf(&b, "   what is left then: %d %s verified last, on the whole project, with the errors in the realization and whatever an earlier slice left\n", sl.Items, plural(sl.Items, "item", "items"))
 			continue
 		}
-		fmt.Fprintf(&b, "   %d %s of %s\n", sl.Items, plural(sl.Items, "item", "items"), packagesText(sl.Packages))
+		fmt.Fprintf(&b, "   %d %s of %s", sl.Items, plural(sl.Items, "item", "items"), packagesText(sl.Packages))
+		if i > 0 {
+			b.WriteString(", and whatever of the Packages before is on the list again")
+		}
+		b.WriteString("\n")
 	}
 	return b.String()
 }

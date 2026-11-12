@@ -41,8 +41,8 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 		return Misused, fmt.Errorf("--slice names Packages, separated by commas, as markitect status --slices prints them")
 	case len(names) > 0 && (pkg != "" || slices):
 		return Misused, fmt.Errorf("--slice stands alone: without --package and --slices")
-	case slices && pkg != "":
-		return Misused, fmt.Errorf("--slices cuts the whole list: without --package")
+	case slices && (pkg != "" || all):
+		return Misused, fmt.Errorf("--slices cuts the list of what is to verify: without --package and --all")
 	case size < 0 || size > 0 && !slices:
 		return Misused, fmt.Errorf("--size is a count of items and goes with --slices")
 	}

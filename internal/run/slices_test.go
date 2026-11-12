@@ -63,12 +63,13 @@ func TestALongListIsBuiltInSlices(t *testing.T) {
 	st = p.sliced(4)
 	same(t, plan(st), []string{
 		"Root+catalog 4: markitect status --slice Root,catalog",
-		"members+members/loans 4: markitect status --slice members,members/loans",
+		"members+members/loans 4: markitect status --slice Root,catalog,members,members/loans",
 		"rest 2: markitect status",
 	})
 	has(t, st.Plan(),
 		"The list is built in 3 slices, one after the other, each built and verified before the next:",
 		"1. markitect status --slice Root,catalog\n   4 items of the Packages Root and catalog\n",
+		"2. markitect status --slice Root,catalog,members,members/loans\n   4 items of the Packages members and members/loans, and whatever of the Packages before is on the list again\n",
 		"3. markitect status\n   what is left then: 2 items verified last, on the whole project",
 	)
 	for _, it := range st.Items {
@@ -81,26 +82,29 @@ func TestALongListIsBuiltInSlices(t *testing.T) {
 	p.write(m+"catalog/book.md", def("std/Concept", "Book", "A book a [[members/member]] may borrow."))
 	same(t, plan(p.sliced(2)), []string{
 		"Root 2: markitect status --slice Root",
-		"members 2: markitect status --slice members",
-		"catalog 2: markitect status --slice catalog",
-		"members/loans 2: markitect status --slice members/loans",
+		"members 2: markitect status --slice Root,members",
+		"catalog 2: markitect status --slice Root,members,catalog",
+		"members/loans 2: markitect status --slice Root,members,catalog,members/loans",
 		"rest 2: markitect status",
 	})
 
 	// A Package with more items than the size is one slice all the same.
 	same(t, plan(p.sliced(1))[:2], []string{
 		"Root 2: markitect status --slice Root",
-		"members 2: markitect status --slice members",
+		"members 2: markitect status --slice Root,members",
 	})
 }
 
 // status limited to a slice lists the items of its Packages that are not
-// verified last, and says how many the other slices hold. What is verified
-// drops out, a slice that is settled is clean though the list is not, and
-// what waits for the owner is no work of a slice.
+// verified last, with the errors in the realization that whoever builds now
+// settles, and says how many items the other slices hold and how many
+// Definitions no file realizes yet. What is verified drops out, a slice that
+// is settled is clean though the list is not, and what waits for the owner
+// is no work of a slice.
 func TestStatusOfOneSlice(t *testing.T) {
 	p := newPlain(t)
 	p.write("src/unlisted.go", "package src\n")
+	p.write(m+"members/loans/renewal.md", def("std/Concept", "Renewal", "A loan runs on."))
 	of := func(names ...string) run.Status {
 		t.Helper()
 		st, err := p.engine.Status(context.Background(), run.StatusRequest{Dir: p.dir, Slice: names})
@@ -110,13 +114,14 @@ func TestStatusOfOneSlice(t *testing.T) {
 		return st
 	}
 	st := of("Root", "catalog")
-	if listed(st) != "catalog/book,catalog/catalog,loan-limit" || st.ItemsElsewhere != 5 || st.ErrorsElsewhere != 1 || len(st.Errors) != 0 || st.Clean() {
+	if listed(st) != "catalog/book,catalog/catalog,loan-limit" || st.ItemsElsewhere != 6 || st.ErrorsElsewhere != 1 || len(st.Errors) != 1 || st.Errors[0].Code != "file.unregistered" || st.Clean() {
 		t.Fatalf("the slice:\n%s", st.Text())
 	}
 	has(t, st.Text(),
-		"To verify in the slice of the Packages Root and catalog (3 of 8 items):",
-		"Not listed: 5 items of other slices; markitect status lists them.",
-		"Not listed: 1 error in the realization",
+		"To verify in the slice of the Packages Root and catalog (3 of 9 items):",
+		"Errors in the realization (1), for whoever builds:",
+		"src/unlisted.go",
+		"Not listed: 6 items of other slices, 1 Definition that no file realizes yet; markitect status lists all of it.",
 	)
 	if strings.Contains(st.Text(), "project@") {
 		t.Fatalf("the slice lists what is verified last:\n%s", st.Text())
@@ -126,11 +131,35 @@ func TestStatusOfOneSlice(t *testing.T) {
 			t.Fatal(text)
 		}
 	}
+	// A file no registry page lists is the work of the slice that added it:
+	// the slice is not settled with it.
+	if st := of("Root", "catalog"); st.Clean() || len(st.Items) != 0 {
+		t.Fatalf("a slice with an unlisted file:\n%s", st.Text())
+	}
+	p.remove("src/unlisted.go")
 	st = of("Root", "catalog")
 	if !st.Clean() || p.status(false).Clean() {
 		t.Fatalf("after verifying the slice:\n%s", st.Text())
 	}
 	has(t, st.Text(), "Nothing to verify in the slice of the Packages Root and catalog: every item of it is verified at its current inputs.")
+
+	// What a later slice changes puts an item of an earlier one back on the
+	// list. The later slice's command names the Packages before its own too,
+	// so the item is its work, and the slice is settled only with it.
+	p.write("src/members/loans/loan.go", "package loans\n\nconst Limit = 6\n")
+	same(t, plan(p.sliced(2)), []string{
+		"Root 1: markitect status --slice Root,catalog",
+		"members 2: markitect status --slice Root,catalog,members",
+		"members/loans 3: markitect status --slice Root,catalog,members,members/loans",
+		"rest 1: markitect status",
+	})
+	if st := of("Root", "catalog", "members"); listed(st) != "loan-limit,members/member,members/members" {
+		t.Fatalf("the slice after a change that reaches back:\n%s", st.Text())
+	}
+	back := p.item(p.status(false), "loan-limit")
+	if text, ok := p.review(back.Definition, run.VerdictOK, back.Fingerprint, []string{"README.md:1"}, ""); !ok {
+		t.Fatal(text)
+	}
 
 	// The plan counts what a builder can settle: a spec-problem waits for
 	// the owner.
@@ -139,13 +168,39 @@ func TestStatusOfOneSlice(t *testing.T) {
 		t.Fatal(text)
 	}
 	same(t, plan(p.sliced(2)), []string{
-		"members 1: markitect status --slice members",
-		"members/loans 2: markitect status --slice members/loans",
+		"members 1: markitect status --slice Root,catalog,members",
+		"members/loans 3: markitect status --slice Root,catalog,members,members/loans",
 		"rest 1: markitect status",
 	})
-	if st := of("members"); listed(st) != "members/member,members/members" {
+	if st := of("members"); listed(st) != "members/member,members/members" || st.ForTheOwner() {
 		t.Fatalf("a slice lists its spec-problem too:\n%s", st.Text())
 	}
+	// A slice with nothing left but spec-problems says so, whatever the
+	// later slices still hold: a Definition no file realizes yet is theirs.
+	other := p.item(p.status(false), "members/members")
+	if text, ok := p.review(other.Definition, run.VerdictOK, other.Fingerprint, []string{"README.md:1"}, ""); !ok {
+		t.Fatal(text)
+	}
+	if st := of("Root", "catalog", "members"); st.Clean() || !st.ForTheOwner() || st.ErrorsElsewhere != 1 {
+		t.Fatalf("a slice with only a spec-problem left:\n%s", st.Text())
+	} else {
+		has(t, st.Text(), "Only spec-problems are left in the slice of the Packages Root, catalog and members")
+	}
+
+	// A Definition gone from the spec is the last slice's: no slice of
+	// Packages lists it, and the plan counts it with the rest.
+	p.remove(m + "catalog/book.md")
+	gone := p.status(false)
+	if p.item(gone, "catalog/book").State != run.StateGone {
+		t.Fatalf("the book is not gone:\n%s", gone.Text())
+	}
+	if st := of("Root", "catalog"); strings.Contains(listed(st), "catalog/book") {
+		t.Fatalf("a slice lists what is gone:\n%s", st.Text())
+	}
+	same(t, plan(p.sliced(1)), []string{
+		"members/loans 3: markitect status --slice Root,catalog,members,members/loans",
+		"rest 2: markitect status",
+	})
 
 	if _, err := p.engine.Status(context.Background(), run.StatusRequest{Dir: p.dir, Slice: []string{"Root", "loans"}}); !errors.Is(err, run.ErrUsage) || !strings.Contains(err.Error(), `no Package "loans"`) {
 		t.Fatalf("a Package the spec does not have: %v", err)

@@ -16,10 +16,13 @@ type ReadEntry struct {
 	ID    string `json:"id"`
 	Title string `json:"title"`
 	Kind  string `json:"kind"`
-	// Folder is the folder it lies in, "" for the spec folder itself.
+	// Folder is the folder it is read under: its own folder, and for a thing
+	// with parts the folder its own folder lies in. "" is the spec folder.
 	Folder string `json:"folder"`
-	// Whole is the Definition it is a part of, if any.
+	// Whole is the Definition it is a part of, if any, and Depth how many
+	// wholes lie above it: 0 for what is no part.
 	Whole string `json:"whole,omitempty"`
+	Depth int    `json:"depth"`
 	// Text is its text without front matter, and Shown the same with each
 	// link shown by its label or by the title of what it names.
 	Text  string `json:"text"`
@@ -27,49 +30,67 @@ type ReadEntry struct {
 }
 
 // Read returns the Definitions at or below a folder of the spec in reading
-// order, the whole spec for the spec folder itself: in each folder the
-// Definition that carries the folder's name first, then the others by name,
-// then the folders below. It is empty for a folder that holds none.
+// order, the whole spec for the spec folder itself. In each folder the
+// Definition that carries the folder's name comes first, then its files and
+// its things with parts by name, each thing followed by its parts, then the
+// folders below. It is empty for a folder that holds none.
 func Read(p *project.Project, folder string) []ReadEntry {
+	sp := p.Spec
 	var ids []string
-	for _, id := range p.Spec.OwnDefinitions() {
+	keys := map[string][]string{}
+	for _, id := range sp.OwnDefinitions() {
 		if folder == spec.RootPackage || strings.HasPrefix(id, folder+"/") {
 			ids = append(ids, id)
+			keys[id] = readKey(sp, id)
 		}
 	}
-	sort.Slice(ids, func(i, j int) bool { return readsBefore(ids[i], ids[j]) })
+	sort.Slice(ids, func(i, j int) bool {
+		a, b := keys[ids[i]], keys[ids[j]]
+		for k := 0; k < len(a) && k < len(b); k++ {
+			if a[k] != b[k] {
+				return a[k] < b[k]
+			}
+		}
+		return len(a) < len(b)
+	})
 	out := []ReadEntry{}
 	for _, id := range ids {
-		d := p.Spec.Definitions[id]
-		out = append(out, ReadEntry{ID: id, Title: d.Title, Kind: d.Kind, Folder: spec.FolderOf(id), Whole: d.Whole, Text: body(d.Data), Shown: shown(p.Spec, d.Data)})
+		d := sp.Definitions[id]
+		e := ReadEntry{ID: id, Title: d.Title, Kind: d.Kind, Folder: spec.FolderOf(id), Whole: d.Whole, Text: body(d.Data), Shown: shown(sp, d.Data)}
+		if _, thing := sp.Thing(e.Folder); thing && id == spec.AnchorOf(e.Folder) {
+			e.Folder = spec.FolderOf(e.Folder)
+		}
+		for w := sp.Definitions[d.Whole]; w != nil; w = sp.Definitions[w.Whole] {
+			e.Depth++
+		}
+		out = append(out, e)
 	}
 	return out
 }
 
-// readsBefore orders two Definition IDs for reading: where their paths part,
-// a file comes before a folder, the file that carries its folder's name
-// before the other files, and names otherwise by the alphabet.
-func readsBefore(a, b string) bool {
-	as, bs := strings.Split(a, "/"), strings.Split(b, "/")
-	for i := 0; i < len(as) && i < len(bs); i++ {
-		if as[i] == bs[i] {
-			continue
-		}
-		aFile, bFile := i == len(as)-1, i == len(bs)-1
-		if aFile != bFile {
-			return aFile
-		}
-		if aFile && i > 0 {
-			if as[i] == as[i-1] {
-				return true
+// readKey is what a Definition sorts by for reading: its path, each part
+// of it ranked. The file that carries its folder's name comes first in the
+// folder, then the other files together with the folders that are a thing
+// with parts, since such a thing reads like a file of the folder it lies in,
+// and last the folders that are a namespace or a Package.
+func readKey(sp *spec.Spec, id string) []string {
+	parts := strings.Split(id, "/")
+	key := make([]string, len(parts))
+	for i, part := range parts {
+		rank := "2"
+		switch {
+		case i == len(parts)-1 && i > 0 && part == parts[i-1]:
+			rank = "0"
+		case i == len(parts)-1:
+			rank = "1"
+		default:
+			if _, thing := sp.Thing(strings.Join(parts[:i+1], "/")); thing {
+				rank = "1"
 			}
-			if bs[i] == bs[i-1] {
-				return false
-			}
 		}
-		return as[i] < bs[i]
+		key[i] = rank + part
 	}
-	return len(as) < len(bs)
+	return key
 }
 
 // KindCount is one Kind with the Definitions of the spec that are of it.

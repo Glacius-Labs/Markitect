@@ -111,6 +111,7 @@ func TestABuildInSlicesThroughTheCommandLine(t *testing.T) {
 		{"status", "--slice", "Root", "--slices"},
 		{"status", "--slice", "Root", "--package", "Root"},
 		{"status", "--slices", "--package", "Root"},
+		{"status", "--slices", "--all"},
 		{"status", "--size", "3"},
 		{"status", "--slices", "--size", "-1"},
 		{"status", "--slice", ","},

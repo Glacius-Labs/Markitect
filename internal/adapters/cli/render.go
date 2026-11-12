@@ -90,25 +90,54 @@ func renderRead(folder string, entries []analysis.ReadEntry) string {
 	fmt.Fprintf(&b, "\n%d %s, as markitect doc --read prints them. The files under .markitect/spec are the spec; this text is a view of them.\n", len(entries), plural(len(entries), "Definition", "Definitions"))
 	at := "\x00"
 	for _, e := range entries {
-		level := "###"
-		if e.Whole != "" {
-			level = "####"
-		} else if group := spec.FolderOf(thing(e.ID)); group != at {
-			at = group
-			if group != spec.RootPackage {
-				fmt.Fprintf(&b, "\n## %s\n", group)
+		level := min(3+e.Depth, 6)
+		if e.Depth == 0 && e.Folder != at {
+			at = e.Folder
+			if at != spec.RootPackage {
+				fmt.Fprintf(&b, "\n## %s\n", at)
 			}
 		}
 		title := e.Title
 		if title == "" {
 			title = e.ID
 		}
-		fmt.Fprintf(&b, "\n%s %s\n\n`%s`, %s\n", level, title, e.ID, e.Kind)
-		if text := strings.TrimSpace(partText(either(e.Shown, e.Text))); text != "" {
+		fmt.Fprintf(&b, "\n%s %s\n\n`%s`, %s\n", strings.Repeat("#", level), title, e.ID, e.Kind)
+		if text := strings.TrimSpace(headingsBelow(partText(either(e.Shown, e.Text)), level)); text != "" {
 			b.WriteString("\n" + text + "\n")
 		}
 	}
 	return b.String()
+}
+
+// headingsBelow moves the headings of a text below a heading of a level,
+// so that a section of a Definition reads as a part of it: a heading of
+// level n becomes one of level+n-1, and none goes deeper than six. Lines in
+// a fenced block stay as they are.
+func headingsBelow(text string, level int) string {
+	lines := strings.Split(text, "\n")
+	fence := ""
+	for i, line := range lines {
+		trimmed := strings.TrimLeft(line, " ")
+		if len(line)-len(trimmed) > 3 {
+			continue
+		}
+		if fence != "" {
+			if strings.HasPrefix(trimmed, fence) && strings.Trim(trimmed, fence[:1]+" ") == "" {
+				fence = ""
+			}
+			continue
+		}
+		if strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~") {
+			fence = trimmed[:3]
+			continue
+		}
+		n := len(trimmed) - len(strings.TrimLeft(trimmed, "#"))
+		if n == 0 || n > 6 || (len(trimmed) > n && trimmed[n] != ' ') {
+			continue
+		}
+		lines[i] = strings.Repeat("#", min(level+n-1, 6)) + trimmed[n:]
+	}
+	return strings.Join(lines, "\n")
 }
 
 // definitionLine is a Definition on one line: its ID, title and Kind.

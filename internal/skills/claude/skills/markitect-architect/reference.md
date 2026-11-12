@@ -128,7 +128,7 @@ parts:
 - `links` at the top names the Kinds any link of the Definition may name, in its own sentences and in every field that does not name its Kinds itself (`link.target`), as `std/Term` declares `links: std/Term`.
 - `realized: false` declares that no file realizes a Definition of the Kind: it is verified, needs no registry row and is never `definition.unused`.
 - `binds: true` declares that a Definition of the Kind binds its Package and every Package below it without a link.
-- `last: true` declares that a Definition of the Kind is built and verified last, on the whole project, as a `std/Quality` is.
+- `last: true` declares that a Definition of the Kind is built and verified last, on the whole project, as a `std/Quality` and a `std/Scenario` are.
 - A key with nothing after it declares that there is none: `fields:` alone allows no field, `parts:` alone no part, `links:` alone no link. A Kind that leaves a key out declares nothing about it, and nothing is checked.
 - Only a Kind declares (`definition.front_matter` elsewhere). A declaration that cannot be read, or that names something that is no Kind, is `kind.schema`.
 
@@ -225,6 +225,8 @@ What a description of a product covers, by folder, in the order of the interview
 **`interfaces/`**, one Package per site, API, command line or channel of messages
 - How each Operation is reached: an Interface with its Routes, or the Pages of a site with their Actions, Refusals and Displays, among them what a page shows when there is nothing to show.
 - Each message the system sends to a person, such as an e-mail: Messages in `messages/` of a Package such as `interfaces/email/`.
+- The addresses of a site that a user relies on, such as the link in an e-mail or a bookmark: Routes of an Interface in the site's Package.
+- How a site looks: the design system or template its pages follow, as a Constraint in `context/constraints/` when it is given and as a Decision when the project chooses one, or one sentence in the site's anchor that its looks are free. Ask the owner; a spec that is silent here lets twenty different sites pass.
 - What holds for the whole site, API, command line or channel: Shapes, such as the language of pages and messages, Refusals and Limits, in the Package's `shapes/`, `refusals/` and `limits/`, and in those folders of `interfaces/` itself for what holds for every interface.
 
 **`quality/`**
@@ -234,11 +236,11 @@ What a description of a product covers, by folder, in the order of the interview
 **`architecture/`**
 - The solution strategy: Strategies in `architecture/strategy/`.
 - The technology, what the project depends on and the other choices it keeps, with their reasons and rejected alternatives: Decisions in `architecture/decisions/`. Without a preference of the owner, propose something plain that fits.
-- What holds across the code, one Rule with parts each in `architecture/rules/`: persistence and transactions, concurrency, security (threats, how secrets and passwords are kept, secure communication, an audit trail, the headers a site sends), faults, logging and monitoring, configuration, how stored data is brought to a newer form, build and release, layout, and tests with the command that runs them, which the reviewer runs as evidence.
+- What holds across the code, one Rule with parts each in `architecture/rules/`: persistence and transactions, concurrency, security (threats, how secrets and passwords are kept, secure communication, an audit trail, the headers a site sends), faults, logging and monitoring, configuration, how stored data is brought to a newer form, build and release, layout, with how an area adds files of its own for what it plugs in, such as its routes or its tables, where it would otherwise change a file all areas share, and tests with the command that runs them, which the reviewer runs as evidence.
 - What runs, how its parts talk and where it runs: Components, Connectors and Deployments in `architecture/runtime/`. How a Component starts and stops, and what it does for its own upkeep, are Rules in its `rules/`. `architecture/runtime/` is a Package once it names what lies in the areas, since it then depends on them, and nothing in an area links into it; a Rule that an area relies on lies in `architecture/rules/`.
 
 **`scenarios/`**
-- The paths through several areas worth checking: Scenarios in `scenarios/`.
+- The paths through several areas worth checking: Scenarios in `scenarios/`. A Scenario is verified by a test that starts the built system and walks it, so state each step so that it can be taken through the interface its Actor uses.
 
 **`administration/`**
 - What the person who runs the system does to it, such as installing, deploying and rolling back, backing up and restoring, upgrading and finding a fault: Tasks in `administration/tasks/`.

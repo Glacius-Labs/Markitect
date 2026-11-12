@@ -7,7 +7,8 @@ import (
 
 // The reading view gives the Definitions at or below a folder in the order
 // one reads them: the Definition that carries its folder's name first, then
-// the other files, then the folders below, and a link by its title.
+// the other files and the things with parts, each thing with its parts
+// behind it, then the folders below, and a link by its title.
 func TestReadGivesTheSpecInReadingOrder(t *testing.T) {
 	r := library(t)
 	r[m+"members/member/member.md"] = def("std/Concept", "Member", "A person with a [[members/member/attributes/card]].")
@@ -20,7 +21,7 @@ func TestReadGivesTheSpecInReadingOrder(t *testing.T) {
 	for _, e := range Read(p, "members") {
 		ids = append(ids, e.ID)
 	}
-	want := "members/members,members/aaa,members/loans/loans,members/loans/loan,members/member/member,members/member/attributes/card"
+	want := "members/members,members/aaa,members/member/member,members/member/attributes/card,members/loans/loans,members/loans/loan"
 	if got := strings.Join(ids, ","); got != want {
 		t.Fatalf("order:\n%s\nwant:\n%s", got, want)
 	}
@@ -31,11 +32,12 @@ func TestReadGivesTheSpecInReadingOrder(t *testing.T) {
 	for _, e := range Read(p, "members/member") {
 		switch e.ID {
 		case "members/member/member":
-			if e.Whole != "" || e.Folder != "members/member" || !strings.Contains(e.Shown, "A person with a Card.") || !strings.Contains(e.Text, "[[members/member/attributes/card]]") {
+			// A thing is read under the folder its own folder lies in.
+			if e.Whole != "" || e.Depth != 0 || e.Folder != "members" || !strings.Contains(e.Shown, "A person with a Card.") || !strings.Contains(e.Text, "[[members/member/attributes/card]]") {
 				t.Errorf("the whole: %+v", e)
 			}
 		case "members/member/attributes/card":
-			if e.Whole != "members/member/member" || e.Kind != "std/Attribute" {
+			if e.Whole != "members/member/member" || e.Depth != 1 || e.Kind != "std/Attribute" {
 				t.Errorf("the part: %+v", e)
 			}
 		default:
