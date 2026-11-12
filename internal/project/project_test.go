@@ -48,7 +48,7 @@ func stdLock(t *testing.T) string {
 
 func valid(t *testing.T) memRepo {
 	return memRepo{files: map[string]string{
-		ManifestFile:                    "libraries:\n  std: 2.0.0\n",
+		ManifestFile:                    "libraries:\n  std: 2.1.0\n",
 		LockFile:                        stdLock(t),
 		SpecDir + "/project.md":         "---\nkind: std/Project\n---\n# Demo\n\nSee [[members]].\n",
 		SpecDir + "/members/members.md": "---\nkind: Package\n---\n# Members\n\nWho belongs to the library.\n",
@@ -148,7 +148,7 @@ func TestLoadLibraryErrors(t *testing.T) {
 	r.files[ManifestFile] = "libraries:\n  std: 9.9.9\n  web: 1.0.0\n"
 	r.files[LibraryDir+"/orphan/Thing.md"] = "---\nkind: Kind\n---\n# Thing\n"
 	p := load(t, r)
-	expect(t, p.Errors, "library.version", "this markitect ships std 2.0.0, not 9.9.9")
+	expect(t, p.Errors, "library.version", "this markitect ships std 2.1.0, not 9.9.9")
 	expect(t, p.Errors, "library.missing", "Library web is neither a standard Library nor committed")
 	expect(t, p.Errors, "library.undeclared", "Library orphan")
 
@@ -158,13 +158,13 @@ func TestLoadLibraryErrors(t *testing.T) {
 	expect(t, load(t, r).Errors, "library.reserved", "std is a standard Library")
 
 	r = valid(t)
-	r.files[ManifestFile] = "libraries:\n  web: 2.0.0\n"
+	r.files[ManifestFile] = "libraries:\n  web: 2.1.0\n"
 	expect(t, load(t, r).Errors, "library.missing", "every project uses the standard Library std")
 }
 
 func TestLoadLocalLibraryAndLock(t *testing.T) {
 	r := valid(t)
-	r.files[ManifestFile] = "libraries:\n  std: 2.0.0\n  web: 0.2.0\n"
+	r.files[ManifestFile] = "libraries:\n  std: 2.1.0\n  web: 0.2.0\n"
 	r.files[LibraryDir+"/web/Page.md"] = "---\nkind: Kind\n---\n# Page\n\nA web page, a kind of [[std/Concept]].\n"
 	r.files[SpecDir+"/home.md"] = "---\nkind: web/Page\n---\n# Home\n"
 	expect(t, load(t, r).Errors, "lock.mismatch", "web 0.2.0 is not in the lock")
@@ -173,7 +173,7 @@ func TestLoadLocalLibraryAndLock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	std, _, _ := LibrarySource(spec.LibraryRef{Name: "std", Version: "2.0.0"}, local)
+	std, _, _ := LibrarySource(spec.LibraryRef{Name: "std", Version: "2.1.0"}, local)
 	web, code, _ := LibrarySource(spec.LibraryRef{Name: "web", Version: "0.2.0"}, local)
 	if code != "" {
 		t.Fatal(code)
@@ -235,7 +235,7 @@ func TestNothingBuilt(t *testing.T) {
 		t.Fatal("a built project with no errors")
 	}
 	fresh := memRepo{files: map[string]string{
-		ManifestFile:            "libraries:\n  std: 2.0.0\n",
+		ManifestFile:            "libraries:\n  std: 2.1.0\n",
 		LockFile:                stdLock(t),
 		SpecDir + "/project.md": "---\nkind: std/Project\n---\n# Demo\n",
 		RootPage:                "| File | Realizes | Why |\n|---|---|---|\n",
@@ -260,7 +260,7 @@ func TestNothingBuilt(t *testing.T) {
 func TestTheManifestHoldsOnlyLibraries(t *testing.T) {
 	r := valid(t)
 	for _, key := range []string{"model: opus", "effort: max"} {
-		r.files[ManifestFile] = "libraries:\n  std: 2.0.0\n" + key + "\n"
+		r.files[ManifestFile] = "libraries:\n  std: 2.1.0\n" + key + "\n"
 		expect(t, load(t, r).Errors, "manifest.syntax", "unknown key")
 	}
 }

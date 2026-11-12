@@ -6,7 +6,7 @@ A compact summary of the spec language, the standard Library and the tools.
 
 ```text
 .markitect/
-  manifest.yaml        Libraries and versions (std: 2.0.0)
+  manifest.yaml        Libraries and versions (std: 2.1.0)
   lock.yaml            Library digests, written by markitect tidy
   spec/                the spec; this folder is the Root Package
     project.md         the project Definition (std/Project), which opens the spec
@@ -29,7 +29,7 @@ Everything under `.markitect/` is accounted for by the compiler and needs no reg
 
 One Markdown file with YAML front matter.
 
-- Front matter: `kind` (required) and `internal: true` (optional); a Kind may also declare `fields`, `parts`, `links`, `realized` and `binds`. Another key is `definition.front_matter`.
+- Front matter: `kind` (required) and `internal: true` (optional); a Kind may also declare `fields`, `parts`, `links`, `realized`, `binds` and `last`. Another key is `definition.front_matter`.
 - File name without `.md` is the name, the path below `spec/` is the ID (`domain/members/concepts/member/attributes/email`). Names: letters, digits, `-`, `_`, starting with a letter or digit (`spec.name`).
 - Body: one level-1 heading, the title, first; no second one (`definition.title`); then the Definition's own sentences, then its fields. Exact values in backticks.
 - **A field** starts with a bold label ending in a colon at the start of a line, such as `**Satisfies:**`, and reaches to the next field; a label inside a list, a quotation or a sentence starts none. Which fields a Definition has, which it must have and what a link in each may name, its Kind declares.
@@ -103,7 +103,7 @@ A Kind is a Definition with `kind: Kind`; its body says what a Definition of tha
 - **An API and a command line** are both a Package under `interfaces/` with an Interface and its Routes: a Route names the method and path, or the command and its arguments, in backticks.
 - `Package` is Core's own, written without a Library: the anchor of a Package says what it is responsible for and what it keeps to itself, not what it contains or depends on.
 
-A project writes its own Kinds as small files (`kind: Kind`) anywhere in its spec; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. The standard Library ships in the binary at one version, as in `std: 2.0.0`. After a manifest change run `markitect tidy`.
+A project writes its own Kinds as small files (`kind: Kind`) anywhere in its spec; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. The standard Library ships in the binary at one version, as in `std: 2.1.0`. After a manifest change run `markitect tidy`.
 
 ### What a Kind declares
 
@@ -128,6 +128,7 @@ parts:
 - `links` at the top names the Kinds any link of the Definition may name, in its own sentences and in every field that does not name its Kinds itself (`link.target`), as `std/Term` declares `links: std/Term`.
 - `realized: false` declares that no file realizes a Definition of the Kind: it is verified, needs no registry row and is never `definition.unused`.
 - `binds: true` declares that a Definition of the Kind binds its Package and every Package below it without a link.
+- `last: true` declares that a Definition of the Kind is built and verified last, on the whole project, as a `std/Quality` and a `std/Scenario` are.
 - A key with nothing after it declares that there is none: `fields:` alone allows no field, `parts:` alone no part, `links:` alone no link. A Kind that leaves a key out declares nothing about it, and nothing is checked.
 - Only a Kind declares (`definition.front_matter` elsewhere). A declaration that cannot be read, or that names something that is no Kind, is `kind.schema`.
 
@@ -224,6 +225,8 @@ What a description of a product covers, by folder, in the order of the interview
 **`interfaces/`**, one Package per site, API, command line or channel of messages
 - How each Operation is reached: an Interface with its Routes, or the Pages of a site with their Actions, Refusals and Displays, among them what a page shows when there is nothing to show.
 - Each message the system sends to a person, such as an e-mail: Messages in `messages/` of a Package such as `interfaces/email/`.
+- The addresses of a site that a user relies on, such as the link in an e-mail or a bookmark: Routes of an Interface in the site's Package.
+- How a site looks: the design system or template its pages follow, as a Constraint in `context/constraints/` when it is given and as a Decision when the project chooses one, or one sentence in the site's anchor that its looks are free. Ask the owner; a spec that is silent here lets twenty different sites pass.
 - What holds for the whole site, API, command line or channel: Shapes, such as the language of pages and messages, Refusals and Limits, in the Package's `shapes/`, `refusals/` and `limits/`, and in those folders of `interfaces/` itself for what holds for every interface.
 
 **`quality/`**
@@ -233,11 +236,11 @@ What a description of a product covers, by folder, in the order of the interview
 **`architecture/`**
 - The solution strategy: Strategies in `architecture/strategy/`.
 - The technology, what the project depends on and the other choices it keeps, with their reasons and rejected alternatives: Decisions in `architecture/decisions/`. Without a preference of the owner, propose something plain that fits.
-- What holds across the code, one Rule with parts each in `architecture/rules/`: persistence and transactions, concurrency, security (threats, how secrets and passwords are kept, secure communication, an audit trail, the headers a site sends), faults, logging and monitoring, configuration, how stored data is brought to a newer form, build and release, layout, and tests with the command that runs them, which the reviewer runs as evidence.
+- What holds across the code, one Rule with parts each in `architecture/rules/`: persistence and transactions, concurrency, security (threats, how secrets and passwords are kept, secure communication, an audit trail, the headers a site sends), faults, logging and monitoring, configuration, how stored data is brought to a newer form, build and release, layout, with how an area adds files of its own for what it plugs in, such as its routes or its tables, where it would otherwise change a file all areas share, and tests with the command that runs them, which the reviewer runs as evidence.
 - What runs, how its parts talk and where it runs: Components, Connectors and Deployments in `architecture/runtime/`. How a Component starts and stops, and what it does for its own upkeep, are Rules in its `rules/`. `architecture/runtime/` is a Package once it names what lies in the areas, since it then depends on them, and nothing in an area links into it; a Rule that an area relies on lies in `architecture/rules/`.
 
 **`scenarios/`**
-- The paths through several areas worth checking: Scenarios in `scenarios/`.
+- The paths through several areas worth checking: Scenarios in `scenarios/`. A Scenario is verified by a test that runs what the project delivers, the built program started as the spec says, and walks it, so state each step so that it can be taken through the interface its Actor uses. Where a Scenario or a Reaction depends on time passing, state in a Rule of `architecture/rules/` how a test sets the time of the running program; without it such a Scenario stays a question for the owner.
 
 **`administration/`**
 - What the person who runs the system does to it, such as installing, deploying and rolling back, backing up and restoring, upgrading and finding a fault: Tasks in `administration/tasks/`.

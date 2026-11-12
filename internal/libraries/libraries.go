@@ -11,7 +11,7 @@ import (
 )
 
 // Version is the version of every standard Library in this binary.
-const Version = "2.0.0"
+const Version = "2.1.0"
 
 //go:embed std
 var files embed.FS

@@ -34,6 +34,9 @@ type Schema struct {
 	// Binds says that a Definition of the Kind binds its Package and every
 	// Package below it without being linked, as a Rule does.
 	Binds bool
+	// Last says that a Definition of the Kind is built and verified last: it
+	// is judged on the whole project, as a quality is.
+	Last bool
 	// Broken says that the declaration has an error of its own: Definitions
 	// are then not held to it, so that one error stays one.
 	Broken bool
@@ -101,14 +104,15 @@ func yamlBool(n *yaml.Node) (value, ok bool) {
 // parseSchema reads what a Kind declares in its front matter: fields, a
 // mapping of labels, parts, a mapping of folders, links, the Kinds a link may
 // name, and realized, which is false for a Kind whose Definitions no file
-// realizes, and binds, which is true for a Kind whose Definitions bind their
-// Package and those below it without a link. Lines of the top nodes are file
+// realizes, binds, which is true for a Kind whose Definitions bind their
+// Package and those below it without a link, and last, which is true for a
+// Kind whose Definitions are judged on the whole project. Lines of the top nodes are file
 // lines already; the lines of nodes below count from the first front matter
 // line.
-func (c *compiler) parseSchema(file string, frontLine int, fields, parts, links, realized, binds *yaml.Node) *Schema {
+func (c *compiler) parseSchema(file string, frontLine int, fields, parts, links, realized, binds, last *yaml.Node) *Schema {
 	s := &Schema{}
 	line := func(n *yaml.Node) int {
-		if n == fields || n == parts || n == links || n == realized || n == binds {
+		if n == fields || n == parts || n == links || n == realized || n == binds || n == last {
 			return n.Line
 		}
 		return n.Line + frontLine
@@ -147,6 +151,13 @@ func (c *compiler) parseSchema(file string, frontLine int, fields, parts, links,
 			bad(binds, "binds is true or false: true for a Kind whose Definitions bind their Package and those below it without a link")
 		}
 		s.Binds = ok && value
+	}
+	if last != nil {
+		value, ok := yamlBool(last)
+		if !ok {
+			bad(last, "last is true or false: true for a Kind whose Definitions are built and verified last, on the whole project")
+		}
+		s.Last = ok && value
 	}
 	if realized != nil {
 		value, ok := yamlBool(realized)
@@ -320,6 +331,18 @@ func (c *compiler) schemaOf(d *Definition) *Schema {
 		return k.Schema
 	}
 	return nil
+}
+
+// VerifiedLast says whether a Definition is built and verified last, on the
+// whole project: its Kind declares last, or declares that no file realizes
+// its Definitions, which can then only be judged on what the others built.
+func (s *Spec) VerifiedLast(id string) bool {
+	d := s.Definitions[id]
+	if d == nil {
+		return false
+	}
+	kind := s.Definitions[d.Kind]
+	return kind != nil && kind.Schema != nil && !kind.Schema.Broken && (kind.Schema.Last || kind.Schema.Unrealized)
 }
 
 // PartFolder returns the folder a part lies in below its whole, as a Kind

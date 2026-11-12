@@ -91,6 +91,8 @@ Use the tools while you work, not only at the end:
 - `markitect check --spec` after every few files. It looks only at the spec, which is what a change of the spec asks, and prints every error as `file:line: code: message`; fix the first ones and run it again. Plain `markitect check` also lists what the project does not realize yet, which is the build's work and not an error of your change.
 - `markitect doc TARGET` before you rename, move or delete a Definition: it shows who links to it and which files realize it.
 - `markitect list --deps` when you add a link between Packages: it shows the new dependency and the links behind it.
+- `markitect list --kinds` to see what the spec describes so far: every Kind with how many Definitions it has, and the Kinds it has none of.
+- `markitect doc --read FOLDER` when the owner wants to read what you wrote: it prints everything at or below a folder as one text, the whole spec without a folder.
 - `markitect vet` at the end: coupling, size, hubs. Fix each warning or give one line why it stays. Its last line counts its notes; `markitect vet --strict` lists them. Link each unlinked mention the Definition relies on, and leave the ones that are ordinary words.
 - `markitect status` on your change: it lists the items the change puts back on the list to verify. Give the owner that list; it is what the builder will work on.
 - After a manifest or Library change run `markitect tidy` and include the new `lock.yaml` in the diff.
@@ -190,7 +192,7 @@ Fix a `field.*`, `link.target` or `part.*` error by the Kind, which `markitect d
 
 Before you hand over a new spec, check that no topic of the [coverage list](reference.md#coverage) was skipped: each is stated, ruled out, or open in `.markitect/questions.md`.
 
-Report to the owner in a few lines: the diff; the output of `check --spec`, or of plain `check` for a first spec drawn from a project (its summary line), and of `vet` (warnings fixed or justified); the list `status` prints, so the owner sees what the change makes the agents do; what waits for them in `.markitect/questions.md`; and any point the owner chose to leave open. Leave the work as a diff; commit only if the owner asks. Go through it with the owner when they would rather talk it through than read it. Change it until they accept it.
+Report to the owner in a few lines: the diff; the output of `check --spec`, or of plain `check` for a first spec drawn from a project (its summary line), and of `vet` (warnings fixed or justified); the list `status` prints, so the owner sees what the change makes the agents do; what waits for them in `.markitect/questions.md`; and any point the owner chose to leave open. Leave the work as a diff; commit only if the owner asks. A new spec is too long to accept by reading it line by line. Offer to go through it instead: say for each top-level folder in a few lines what it now states, name each place where you proposed something the owner did not say, and ask where they want to go deeper; `markitect doc --read FOLDER` gives you the text of a folder in one piece to answer from. Change it until they accept it.
 
 Deleting or renaming a Definition leaves registry entries that name it. That is stale realization, an error of the realization rather than the spec's: `check` lists it apart, and the next build cleans it up. Say so; do not edit the registry pages in a change of the spec, which the builder keeps (only drawing the spec from the project writes them).
 

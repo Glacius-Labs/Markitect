@@ -307,7 +307,7 @@ func (c *compiler) parseDefinition(id, file string, data []byte) *Definition {
 	if page.FrontLine == 0 {
 		c.diags.Add("definition.front_matter", file, 1, "a Definition starts with front matter that names its kind, such as kind: std/Rule between two lines ---")
 	}
-	var declaredFields, declaredParts, declaredLinks, declaredRealized, declaredBinds *yaml.Node
+	var declaredFields, declaredParts, declaredLinks, declaredRealized, declaredBinds, declaredLast *yaml.Node
 	for key, node := range page.Front {
 		switch key {
 		case "fields":
@@ -320,6 +320,8 @@ func (c *compiler) parseDefinition(id, file string, data []byte) *Definition {
 			declaredRealized = node
 		case "binds":
 			declaredBinds = node
+		case "last":
+			declaredLast = node
 		case "kind":
 			if node.Kind != yaml.ScalarNode || node.Tag != "!!str" || strings.TrimSpace(node.Value) == "" {
 				c.diags.Add("definition.front_matter", file, node.Line, "kind must be a path such as std/Rule")
@@ -334,12 +336,12 @@ func (c *compiler) parseDefinition(id, file string, data []byte) *Definition {
 			}
 			d.Internal = internal
 		default:
-			c.diags.Add("definition.front_matter", file, node.Line, "unknown front matter key %q: a Definition's front matter holds only kind and internal, and a Kind's also fields, parts, links, realized and binds", key)
+			c.diags.Add("definition.front_matter", file, node.Line, "unknown front matter key %q: a Definition's front matter holds only kind and internal, and a Kind's also fields, parts, links, realized, binds and last", key)
 		}
 	}
 	// A Kind may declare the fields and the parts of its Definitions, and
 	// that no file realizes them.
-	declared := []*yaml.Node{declaredFields, declaredParts, declaredLinks, declaredRealized, declaredBinds}
+	declared := []*yaml.Node{declaredFields, declaredParts, declaredLinks, declaredRealized, declaredBinds, declaredLast}
 	declares := false
 	for _, node := range declared {
 		if node == nil {
@@ -347,13 +349,13 @@ func (c *compiler) parseDefinition(id, file string, data []byte) *Definition {
 		}
 		declares = true
 		if kind.value != CoreKind {
-			c.diags.Add("definition.front_matter", file, node.Line, "only a Kind declares fields, parts, links, realized and binds: this Definition's kind is not Kind")
+			c.diags.Add("definition.front_matter", file, node.Line, "only a Kind declares fields, parts, links, realized, binds and last: this Definition's kind is not Kind")
 			declares = false
 			break
 		}
 	}
 	if declares {
-		d.Schema = c.parseSchema(file, page.FrontLine, declaredFields, declaredParts, declaredLinks, declaredRealized, declaredBinds)
+		d.Schema = c.parseSchema(file, page.FrontLine, declaredFields, declaredParts, declaredLinks, declaredRealized, declaredBinds, declaredLast)
 	}
 	if kind.value == "" && page.FrontLine != 0 {
 		if _, ok := page.Front["kind"]; !ok {

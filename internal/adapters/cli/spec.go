@@ -134,23 +134,39 @@ func notesLine(notes []analysis.Note) string {
 }
 
 // list prints the Packages and their Definitions; with --deps, what each
-// depends on; with --packages, the Packages alone.
+// depends on; with --packages, the Packages alone; with --kinds, every Kind
+// the spec can use with how many Definitions it has of it.
 func (c CLI) list(_ context.Context, args []string) (int, error) {
 	var o options
-	var deps, packages bool
+	var deps, packages, kinds bool
 	fs := c.flags("list", &o)
 	fs.BoolVar(&deps, "deps", false, "add what each Package and Definition depends on, and each Package's coupling, abstractness and distance")
 	fs.BoolVar(&packages, "packages", false, "print the Packages alone: with --deps each dependency on one line with the number of links behind it")
+	fs.BoolVar(&kinds, "kinds", false, "print every Kind the spec can use, with how many Definitions it has of it and in which top-level folders")
 	if positional, err := parse(fs, args); err != nil {
 		return Misused, err
 	} else if len(positional) != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
+	}
+	if kinds && (deps || packages) {
+		return Misused, fmt.Errorf("--kinds stands alone: without --deps and --packages")
 	}
 	_, p, err := c.load(o)
 	if err != nil {
 		return Misused, err
 	}
 	c.warnErrors(p)
+	if kinds {
+		counts := analysis.Kinds(p)
+		if o.json {
+			return OK, c.printJSON(struct {
+				envelope
+				Kinds []analysis.KindCount `json:"kinds"`
+			}{newEnvelope("list"), counts})
+		}
+		fmt.Fprint(c.Stdout, renderKinds(counts))
+		return OK, nil
+	}
 	pkgs := analysis.ListPackages(p, deps)
 	if o.json {
 		if err := c.printJSON(struct {
@@ -168,15 +184,21 @@ func (c CLI) list(_ context.Context, args []string) (int, error) {
 // doc prints a Definition with its text, what links to it, what it links to,
 // the files that realize it and its record; or a Package with its public and
 // its internal Definitions apart, its registry page and its files. A target
-// that is neither exits 1.
+// that is neither exits 1. With --read it prints every Definition at or below
+// a folder as one text to read, the whole spec when it names none.
 func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 	var o options
+	var read bool
 	fs := c.flags("doc", &o)
+	fs.BoolVar(&read, "read", false, "print every Definition at or below a folder as one text to read; the whole spec when no folder is named")
 	positional, err := parse(fs, args)
 	if err != nil {
 		return Misused, err
 	}
-	if len(positional) != 1 {
+	if read && len(positional) > 1 {
+		return Misused, fmt.Errorf("--read names one folder of the spec, such as purpose or domain/members, or none for the whole spec")
+	}
+	if !read && len(positional) != 1 {
 		return Misused, fmt.Errorf("names one Definition or Package, such as members/member or members")
 	}
 	_, p, err := c.load(o)
@@ -184,6 +206,34 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 		return Misused, err
 	}
 	c.warnErrors(p)
+	if read {
+		folder := spec.RootPackage
+		if len(positional) == 1 && positional[0] != "Root" && positional[0] != "." {
+			folder = strings.Trim(strings.TrimSuffix(strings.TrimPrefix(positional[0], "[["), "]]"), "/")
+		}
+		entries := analysis.Read(p, folder)
+		if len(entries) == 0 {
+			var ds spec.Diagnostics
+			ds.Add("doc.unknown", "", 0, "%s is no folder of the spec that holds a Definition", folder)
+			if o.json {
+				return Failed, c.printJSON(struct {
+					envelope
+					Diagnostics []diagnostic `json:"diagnostics"`
+				}{newEnvelope("doc"), diagnostics(severityError, ds)})
+			}
+			fmt.Fprintf(c.Stderr, "markitect doc: %s\n", ds[0].String())
+			return Failed, nil
+		}
+		if o.json {
+			return OK, c.printJSON(struct {
+				envelope
+				Folder      string               `json:"folder"`
+				Definitions []analysis.ReadEntry `json:"definitions"`
+			}{newEnvelope("doc"), folder, entries})
+		}
+		fmt.Fprint(c.Stdout, renderRead(folder, entries))
+		return OK, nil
+	}
 	target := strings.TrimSuffix(strings.TrimSuffix(strings.TrimPrefix(positional[0], "[["), "]]"), ".md")
 	// A folder that holds a Definition of its own name stands for it.
 	if d := p.Spec.Lookup(target); d != nil {

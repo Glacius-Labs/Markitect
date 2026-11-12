@@ -46,7 +46,7 @@ internal/email/{receipt.go, receipt_test.go}
 
 ```yaml
 libraries:
-  std: 2.0.0
+  std: 2.1.0
 ```
 
 ## Root: purpose, context, quality and architecture

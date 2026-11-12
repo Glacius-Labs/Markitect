@@ -17,20 +17,36 @@ import (
 // status says what is to verify, and changes nothing. Exit 1 means it found
 // something: an item, an error in the spec or the realization, or a line of the
 // record it cannot read; notes, such as a skip, never change the exit code. With
-// --all every Definition is an item.
+// --all every Definition is an item. --slices prints the slices a build of
+// the list goes in, and --slice limits the list to one of them.
 func (c CLI) status(ctx context.Context, args []string) (int, error) {
 	var o options
-	var all bool
-	var pkg string
+	var all, slices bool
+	var pkg, slice string
+	var size int
 	fs := c.flags("status", &o)
 	fs.BoolVar(&all, "all", false, "list every Definition, to verify everything again")
 	fs.StringVar(&pkg, "package", "", "list only the items whose Definition belongs to this Package, Root for the one at the top")
+	fs.BoolVar(&slices, "slices", false, "print the slices a build of the list goes in, each with the command that lists it")
+	fs.StringVar(&slice, "slice", "", "list only one slice: the items of these Packages, separated by commas, that are not verified last")
+	fs.IntVar(&size, "size", 0, fmt.Sprintf("with --slices: how many items a slice holds at most (default %d)", run.SliceSize))
 	if positional, err := parse(fs, args); err != nil {
 		return Misused, err
 	} else if len(positional) != 0 {
 		return Misused, fmt.Errorf("takes no arguments")
 	}
-	st, err := c.Record.Status(ctx, run.StatusRequest{Dir: o.repo, All: all, Package: pkg})
+	names := run.SliceNames(slice)
+	switch {
+	case slice != "" && len(names) == 0:
+		return Misused, fmt.Errorf("--slice names Packages, separated by commas, as markitect status --slices prints them")
+	case len(names) > 0 && (pkg != "" || slices):
+		return Misused, fmt.Errorf("--slice stands alone: without --package and --slices")
+	case slices && (pkg != "" || all):
+		return Misused, fmt.Errorf("--slices cuts the list of what is to verify: without --package and --all")
+	case size < 0 || size > 0 && !slices:
+		return Misused, fmt.Errorf("--size is a count of items and goes with --slices")
+	}
+	st, err := c.Record.Status(ctx, run.StatusRequest{Dir: o.repo, All: all, Package: pkg, Slice: names, SliceSize: size})
 	if err != nil {
 		return Misused, err
 	}
@@ -48,25 +64,30 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 			questions = project.QuestionsFile
 		}
 		packages := append([]run.PackageItems{}, st.Packages...)
+		plan := append([]run.Slice{}, st.Slices...)
 		if err := c.printJSON(struct {
 			envelope
 			Clean             bool               `json:"clean"`
 			ForTheOwner       bool               `json:"for_the_owner"`
 			Package           string             `json:"package,omitempty"`
+			Slice             []string           `json:"slice,omitempty"`
 			NotListed         int                `json:"not_listed,omitempty"`
 			Definitions       int                `json:"definitions"`
 			Units             int                `json:"units"`
 			SpecErrors        int                `json:"spec_errors"`
 			RealizationErrors int                `json:"realization_errors"`
 			Packages          []run.PackageItems `json:"packages"`
+			Slices            []run.Slice        `json:"slices"`
 			Items             []run.Item         `json:"items"`
 			Diagnostics       []diagnostic       `json:"diagnostics"`
 			Skipped           []run.Item         `json:"skipped"`
 			Unreadable        []int              `json:"unreadable_lines"`
 			Questions         string             `json:"questions,omitempty"`
-		}{newEnvelope("status"), st.Clean(), st.ForTheOwner(), st.Package, st.ErrorsElsewhere + st.UnreadableElsewhere, st.Definitions, st.Units, len(st.SpecErrors), len(st.Errors), packages, items, append(append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), diagnostics(severityError, st.RecordErrors())...), skipped, unreadable, questions}); err != nil {
+		}{newEnvelope("status"), st.Clean(), st.ForTheOwner(), st.Package, st.Slice, st.ItemsElsewhere + st.ErrorsElsewhere + st.UnreadableElsewhere, st.Definitions, st.Units, len(st.SpecErrors), len(st.Errors), packages, plan, items, append(append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), diagnostics(severityError, st.RecordErrors())...), skipped, unreadable, questions}); err != nil {
 			return Misused, err
 		}
+	} else if slices {
+		fmt.Fprint(c.Stdout, st.Plan())
 	} else {
 		fmt.Fprint(c.Stdout, st.Text())
 	}

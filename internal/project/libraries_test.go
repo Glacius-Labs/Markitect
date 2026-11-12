@@ -40,9 +40,9 @@ func TestStandardLibrariesCompile(t *testing.T) {
 // needs a new Library version and a new expected digest here.
 func TestStandardLibraryDigests(t *testing.T) {
 	want := map[string]string{
-		"std": "sha256:0d3345b3c2e27b8a912efddd70618183566eb3892d61e0edc74fe3df806575cb",
+		"std": "sha256:cb621816104929dd375bf67c65f4b6a5c102f46e0883345946a6230e947c329e",
 	}
-	if libraries.Version != "2.0.0" {
+	if libraries.Version != "2.1.0" {
 		t.Fatalf("version %s: update the pinned digests with the version", libraries.Version)
 	}
 	for _, name := range libraries.Names() {

@@ -22,5 +22,5 @@ func TestCompileAKindDeclaresThatItBinds(t *testing.T) {
 		t.Fatalf("where: %v", d)
 	}
 	_, ds = typed(t, map[string]string{"goal.md": "---\nkind: typed/Goal\nbinds: true\n---\n# Goal\n"})
-	expect(t, ds, "definition.front_matter", "only a Kind declares fields, parts, links, realized and binds")
+	expect(t, ds, "definition.front_matter", "only a Kind declares fields, parts, links, realized, binds and last")
 }
