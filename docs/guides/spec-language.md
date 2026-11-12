@@ -10,8 +10,11 @@ This guide is the canonical description of the spec language of the [concept](..
   lock.yaml            the digest of each Library, written by markitect tidy
   spec/                the spec; this folder is the Root Package
     project.md         the project anchor (std/Project)
-    members/           a Package
+    members/           a Package, because it holds its anchor
+      members.md       the anchor of members (std/Package): ID members/members
       member.md        a Definition: ID members/member
+      rules/           a folder without an anchor: it only sorts
+        loan-limit.md  a Definition of members: ID members/rules/loan-limit
   registry.md          Root's registry page
   registry/
     members.md         the registry page of Package members
@@ -47,17 +50,28 @@ A [[members/member|member]] reserves a [[equipment/machine|machine]] for a slot.
 - The rest is documentation. Exact values such as wire names and error codes are written in backticks.
 - The spec folder holds only `.md` files and folders (`spec.file`). Two entries of one folder whose names differ only in case, or a file and a folder of the same name (`member.md` and `member/`), collide (`spec.collision`): a link could not tell them apart.
 
+## Packages and folders
+
+A Package is a part of the project. The spec folder itself is the Root Package. Below it, a folder is a Package when it holds a Definition of its own name, its anchor: `members/members.md` makes `members` a Package, and `members/loans/loans.md` makes `members/loans` one ([DEC-107](../decisions.md#dec-107-a-folder-is-a-package-by-its-anchor-any-other-folder-only-sorts)).
+
+- **The anchor says what the Package is:** what it is responsible for and what it keeps to itself. It is an ordinary Definition of any Kind, `std/Package` in the standard Library. It is verified like every Definition, a file realizes it or a Definition links to it (`definition.unused`), and a link to the Package does not link it. Root has no anchor by name; the project's anchor, `project.md`, is its by convention.
+- **A folder without an anchor only sorts.** Its Definitions belong to the nearest Package above it, and to Root when there is none. Their IDs keep the folder, `members/rules/loan-limit`, and nothing else changes: scope, visibility and dependencies are the Package's, so the Definitions in two such folders of one Package link each other freely.
+- **A folder that only sorts is not a part of the project.** A link to it resolves to nothing (`link.unresolved`), and a registry page for it belongs to no Package (`stale.page`).
+- **A Package may lie in a folder that only sorts.** `members/concepts/card/card.md` makes `members/concepts/card` a Package whose parent is `members`.
+
+A project sorts a Package's Definitions as it reads best, by Kind or not at all; Markitect prescribes no layout.
+
 ## Kinds and Libraries
 
 Core offers one thing: the Definition `Kind`. A Kind is a Definition whose `kind` is `Kind`; its body says what it is and how it is used. Every other Definition's `kind` names a Kind by path (`kind.unresolved`, `kind.not_a_kind`).
 
 A Library is a folder of Kind Definitions, one `<Name>.md` file each at its top level (`library.file`, `library.not_a_kind`, `library.internal`); a Library's name follows the same rules as other names (`library.name`). A Library Definition may link only to Libraries the manifest names and to `Kind`. No Kind has a special meaning to Markitect.
 
-The standard Libraries ship inside the binary at version 1.1.0:
+The standard Libraries ship inside the binary at version 1.2.0:
 
 | Library | Kinds |
 |---|---|
-| `std` | [Project](../../internal/libraries/std/Project.md), [Rule](../../internal/libraries/std/Rule.md), [Concept](../../internal/libraries/std/Concept.md), [Feature](../../internal/libraries/std/Feature.md), [Decision](../../internal/libraries/std/Decision.md) |
+| `std` | [Project](../../internal/libraries/std/Project.md), [Package](../../internal/libraries/std/Package.md), [Rule](../../internal/libraries/std/Rule.md), [Concept](../../internal/libraries/std/Concept.md), [Feature](../../internal/libraries/std/Feature.md), [Decision](../../internal/libraries/std/Decision.md) |
 | `rest` | [Endpoint](../../internal/libraries/rest/Endpoint.md) |
 | `cli` | [Command](../../internal/libraries/cli/Command.md) |
 
@@ -68,8 +82,8 @@ Every project uses `std`. A project writes its own Kinds for anything else, one 
 ```yaml
 # .markitect/manifest.yaml
 libraries:
-  std: 1.1.0
-  rest: 1.1.0
+  std: 1.2.0
+  rest: 1.2.0
 ```
 
 The manifest names each Library with its version and nothing else (`manifest.syntax`, `manifest.missing`). A standard Library must have the version this binary ships (`library.version`), and no project folder may replace it (`library.reserved`). A version names one content: when a Kind of a standard Library changes, the version of the standard Libraries moves, and `markitect tidy` and `markitect update` name the new one in the manifest before they write the lock. Any other named Library must exist under `.markitect/libraries/` (`library.missing`), and every Library folder there must be named (`library.undeclared`).
@@ -80,8 +94,8 @@ The manifest names each Library with its version and nothing else (`manifest.syn
 
 A link names its target by path: `[[members/member]]` inside the spec, `[[std/Rule]]` for a Library Kind, `[[members]]` for a Package. A label after `|` and a section after `#` are allowed and ignored for resolution: `[[members/member#Status|member]]`. In a Markdown table, write the label's bar as `\|`. Links inside code spans and code blocks are text, not links. There are no imports and no relative links: a link to a Definition in the same Package still names its full path, `[[members/member]]` from inside `members/`.
 
-- A path whose first name is a Library the manifest names is a Library link. No top-level Package or Definition of the spec may have a Library's name, or the name `Kind` (`spec.reserved`).
-- A link that resolves to nothing, or that is not a path of valid names (`../x`, `/x`), is an error (`link.unresolved`, `link.syntax`).
+- A path whose first name is a Library the manifest names is a Library link. No top-level folder or Definition of the spec may have a Library's name, or the name `Kind` (`spec.reserved`).
+- A link that resolves to nothing, or that is not a path of valid names (`../x`, `/x`), is an error (`link.unresolved`, `link.syntax`). A folder that only sorts is nothing a link resolves to.
 
 **Every link is a relation** ([DEC-104](../decisions.md#dec-104-a-link-is-never-decorative-identity-and-surface-are-written-as-code-writes-them)). The spec behaves like code, and code has no "see also", so a link is never decorative. A link to a Definition says that the source relies on what the target states: a change to the target puts the source back on the list of `status`. A link to a Package says that the source's module depends on that module or, down the tree, says something about a part of the parent's organization. The Kind, the tree with its visibility, the registry and the evidence state the other relations. A link that would only help a reader find something does not belong in the spec; navigation belongs in documentation rendered from it. The [guide to a good spec](good-spec.md#every-link-is-a-relation) shows how identities, a module's surface and the modules it uses are written under this rule.
 
@@ -101,7 +115,7 @@ A cycle is broken by moving the shared concept into a common parent, or by inver
 
 ### Registry pages
 
-Every Package may have one registry page: `.markitect/registry.md` for Root, `.markitect/registry/<package path>.md` for the others. The front matter names the path patterns the Package owns; a table lists every file it owns with the Definitions the file realizes and why.
+Every Package may have one registry page: `.markitect/registry.md` for Root, `.markitect/registry/<package path>.md` for the others. A folder that only sorts has none: its Definitions' files are listed on the page of the Package they belong to. The front matter names the path patterns the Package owns; a table lists every file it owns with the Definitions the file realizes and why.
 
 ```markdown
 ---
@@ -133,7 +147,7 @@ When the owner deletes a Definition, a file or a Package, the registry still nam
 |---|---|
 | `stale.definition` | a registry link to a Definition that no longer exists |
 | `stale.file` | an entry for a file that no longer exists |
-| `stale.page` | the page of a Package that no longer exists, and each file still listed only there |
+| `stale.page` | the page of a Package that no longer exists, or of a folder that only sorts, and each file still listed only there |
 
 `check` fails on each, in its group of errors in the realization, as it does on a file the registry does not list and on a Definition nothing links to and no file realizes (`definition.unused`). `check --spec` looks only at the spec itself.
 
@@ -185,7 +199,7 @@ The fields of each document:
 | `check` | `ok`, `nothing_built`, `definitions`, `packages`, `files`, `spec_errors`, `realization_errors`, `diagnostics` |
 | `vet` | `diagnostics`: the warnings, then every note with `severity` `note`, `--strict` or not; a `vet.unlinked_mention` adds `targets`, the Definitions it names, and `structure`, `against` or `new_dependency` for those a link to which would close a Package cycle or add a Package dependency |
 | `list` | `packages`: `path`, `name`, `parent`, `definitions` (`id`, `title`, `kind`, `file`, `internal`) and, with `--deps`, each Definition's `links` and the Package's `deps` (`afferent`, `efferent`, `instability`, `abstractness`, `distance`, `depends_on` with the `uses` behind each edge: `from`, `target`, `via` (`link` or `kind`), `file`, `line`) |
-| `doc` | `definition`: `id`, `title`, `kind`, `file`, `internal`, `links`, `package`, `library`, `text`, `linked_from`, `realized_by`, `record`; or `package`: `path`, `name`, `parent`, `children`, `page`, `paths`, `definitions` (each with `internal`), `linked_from`, `files`; or, for a target that is neither, `diagnostics` (`doc.unknown`) |
+| `doc` | `definition`: `id`, `title`, `kind`, `file`, `internal`, `links`, `package`, `library`, `text`, `linked_from`, `realized_by`, `record`; or `package`: `path`, `name`, `parent`, `children`, `anchor`, `text` (the anchor's text without front matter), `page`, `paths`, `definitions` (each with `internal`), `linked_from`, `files`; or, for a target that is neither, `diagnostics` (`doc.unknown`) |
 | `status` | `clean`, `for_the_owner` (something is left, and all of it is `spec-problem`s recorded at the inputs as they are), `package` and `not_listed` (only with `--package`: every other field but `packages` is then that Package's part, and `not_listed` counts the errors in the realization and the unreadable lines, which belong to no Package), `definitions`, `spec_errors`, `realization_errors`, `packages` (each Package of the spec, by name: `package`, `definitions`, `items` and `spec_problems` on the list, and `depends_on`, the Packages it depends on as `list --deps` has them, where a link to an ancestor is implicit), `items` (`definition`, `title`, `state`, `fingerprint`, `changes`, `verdict`, `why`, `verdicts`, `look`), `diagnostics` (the spec's errors, the realization's, and `record.unreadable` for each line of the record markitect cannot read), `skipped`, `unreadable_lines`, `questions` (the path of the questions file, when it exists and the list is not limited to a Package) |
 | `mark` | `recorded`, `item`, `verdict`, `message` |
 | `config` | `values` (`key`, `value`, `origin`: `built-in`, `user` or `project`, `file`, `via`), `problems` |
@@ -205,7 +219,7 @@ The fields of each document:
 | `markitect tidy` | Brings the lock in line with the manifest and the Libraries it names, as `go mod tidy` does. Where the manifest names another version of a standard Library than this binary ships, it names the shipped one there first, and says so. The lock's header reads "Written by markitect tidy from the manifest". |
 | `markitect vet [--strict]` | Analyses the spec's design: coupling, size, hubs, and as notes unlinked mentions, statements, placement and hotspots ([the warnings and notes](#vet-warnings-and-notes)). Prints its warnings as diagnostic lines, then one line that counts its notes, such as `notes: 12 unlinked mentions in 5 Definitions, 3 more against or beyond the Package structure, 1 other note; markitect vet --strict lists them`, and nothing when there is neither. `--strict` prints the notes as diagnostic lines instead of that line. Exit 1 only with `--strict` and a warning; notes never change it. |
 | `markitect list [--deps]` | Each Package by name (`Root` for the root) with its Definitions below it as `  ID: Title (Kind)`. With `--deps` the Package line adds `(Ca n, Ce n, instability x.xx, abstractness x.xx, distance x.xx)`, information only, and is followed by `  depends on P: A links B; C is of Kind D`, and a Definition by the links it makes, `    links X, Y`. |
-| `markitect doc TARGET` | A Definition: `ID: Title (Kind)`, its Package and file (or its Library), its text without front matter, what it links to, what links to it (`  FROM (link\|kind), FILE:LINE`), the files that realize it (`  FILE, PAGE:LINE`) and its record (`Record: ID@FP, STATE`, with the changes or the reason). A Package: its parent, registry page and paths, the Packages below it, its public Definitions and, apart, its internal ones, what links to it and its files. `doc Root` or `doc .` shows Root. Exit 1 for a target that is neither. |
+| `markitect doc TARGET` | A Definition: `ID: Title (Kind)`, its Package and file (or its Library), its text without front matter, what it links to, what links to it (`  FROM (link\|kind), FILE:LINE`), the files that realize it (`  FILE, PAGE:LINE`) and its record (`Record: ID@FP, STATE`, with the changes or the reason). A Package: its parent, registry page and paths, the Packages below it, the text of its anchor, its public Definitions and, apart, its internal ones, what links to it and its files. `doc Root` or `doc .` shows Root. Exit 1 for a target that is neither. |
 
 `vet`, `list` and `doc` also run over a spec with errors and say so on standard error.
 
@@ -213,7 +227,7 @@ Two commands work on the record of what was verified, `.markitect/review.sum` ([
 
 | Command | Does |
 |---|---|
-| `markitect status [--all] [--package P]` | Lists what is to verify: each Definition with a changed input or no record, with what changed, where to look and its fingerprint; each Definition recorded `fail` or `spec-problem`; each Definition gone from the spec, with the files that realized it; conflicts after a merge; and the errors in the realization. When only `spec-problem`s are left, one line says so. A `skip` is a note, and so is the last line, which says that `.markitect/questions.md` exists while it does. Exit 0 when it lists nothing, 1 when it lists something; a spec with errors has no list. `--all` lists every Definition. `--package P` lists only the items whose Definition lies directly in the Package of that name, `Root` for the one at the top, and counts the errors in the realization and the unreadable lines of the record without listing them, since they belong to no Package; exit 0 then means that nothing is to verify in that Package. Changes nothing. |
+| `markitect status [--all] [--package P]` | Lists what is to verify: each Definition with a changed input or no record, with what changed, where to look and its fingerprint; each Definition recorded `fail` or `spec-problem`; each Definition gone from the spec, with the files that realized it; conflicts after a merge; and the errors in the realization. When only `spec-problem`s are left, one line says so. A `skip` is a note, and so is the last line, which says that `.markitect/questions.md` exists while it does. Exit 0 when it lists nothing, 1 when it lists something; a spec with errors has no list. `--all` lists every Definition. `--package P` lists only the items whose Definition belongs to the Package of that name, `Root` for the one at the top, and not those of the Packages below it, and counts the errors in the realization and the unreadable lines of the record without listing them, since they belong to no Package; exit 0 then means that nothing is to verify in that Package. Changes nothing. |
 | `markitect mark DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m WHY] [--cases N --covered M]` | Records `ok`, `fail`, `skip` or `spec-problem` at the state `status` printed, which prints each item as `DEFINITION@FINGERPRINT`. `ok` names its evidence with `-e`, files of the folder as `path` or `path:line`; the others say why with `-m`. `--cases` and `--covered` are the reviewer's counts of the Definition's cases, conditions and exceptions and of those its evidence demonstrates, kept on the line; `mark` refuses an `ok` or a `skip` on a Definition of the spec without both ([the record file](../../internal/run/README.md#the-record-file)), which also counts how often the Definition's own text changed between verdicts. Refuses, and records nothing, when the inputs changed since the fingerprint or evidence does not exist. In an agent session, only the reviewer agent may run it (the hook). |
 | `markitect hook pretool` | The hook before a tool call: only the reviewer records, a subagent writes only what its role may, and none starts the builder, the architect or a workflow ([the hook](../../internal/guard/README.md#the-hook)). Hooks only. |
 
@@ -232,7 +246,7 @@ An unknown command is a usage error, exit 2.
 | `vet.definition_size` | a Definition's body has more than 1000 words |
 | `vet.package_size` | a Package has more than 25 Definitions of its own |
 | `vet.hub` | a change to one Definition alone would put more than a fifth of the spec back on the list to verify, and more than 10: fan-in + 1 > max(10, N / 5). It counts Root's Definitions and leaves Kinds out, whose change concerns all their Definitions by design |
-| `vet.thin_package` | a Package has no Definitions of its own and only one child |
+| `vet.thin_package` | a Package holds only its anchor and has only one child |
 | `vet.no_paths` | a Package other than Root claims no path pattern, as above |
 
 **Notes** have a known blind spot or no calibration yet, so they never change the exit code. Plain `vet` counts them in one line; `--strict` lists them; `--json` always carries them.
@@ -252,6 +266,7 @@ Coupling counts explicit edges only, not the implicit edge to the parent. `list 
 Details the concept leaves open:
 
 - **Layout.** The fixed `.markitect/` layout above; registry pages mirror Package paths, Root's page is `registry.md`.
+- **A gone Definition's Package.** A Definition that is gone from the spec counts for the nearest Package above its path. When no folder above it is a Package, it counts for the nearest folder that is gone too, as the Package that was, and for Root when every folder above it only sorts.
 - **Library links.** A path whose first name is a Library is a Library link, so no top-level name of the spec may equal a Library's name.
 - **Local Library versions.** A local Library carries no version file; the manifest names its version and the lock pins its digest.
 - **Specificity.** An exact path beats every pattern; otherwise more literal characters win; a tie between Packages is an error.

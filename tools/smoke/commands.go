@@ -23,14 +23,16 @@ func (s *smoke) version() error {
 // smokeSpec is a small project in the spec language: Root with a Rule, and
 // the Packages members and catalog, with registry pages for every file.
 var smokeSpec = map[string]string{
-	".markitect/spec/loan-limit.md":     "---\nkind: std/Rule\n---\n# Loan limit\n\nA member has at most `5` open loans; see [[members]].\n",
-	".markitect/spec/members/member.md": "---\nkind: std/Concept\n---\n# Member\n\nA person who borrows copies.\n",
-	".markitect/spec/catalog/copy.md":   "---\nkind: std/Concept\n---\n# Copy\n\nA copy is lent to a [[members/member]].\n",
-	".markitect/registry/members.md":    "---\npaths: [src/members/**]\n---\n# Registry: members\n\n| File | Realizes | Why |\n|---|---|---|\n| `src/members/member.go` | [[members/member]] [[loan-limit]] | Member type and loan limit |\n",
-	".markitect/registry/catalog.md":    "---\npaths: [src/catalog/**]\n---\n# Registry: catalog\n\n| File | Realizes | Why |\n|---|---|---|\n| `src/catalog/copy.go` | [[catalog/copy]] | Copy type |\n",
-	"README.md":                         "# Lending library\n",
-	"src/members/member.go":             "package members\n",
-	"src/catalog/copy.go":               "package catalog\n",
+	".markitect/spec/loan-limit.md":      "---\nkind: std/Rule\n---\n# Loan limit\n\nA member has at most `5` open loans; see [[members]].\n",
+	".markitect/spec/members/members.md": "---\nkind: std/Package\n---\n# Members\n\nWho may borrow.\n",
+	".markitect/spec/members/member.md":  "---\nkind: std/Concept\n---\n# Member\n\nA person who borrows copies.\n",
+	".markitect/spec/catalog/catalog.md": "---\nkind: std/Package\n---\n# Catalog\n\nWhat can be borrowed.\n",
+	".markitect/spec/catalog/copy.md":    "---\nkind: std/Concept\n---\n# Copy\n\nA copy is lent to a [[members/member]].\n",
+	".markitect/registry/members.md":     "---\npaths: [src/members/**]\n---\n# Registry: members\n\n| File | Realizes | Why |\n|---|---|---|\n| `src/members/member.go` | [[members/members]] [[members/member]] [[loan-limit]] | Member type and loan limit |\n",
+	".markitect/registry/catalog.md":     "---\npaths: [src/catalog/**]\n---\n# Registry: catalog\n\n| File | Realizes | Why |\n|---|---|---|\n| `src/catalog/copy.go` | [[catalog/catalog]] [[catalog/copy]] | Copy type |\n",
+	"README.md":                          "# Lending library\n",
+	"src/members/member.go":              "package members\n",
+	"src/catalog/copy.go":                "package catalog\n",
 }
 
 // specCommands drives the built CLI over a small project in a plain folder,
@@ -45,7 +47,7 @@ func (s *smoke) specCommands() error {
 	markitect := func(args ...string) (string, error) { return s.run(repo, nil, s.tool("markitect"), args...) }
 	if out, err := markitect("init", "--name", "Lending library"); err != nil {
 		return err
-	} else if err := requireContains(out, "created .markitect/manifest.yaml", "wrote .markitect/lock.yaml: std 1.1.0", "installed the harness"); err != nil {
+	} else if err := requireContains(out, "created .markitect/manifest.yaml", "wrote .markitect/lock.yaml: std 1.2.0", "installed the harness"); err != nil {
 		return err
 	}
 	if err := requirePresent(repo, ".claude/skills/markitect-architect/SKILL.md", ".claude/agents/markitect-architect.md", ".claude/workflows/markitect-parallel.js", ".markitect/spec/project.md"); err != nil {
@@ -72,12 +74,12 @@ func (s *smoke) specCommands() error {
 	if err != nil {
 		return err
 	}
-	if err := requireContains(out, "ok: 4 Definitions in 3 Packages, 3 files accounted"); err != nil {
+	if err := requireContains(out, "ok: 6 Definitions in 3 Packages, 3 files accounted"); err != nil {
 		return err
 	}
 	if out, err := markitect("tidy"); err != nil {
 		return err
-	} else if err := requireContains(out, "std 1.1.0"); err != nil {
+	} else if err := requireContains(out, "std 1.2.0"); err != nil {
 		return err
 	}
 	if out, err := markitect("doc", "members/member"); err != nil {
@@ -110,7 +112,7 @@ func (s *smoke) specCommands() error {
 			return fmt.Errorf("check --json is not ok: %s", tail(out))
 		}
 	}
-	if err := verifyAll(markitect, 4); err != nil {
+	if err := verifyAll(markitect, 6); err != nil {
 		return err
 	}
 	if !strings.Contains(readFile(repo, ".markitect/review.sum"), `{"definition":"catalog/copy","verdict":"ok","inputs":{`) {
@@ -123,7 +125,7 @@ func (s *smoke) specCommands() error {
 	if err := os.WriteFile(limit, []byte(strings.Replace(smokeSpec[".markitect/spec/loan-limit.md"], "`5`", "`3`", 1)), 0o644); err != nil {
 		return err
 	}
-	if out, err := markitect("status"); err == nil || !strings.Contains(out, "To verify (1 of 4 Definitions)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self") {
+	if out, err := markitect("status"); err == nil || !strings.Contains(out, "To verify (1 of 6 Definitions)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self") {
 		return fmt.Errorf("status after the change of the loan limit: %v\n%s", err, tail(out))
 	}
 	if err := verifyAll(markitect, 1); err != nil {

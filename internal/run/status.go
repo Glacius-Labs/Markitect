@@ -181,10 +181,14 @@ func (s Status) only(name string) (Status, error) {
 	if !known {
 		return Status{}, fmt.Errorf("%w: the spec has no Package %q; markitect list names them, and the one at the top is %s", ErrUsage, name, spec.PackageName(spec.RootPackage))
 	}
+	names := map[string]bool{}
+	for _, p := range s.Packages {
+		names[p.Package] = true
+	}
 	in := func(items []Item) []Item {
 		var out []Item
 		for _, it := range items {
-			if spec.PackageName(spec.ParentOf(it.Definition)) == name {
+			if packageNamed(names, it.Definition) == name {
 				out = append(out, it)
 			}
 		}
@@ -288,6 +292,18 @@ func (f *folder) status(rec Record, all bool) (Status, error) {
 	return st, nil
 }
 
+// packageNamed returns the name of the Package a Definition ID belongs to,
+// among the names status lists: the nearest folder above it that is one of
+// them, or Root.
+func packageNamed(names map[string]bool, id string) string {
+	for at := spec.FolderOf(id); at != spec.RootPackage; at = spec.FolderOf(at) {
+		if names[at] {
+			return at
+		}
+	}
+	return spec.PackageName(spec.RootPackage)
+}
+
 // packageItems counts the items per Package, for every Package of the spec and
 // for a Package that is gone but still has a gone Definition on the list.
 func packageItems(sp *spec.Spec, items []Item) []PackageItems {
@@ -302,7 +318,7 @@ func packageItems(sp *spec.Spec, items []Item) []PackageItems {
 		byName[p.Package] = p
 	}
 	for _, it := range items {
-		name := spec.PackageName(spec.ParentOf(it.Definition))
+		name := spec.PackageName(sp.PackageOf(it.Definition))
 		p := byName[name]
 		if p == nil {
 			p = &PackageItems{Package: name, DependsOn: []string{}}

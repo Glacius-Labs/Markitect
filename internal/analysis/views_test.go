@@ -15,7 +15,7 @@ func TestListPackages(t *testing.T) {
 		byName[pkg.Name] = pkg
 	}
 	catalog := byName["catalog"]
-	if catalog.Parent != "Root" || len(catalog.Definitions) != 2 || catalog.Deps == nil || len(catalog.Deps.DependsOn) != 1 {
+	if catalog.Parent != "Root" || len(catalog.Definitions) != 3 || catalog.Deps == nil || len(catalog.Deps.DependsOn) != 1 {
 		t.Fatalf("catalog: %+v", catalog)
 	}
 	dep := catalog.Deps.DependsOn[0]
@@ -56,6 +56,12 @@ func TestDocViews(t *testing.T) {
 		t.Fatalf("linked from %v, realized by %v", from, files)
 	}
 	dp := DocPackageOf(p, p.Spec.Packages[p.Spec.Definitions["members/member"].Package])
+	if dp.Anchor != "members/members" || dp.Text != "# Members\n\nWho may borrow.\n" {
+		t.Fatalf("anchor of members: %+v", dp)
+	}
+	if root := DocPackageOf(p, p.Spec.Packages[""]); root.Anchor != "" || root.Text != "" {
+		t.Fatalf("Root has an anchor: %+v", root)
+	}
 	if dp.Name != "members" || dp.Parent != "Root" || dp.Page == "" || !reflect.DeepEqual(dp.Paths, []string{"src/members/**"}) || !reflect.DeepEqual(dp.Files, []string{"src/members/member.go"}) {
 		t.Fatalf("members: %+v", dp)
 	}

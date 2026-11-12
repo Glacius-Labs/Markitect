@@ -6,11 +6,14 @@ A compact summary of the spec language and the tools.
 
 ```text
 .markitect/
-  manifest.yaml        Libraries and versions (std: 1.1.0, rest: 1.1.0, ...)
+  manifest.yaml        Libraries and versions (std: 1.2.0, rest: 1.2.0, ...)
   lock.yaml            Library digests, written by markitect tidy
   spec/                the spec; this folder is the Root Package
     project.md         the project anchor (std/Project)
-    <package>/<name>.md
+    members/           a Package, because it holds its anchor
+      members.md       the anchor of members (std/Package)
+      <name>.md
+      rules/<name>.md  a folder without an anchor only sorts: still members
   registry.md          Root's registry page
   registry/<package path>.md
   ignore               files that belong to no Package, if any
@@ -28,6 +31,7 @@ One Markdown file with YAML front matter.
 - File name without `.md` is the name, the path below `spec/` is the ID (`members/member`). Names: letters, digits, `-`, `_`, starting with a letter or digit (`spec.name`).
 - Body: one level-1 heading, the title, first; no second one (`definition.title`); then prose. Exact values in backticks.
 - The spec folder holds only `.md` files and folders (`spec.file`). Two entries differing only in case, or `member.md` beside `member/`, collide (`spec.collision`).
+- A folder is a Package when it holds a Definition of its own name, its anchor: `members/members.md` makes `members` one. Any other folder only sorts: its Definitions belong to the nearest Package above, and Root if there is none.
 - A top-level name may not be a Library name or `Kind` (`spec.reserved`).
 
 ## Kinds and Libraries
@@ -37,6 +41,7 @@ A Kind is a Definition with `kind: Kind`; its body says what a Definition of tha
 | Kind | Use for |
 |---|---|
 | `std/Project` | The anchor at Root: what the project is, for whom, the Packages, what is out of scope. |
+| `std/Package` | The anchor of a Package: what it is responsible for and what it keeps to itself. |
 | `std/Rule` | Something every artifact in its scope must satisfy: policies, conventions, layout, quality. |
 | `std/Concept` | One domain thing: what it is, its attributes, relations, states, invariants. |
 | `std/Feature` | One use case: who does what, the outcome and every refusal a caller sees. |
@@ -44,11 +49,11 @@ A Kind is a Definition with `kind: Kind`; its body says what a Definition of tha
 | `rest/Endpoint` | One HTTP operation: title `METHOD /path`, request, each response with status and error codes; links its Feature. |
 | `cli/Command` | One command as typed: arguments, flags, output, exit codes, refusals; links its Feature. |
 
-A project writes its own Kinds as small files (`kind: Kind`) anywhere in its spec; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. The standard Libraries ship in the binary, all at one version, as in `std: 1.1.0`. After a manifest change run `markitect tidy`.
+A project writes its own Kinds as small files (`kind: Kind`) anywhere in its spec; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. The standard Libraries ship in the binary, all at one version, as in `std: 1.2.0`. After a manifest change run `markitect tidy`.
 
 ## Links, scope, visibility, cycles
 
-- A link is `[[path]]`: the full path from the spec folder, even inside the same Package (`[[members/member]]`), `[[std/Rule]]` for a Library Kind, `[[members]]` for a Package. Optional `#section` and `|label` do not matter for resolution. In a Markdown table write the label's bar as `\|`. Links in code spans and code blocks are text. No imports, no relative links.
+- A link is `[[path]]`: the full path from the spec folder, even inside the same Package (`[[members/member]]`), `[[std/Rule]]` for a Library Kind, `[[members]]` for a Package, never a folder that only sorts. Optional `#section` and `|label` do not matter for resolution. In a Markdown table write the label's bar as `\|`. Links in code spans and code blocks are text. No imports, no relative links.
 - **Scope is location.** What a Package defines reaches its whole subtree; a Rule at Root binds the project.
 - **Visibility.** Public unless `internal: true`; then only its own Package and Packages below may link to it or use it as a Kind (`link.internal`). Reading is not restricted: agents read internal Definitions, and registry entries may link any Definition.
 - **Dependencies.** A link from Package A to a Definition in, or to, another Package B is an edge A to B; using a Kind is an edge. Every Package also has an implicit edge to its parent. Linking up to an ancestor's Definition is free. A parent may link to a child Package but not to a Definition inside it (`link.downward`). Links to Library Kinds make no edge. A cycle of edges is an error (`package.cycle`).
@@ -107,14 +112,14 @@ All take `--repo DIR`; `check`, `vet`, `list`, `doc`, `status` and `mark` take `
 | `init [--name TITLE]` | Once per project: manifest, lock, project anchor, registry page, `AGENTS.md`, `CLAUDE.md`, skills and harness. Makes no repository and commits nothing. Never changes an existing spec file. |
 | `check [--spec]` | Compile: errors only. `--spec` looks only at the spec and leaves out what the project does not realize yet, which is what a change of the spec asks. A project with nothing registered, where the only errors are `definition.unused`, passes and says that nothing is built yet. |
 | `tidy` | Bring `lock.yaml` in line with the manifest after a manifest or Library change, as `go mod tidy` does. |
-| `doc TARGET` | A Definition with its text, what links to it, what it links to, the files that realize it and its record; or a Package with its public and its internal Definitions apart, its page and files. |
+| `doc TARGET` | A Definition with its text, what links to it, what it links to, the files that realize it and its record; or a Package with the text of its anchor, its public and its internal Definitions apart, its page and files. |
 | `list [--deps]` | The Packages and their Definitions; `--deps` adds each Package's coupling, abstractness and distance from the main sequence, what it depends on and the links behind each dependency. |
 | `status [--all] [--package P]` | What is to verify: each Definition whose text, Kind, links, files or evidence changed since a reviewer last verified it, or that has no record yet, with what changed and where to look. Needs a project that compiles. One line says when only spec-problems are left, and a last one when `.markitect/questions.md` exists. |
 | `vet [--strict]` | Warnings about the spec's design, as `file:line: code: message`, and one line that counts its notes; `--strict` lists the notes too. Exit 1 only with `--strict` and a warning; notes never change it. |
 
 ## Warnings and notes (`vet`)
 
-Warnings: `vet.coupling` (more than 5 dependencies), `vet.unstable_dependency` (depends on a less stable Package), `vet.definition_size` (over 1000 words), `vet.package_size` (over 25 Definitions), `vet.hub` (a Definition other than a Kind, Root's included, whose change alone would put more than a fifth of the spec, and more than 10 Definitions, back on the list to verify), `vet.thin_package` (no Definitions and one child), `vet.no_paths` (a Package other than Root claims no path pattern, so it owns no file).
+Warnings: `vet.coupling` (more than 5 dependencies), `vet.unstable_dependency` (depends on a less stable Package), `vet.definition_size` (over 1000 words), `vet.package_size` (over 25 Definitions), `vet.hub` (a Definition other than a Kind, Root's included, whose change alone would put more than a fifth of the spec, and more than 10 Definitions, back on the list to verify), `vet.thin_package` (only its anchor and one child), `vet.no_paths` (a Package other than Root claims no path pattern, so it owns no file).
 
 Notes: `vet.unlinked_mention` (a Definition's title or name in another Definition's prose with no link to it; also where a link would close a Package cycle or add a Package dependency), `vet.statements` (over 20 list items and table rows), `vet.placement` (every Definition that links to it lies in one Package below it), `vet.hotspot` (how often its own text changed between verdicts, times what links to it, is above a tenth of the spec and 20), `vet.risk` (its last `ok` or `skip` rests on evidence for too few of the cases the reviewer counted, or it has too many cases to verify well).
 

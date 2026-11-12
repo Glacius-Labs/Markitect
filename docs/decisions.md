@@ -73,7 +73,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 - A Definition is one Markdown file with YAML front matter that names its Kind. Its path is its ID, its main heading its title, and its body the documentation. There are no typed fields: exact values, such as wire names and error codes, are written in prose.
 - A Kind is itself a Definition, of Kind `Kind`. No Kind has a special meaning to Markitect. Projects define their own Kinds, and Libraries supply common ones: `std`, `rest` and `cli` ship in the binary; any other Library is committed under `.markitect/libraries/`. The manifest names each Library with its version, and the lock pins its digest; `tidy` writes it.
-- The spec lives in `.markitect/spec/`. A Package is a folder. Everything a Package defines reaches its whole subtree, and the spec's root folder is the Root Package.
+- The spec lives in `.markitect/spec/`. A Package is a folder with its anchor ([DEC-107](#dec-107-a-folder-is-a-package-by-its-anchor-any-other-folder-only-sorts)). Everything a Package defines reaches its whole subtree, and the spec's root folder is the Root Package.
 - A link, `[[members/member]]`, names its target by path and is a declared dependency, like an import. Links point up the tree or sideways, never down into a child's Definitions; a cycle between Packages is a compile error, as in Go. A Definition with `internal: true` front matter may be linked only from its own subtree.
 - There are no explicit layers and no mechanism by which one Kind refines another. The Package tree carries the Dependency Rule: links up are free, links down are forbidden, sideways edges are checked by the cycle ban and `vet.unstable_dependency`, and a project states its own limits with `internal: true` or an ordinary Rule.
 - The [spec language guide](guides/spec-language.md) is the canonical description.
@@ -125,6 +125,16 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
   - the project does something that nothing in it states and that looks like an accident. The spec leaves it unstated, since stating it would make the spec demand it, and the architect asks the owner, in the file of [DEC-100](#dec-100-skills-are-named-after-the-activity-agents-after-the-role) when the owner is not there to answer.
 - The spec is not a transcription of the project. The question at each artifact is what it holds that should also be in the spec, not what it holds that the spec does not say. Most of what a file holds is then stated as an obligation without its values, or left to the agents.
 - With the owner's acceptance the spec becomes the authority ([DEC-063](#dec-063-the-spec-is-the-authority-and-its-defects-go-to-the-owner)). What the owner confirmed as a defect stays `fail`, and `/markitect-build` repairs it; the spec is not changed to empty the list.
+
+### DEC-107 A folder is a Package by its anchor; any other folder only sorts
+
+- A folder of the spec is a Package when it holds a Definition of its own name, its anchor: `members/members.md` makes `members` a Package. The anchor says what the Package is, what it is responsible for and what it keeps to itself. It is an ordinary Definition, `std/Package` in the standard Library, and no Kind gains a meaning to Markitect: the name makes the Package.
+- A folder without an anchor only sorts. Its Definitions belong to the nearest Package above, keep the folder in their ID, and share that Package's scope, visibility and dependencies. It is no link target and has no registry page.
+- A Package carries the dependency check, visibility and file ownership, so a folder that only orders files must not be one. With every folder a Package, sorting an area's Definitions by Kind turns the links inside the area into Package cycles, and the areas, which the division was made for, hold nothing. Markitect prescribes no layout: a project sorts as it reads best.
+- Every Package now states its responsibility in one place, where the spec had none for it but a sentence in the project's anchor.
+- A link to a Package stays what [DEC-104](#dec-104-a-link-is-never-decorative-identity-and-surface-are-written-as-code-writes-them) says: it names the module and does not rely on the anchor's text. A Definition that relies on that text links the anchor.
+- Marking the folders that sort, by a marker file or a rule for their names, was weighed and not chosen: the Package is the thing with parts, so it is the one that says what it is.
+- A project written before this rule gives each of its Package folders its anchor; until then its folders only sort, and `check` says so at each link to one and at each registry page of one.
 
 ## The tool
 

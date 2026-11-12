@@ -57,7 +57,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 
 	out := mustRun(t, r.Dir, "init", "--name", "Lending library")
 	noRepository(t, r.Dir)
-	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/spec/project.md", "wrote .markitect/lock.yaml: std 1.1.0", "installed the harness in .claude/: the architect, build"} {
+	for _, want := range []string{"created .markitect/manifest.yaml", "created .markitect/spec/project.md", "wrote .markitect/lock.yaml: std 1.2.0", "installed the harness in .claude/: the architect, build"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("init output lacks %q:\n%s", want, out)
 		}
@@ -75,10 +75,12 @@ func TestCommandsEndToEnd(t *testing.T) {
 	}
 
 	r.Write(".markitect/spec/loan-limit.md", "---\nkind: std/Rule\n---\n# Loan limit\n\nAt most `5` open loans, for [[members]].\n")
+	// members is a Package by its anchor, the Definition of the folder's name.
+	r.Write(".markitect/spec/members/members.md", "---\nkind: std/Package\n---\n# Members\n\nWho may borrow.\n")
 	r.Write(".markitect/spec/members/member.md", "---\nkind: std/Concept\n---\n# Member\n\nA person who borrows.\n")
 	r.Write(".markitect/registry.md", read(t, r.Dir, ".markitect/registry.md")+"| `README.md` | [[project]], [[loan-limit]] | Overview |\n")
-	r.Write(".markitect/registry/members.md", "---\npaths: [src/members/**]\n---\n# Registry: members\n\n| File | Realizes | Why |\n|---|---|---|\n| `src/members/member.go` | [[members/member]] | The type |\n")
-	if out := mustRun(t, r.Dir, "check"); !strings.HasPrefix(out, "ok: 3 Definitions in 2 Packages") {
+	r.Write(".markitect/registry/members.md", "---\npaths: [src/members/**]\n---\n# Registry: members\n\n| File | Realizes | Why |\n|---|---|---|\n| `src/members/member.go` | [[members/members]], [[members/member]] | The Package and its type |\n")
+	if out := mustRun(t, r.Dir, "check"); !strings.HasPrefix(out, "ok: 4 Definitions in 2 Packages") {
 		t.Fatalf("check = %s", out)
 	}
 	code, out, _ = run(t, r.Dir, "check", "--json")
@@ -93,7 +95,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 	}
 	// With no record, every Definition is to verify.
 	code, out, _ = run(t, r.Dir, "status")
-	if code != 1 || !strings.Contains(out, "To verify (3 of 3 Definitions)") || !strings.Contains(out, "\nloan-limit@") {
+	if code != 1 || !strings.Contains(out, "To verify (4 of 4 Definitions)") || !strings.Contains(out, "\nloan-limit@") {
 		t.Fatalf("status before a review: %d\n%s", code, out)
 	}
 	verifyAll(t, r.Dir)
@@ -108,7 +110,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 	// A changed Rule is to verify again, and nothing else is.
 	r.Write(".markitect/spec/loan-limit.md", "---\nkind: std/Rule\n---\n# Loan limit\n\nAt most `3` open loans, for [[members]].\n")
 	code, out, _ = run(t, r.Dir, "status")
-	if code != 1 || !strings.Contains(out, "To verify (1 of 3 Definitions)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self\n") {
+	if code != 1 || !strings.Contains(out, "To verify (1 of 4 Definitions)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self\n") {
 		t.Fatalf("status after a change of the spec: %d\n%s", code, out)
 	}
 
@@ -116,7 +118,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 	// record; and a Package.
 	wantAll(t, mustRun(t, r.Dir, "doc", "[[members/member]]"), "members/member: Member (std/Concept)\n", "Package members, .markitect/spec/members/member.md\n", "A person who borrows.", "Realized by:\n  src/members/member.go, .markitect/registry/members.md:", "Record: members/member@", ", ok")
 	wantAll(t, mustRun(t, r.Dir, "doc", "loan-limit"), "Links to: members\n", "Realized by:\n  README.md", ", changed: self")
-	wantAll(t, mustRun(t, r.Dir, "doc", "members"), "Package members, in Root\n", "paths src/members/**", "members/member: Member (std/Concept)", "Linked from:\n  loan-limit (link)", "Files:\n  src/members/member.go")
+	wantAll(t, mustRun(t, r.Dir, "doc", "members"), "Package members, in Root\n", "paths src/members/**", "\n# Members\n\nWho may borrow.\n", "members/member: Member (std/Concept)", "Linked from:\n  loan-limit (link)", "Files:\n  src/members/member.go")
 	if code, _, errOut := run(t, r.Dir, "doc", "members/nobody"); code != 1 || !strings.Contains(errOut, "neither a Definition nor a Package") {
 		t.Fatalf("doc of nothing: %d %s", code, errOut)
 	}
@@ -619,13 +621,13 @@ func TestInitInstallsTheHarness(t *testing.T) {
 
 func TestTidyWritesTheLock(t *testing.T) {
 	r := newFolder(t)
-	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.1.0\n  rest: 1.1.0\n  web: 0.1.0\n")
+	r.Write(".markitect/manifest.yaml", "libraries:\n  std: 1.2.0\n  rest: 1.2.0\n  web: 0.1.0\n")
 	code, _, errOut := run(t, r.Dir, "tidy")
 	if code != 1 || !strings.Contains(errOut, "library.missing") {
 		t.Fatalf("lock without web: %d %s", code, errOut)
 	}
 	r.Write(".markitect/libraries/web/Page.md", "---\nkind: Kind\n---\n# Page\n")
-	if out := mustRun(t, r.Dir, "tidy"); !strings.Contains(out, "rest 1.1.0, std 1.1.0, web 0.1.0") {
+	if out := mustRun(t, r.Dir, "tidy"); !strings.Contains(out, "rest 1.2.0, std 1.2.0, web 0.1.0") {
 		t.Fatalf("lock = %s", out)
 	}
 	if lock := read(t, r.Dir, ".markitect/lock.yaml"); !strings.Contains(lock, "  web:\n    version: 0.1.0\n    digest: sha256:") {
@@ -650,7 +652,7 @@ func TestAStandardLibraryMovesWithTheBinary(t *testing.T) {
 	}
 	r := old()
 	code, out, _ := run(t, r.Dir, "check")
-	wantAll(t, out, ".markitect/manifest.yaml:3: library.version: this markitect ships std 1.1.0, not 1.0.0; markitect tidy names 1.1.0 in the manifest", ".markitect/manifest.yaml:4: library.version: this markitect ships rest 1.1.0, not 0.9.0")
+	wantAll(t, out, ".markitect/manifest.yaml:3: library.version: this markitect ships std 1.2.0, not 1.0.0; markitect tidy names 1.2.0 in the manifest", ".markitect/manifest.yaml:4: library.version: this markitect ships rest 1.2.0, not 0.9.0")
 	if code != 1 || strings.Contains(out, "lock.mismatch") || strings.Contains(out, "kind.unresolved") || strings.Count(out, "library.version") != 2 {
 		t.Fatalf("check on an earlier version: %d\n%s", code, out)
 	}
@@ -658,10 +660,10 @@ func TestAStandardLibraryMovesWithTheBinary(t *testing.T) {
 		t.Fatalf("version on an earlier version:\n%s", out)
 	}
 	wantAll(t, mustRun(t, r.Dir, "tidy"),
-		".markitect/manifest.yaml now names std 1.1.0, where it named 1.0.0",
-		".markitect/manifest.yaml now names rest 1.1.0, where it named 0.9.0",
-		"wrote .markitect/lock.yaml: rest 1.1.0, std 1.1.0")
-	if got, want := read(t, r.Dir, ".markitect/manifest.yaml"), strings.NewReplacer("1.0.0", "1.1.0", "0.9.0", "1.1.0").Replace(earlier); got != want {
+		".markitect/manifest.yaml now names std 1.2.0, where it named 1.0.0",
+		".markitect/manifest.yaml now names rest 1.2.0, where it named 0.9.0",
+		"wrote .markitect/lock.yaml: rest 1.2.0, std 1.2.0")
+	if got, want := read(t, r.Dir, ".markitect/manifest.yaml"), strings.NewReplacer("1.0.0", "1.2.0", "0.9.0", "1.2.0").Replace(earlier); got != want {
 		t.Fatalf("the manifest after tidy:\n%s", got)
 	}
 	mustRun(t, r.Dir, "check")
@@ -671,16 +673,16 @@ func TestAStandardLibraryMovesWithTheBinary(t *testing.T) {
 
 	// update does the same, and says so.
 	r = old()
-	wantAll(t, mustRun(t, r.Dir, "update", "--files"), ".markitect/manifest.yaml now names std 1.1.0, where it named 1.0.0", "lock: rewritten")
+	wantAll(t, mustRun(t, r.Dir, "update", "--files"), ".markitect/manifest.yaml now names std 1.2.0, where it named 1.0.0", "lock: rewritten")
 	mustRun(t, r.Dir, "check")
 
 	// The version is written where it stands, whatever else the line holds: in
 	// quotes, in flow style behind a project Library of the same version, or on
 	// a line of its own.
 	for before, after := range map[string]string{
-		"libraries:\r\n  \"std\" :   '1.0.0'   # 1.0.0 was the first\r\n": "libraries:\r\n  \"std\" :   '1.1.0'   # 1.0.0 was the first\r\n",
-		"libraries: {web: 1.0.0, std: 1.0.0}\n":                           "libraries: {web: 1.0.0, std: 1.1.0}\n",
-		"libraries:\n  std:\n    1.0.0\n  web: 1.0.0\n":                   "libraries:\n  std:\n    1.1.0\n  web: 1.0.0\n",
+		"libraries:\r\n  \"std\" :   '1.0.0'   # 1.0.0 was the first\r\n": "libraries:\r\n  \"std\" :   '1.2.0'   # 1.0.0 was the first\r\n",
+		"libraries: {web: 1.0.0, std: 1.0.0}\n":                           "libraries: {web: 1.0.0, std: 1.2.0}\n",
+		"libraries:\n  std:\n    1.0.0\n  web: 1.0.0\n":                   "libraries:\n  std:\n    1.2.0\n  web: 1.0.0\n",
 	} {
 		r = old()
 		if strings.Contains(before, "web") {
@@ -915,9 +917,10 @@ func TestDocAndVetDocuments(t *testing.T) {
 	}
 	// A Package's public Definitions are what it publishes; doc shows them
 	// apart from its internal ones, in its text and its document.
+	r.Write(".markitect/spec/members/members.md", "---\nkind: std/Package\n---\n# Members\n\nWho may borrow.\n")
 	r.Write(".markitect/spec/members/member.md", "---\nkind: std/Concept\n---\n# Member\n\nA person who borrows.\n")
 	r.Write(".markitect/spec/members/limit.md", "---\nkind: std/Rule\ninternal: true\n---\n# Limit\n\nA [[members/member]] borrows at most five items.\n")
-	wantAll(t, mustRun(t, r.Dir, "doc", "members"), "\nPublic Definitions:\n  members/member: Member (std/Concept)\n", "\nInternal Definitions:\n  members/limit: Limit (std/Rule)\n")
+	wantAll(t, mustRun(t, r.Dir, "doc", "members"), "\nPublic Definitions:\n  members/member: Member (std/Concept)\n  members/members: Members (std/Package)\n", "\nInternal Definitions:\n  members/limit: Limit (std/Rule)\n")
 	var members struct {
 		Package struct {
 			Definitions []struct {
@@ -926,7 +929,7 @@ func TestDocAndVetDocuments(t *testing.T) {
 			}
 		}
 	}
-	if code, out, _ := run(t, r.Dir, "doc", "members", "--json"); code != 0 || json.Unmarshal([]byte(out), &members) != nil || len(members.Package.Definitions) != 2 ||
+	if code, out, _ := run(t, r.Dir, "doc", "members", "--json"); code != 0 || json.Unmarshal([]byte(out), &members) != nil || len(members.Package.Definitions) != 3 ||
 		members.Package.Definitions[0].ID != "members/limit" || !members.Package.Definitions[0].Internal || members.Package.Definitions[1].Internal {
 		t.Fatalf("doc members --json: %d %s", code, out)
 	}

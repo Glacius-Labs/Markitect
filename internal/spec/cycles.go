@@ -14,7 +14,7 @@ func (s *Spec) Successors(p string) []string {
 		out = append(out, to)
 	}
 	if p != RootPackage {
-		if parent := ParentOf(p); s.Edges[p][parent] == nil {
+		if parent := s.Parent(p); s.Edges[p][parent] == nil {
 			out = append(out, parent)
 		}
 	}

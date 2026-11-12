@@ -15,6 +15,11 @@ func def(kind, body string) string {
 	return "---\nkind: " + kind + "\n---\n" + body
 }
 
+// anchor is the anchor of a Package: the Definition of the folder's own name.
+func anchor(title string) string {
+	return def("std/Concept", "# "+title+"\n")
+}
+
 func compile(t *testing.T, files map[string]string, libs ...LibrarySource) (*Spec, Diagnostics) {
 	t.Helper()
 	src := Source{Dir: ".markitect/spec", Libraries: append([]LibrarySource{stdKinds}, libs...)}
@@ -54,9 +59,12 @@ func TestCompileValidSpec(t *testing.T) {
 	m, ds := compile(t, map[string]string{
 		"project.md":         def("std/Concept", "# Lending library\n\nMembers borrow copies. See [[members]] and [[catalog]].\n"),
 		"policy.md":          def("std/Rule", "# Loan policy\n\nAt most five loans.\n"),
+		"members/members.md": anchor("Members"),
 		"members/member.md":  def("std/Concept", "# Member\n\nA person; follows [[policy|the policy]].\n"),
 		"members/status.md":  "---\nkind: std/Concept\ninternal: true\n---\n# Status\n\nInternal detail of [[members/member]].\n",
+		"members/a/a.md":     anchor("A"),
 		"members/a/check.md": def("std/Rule", "# Check\n\nUses [[members/status]], visible below its Package.\n"),
+		"catalog/catalog.md": anchor("Catalog"),
 		"catalog/Copy.md":    def("Kind", "# Copy\n\nA project Kind.\n"),
 		"catalog/book.md":    def("catalog/Copy", "# Book\n\nBorrowed by a [[members/member#Status|member]].\n\n`[[ignored/in/code]]`\n\n```\n[[also/ignored]]\n```\n"),
 	})
@@ -77,11 +85,95 @@ func TestCompileValidSpec(t *testing.T) {
 	if got := m.Packages[RootPackage].Children; strings.Join(got, ",") != "catalog,members" {
 		t.Fatalf("root children = %v", got)
 	}
-	if got := m.Packages["members"].Definitions; strings.Join(got, ",") != "members/member,members/status" {
+	if got := m.Packages["members"].Definitions; strings.Join(got, ",") != "members/member,members/members,members/status" {
 		t.Fatalf("members definitions = %v", got)
 	}
 	if got := m.Definitions["catalog/book"].Title; got != "Book" {
 		t.Fatalf("title = %q", got)
+	}
+	if got := m.Packages["members/a"]; got.Anchor != "members/a/a" || got.Parent != "members" {
+		t.Fatalf("members/a = %+v", got)
+	}
+	if got := m.Packages[RootPackage].Anchor; got != "" {
+		t.Fatalf("Root has the anchor %q", got)
+	}
+}
+
+func TestCompileAFolderWithoutAnAnchorOnlySorts(t *testing.T) {
+	m, ds := compile(t, map[string]string{
+		"project.md":                     def("std/Concept", "# Lending library\n\nIts aim is [[goals/fast]]; its parts are [[members]] and [[catalog]].\n"),
+		"goals/fast.md":                  def("std/Rule", "# Fast\n"),
+		"members/members.md":             anchor("Members"),
+		"members/concepts/member.md":     def("std/Concept", "# Member\n\nHolds a [[members/concepts/card/card|card]] and follows [[members/rules/limit]].\n"),
+		"members/rules/limit.md":         def("std/Rule", "# Limit\n\nFor every [[members/concepts/member]].\n"),
+		"members/rules/secret.md":        "---\nkind: std/Rule\ninternal: true\n---\n# Secret\n",
+		"members/concepts/card/card.md":  anchor("Card"),
+		"members/concepts/card/digit.md": def("std/Rule", "# Digit\n\nUses [[members/rules/secret]], visible below its Package.\n"),
+		"catalog/catalog.md":             anchor("Catalog"),
+		"catalog/operations/lend.md":     def("std/Rule", "# Lend\n\nTo a [[members/concepts/member]].\n"),
+	})
+	// The member's link down into the Package card is the one error.
+	if len(ds) != 1 {
+		t.Fatalf("diagnostics:\n%v", ds)
+	}
+	expect(t, ds, "link.downward", "members links down to members/concepts/card/card inside its child Package members/concepts/card")
+	if got := strings.Join(m.SortedPackages(), ","); got != ",catalog,members,members/concepts/card" {
+		t.Fatalf("Packages = %q", got)
+	}
+	for id, pkg := range map[string]string{
+		"goals/fast":                  RootPackage,
+		"members/concepts/member":     "members",
+		"members/rules/limit":         "members",
+		"members/concepts/card/digit": "members/concepts/card",
+		"catalog/operations/lend":     "catalog",
+	} {
+		if got := m.Definitions[id].Package; got != pkg {
+			t.Errorf("%s lies in %q, want %q", id, got, pkg)
+		}
+	}
+	card := m.Packages["members/concepts/card"]
+	if card.Parent != "members" || card.Anchor != "members/concepts/card/card" {
+		t.Fatalf("card = %+v", card)
+	}
+	if got := strings.Join(m.Packages["members"].Children, ","); got != "members/concepts/card" {
+		t.Fatalf("children of members = %q", got)
+	}
+	if got := strings.Join(m.Successors("members/concepts/card"), ","); got != "members" {
+		t.Fatalf("card depends on %q", got)
+	}
+	if got := strings.Join(m.Packages[RootPackage].Definitions, ","); got != "goals/fast,project" {
+		t.Fatalf("Root holds %q", got)
+	}
+	// The two sort folders of members make no edge between them, and the
+	// link from catalog is an edge between the Packages.
+	if len(m.Edges["members"]) != 0 || len(m.Edges["catalog"]["members"]) != 1 {
+		t.Fatalf("edges = %+v", m.Edges)
+	}
+	if m.Parent("members/concepts/card") != "members" || m.Parent("members/concepts") != RootPackage {
+		t.Fatalf("Parent is wrong")
+	}
+	if m.PackageOf("members/rules/limit") != "members" || m.PackageOf("members/rules/gone") != "members" || m.PackageOf("old/gone") != "old" || m.PackageOf("gone") != RootPackage || m.PackageOf("goals/gone") != RootPackage {
+		t.Fatalf("PackageOf is wrong")
+	}
+}
+
+func TestCompileASortFolderIsNoLinkTarget(t *testing.T) {
+	_, ds := compile(t, map[string]string{
+		"project.md":                 def("std/Rule", "# Project\n\nSee [[members/rules]] and [[catalog]].\n"),
+		"members/members.md":         anchor("Members"),
+		"members/rules/limit.md":     def("std/Rule", "# Limit\n"),
+		"members/rules/secret.md":    "---\nkind: std/Rule\ninternal: true\n---\n# Secret\n",
+		"members/kinds/Role.md":      def("Kind", "# Role\n"),
+		"members/kinds/treasurer.md": def("members/kinds", "# Treasurer\n"),
+		"catalog/book.md":            def("std/Rule", "# Book\n\nNot for [[members/rules/secret]].\n"),
+	})
+	expect(t, ds, "link.unresolved", `link "members/rules" names a folder that only sorts: it holds no Definition of its own name, members/rules/rules.md`)
+	expect(t, ds, "link.unresolved", `link "catalog" names a folder that only sorts`)
+	expect(t, ds, "kind.unresolved", `kind "members/kinds" names a folder that only sorts`)
+	// catalog has no page, so its book lies in Root, above members.
+	expect(t, ds, "link.downward", "Root links down to members/rules/secret")
+	if len(ds) != 4 {
+		t.Fatalf("diagnostics:\n%v", ds)
 	}
 }
 
@@ -140,11 +232,12 @@ func TestCompileFileAndNameErrors(t *testing.T) {
 
 func TestCompileKindErrors(t *testing.T) {
 	_, ds := compile(t, map[string]string{
-		"a.md":     def("std/Missing", "# A\n"),
-		"b.md":     def("nowhere/Thing", "# B\n"),
-		"c.md":     def("a", "# C, whose kind is a Rule\n"),
-		"d.md":     def("pkg", "# D, whose kind is a Package\n"),
-		"pkg/e.md": def("std/Rule", "# E\n"),
+		"a.md":       def("std/Missing", "# A\n"),
+		"b.md":       def("nowhere/Thing", "# B\n"),
+		"c.md":       def("a", "# C, whose kind is a Rule\n"),
+		"d.md":       def("pkg", "# D, whose kind is a Package\n"),
+		"pkg/pkg.md": anchor("Pkg"),
+		"pkg/e.md":   def("std/Rule", "# E\n"),
 	})
 	expect(t, ds, "kind.unresolved", `kind "std/Missing": Library std has no Kind`)
 	expect(t, ds, "kind.unresolved", `kind "nowhere/Thing"`)
@@ -165,9 +258,12 @@ func TestCompileLinkErrors(t *testing.T) {
 
 func TestCompileVisibility(t *testing.T) {
 	_, ds := compile(t, map[string]string{
+		"members/members.md":  anchor("Members"),
 		"members/status.md":   "---\nkind: std/Rule\ninternal: true\n---\n# Status\n",
+		"members/sub/sub.md":  anchor("Sub"),
 		"members/sub/use.md":  def("std/Rule", "# Use\n\n[[members/status]] is visible here.\n"),
 		"members/peer.md":     def("std/Rule", "# Peer\n\n[[members/status]] is visible here.\n"),
+		"catalog/catalog.md":  anchor("Catalog"),
 		"catalog/outsider.md": def("std/Rule", "# Outsider\n\nLinks [[members/status]].\n"),
 	})
 	d := expect(t, ds, "link.internal", "members/status is internal to members")
@@ -181,18 +277,21 @@ func TestCompileVisibility(t *testing.T) {
 
 func TestCompileInternalKindIsVisibilityBound(t *testing.T) {
 	_, ds := compile(t, map[string]string{
-		"members/Secret.md": "---\nkind: Kind\ninternal: true\n---\n# Secret\n",
-		"catalog/x.md":      def("members/Secret", "# X\n"),
+		"members/members.md": anchor("Members"),
+		"members/Secret.md":  "---\nkind: Kind\ninternal: true\n---\n# Secret\n",
+		"catalog/catalog.md": anchor("Catalog"),
+		"catalog/x.md":       def("members/Secret", "# X\n"),
 	})
 	expect(t, ds, "link.internal", "catalog/x.md:2")
 }
 
 func TestCompileDownwardLinks(t *testing.T) {
 	_, ds := compile(t, map[string]string{
-		"project.md":        def("std/Rule", "# Project\n\nRealized in [[members]]; details in [[members/member]].\n"),
-		"members/member.md": def("std/Rule", "# Member\n"),
-		"members/Role.md":   def("Kind", "# Role\n"),
-		"admin.md":          def("members/Role", "# Admin, a Root Definition of a child's Kind\n"),
+		"project.md":         def("std/Rule", "# Project\n\nRealized in [[members]]; details in [[members/member]].\n"),
+		"members/members.md": anchor("Members"),
+		"members/member.md":  def("std/Rule", "# Member\n"),
+		"members/Role.md":    def("Kind", "# Role\n"),
+		"admin.md":           def("members/Role", "# Admin, a Root Definition of a child's Kind\n"),
 	})
 	expect(t, ds, "link.downward", "project.md:6")
 	expect(t, ds, "link.downward", "admin.md:2")
@@ -205,8 +304,10 @@ func TestCompileDownwardLinks(t *testing.T) {
 
 func TestCompileSidewaysCycle(t *testing.T) {
 	_, ds := compile(t, map[string]string{
-		"members/member.md": def("std/Rule", "# Member\n\nBorrows a [[catalog/book]].\n"),
-		"catalog/book.md":   def("std/Rule", "# Book\n\nLent to a [[members/member]].\n"),
+		"members/members.md": anchor("Members"),
+		"members/member.md":  def("std/Rule", "# Member\n\nBorrows a [[catalog/book]].\n"),
+		"catalog/catalog.md": anchor("Catalog"),
+		"catalog/book.md":    def("std/Rule", "# Book\n\nLent to a [[members/member]].\n"),
 	})
 	d := expect(t, ds, "package.cycle", "catalog, members")
 	if !strings.Contains(d.Message, "catalog/book links [[members/member]]") || !strings.Contains(d.Message, "members/member links [[catalog/book]]") {
@@ -217,8 +318,11 @@ func TestCompileSidewaysCycle(t *testing.T) {
 func TestCompileCycleThroughParent(t *testing.T) {
 	// a links c; c links into a's child a/b; a/b depends on a by location.
 	_, ds := compile(t, map[string]string{
+		"a/a.md":   anchor("A"),
 		"a/x.md":   def("std/Rule", "# X\n\nNeeds [[c/y]].\n"),
+		"a/b/b.md": anchor("B"),
 		"a/b/z.md": def("std/Rule", "# Z\n"),
+		"c/c.md":   anchor("C"),
 		"c/y.md":   def("std/Rule", "# Y\n\nUses [[a/b/z]].\n"),
 	})
 	d := expect(t, ds, "package.cycle", "a, a/b, c")
@@ -229,7 +333,9 @@ func TestCompileCycleThroughParent(t *testing.T) {
 
 func TestCompileKindUseIsAnEdge(t *testing.T) {
 	_, ds := compile(t, map[string]string{
+		"members/members.md": anchor("Members"),
 		"members/Role.md":    def("Kind", "# Role\n\nSee [[catalog/book]].\n"),
+		"catalog/catalog.md": anchor("Catalog"),
 		"catalog/book.md":    def("std/Rule", "# Book\n"),
 		"catalog/curator.md": def("members/Role", "# Curator\n"),
 	})
@@ -238,10 +344,14 @@ func TestCompileKindUseIsAnEdge(t *testing.T) {
 
 func TestCompileUpAndSidewaysAreFine(t *testing.T) {
 	m, ds := compile(t, map[string]string{
-		"rule.md":           def("std/Rule", "# Rule\n"),
-		"members/member.md": def("std/Rule", "# Member\n\nFollows [[rule]].\n"),
-		"catalog/book.md":   def("std/Rule", "# Book\n\nLent to a [[members/member]], see [[members]].\n"),
-		"catalog/a/b/c.md":  def("std/Rule", "# C\n\nDeep, uses [[catalog/book]] and [[rule]].\n"),
+		"rule.md":            def("std/Rule", "# Rule\n"),
+		"members/members.md": anchor("Members"),
+		"members/member.md":  def("std/Rule", "# Member\n\nFollows [[rule]].\n"),
+		"catalog/catalog.md": anchor("Catalog"),
+		"catalog/book.md":    def("std/Rule", "# Book\n\nLent to a [[members/member]], see [[members]].\n"),
+		"catalog/a/a.md":     anchor("A"),
+		"catalog/a/b/b.md":   anchor("B"),
+		"catalog/a/b/c.md":   def("std/Rule", "# C\n\nDeep, uses [[catalog/book]] and [[rule]].\n"),
 	})
 	clean(t, ds)
 	if len(m.Edges["catalog"]["members"]) != 2 {

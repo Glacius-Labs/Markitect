@@ -153,10 +153,14 @@ type DocDefinition struct {
 
 // DocPackage is one Package as doc shows it.
 type DocPackage struct {
-	Path        string             `json:"path"`
-	Name        string             `json:"name"`
-	Parent      string             `json:"parent,omitempty"`
-	Children    []string           `json:"children"`
+	Path     string   `json:"path"`
+	Name     string   `json:"name"`
+	Parent   string   `json:"parent,omitempty"`
+	Children []string `json:"children"`
+	// Anchor is the Definition that says what the Package is, and Text its
+	// text without front matter; Root has none.
+	Anchor      string             `json:"anchor,omitempty"`
+	Text        string             `json:"text,omitempty"`
 	Page        string             `json:"page,omitempty"`
 	Paths       []string           `json:"paths"`
 	Definitions []ListedDefinition `json:"definitions"`
@@ -188,6 +192,9 @@ func DocPackageOf(p *project.Project, pkg *spec.Package) DocPackage {
 		dp.Parent = spec.PackageName(pkg.Parent)
 	}
 	dp.Children = append(dp.Children, pkg.Children...)
+	if a := p.Spec.Definitions[pkg.Anchor]; a != nil {
+		dp.Anchor, dp.Text = a.ID, body(a.Data)
+	}
 	for _, id := range pkg.Definitions {
 		dp.Definitions = append(dp.Definitions, listDefinition(p.Spec.Definitions[id], false))
 	}

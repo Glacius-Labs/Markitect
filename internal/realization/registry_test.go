@@ -11,10 +11,16 @@ func testSpec(t *testing.T) *spec.Spec {
 	t.Helper()
 	kinds := spec.LibrarySource{Name: "std", Version: "1.0.0", Dir: "std", Files: []spec.File{
 		{Path: "Rule.md", Data: []byte("---\nkind: Kind\n---\n# Rule\n")},
+		{Path: "Package.md", Data: []byte("---\nkind: Kind\n---\n# Package\n")},
 	}}
 	src := spec.Source{Dir: ".markitect/spec", Libraries: []spec.LibrarySource{kinds}}
 	for _, p := range []string{"project", "members/member", "members/loans/loan", "catalog/book"} {
 		src.Files = append(src.Files, spec.File{Path: p + ".md", Data: []byte("---\nkind: std/Rule\n---\n# " + p + "\n")})
+	}
+	// A folder is a Package only with a Definition of its own name; a folder
+	// without one would only sort.
+	for _, p := range []string{"members/members", "members/loans/loans", "catalog/catalog"} {
+		src.Files = append(src.Files, spec.File{Path: p + ".md", Data: []byte("---\nkind: std/Package\n---\n# " + p + "\n")})
 	}
 	m, ds := spec.Compile(src)
 	if len(ds) != 0 {
@@ -229,5 +235,37 @@ func TestPatternMatchAndSpecificity(t *testing.T) {
 	}
 	if !((Pattern{Text: "a/b"}).Specificity() > (Pattern{Text: "a/**/b"}).Specificity()) {
 		t.Error("an exact path must beat any pattern")
+	}
+}
+
+// A folder of the spec without a Definition of its own name only sorts, so it is
+// no Package: a registry page for it is the page of a Package that does not
+// exist, and its files go to the Package above.
+func TestAccountPageOfASortFolder(t *testing.T) {
+	src := spec.Source{Dir: ".markitect/spec", Libraries: []spec.LibrarySource{{Name: "std", Version: "1.0.0", Dir: "std", Files: []spec.File{
+		{Path: "Rule.md", Data: []byte("---\nkind: Kind\n---\n# Rule\n")},
+	}}}}
+	src.Files = append(src.Files, spec.File{Path: "notes/todo.md", Data: []byte("---\nkind: std/Rule\n---\n# Todo\n")})
+	m, ds := spec.Compile(src)
+	if len(ds) != 0 {
+		t.Fatalf("fixture spec: %v", ds)
+	}
+	reg, ds := Account(Input{Spec: m, OwnDir: ".markitect", Files: []string{"src/notes/todo.go"},
+		Pages: []PageFile{page("notes", "---\npaths: [src/notes/**]\n---\n"+table+"| src/notes/todo.go | [[notes/todo]] | Sorted, not a Package |\n")}})
+	if len(ds) != 0 {
+		t.Fatalf("stale is no error here:\n%v", ds)
+	}
+	if reg.Owner["src/notes/todo.go"] != "" {
+		t.Errorf("owner = %q, want Root: the folder is no Package", reg.Owner["src/notes/todo.go"])
+	}
+	if p := reg.Pages["notes"]; p == nil || !p.Orphaned {
+		t.Errorf("page = %+v, want an orphaned page", p)
+	}
+	var got []string
+	for _, s := range reg.Stale {
+		got = append(got, s.Code+" "+s.File)
+	}
+	if strings.Join(got, "|") != "stale.page |stale.page src/notes/todo.go" {
+		t.Errorf("stale = %q", got)
 	}
 }
