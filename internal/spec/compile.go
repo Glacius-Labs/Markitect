@@ -104,11 +104,16 @@ func (c *compiler) loadSpec(src Source) {
 	files := append([]File(nil), src.Files...)
 	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
 	// A folder is a Package when it holds a Definition of its own name.
-	anchored := map[string]bool{}
+	anchored, misspelled := map[string]bool{}, map[string]string{}
 	for _, f := range files {
 		if id, ok := strings.CutSuffix(f.Path, ".md"); ok && ValidPath(id) {
-			if folder := path.Dir(id); folder != "." && id == AnchorOf(folder) {
+			folder := FolderOf(id)
+			switch {
+			case folder == RootPackage:
+			case id == AnchorOf(folder):
 				anchored[folder] = true
+			case strings.EqualFold(id, AnchorOf(folder)):
+				misspelled[folder] = path.Join(src.Dir, f.Path)
 			}
 		}
 	}
@@ -161,6 +166,13 @@ func (c *compiler) loadSpec(src Source) {
 		}
 		d.Package = pkg
 		c.spec.Packages[pkg].Definitions = append(c.spec.Packages[pkg].Definitions, id)
+	}
+	// A Definition that differs from its folder's name only in case looks like
+	// an anchor and is none.
+	for folder, file := range misspelled {
+		if !anchored[folder] {
+			c.diags.Add("spec.anchor", file, 0, "this file differs from the name of its folder only in case, so it is no anchor and %s only sorts; a Package's anchor carries the folder's name exactly, %s.md", folder, AnchorOf(folder))
+		}
 	}
 	for folder, byKey := range names {
 		for _, entries := range byKey {
@@ -310,7 +322,11 @@ func (c *compiler) resolveLink(d *Definition, raw string, line int, kind bool) L
 		} else if _, ok := c.spec.Packages[target]; ok {
 			link.Target, link.Package = target, true
 		} else if c.spec.Sorting[target] {
-			c.diags.Add(code, d.File, line, "%s %q names a folder that only sorts: it holds no Definition of its own name, %s.md, so it is no Package; link a Definition in it or the Package above", what, raw, AnchorOf(target))
+			instead := "link a Definition in it or the Package above"
+			if kind {
+				instead = "name a Kind in it"
+			}
+			c.diags.Add(code, d.File, line, "%s %q names a folder that only sorts: it holds no Definition of its own name, %s.md, so it is no Package; %s", what, raw, AnchorOf(target), instead)
 			return link
 		} else {
 			c.diags.Add(code, d.File, line, "%s %q resolves to no Definition, Package or Library Kind; paths start at the spec folder", what, raw)

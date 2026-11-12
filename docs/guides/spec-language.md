@@ -54,7 +54,7 @@ A [[members/member|member]] reserves a [[equipment/machine|machine]] for a slot.
 
 A Package is a part of the project. The spec folder itself is the Root Package. Below it, a folder is a Package when it holds a Definition of its own name, its anchor: `members/members.md` makes `members` a Package, and `members/loans/loans.md` makes `members/loans` one ([DEC-107](../decisions.md#dec-107-a-folder-is-a-package-by-its-anchor-any-other-folder-only-sorts)).
 
-- **The anchor says what the Package is:** what it is responsible for and what it keeps to itself. It is an ordinary Definition of any Kind, `std/Package` in the standard Library. It is verified like every Definition, a file realizes it or a Definition links to it (`definition.unused`), and a link to the Package does not link it. Root has no anchor by name; the project's anchor, `project.md`, is its by convention.
+- **The anchor says what the Package is:** what it is responsible for and what it keeps to itself. It is an ordinary Definition of any Kind, `std/Package` in the standard Library. It is verified like every Definition, a file realizes it or a Definition links to it (`definition.unused`), and a link to the Package does not link it. It carries the folder's name exactly: a file that differs from it only in case is an error (`spec.anchor`). Root needs none; the Project Definition, `project.md`, says what the project is.
 - **A folder without an anchor only sorts.** Its Definitions belong to the nearest Package above it, and to Root when there is none. Their IDs keep the folder, `members/rules/loan-limit`, and nothing else changes: scope, visibility and dependencies are the Package's, so the Definitions in two such folders of one Package link each other freely.
 - **A folder that only sorts is not a part of the project.** A link to it resolves to nothing (`link.unresolved`), and a registry page for it belongs to no Package (`stale.page`).
 - **A Package may lie in a folder that only sorts.** `members/concepts/card/card.md` makes `members/concepts/card` a Package whose parent is `members`.
@@ -115,7 +115,7 @@ A cycle is broken by moving the shared concept into a common parent, or by inver
 
 ### Registry pages
 
-Every Package may have one registry page: `.markitect/registry.md` for Root, `.markitect/registry/<package path>.md` for the others. A folder that only sorts has none: its Definitions' files are listed on the page of the Package they belong to. The front matter names the path patterns the Package owns; a table lists every file it owns with the Definitions the file realizes and why.
+Every Package may have one registry page: `.markitect/registry.md` for Root, `.markitect/registry/<package path>.md` for the others. A folder that only sorts has none: the files that realize its Definitions are listed, like every file, on the page of the Package that owns them. The front matter names the path patterns the Package owns; a table lists every file it owns with the Definitions the file realizes and why.
 
 ```markdown
 ---
@@ -253,7 +253,7 @@ An unknown command is a usage error, exit 2.
 
 | Code | Notes when |
 |---|---|
-| `vet.unlinked_mention` | a Definition's title, or the last segment of its ID with hyphens read as spaces, appears in another Definition's prose with no link to it: matched as whole words without regard to case, with up to two trailing letters, outside the title, code, raw HTML and `[[…]]` links (a Markdown link's label counts as prose). Not reported: where the Definition links the named one or is of it as Kind, where it may not link it (into a child, or an internal Definition from outside), where a longer name covers the words (its own included), where a linked Definition's name covers them, and where the named one is a Kind. One line per Definition, at its first mention. Mentions a link to which would close a Package cycle or add a Package dependency the spec does not have are counted apart, each group in a line of its own that says so. About half to three-quarters are real missing links; [`/markitect-audit`](project-workflow.md#7-build-and-review) has the auditor triage them |
+| `vet.unlinked_mention` | a Definition's title, or the last segment of its ID with hyphens read as spaces, appears in another Definition's prose with no link to it: matched as whole words without regard to case, with up to two trailing letters, outside the title, code, raw HTML and `[[…]]` links (a Markdown link's label counts as prose). Not reported: where the Definition links the named one or is of it as Kind, where it may not link it (into a child, or an internal Definition from outside), where a longer name covers the words (its own included), where a linked Definition's name covers them, and where the named one is a Kind or a Package's anchor, whose name is the Package's own. One line per Definition, at its first mention. Mentions a link to which would close a Package cycle or add a Package dependency the spec does not have are counted apart, each group in a line of its own that says so. About half to three-quarters are real missing links; [`/markitect-audit`](project-workflow.md#7-build-and-review) has the auditor triage them |
 | `vet.statements` | a Definition has more than 20 statements: list items and table rows, header rows included |
 | `vet.placement` | every Definition that links to a Definition lies in one Package below it, so it could move down there, unless it binds its Package by scope |
 | `vet.hotspot` | how often a Definition's own text changed between verdicts, from the record, times its fan-in, is more than a tenth of the spec and more than 20: revisions × fan-in > max(20, N / 10) |
@@ -266,7 +266,7 @@ Coupling counts explicit edges only, not the implicit edge to the parent. `list 
 Details the concept leaves open:
 
 - **Layout.** The fixed `.markitect/` layout above; registry pages mirror Package paths, Root's page is `registry.md`.
-- **A gone Definition's Package.** A Definition that is gone from the spec counts for the nearest Package above its path. When no folder above it is a Package, it counts for the nearest folder that is gone too, as the Package that was, and for Root when every folder above it only sorts.
+- **A gone Definition's Package.** A Definition that is gone from the spec counts for the nearest Package above its path that exists, and for Root when there is none.
 - **Library links.** A path whose first name is a Library is a Library link, so no top-level name of the spec may equal a Library's name.
 - **Local Library versions.** A local Library carries no version file; the manifest names its version and the lock pins its digest.
 - **Specificity.** An exact path beats every pattern; otherwise more literal characters win; a tie between Packages is an error.

@@ -41,7 +41,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/spec` | Package spec compiles the spec from explicitly supplied Markdown files: Definitions with front matter, Packages as folders, Libraries of Kinds, links by path, visibility and the Package dependency graph. | [docs/guides/spec-language.md#definitions](../guides/spec-language.md#definitions) |
+| `internal/spec` | Package spec compiles the spec from explicitly supplied Markdown files: Definitions with front matter, Packages as folders with an anchor, Libraries of Kinds, links by path, visibility and the Package dependency graph. | [docs/guides/spec-language.md#definitions](../guides/spec-language.md#definitions) |
 
 ## Built-in files
 

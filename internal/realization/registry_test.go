@@ -255,6 +255,10 @@ func TestAccountPageOfASortFolder(t *testing.T) {
 	if len(ds) != 0 {
 		t.Fatalf("stale is no error here:\n%v", ds)
 	}
+	// A row that links the folder itself links no Definition.
+	_, linked := Account(Input{Spec: m, OwnDir: ".markitect", Files: []string{"src/todo.go"},
+		Pages: []PageFile{page("", table+"| src/todo.go | [[notes]] | The folder |\n")}})
+	expect(t, linked, "registry.link", "[[notes]] is not a Definition of the spec")
 	if reg.Owner["src/notes/todo.go"] != "" {
 		t.Errorf("owner = %q, want Root: the folder is no Package", reg.Owner["src/notes/todo.go"])
 	}

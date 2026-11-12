@@ -152,8 +152,28 @@ func TestCompileAFolderWithoutAnAnchorOnlySorts(t *testing.T) {
 	if m.Parent("members/concepts/card") != "members" || m.Parent("members/concepts") != RootPackage {
 		t.Fatalf("Parent is wrong")
 	}
-	if m.PackageOf("members/rules/limit") != "members" || m.PackageOf("members/rules/gone") != "members" || m.PackageOf("old/gone") != "old" || m.PackageOf("gone") != RootPackage || m.PackageOf("goals/gone") != RootPackage {
+	if m.PackageOf("members/rules/limit") != "members" || m.PackageOf("members/rules/gone") != "members" || m.PackageOf("members/gone/away") != "members" || m.PackageOf("old/gone") != RootPackage || m.PackageOf("gone") != RootPackage || m.PackageOf("goals/gone") != RootPackage {
 		t.Fatalf("PackageOf is wrong")
+	}
+}
+
+// An anchor carries the folder's name exactly. A file that differs from it
+// only in case is refused, since the folder would silently only sort; and an
+// anchor whose front matter is broken still makes its folder a Package.
+func TestCompileAnchorNames(t *testing.T) {
+	m, ds := compile(t, map[string]string{
+		"Members/members.md": anchor("Members"),
+		"Members/member.md":  def("std/Rule", "# Member\n"),
+		"catalog/catalog.md": "---\nkind: std/Concept\n# never closed\n",
+		"catalog/book.md":    def("std/Rule", "# Book\n"),
+	})
+	expect(t, ds, "spec.anchor", ".markitect/spec/Members/members.md: spec.anchor: this file differs from the name of its folder only in case, so it is no anchor and Members only sorts; a Package's anchor carries the folder's name exactly, Members/Members.md")
+	expect(t, ds, "definition.front_matter", "catalog/catalog.md")
+	if len(ds) != 2 {
+		t.Fatalf("diagnostics:\n%v", ds)
+	}
+	if m.Packages["Members"] != nil || m.Packages["catalog"] == nil || m.Definitions["catalog/book"].Package != "catalog" {
+		t.Fatalf("Packages = %v", m.SortedPackages())
 	}
 }
 
@@ -169,7 +189,8 @@ func TestCompileASortFolderIsNoLinkTarget(t *testing.T) {
 	})
 	expect(t, ds, "link.unresolved", `link "members/rules" names a folder that only sorts: it holds no Definition of its own name, members/rules/rules.md`)
 	expect(t, ds, "link.unresolved", `link "catalog" names a folder that only sorts`)
-	expect(t, ds, "kind.unresolved", `kind "members/kinds" names a folder that only sorts`)
+	expect(t, ds, "link.unresolved", "so it is no Package; link a Definition in it or the Package above")
+	expect(t, ds, "kind.unresolved", `kind "members/kinds" names a folder that only sorts: it holds no Definition of its own name, members/kinds/kinds.md, so it is no Package; name a Kind in it`)
 	// catalog has no page, so its book lies in Root, above members.
 	expect(t, ds, "link.downward", "Root links down to members/rules/secret")
 	if len(ds) != 4 {

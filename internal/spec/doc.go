@@ -1,5 +1,5 @@
 // Package spec compiles the spec from explicitly supplied Markdown files:
-// Definitions with front matter, Packages as folders, Libraries of Kinds,
+// Definitions with front matter, Packages as folders with an anchor, Libraries of Kinds,
 // links by path, visibility and the Package dependency graph.
 //
 // The package reads no files itself. Its callers hand it the bytes of the

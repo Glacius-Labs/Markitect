@@ -403,6 +403,14 @@ func TestVetUnlinkedMentions(t *testing.T) {
 			t.Fatalf("%s: structure %q, targets %v", n.File, n.Structure, n.Targets)
 		}
 	}
+	// An anchor carries its Package's name, which prose uses freely: "the
+	// catalog" names no Definition.
+	r[m+"catalog/shelf.md"] = def("std/Concept", "Shelf", "A part of the Catalog.")
+	for _, line := range noteLines(vetNotes(t, r, nil), "vet.unlinked_mention") {
+		if strings.Contains(line, "catalog/shelf.md") {
+			t.Fatalf("the name of a Package reported as a mention of its anchor: %s", line)
+		}
+	}
 	// A linked Definition's name covers the words: "members" beside a linked
 	// members/member is no mention of members/member, nor of anything else.
 	r[m+"catalog/book.md"] = def("std/Concept", "Book", "Lent to [[members/member]]s; members queue.")

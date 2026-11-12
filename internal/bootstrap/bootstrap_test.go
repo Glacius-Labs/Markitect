@@ -122,6 +122,15 @@ func TestCommandsEndToEnd(t *testing.T) {
 	if code, _, errOut := run(t, r.Dir, "doc", "members/nobody"); code != 1 || !strings.Contains(errOut, "neither a Definition nor a Package") {
 		t.Fatalf("doc of nothing: %d %s", code, errOut)
 	}
+	// A folder without an anchor is neither, and doc says that it only sorts.
+	r.Write(".markitect/spec/members/rules/late.md", "---\nkind: std/Rule\n---\n# Late\n\nA [[members/member]] is late after `14` days.\n")
+	if code, _, errOut := run(t, r.Dir, "doc", "members/rules"); code != 1 || !strings.Contains(errOut, "members/rules is a folder that only sorts") {
+		t.Fatalf("doc of a sort folder: %d %s", code, errOut)
+	}
+	wantAll(t, mustRun(t, r.Dir, "doc", "members/rules/late"), "members/rules/late: Late (std/Rule)\n", "Package members, .markitect/spec/members/rules/late.md\n")
+	if err := os.RemoveAll(filepath.Join(r.Dir, ".markitect", "spec", "members", "rules")); err != nil {
+		t.Fatal(err)
+	}
 	var doc struct {
 		Kind       string
 		Definition struct {

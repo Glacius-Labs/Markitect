@@ -320,6 +320,17 @@ func TestStatusCountsASortFolderForThePackageAbove(t *testing.T) {
 	if only := of("members"); listed(only) != "members/rules/limit" || only.Definitions != 2 || listed(of("members/loans")) != "" || listed(of("Root")) != "" {
 		t.Fatalf("status of members:\n%s", only.Text())
 	}
+	// So are the Definitions of a whole Package that is gone: they count for
+	// the nearest Package above that exists, and the gone one is not listed.
+	p.remove(m + "members/loans/loans.md")
+	p.remove(m + "members/loans/loan.md")
+	after := p.status(false)
+	if len(after.Packages) != 3 || p.item(after, "members/loans/loan").State != run.StateGone {
+		t.Fatalf("a gone Package:\n%s", after.Text())
+	}
+	if only := of("members"); !strings.Contains(listed(only), "members/loans/loan") || !strings.Contains(listed(only), "members/loans/loans") {
+		t.Fatalf("a gone Package's Definitions are not members':\n%s", only.Text())
+	}
 }
 
 // What is to verify is what a change touches at distance 0 and 1.

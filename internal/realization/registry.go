@@ -226,7 +226,7 @@ func (a *accountant) resolve(src PageFile, raw spec.RawLink, entry *Entry) (stri
 	switch {
 	case ok && d.Own():
 		return target, true
-	case ok || a.in.Spec.Packages[target] != nil:
+	case ok || a.in.Spec.Packages[target] != nil || a.in.Spec.Sorting[target]:
 		a.diags.Add("registry.link", src.File, raw.Line, "[[%s]] is not a Definition of the spec; a registry entry links the Definitions its file realizes", raw.Target)
 	case !spec.ValidPath(target):
 		a.diags.Add("registry.link", src.File, raw.Line, "[[%s]] is not a spec path such as members/member", raw.Target)

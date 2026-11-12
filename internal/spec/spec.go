@@ -122,23 +122,18 @@ func (s *Spec) Parent(pkg string) string {
 }
 
 // PackageOf returns the Package a Definition ID belongs to. For an ID the
-// spec no longer holds it is the nearest folder above that is a Package. When
-// there is none, it is the nearest folder above that is gone, which counts as
-// the Package it was, or Root when every folder above only sorts.
+// spec no longer holds it is the nearest folder above that is a Package, and
+// Root when there is none.
 func (s *Spec) PackageOf(id string) string {
 	if d := s.Definitions[id]; d != nil && d.Own() {
 		return d.Package
 	}
-	gone := RootPackage
 	for at := FolderOf(id); at != RootPackage; at = FolderOf(at) {
 		if s.Packages[at] != nil {
 			return at
 		}
-		if !s.Sorting[at] && gone == RootPackage {
-			gone = at
-		}
 	}
-	return gone
+	return RootPackage
 }
 
 // FolderOf returns the folder a path lies in: "" for a path at the top.

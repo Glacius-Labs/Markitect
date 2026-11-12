@@ -131,10 +131,10 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - A folder of the spec is a Package when it holds a Definition of its own name, its anchor: `members/members.md` makes `members` a Package. The anchor says what the Package is, what it is responsible for and what it keeps to itself. It is an ordinary Definition, `std/Package` in the standard Library, and no Kind gains a meaning to Markitect: the name makes the Package.
 - A folder without an anchor only sorts. Its Definitions belong to the nearest Package above, keep the folder in their ID, and share that Package's scope, visibility and dependencies. It is no link target and has no registry page.
 - A Package carries the dependency check, visibility and file ownership, so a folder that only orders files must not be one. With every folder a Package, sorting an area's Definitions by Kind turns the links inside the area into Package cycles, and the areas, which the division was made for, hold nothing. Markitect prescribes no layout: a project sorts as it reads best.
-- Every Package now states its responsibility in one place, where the spec had none for it but a sentence in the project's anchor.
+- Every Package states its responsibility in one place, its anchor.
 - A link to a Package stays what [DEC-104](#dec-104-a-link-is-never-decorative-identity-and-surface-are-written-as-code-writes-them) says: it names the module and does not rely on the anchor's text. A Definition that relies on that text links the anchor.
 - Marking the folders that sort, by a marker file or a rule for their names, was weighed and not chosen: the Package is the thing with parts, so it is the one that says what it is.
-- A project written before this rule gives each of its Package folders its anchor; until then its folders only sort, and `check` says so at each link to one and at each registry page of one.
+- A project written before this rule gives each of its Package folders its anchor. Until then its folders only sort: `check` says so at each link to one and at each registry page of one, and where a project has neither, `markitect list` shows the Packages it has left.
 
 ## The tool
 

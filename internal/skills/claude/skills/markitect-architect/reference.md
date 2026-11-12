@@ -31,7 +31,7 @@ One Markdown file with YAML front matter.
 - File name without `.md` is the name, the path below `spec/` is the ID (`members/member`). Names: letters, digits, `-`, `_`, starting with a letter or digit (`spec.name`).
 - Body: one level-1 heading, the title, first; no second one (`definition.title`); then prose. Exact values in backticks.
 - The spec folder holds only `.md` files and folders (`spec.file`). Two entries differing only in case, or `member.md` beside `member/`, collide (`spec.collision`).
-- A folder is a Package when it holds a Definition of its own name, its anchor: `members/members.md` makes `members` one. Any other folder only sorts: its Definitions belong to the nearest Package above, and Root if there is none.
+- A folder is a Package when it holds a Definition of its own name, its anchor: `members/members.md` makes `members` one. Any other folder only sorts: its Definitions belong to the nearest Package above, and Root if there is none. The anchor carries the folder's name exactly, also in case (`spec.anchor`).
 - A top-level name may not be a Library name or `Kind` (`spec.reserved`).
 
 ## Kinds and Libraries
@@ -128,7 +128,7 @@ Notes: `vet.unlinked_mention` (a Definition's title or name in another Definitio
 | Group | Codes |
 |---|---|
 | Project | `project.file` (a file under `.markitect/` has no place in the layout), `project.read` |
-| Definition and spec | `definition.front_matter`, `definition.title`, `spec.name`, `spec.file`, `spec.collision`, `spec.reserved` |
+| Definition and spec | `definition.front_matter`, `definition.title`, `spec.name`, `spec.file`, `spec.collision`, `spec.anchor`, `spec.reserved` |
 | Kind and Library | `kind.unresolved`, `kind.not_a_kind`, `library.name`, `library.file`, `library.not_a_kind`, `library.internal`, `library.version`, `library.reserved`, `library.missing`, `library.undeclared` |
 | Manifest and lock | `manifest.syntax`, `manifest.missing`, `lock.mismatch`, `lock.missing`, `lock.syntax` |
 | Links and Packages | `link.unresolved`, `link.syntax`, `link.internal`, `link.downward`, `package.cycle` |

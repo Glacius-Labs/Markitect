@@ -78,12 +78,12 @@ type Status struct {
 	ErrorsElsewhere, UnreadableElsewhere int
 }
 
-// PackageItems is one Package with the items of status whose Definition lies
-// directly in it.
+// PackageItems is one Package with the items of status whose Definition
+// belongs to it, not to a Package below it.
 type PackageItems struct {
 	// Package is the Package's name: its path, or Root.
 	Package string `json:"package"`
-	// Definitions counts the Definitions that lie directly in it.
+	// Definitions counts the Definitions that belong to it.
 	Definitions int `json:"definitions"`
 	// Items counts its items, and SpecProblems those of them recorded
 	// spec-problem, which wait for the owner.
@@ -124,7 +124,7 @@ type StatusRequest struct {
 	Dir string
 	// All lists every Definition, to verify everything again.
 	All bool
-	// Package limits the list to the items whose Definition lies directly in the
+	// Package limits the list to the items whose Definition belongs to the
 	// Package of that name, as a strand of a parallel run works on them.
 	Package string
 }
@@ -164,7 +164,7 @@ func (e *Engine) Status(_ context.Context, req StatusRequest) (Status, error) {
 }
 
 // only limits status to the Package of a name: to the items and notes whose
-// Definition lies directly in it. The errors in the realization and the lines
+// Definition belongs to it. The errors in the realization and the lines
 // of the record markitect cannot read belong to no Package, so it leaves them
 // out and counts them. A spec with errors has no list to limit.
 func (s Status) only(name string) (Status, error) {
@@ -304,8 +304,8 @@ func packageNamed(names map[string]bool, id string) string {
 	return spec.PackageName(spec.RootPackage)
 }
 
-// packageItems counts the items per Package, for every Package of the spec and
-// for a Package that is gone but still has a gone Definition on the list.
+// packageItems counts the items per Package of the spec. A Definition that is
+// gone counts for the nearest Package above its path that exists.
 func packageItems(sp *spec.Spec, items []Item) []PackageItems {
 	byName := map[string]*PackageItems{}
 	for _, path := range sp.SortedPackages() {
@@ -320,10 +320,6 @@ func packageItems(sp *spec.Spec, items []Item) []PackageItems {
 	for _, it := range items {
 		name := spec.PackageName(sp.PackageOf(it.Definition))
 		p := byName[name]
-		if p == nil {
-			p = &PackageItems{Package: name, DependsOn: []string{}}
-			byName[name] = p
-		}
 		p.Items++
 		if it.State == StateSpecProblem {
 			p.SpecProblems++

@@ -87,9 +87,9 @@ kind: std/Package
 ---
 # Members
 
-Who is registered with the library, and how many books one person may hold at once.
+Who is registered with the library, and how much one person may borrow at once.
 
-It keeps to itself when two email addresses count as the same.
+It keeps to itself how an address is compared with another.
 ```
 
 `spec/members/member.md` (after the cycle below is fixed)
