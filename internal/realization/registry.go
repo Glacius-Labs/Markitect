@@ -76,6 +76,7 @@ type Stale struct {
 	Line     int
 	File     string // the registered file
 	Target   string // the missing Definition
+	Package  string // for stale.page: the path the page names, which is no Package
 }
 
 // Account parses the registry pages and the ignore file and accounts every repository
@@ -225,7 +226,7 @@ func (a *accountant) resolve(src PageFile, raw spec.RawLink, entry *Entry) (stri
 	switch {
 	case ok && d.Own():
 		return target, true
-	case ok || a.in.Spec.Packages[target] != nil:
+	case ok || a.in.Spec.Packages[target] != nil || a.in.Spec.Sorting[target]:
 		a.diags.Add("registry.link", src.File, raw.Line, "[[%s]] is not a Definition of the spec; a registry entry links the Definitions its file realizes", raw.Target)
 	case !spec.ValidPath(target):
 		a.diags.Add("registry.link", src.File, raw.Line, "[[%s]] is not a spec path such as members/member", raw.Target)
@@ -359,7 +360,7 @@ func (a *accountant) checkEntries(visible map[string]bool) {
 	for _, pkg := range a.sortedAllPages() {
 		page := a.reg.Pages[pkg]
 		if page.Orphaned {
-			a.reg.Stale = append(a.reg.Stale, Stale{Code: "stale.page", PageFile: page.File})
+			a.reg.Stale = append(a.reg.Stale, Stale{Code: "stale.page", PageFile: page.File, Package: page.Package})
 		}
 		for _, e := range page.Entries {
 			switch {
@@ -388,7 +389,7 @@ func (a *accountant) checkEntries(visible map[string]bool) {
 	for _, e := range orphaned {
 		if a.reg.Entries[e.File] == nil {
 			a.staleOnly[e.File] = true
-			a.reg.Stale = append(a.reg.Stale, Stale{Code: "stale.page", PageFile: e.PageFile, Line: e.Line, File: e.File})
+			a.reg.Stale = append(a.reg.Stale, Stale{Code: "stale.page", PageFile: e.PageFile, Line: e.Line, File: e.File, Package: e.Package})
 		}
 	}
 }

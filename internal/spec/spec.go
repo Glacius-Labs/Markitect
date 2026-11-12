@@ -39,7 +39,10 @@ type Source struct {
 type Spec struct {
 	Definitions map[string]*Definition // by ID: "members/member", "std/Rule", "Kind"
 	Packages    map[string]*Package    // by path; RootPackage is ""
-	Libraries   map[string]*Library
+	// Sorting holds the folders of the spec that are no Package: they hold no
+	// anchor, and what lies in them belongs to the Package above.
+	Sorting   map[string]bool
+	Libraries map[string]*Library
 	// Edges are the explicit dependencies between Packages: from, to, and the
 	// links that make them. The implicit edge from a child to its parent is
 	// not listed.
@@ -53,12 +56,15 @@ type Library struct {
 	Definitions []string
 }
 
-// Package is one folder of the spec.
+// Package is one part of the spec: the spec folder itself, or a folder that
+// holds a Definition of its own name, its anchor. A folder without an anchor
+// only sorts, and what lies in it belongs to the Package above.
 type Package struct {
 	Path        string
-	Parent      string
-	Children    []string
+	Parent      string   // the Package above, which need not be the folder above
+	Children    []string // the Packages directly below, sorted
 	Definitions []string // own Definition IDs, sorted
+	Anchor      string   // the Definition that says what the Package is; "" for Root
 }
 
 // Definition is one Markdown file of the spec, of a Library, or Core's Kind.
@@ -106,12 +112,42 @@ func PackageName(path string) string {
 	return path
 }
 
-// ParentOf returns the parent of a Package path.
-func ParentOf(path string) string {
-	if i := strings.LastIndexByte(path, '/'); i >= 0 {
-		return path[:i]
+// Parent returns the Package above a Package: Root for Root and for a path
+// that names no Package.
+func (s *Spec) Parent(pkg string) string {
+	if p := s.Packages[pkg]; p != nil {
+		return p.Parent
 	}
 	return RootPackage
+}
+
+// PackageOf returns the Package a Definition ID belongs to. For an ID the
+// spec no longer holds it is the nearest folder above that is a Package, and
+// Root when there is none.
+func (s *Spec) PackageOf(id string) string {
+	if d := s.Definitions[id]; d != nil && d.Own() {
+		return d.Package
+	}
+	for at := FolderOf(id); at != RootPackage; at = FolderOf(at) {
+		if s.Packages[at] != nil {
+			return at
+		}
+	}
+	return RootPackage
+}
+
+// FolderOf returns the folder a path lies in: "" for a path at the top.
+func FolderOf(p string) string {
+	if i := strings.LastIndexByte(p, '/'); i >= 0 {
+		return p[:i]
+	}
+	return RootPackage
+}
+
+// AnchorOf returns the ID a Package's anchor has: the folder's own name inside
+// the folder, such as members/members for the Package members.
+func AnchorOf(pkg string) string {
+	return pkg + "/" + pkg[strings.LastIndexByte(pkg, '/')+1:]
 }
 
 // Within reports whether Package p is q or lies below it.

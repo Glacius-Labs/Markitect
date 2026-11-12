@@ -59,7 +59,10 @@ func unlinkedMentions(p *project.Project) []Note {
 		for _, s := range longestFirst(spans(toks, byFirst)) {
 			dd := s.id
 			t := sp.Definitions[dd]
-			if dd == x || linked[dd] || t.Kind == spec.CoreKind || !mayLink(d, t) {
+			// An anchor carries its Package's name, a word of the domain that prose
+			// uses freely: naming it is no reliance on the anchor's text. Its name
+			// still covers the words, so that no shorter name inside it is reported.
+			if dd == x || linked[dd] || t.Kind == spec.CoreKind || sp.Packages[t.Package].Anchor == dd || !mayLink(d, t) {
 				continue
 			}
 			if _, ok := first[dd]; ok || covered(s.words, linked, nameList) {

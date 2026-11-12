@@ -106,6 +106,11 @@ func renderDocPackage(p analysis.DocPackage) string {
 	if len(p.Children) > 0 {
 		fmt.Fprintf(&b, "Packages below: %s\n", strings.Join(p.Children, ", "))
 	}
+	// The anchor's text says what the Package is, as go doc opens with a
+	// package's comment.
+	if p.Text != "" {
+		b.WriteString("\n" + p.Text)
+	}
 	// The public Definitions are what the Package publishes, as go doc shows a
 	// package's exported names; the internal ones follow apart.
 	for _, internal := range []bool{false, true} {

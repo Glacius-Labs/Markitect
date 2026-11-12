@@ -25,6 +25,7 @@ func Compile(src Source) (*Spec, Diagnostics) {
 			Packages:    map[string]*Package{RootPackage: {Path: RootPackage}},
 			Libraries:   map[string]*Library{},
 			Edges:       map[string]map[string][]Use{},
+			Sorting:     map[string]bool{},
 		},
 		rawKind: map[string]rawKind{},
 	}
@@ -84,29 +85,44 @@ func (c *compiler) loadLibrary(lib LibrarySource) {
 }
 
 func (c *compiler) loadSpec(src Source) {
-	// names[parent][lower-case name] collects the spellings and forms (file or
+	// names[folder][lower-case name] collects the spellings and forms (file or
 	// folder) of every entry, to find entries that collide.
 	type entry struct{ name, form string }
 	names := map[string]map[string][]entry{}
-	note := func(parent, name, form string) {
-		if names[parent] == nil {
-			names[parent] = map[string][]entry{}
+	note := func(folder, name, form string) {
+		if names[folder] == nil {
+			names[folder] = map[string][]entry{}
 		}
 		key := strings.ToLower(name)
-		for _, e := range names[parent][key] {
+		for _, e := range names[folder][key] {
 			if e == (entry{name, form}) {
 				return
 			}
 		}
-		names[parent][key] = append(names[parent][key], entry{name, form})
+		names[folder][key] = append(names[folder][key], entry{name, form})
 	}
 	files := append([]File(nil), src.Files...)
 	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
+	// A folder is a Package when it holds a Definition of its own name.
+	anchored, misspelled := map[string]bool{}, map[string]string{}
+	for _, f := range files {
+		if id, ok := strings.CutSuffix(f.Path, ".md"); ok && ValidPath(id) {
+			folder := FolderOf(id)
+			switch {
+			case folder == RootPackage:
+			case id == AnchorOf(folder):
+				anchored[folder] = true
+			case strings.EqualFold(id, AnchorOf(folder)):
+				misspelled[folder] = path.Join(src.Dir, f.Path)
+			}
+		}
+	}
+	top := map[string]bool{}
 	for _, f := range files {
 		file := path.Join(src.Dir, f.Path)
 		id, isMarkdown := strings.CutSuffix(f.Path, ".md")
 		if !isMarkdown {
-			c.diags.Add("spec.file", file, 0, "the spec folder holds only Definitions (.md files) and Package folders")
+			c.diags.Add("spec.file", file, 0, "the spec folder holds only Definitions (.md files) and folders")
 			continue
 		}
 		if !ValidPath(id) {
@@ -114,17 +130,28 @@ func (c *compiler) loadSpec(src Source) {
 			continue
 		}
 		segments := strings.Split(id, "/")
-		parent := RootPackage
+		folder, pkg := RootPackage, RootPackage
 		for _, s := range segments[:len(segments)-1] {
-			note(parent, s, "folder")
-			child := strings.TrimPrefix(parent+"/"+s, "/")
-			if _, ok := c.spec.Packages[child]; !ok {
-				c.spec.Packages[child] = &Package{Path: child, Parent: parent}
-				c.spec.Packages[parent].Children = append(c.spec.Packages[parent].Children, child)
+			note(folder, s, "folder")
+			if folder == RootPackage {
+				top[s] = true
 			}
-			parent = child
+			folder = strings.TrimPrefix(folder+"/"+s, "/")
+			if !anchored[folder] {
+				c.spec.Sorting[folder] = true
+				continue
+			}
+			if _, ok := c.spec.Packages[folder]; !ok {
+				c.spec.Packages[folder] = &Package{Path: folder, Parent: pkg, Anchor: AnchorOf(folder)}
+				c.spec.Packages[pkg].Children = append(c.spec.Packages[pkg].Children, folder)
+			}
+			pkg = folder
 		}
-		note(parent, segments[len(segments)-1], "file")
+		name := segments[len(segments)-1]
+		note(folder, name, "file")
+		if folder == RootPackage {
+			top[name] = true
+		}
 		if _, taken := c.spec.Definitions[id]; taken {
 			what := "a Library Kind"
 			if id == CoreKind {
@@ -137,10 +164,17 @@ func (c *compiler) loadSpec(src Source) {
 		if d == nil {
 			continue
 		}
-		d.Package = parent
-		c.spec.Packages[parent].Definitions = append(c.spec.Packages[parent].Definitions, id)
+		d.Package = pkg
+		c.spec.Packages[pkg].Definitions = append(c.spec.Packages[pkg].Definitions, id)
 	}
-	for parent, byKey := range names {
+	// A Definition that differs from its folder's name only in case looks like
+	// an anchor and is none.
+	for folder, file := range misspelled {
+		if !anchored[folder] {
+			c.diags.Add("spec.anchor", file, 0, "this file differs from the name of its folder only in case, so it is no anchor and %s only sorts; a Package's anchor carries the folder's name exactly, %s.md", folder, AnchorOf(folder))
+		}
+	}
+	for folder, byKey := range names {
 		for _, entries := range byKey {
 			if len(entries) > 1 {
 				var spelled []string
@@ -148,15 +182,17 @@ func (c *compiler) loadSpec(src Source) {
 					spelled = append(spelled, e.form+" "+e.name)
 				}
 				sort.Strings(spelled)
-				c.diags.Add("spec.collision", path.Join(src.Dir, parent), 0, "%s name the same thing; links could not tell them apart", strings.Join(spelled, " and "))
+				c.diags.Add("spec.collision", path.Join(src.Dir, folder), 0, "%s name the same thing; links could not tell them apart", strings.Join(spelled, " and "))
 			}
 		}
 	}
-	for _, top := range c.spec.Packages[RootPackage].Children {
-		c.reserved(src.Dir, top)
+	topNames := make([]string, 0, len(top))
+	for name := range top {
+		topNames = append(topNames, name)
 	}
-	for _, id := range c.spec.Packages[RootPackage].Definitions {
-		c.reserved(src.Dir, id)
+	sort.Strings(topNames)
+	for _, name := range topNames {
+		c.reserved(src.Dir, name)
 	}
 }
 
@@ -285,6 +321,13 @@ func (c *compiler) resolveLink(d *Definition, raw string, line int, kind bool) L
 			link.Target = target
 		} else if _, ok := c.spec.Packages[target]; ok {
 			link.Target, link.Package = target, true
+		} else if c.spec.Sorting[target] {
+			instead := "link a Definition in it or the Package above"
+			if kind {
+				instead = "name a Kind in it"
+			}
+			c.diags.Add(code, d.File, line, "%s %q names a folder that only sorts: it holds no Definition of its own name, %s.md, so it is no Package; %s", what, raw, AnchorOf(target), instead)
+			return link
 		} else {
 			c.diags.Add(code, d.File, line, "%s %q resolves to no Definition, Package or Library Kind; paths start at the spec folder", what, raw)
 			return link

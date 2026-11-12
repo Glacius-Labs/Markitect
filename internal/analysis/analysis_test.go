@@ -48,7 +48,16 @@ func def(kind, title, body string) string {
 	return "---\nkind: " + kind + "\n---\n# " + title + "\n\n" + body + "\n"
 }
 
-// library returns a small project: Root with a Rule and the anchor, members
+// pkg makes a folder of a fixture a Package: it adds the anchor, the
+// Definition of the folder's own name.
+func pkg(r memRepo, paths ...string) {
+	for _, path := range paths {
+		name := path[strings.LastIndexByte(path, '/')+1:]
+		r[m+path+"/"+name+".md"] = def("std/Package", "Part "+name, "")
+	}
+}
+
+// library returns a small project: Root with a Rule and the Project, members
 // with a sub-Package loans, and catalog, which depends on members.
 func library(t *testing.T) memRepo {
 	t.Helper()
@@ -58,12 +67,15 @@ func library(t *testing.T) memRepo {
 		std.Files = append(std.Files, spec.File{Path: f.Path, Data: f.Data})
 	}
 	return memRepo{
-		project.ManifestFile:                      "libraries:\n  std: 1.1.0\n",
+		project.ManifestFile:                      "libraries:\n  std: 1.2.0\n",
 		project.LockFile:                          string(spec.RenderLock([]spec.LibrarySource{std})),
 		m + "project.md":                          def("std/Project", "Library", "Parts: [[members]], [[catalog]]."),
 		m + "loan-limit.md":                       def("std/Rule", "Loan limit", "At most `5` open loans."),
+		m + "members/members.md":                  def("std/Package", "Members", "Who may borrow."),
 		m + "members/member.md":                   def("std/Concept", "Member", "A person."),
+		m + "members/loans/loans.md":              def("std/Package", "Loans", "What is lent out."),
 		m + "members/loans/loan.md":               def("std/Concept", "Loan", "A [[members/member]] borrows."),
+		m + "catalog/catalog.md":                  def("std/Package", "Catalog", "What can be borrowed."),
 		m + "catalog/book.md":                     def("std/Concept", "Book", "Lent to a [[members/member]]."),
 		m + "catalog/shelf.md":                    def("std/Concept", "Shelf", "Holds books."),
 		project.RootPage:                          table + "| README.md | [[project]] [[members/member]] | Overview |\n",
@@ -118,7 +130,7 @@ func TestRefs(t *testing.T) {
 
 func TestGraphMeasures(t *testing.T) {
 	r := library(t)
-	// A Kind of catalog's own makes it a third abstract: A 1/3, I 1, D 1/3.
+	// A Kind of catalog's own makes it a quarter abstract: A 1/4, I 1, D 1/4.
 	r[m+"catalog/Medium.md"] = def("Kind", "Medium", "A thing to lend.")
 	g := BuildGraph(loadRepo(t, r))
 	if len(g.Edges) != 1 || g.Edges[0].From != "catalog" || g.Edges[0].To != "members" {
@@ -128,10 +140,10 @@ func TestGraphMeasures(t *testing.T) {
 	if catalog.Efferent != 1 || catalog.Instability != 1 || members.Afferent != 1 || members.Instability != 0 {
 		t.Fatalf("catalog %+v members %+v", catalog, members)
 	}
-	if fmt.Sprintf("%.3f %.3f", catalog.Abstractness, catalog.Distance) != "0.333 0.333" || members.Abstractness != 0 || members.Distance != 1 {
+	if fmt.Sprintf("%.3f %.3f", catalog.Abstractness, catalog.Distance) != "0.250 0.250" || members.Abstractness != 0 || members.Distance != 1 {
 		t.Fatalf("abstractness and distance: catalog %+v members %+v", catalog, members)
 	}
-	// A Package without Definitions of its own is not abstract.
+	// A Package without a Kind of its own is not abstract.
 	if loans := g.node("members/loans"); loans.Abstractness != 0 || loans.Distance != 1 {
 		t.Fatalf("members/loans %+v", loans)
 	}
@@ -182,9 +194,11 @@ func TestVetCoupling(t *testing.T) {
 	var links []string
 	for i := 0; i < MaxEfferent+1; i++ {
 		name := fmt.Sprintf("p%d", i)
+		pkg(r, name)
 		r[m+name+"/x.md"] = def("std/Rule", "X", "")
 		links = append(links, "[["+name+"/x]]")
 	}
+	pkg(r, "hub")
 	r[m+"hub/h.md"] = def("std/Rule", "Hub", strings.Join(links, " "))
 	expectWarning(t, vetCodes(t, r), "vet.coupling", "hub depends on 6 Packages")
 }
@@ -193,6 +207,7 @@ func TestVetUnstableDependency(t *testing.T) {
 	r := library(t)
 	// shelf-tools depends on catalog, which also depends on members: catalog's
 	// instability drops below shelf-tools'... and members depends on extra.
+	pkg(r, "extra", "reports", "audits", "x1", "x2")
 	r[m+"extra/e.md"] = def("std/Rule", "E", "")
 	r[m+"members/member.md"] = def("std/Concept", "Member", "Uses [[extra/e]].")
 	r[m+"reports/r.md"] = def("std/Rule", "R", "Counts [[members/member]].")
@@ -208,7 +223,9 @@ func TestVetUnstableDependency(t *testing.T) {
 func TestVetSizes(t *testing.T) {
 	r := library(t)
 	r[m+"catalog/book.md"] = def("std/Concept", "Book", "Lent to a [[members/member]]. "+strings.Repeat("word ", MaxDefinitionWords))
-	for i := 0; i <= MaxPackageSize; i++ {
+	// With its anchor, big has one Definition more than the limit.
+	pkg(r, "big")
+	for i := 0; i < MaxPackageSize; i++ {
 		r[m+fmt.Sprintf("big/d%02d.md", i)] = def("std/Rule", "D", "")
 	}
 	ds := vetCodes(t, r)
@@ -218,9 +235,17 @@ func TestVetSizes(t *testing.T) {
 
 func TestVetThinPackage(t *testing.T) {
 	r := library(t)
+	pkg(r, "wrapper", "wrapper/inner")
 	r[m+"wrapper/inner/i.md"] = def("std/Rule", "I", "")
+	// A folder that only sorts adds no level of Packages: members/rules is none.
+	r[m+"members/rules/late.md"] = def("std/Rule", "Late", "")
 	ds := vetCodes(t, r)
-	expectWarning(t, ds, "vet.thin_package", "wrapper has no Definitions of its own and only one child, wrapper/inner")
+	expectWarning(t, ds, "vet.thin_package", "wrapper holds only its anchor and one child, wrapper/inner")
+	for _, d := range ds {
+		if d.Code == "vet.thin_package" && !strings.Contains(d.Message, "wrapper holds") {
+			t.Fatalf("unexpected %v", d)
+		}
+	}
 }
 
 // vet.hub counts Definitions, Root included, and leaves Kinds out: it warns when
@@ -230,13 +255,14 @@ func TestVetHub(t *testing.T) {
 	r := library(t)
 	r[m+"Order.md"] = def("Kind", "Order", "An order.")
 	// members/member is linked by loan and book; nine orders more make 11 linkers,
-	// so a change lists 12 of 16 Definitions. loan-limit at Root is linked by 9
+	// so a change lists 12 of 20 Definitions. loan-limit at Root is linked by 9
 	// orders, which lists 10: not more than 10.
+	pkg(r, "orders")
 	for i := 0; i < 9; i++ {
 		r[m+fmt.Sprintf("orders/o%d.md", i)] = def("Order", "O", "For a [[members/member]], under the [[loan-limit]].")
 	}
 	ds := vetCodes(t, r)
-	expectWarning(t, ds, "vet.hub", "members/member.md: vet.hub: 11 Definitions link to members/member or are of it as Kind, so a change to it alone puts 12 of the spec's 16 back on the list")
+	expectWarning(t, ds, "vet.hub", "members/member.md: vet.hub: 11 Definitions link to members/member or are of it as Kind, so a change to it alone puts 12 of the spec's 20 back on the list")
 	for _, d := range ds {
 		if d.Code == "vet.hub" && !strings.Contains(d.File, "members/member") {
 			t.Fatalf("unexpected %v", d)
@@ -285,7 +311,7 @@ func TestVetPlacement(t *testing.T) {
 // counts goes above a tenth of the spec, and above 20.
 func TestVetHotspot(t *testing.T) {
 	r := library(t)
-	// members/member has fan-in 2 (loan and book); the spec has 6 Definitions.
+	// members/member has fan-in 2 (loan and book); the spec has 9 Definitions.
 	if got := noteLines(vetNotes(t, r, map[string]int{"members/member": 10, "catalog/shelf": 50}), "vet.hotspot"); len(got) != 0 {
 		t.Fatalf("2 × 10 is not above 20, and what nothing links is no hotspot: %v", got)
 	}
@@ -377,6 +403,24 @@ func TestVetUnlinkedMentions(t *testing.T) {
 			t.Fatalf("%s: structure %q, targets %v", n.File, n.Structure, n.Targets)
 		}
 	}
+	// An anchor carries its Package's name, which prose uses freely: "the
+	// catalog" names no Definition.
+	r[m+"catalog/shelf.md"] = def("std/Concept", "Shelf", "A part of the Catalog.")
+	for _, line := range noteLines(vetNotes(t, r, nil), "vet.unlinked_mention") {
+		if strings.Contains(line, "catalog/shelf.md") {
+			t.Fatalf("the name of a Package reported as a mention of its anchor: %s", line)
+		}
+	}
+	// The anchor's name still covers its words: "book catalog" does not name
+	// the book inside it.
+	r[m+"catalog/catalog.md"] = def("std/Package", "Book catalog", "What can be borrowed.")
+	r[m+"catalog/shelf.md"] = def("std/Concept", "Shelf", "A part of the book catalog.")
+	for _, line := range noteLines(vetNotes(t, r, nil), "vet.unlinked_mention") {
+		if strings.Contains(line, "catalog/shelf.md") {
+			t.Fatalf("a word inside the name of a Package reported: %s", line)
+		}
+	}
+	r[m+"catalog/catalog.md"] = def("std/Package", "Catalog", "What can be borrowed.")
 	// A linked Definition's name covers the words: "members" beside a linked
 	// members/member is no mention of members/member, nor of anything else.
 	r[m+"catalog/book.md"] = def("std/Concept", "Book", "Lent to [[members/member]]s; members queue.")
@@ -389,6 +433,7 @@ func TestVetUnlinkedMentions(t *testing.T) {
 
 func TestVetNoPaths(t *testing.T) {
 	r := library(t)
+	pkg(r, "orders")
 	r[m+"orders/o.md"] = def("std/Rule", "O", "[[members/member]]")
 	// catalog's page names no paths, so Root owns its file.
 	r[project.RegistryDir+"/catalog.md"] = table

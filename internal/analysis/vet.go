@@ -101,8 +101,8 @@ func Vet(p *project.Project, h History) Report {
 		if len(pkg.Definitions) > MaxPackageSize {
 			r.Warnings.Add("vet.package_size", file, 0, "%s has %d Definitions of its own (more than %d); consider splitting it", spec.PackageName(n.Path), len(pkg.Definitions), MaxPackageSize)
 		}
-		if n.Path != spec.RootPackage && len(pkg.Definitions) == 0 && len(pkg.Children) == 1 {
-			r.Warnings.Add("vet.thin_package", file, 0, "%s has no Definitions of its own and only one child, %s; it only adds a level", n.Path, pkg.Children[0])
+		if n.Path != spec.RootPackage && len(pkg.Definitions) == 1 && len(pkg.Children) == 1 {
+			r.Warnings.Add("vet.thin_package", file, 0, "%s holds only its anchor and one child, %s; it only adds a level", n.Path, pkg.Children[0])
 		}
 		// A Package owns the files its path patterns match; without any it owns
 		// none, and Root owns what is built for it.
@@ -192,7 +192,7 @@ func placement(sp *spec.Spec, d *spec.Definition, linkers map[string]bool) strin
 			continue
 		}
 		for !spec.Within(pkg, common) {
-			common = spec.ParentOf(common)
+			common = sp.Parent(common)
 		}
 	}
 	if first || common == d.Package {

@@ -37,6 +37,8 @@ The rules below each name their **signal**: a warning or a note of `markitect ve
 
 **Why.** A change in one area stays in one Package, and the links that cross Packages are the only places where areas touch. A reader of one Package learns one vocabulary.
 
+**The anchor.** Each Package says what it is in its anchor, the Definition of the folder's own name: what it is responsible for, so that no two Packages are responsible for the same thing, and what it keeps to itself. Where a Package's Definitions no longer read well in one folder, folders without an anchor sort them, by Kind for example. They make no Package and no dependency, so the cut by area stays the only one the tools see ([the language](spec-language.md#packages-and-folders)).
+
 **Bad.** Makerspace's Root is both the project's anchor and a module: its project page names "the shared policies module, which this folder describes". Formats, refusal codes, audit and authorization, with `list-audit-entries`, the only Operation at Root, sit beside the project's anchor and its project-wide Rules. Two areas share one Package, and one of them is the Package every other one inherits.
 
 **Good.** `members`, `equipment`, `billing`, `training`, `bookings`, `materials`, `safety` and `reporting` each hold one area: its Concepts, its Operations, its Interface and the Rules only it follows. `billing/charge` and `materials/purchase` are separate Concepts, each in the words of its area.

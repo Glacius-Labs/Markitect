@@ -17,6 +17,7 @@ func TestCompileEmptyTitleIsAnErrorNotACrash(t *testing.T) {
 func TestLinksWithWrappedOrCodeLabelsAreChecked(t *testing.T) {
 	_, ds := compile(t, map[string]string{
 		"project.md": def("std/Rule", "# Project\n\nSee [[b/x|a label that\nwraps]] and [[b/y|the `y` thing]] and [[b/z#Part|<em>z</em>]].\n"),
+		"b/b.md":     anchor("B"),
 		"b/x.md":     def("std/Rule", "# X\n"),
 		"b/y.md":     def("std/Rule", "# Y\n"),
 		"b/z.md":     def("std/Rule", "# Z\n"),

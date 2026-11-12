@@ -15,21 +15,21 @@ internal/catalog/{book.go, loans.go, loans_test.go}
   registry/{members.md, catalog.md}
   spec/
     project.md  layout.md  error-body.md
-    members/{member, member-id, email, loan-limit, register-member, post-members}.md
-    catalog/{book, borrow-book, post-loans}.md
+    members/{members, member, member-id, email, loan-limit, register-member, post-members}.md
+    catalog/{catalog, book, borrow-book, post-loans}.md
 ```
 
 `manifest.yaml` names the Libraries; run `markitect tidy` after changing it:
 
 ```yaml
 libraries:
-  std: 1.1.0
-  rest: 1.1.0
+  std: 1.2.0
+  rest: 1.2.0
 ```
 
 ## Root: anchor and Rules
 
-Root holds what binds the whole project. The anchor names the Packages by link and says what is out of scope.
+Root holds what binds the whole project. The project's anchor names the Packages by link and says what is out of scope.
 
 `spec/project.md`
 
@@ -77,7 +77,20 @@ The project needs no Kind of its own. A project Kind earns its place when severa
 
 ## Package members
 
-Concepts, the member's identity, a value rule that is internal, a Rule only this Package follows, a Feature and an Endpoint. Links are full paths even inside the Package.
+The anchor, Concepts, the member's identity, a value rule that is internal, a Rule only this Package follows, a Feature and an Endpoint. Links are full paths even inside the Package.
+
+`spec/members/members.md` is the Package's anchor: the Definition that carries the folder's name makes the folder a Package, and says what it is responsible for and what it keeps to itself. A folder without one, such as `spec/members/endpoints/`, would only sort Definitions of `members`.
+
+```markdown
+---
+kind: std/Package
+---
+# Members
+
+Who is registered with the library, and how much one person may borrow at once.
+
+It keeps to itself how an address is compared with another.
+```
 
 `spec/members/member.md` (after the cycle below is fixed)
 
@@ -161,6 +174,19 @@ Exposes [[members/register-member]] over HTTP.
 ## Package catalog
 
 `catalog` needs members (to borrow, a member must be active and under the limit), so it depends on `members`; `members` must never depend back.
+
+`spec/catalog/catalog.md` is its anchor.
+
+```markdown
+---
+kind: std/Package
+---
+# Catalog
+
+Which titles the library owns, and who holds each copy.
+
+It keeps to itself how a loan is stored.
+```
 
 `spec/catalog/book.md`
 
@@ -252,7 +278,7 @@ paths:
 
 | File | Realizes | Why |
 |---|---|---|
-| `internal/members/member.go` | [[members/member]] [[members/member-id]] [[members/email]] [[members/register-member]] [[members/loan-limit]] | Member type, registration and the loan limit |
+| `internal/members/member.go` | [[members/members]] [[members/member]] [[members/member-id]] [[members/email]] [[members/register-member]] [[members/loan-limit]] | Member type, registration and the loan limit |
 | `internal/members/http.go` | [[members/post-members]] [[error-body]] | The `POST /members` handler |
 | `internal/members/member_test.go` | [[members/member]] [[members/register-member]] [[members/loan-limit]] | Tests |
 ```
@@ -268,7 +294,7 @@ paths:
 
 | File | Realizes | Why |
 |---|---|---|
-| `internal/catalog/book.go` | [[catalog/book]] | Book type |
+| `internal/catalog/book.go` | [[catalog/catalog]] [[catalog/book]] | Book type |
 | `internal/catalog/loans.go` | [[catalog/borrow-book]] [[catalog/post-loans]] [[error-body]] | Borrowing and the `POST /loans` handler |
 | `internal/catalog/loans_test.go` | [[catalog/borrow-book]] [[members/loan-limit]] | Tests |
 ```
@@ -284,20 +310,20 @@ LICENSE
 
 ```text
 $ markitect check
-ok: 12 Definitions in 3 Packages, 10 files accounted
+ok: 14 Definitions in 3 Packages, 10 files accounted
 ```
 
 `markitect vet` shows no warnings. After the limit in `loan-limit.md` changes from `3` to `5`, `markitect status` lists `members/loan-limit` and `catalog/borrow-book`, the one Definition that links to it, each with the files the registry names for it, such as `internal/members/member.go` and `internal/catalog/loans.go`. The member does not link back to the limit, so it stays off the list.
 
 ## Other errors you will meet
 
-The anchor gains the line `Staff lend books with [[catalog/post-loans]].`:
+The project's anchor gains the line `Staff lend books with [[catalog/post-loans]].`:
 
 ```text
 .markitect/spec/project.md:15: link.downward: Root links down to catalog/post-loans inside its child Package catalog; a parent may name a child Package but not a Definition inside it (move the shared concept up, or let the child link to a need stated here)
 ```
 
-The anchor may name the Package, `[[catalog]]`, not a Definition inside it.
+The project's anchor may name the Package, `[[catalog]]`, not a Definition inside it.
 
 `catalog/borrow-book` gains the bullet `- The receipt goes to the member's [[members/email]].`:
 

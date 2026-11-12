@@ -129,7 +129,7 @@ func (p *plain) verifyAll() {
 func TestStatusEmptiesAsTheReviewerRecords(t *testing.T) {
 	p := newPlain(t)
 	st := p.status(false)
-	if listed(st) != "catalog/book,loan-limit,members/loans/loan,members/member,project" || st.Clean() {
+	if listed(st) != "catalog/book,catalog/catalog,loan-limit,members/loans/loan,members/loans/loans,members/member,members/members,project" || st.Clean() {
 		t.Fatalf("first status:\n%s", st.Text())
 	}
 	for _, it := range st.Items {
@@ -137,12 +137,12 @@ func TestStatusEmptiesAsTheReviewerRecords(t *testing.T) {
 			t.Fatalf("%+v", it)
 		}
 	}
-	has(t, st.Text(), "To verify (5 of 5 Definitions)", "members/loans/loan@"+p.item(st, "members/loans/loan").Fingerprint+"\n", "no record yet", "look at: .markitect/spec/members/loans/loan.md, src/members/loans/loan.go")
+	has(t, st.Text(), "To verify (8 of 8 Definitions)", "members/loans/loan@"+p.item(st, "members/loans/loan").Fingerprint+"\n", "no record yet", "look at: .markitect/spec/members/loans/loan.md, src/members/loans/loan.go")
 	p.verifyAll()
-	has(t, p.status(false).Text(), "Nothing to verify: the spec compiles, and all 5 Definitions are verified at their current inputs.")
+	has(t, p.status(false).Text(), "Nothing to verify: the spec compiles, and all 8 Definitions are verified at their current inputs.")
 	rec := p.read(project.ReviewFile)
 	lines := strings.Split(strings.TrimSuffix(rec, "\n"), "\n")
-	if len(lines) != 5 || !strings.HasPrefix(lines[0], `{"definition":"catalog/book","verdict":"ok","inputs":{`) {
+	if len(lines) != 8 || !strings.HasPrefix(lines[0], `{"definition":"catalog/book","verdict":"ok","inputs":{`) {
 		t.Fatalf("record:\n%s", rec)
 	}
 	has(t, rec, `"file:src/members/loans/loan.go":"sha256:`, `"kind:std/Rule":"sha256:`, `"link:members/member":"sha256:`, `"evidence":["src/members/loans/loan.go:1"]`)
@@ -151,7 +151,7 @@ func TestStatusEmptiesAsTheReviewerRecords(t *testing.T) {
 		t.Fatalf("%+v", parsed)
 	}
 	// --all lists every Definition again, and so is never clean while there is one.
-	if all := p.status(true); len(all.Items) != 5 || all.Clean() || all.Items[0].State != run.StateOK {
+	if all := p.status(true); len(all.Items) != 8 || all.Clean() || all.Items[0].State != run.StateOK {
 		t.Fatalf("--all:\n%s", all.Text())
 	}
 }
@@ -170,7 +170,7 @@ func TestStatusCountsItemsPerPackage(t *testing.T) {
 	if len(st.Packages) != 4 || st.Packages[0].Package != "Root" {
 		t.Fatalf("Packages: %+v", st.Packages)
 	}
-	for name, want := range map[string][2]int{"Root": {2, 2}, "catalog": {1, 1}, "members": {1, 1}, "members/loans": {1, 1}} {
+	for name, want := range map[string][2]int{"Root": {2, 2}, "catalog": {2, 2}, "members": {2, 2}, "members/loans": {2, 2}} {
 		if got[name].Definitions != want[0] || got[name].Items != want[1] || got[name].SpecProblems != 0 {
 			t.Errorf("%s: %+v", name, got[name])
 		}
@@ -194,11 +194,11 @@ func TestStatusCountsItemsPerPackage(t *testing.T) {
 		t.Fatal(text)
 	}
 	for _, pk := range p.status(false).Packages {
-		if pk.Package == "members/loans" && (pk.Items != 1 || pk.SpecProblems != 1) {
+		if pk.Package == "members/loans" && (pk.Items != 2 || pk.SpecProblems != 1) {
 			t.Fatalf("after a spec-problem: %+v", pk)
 		}
 	}
-	if broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 1.1.0\n", project.SpecDir + "/x.md": "no front matter\n"}).status(false); len(broken.Packages) != 0 {
+	if broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 1.2.0\n", project.SpecDir + "/x.md": "no front matter\n"}).status(false); len(broken.Packages) != 0 {
 		t.Fatalf("a spec with errors has Packages: %+v", broken.Packages)
 	}
 }
@@ -224,7 +224,7 @@ func TestStatusOfOnePackage(t *testing.T) {
 		}
 		return st
 	}
-	for name, want := range map[string]string{"Root": "loan-limit,project", "catalog": "catalog/book", "members": "members/member", "members/loans": "members/loans/loan"} {
+	for name, want := range map[string]string{"Root": "loan-limit,project", "catalog": "catalog/book,catalog/catalog", "members": "members/member,members/members", "members/loans": "members/loans/loan,members/loans/loans"} {
 		st := of(name, false)
 		n := strings.Count(want, ",") + 1
 		if listed(st) != want || st.Definitions != n || st.Package != name || len(st.Errors) != 0 || st.ErrorsElsewhere != 1 || len(st.Packages) != len(whole.Packages) || st.Clean() {
@@ -235,16 +235,17 @@ func TestStatusOfOnePackage(t *testing.T) {
 			t.Errorf("%s lists the errors in the realization:\n%s", name, st.Text())
 		}
 	}
-	it := of("catalog", false).Items[0]
-	if text, ok := p.review(it.Definition, run.VerdictOK, it.Fingerprint, []string{"src/catalog/book.go:1"}, ""); !ok {
-		t.Fatal(text)
+	for _, it := range of("catalog", false).Items {
+		if text, ok := p.review(it.Definition, run.VerdictOK, it.Fingerprint, []string{"src/catalog/book.go:1"}, ""); !ok {
+			t.Fatal(text)
+		}
 	}
 	st := of("catalog", false)
 	if !st.Clean() || p.status(false).Clean() {
 		t.Fatalf("after verifying the Package:\n%s", st.Text())
 	}
-	has(t, st.Text(), "Nothing to verify in Package catalog: the spec compiles, and its one Definition is verified at its current inputs.", "Not listed: 1 error")
-	if all := of("catalog", true); listed(all) != "catalog/book" || all.Items[0].State != run.StateOK {
+	has(t, st.Text(), "Nothing to verify in Package catalog: the spec compiles, and all 2 Definitions are verified at their current inputs.", "Not listed: 1 error")
+	if all := of("catalog", true); listed(all) != "catalog/book,catalog/catalog" || all.Items[0].State != run.StateOK {
 		t.Fatalf("--all in a Package:\n%s", all.Text())
 	}
 	// A line of the record markitect cannot read belongs to no Package either:
@@ -259,9 +260,90 @@ func TestStatusOfOnePackage(t *testing.T) {
 		t.Fatalf("a Package the spec does not have: %v", err)
 	}
 	// A spec with errors has no list to limit, whatever Package is asked for.
-	broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 1.1.0\n", project.SpecDir + "/x.md": "no front matter\n"})
+	broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 1.2.0\n", project.SpecDir + "/x.md": "no front matter\n"})
 	if st, err := broken.engine.Status(context.Background(), run.StatusRequest{Dir: broken.dir, Package: "nowhere"}); err != nil || len(st.SpecErrors) == 0 {
 		t.Fatalf("a spec with errors: %v\n%s", err, st.Text())
+	}
+}
+
+// A folder without an anchor only sorts: the Definitions in it
+// belong to the Package above, to its Definitions and its items, also once one
+// is gone, and the folder is no Package of its own in status.
+func TestStatusCountsASortFolderForThePackageAbove(t *testing.T) {
+	files := library()
+	files[m+"members/rules/limit.md"] = def("std/Rule", "Limit", "At most `5` open loans a [[members/member]].")
+	files[project.RegistryDir+"/members.md"] += "| src/members/limit.go | [[members/rules/limit]] | Limit |\n"
+	files["src/members/limit.go"] = "package members\n"
+	p := newPlainOf(t, files)
+	of := func(name string) run.Status {
+		t.Helper()
+		st, err := p.engine.Status(context.Background(), run.StatusRequest{Dir: p.dir, Package: name})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return st
+	}
+	members := func(st run.Status) run.PackageItems {
+		t.Helper()
+		for _, pk := range st.Packages {
+			if pk.Package == "members" {
+				return pk
+			}
+			if strings.HasPrefix(pk.Package, "members/") && pk.Package != "members/loans" {
+				t.Fatalf("a folder that only sorts is a Package: %+v", st.Packages)
+			}
+		}
+		t.Fatalf("no Package members: %+v", st.Packages)
+		return run.PackageItems{}
+	}
+	st := p.status(false)
+	if pk := members(st); pk.Definitions != 3 || pk.Items != 3 || len(st.Packages) != 4 {
+		t.Fatalf("members with a sort folder: %+v of %+v", pk, st.Packages)
+	}
+	if of("members").Definitions != 3 || listed(of("members")) != "members/member,members/members,members/rules/limit" {
+		t.Fatalf("status of members:\n%s", of("members").Text())
+	}
+	if _, err := p.engine.Status(context.Background(), run.StatusRequest{Dir: p.dir, Package: "members/rules"}); !errors.Is(err, run.ErrUsage) {
+		t.Fatalf("a sort folder is no Package to ask for: %v", err)
+	}
+	// Gone, the Definition is still counted for the Package above its folder.
+	p.verifyAll()
+	p.remove(m + "members/rules/limit.md")
+	st = p.status(false)
+	gone := p.item(st, "members/rules/limit")
+	if gone.State != run.StateGone || len(st.Packages) != 4 {
+		t.Fatalf("a gone Definition of a sort folder:\n%s", st.Text())
+	}
+	if pk := members(st); pk.Definitions != 2 || pk.Items != 1 {
+		t.Fatalf("the gone item is not members': %+v", pk)
+	}
+	if only := of("members"); listed(only) != "members/rules/limit" || only.Definitions != 2 || listed(of("members/loans")) != "" || listed(of("Root")) != "" {
+		t.Fatalf("status of members:\n%s", only.Text())
+	}
+	// So are the Definitions of a whole Package that is gone: they count for
+	// the nearest Package above that exists, and the gone one is not listed.
+	p.remove(m + "members/loans/loans.md")
+	p.remove(m + "members/loans/loan.md")
+	after := p.status(false)
+	if len(after.Packages) != 3 || p.item(after, "members/loans/loan").State != run.StateGone {
+		t.Fatalf("a gone Package:\n%s", after.Text())
+	}
+	if only := of("members"); !strings.Contains(listed(only), "members/loans/loan") || !strings.Contains(listed(only), "members/loans/loans") {
+		t.Fatalf("a gone Package's Definitions are not members':\n%s", only.Text())
+	}
+	// A Package at the top that is gone is not listed either: its Definitions
+	// count for Root, and it is no Package to ask for.
+	p.write(m+"project.md", def("std/Project", "Library", "Parts: [[members]]."))
+	p.remove(m + "catalog/catalog.md")
+	p.remove(m + "catalog/book.md")
+	if last := p.status(false); len(last.Packages) != 2 || p.item(last, "catalog/book").State != run.StateGone {
+		t.Fatalf("a gone Package at the top:\n%s", last.Text())
+	}
+	if root := of("Root"); !strings.Contains(listed(root), "catalog/book") || !strings.Contains(listed(root), "catalog/catalog") {
+		t.Fatalf("a gone top Package's Definitions are not Root's:\n%s", root.Text())
+	}
+	if _, err := p.engine.Status(context.Background(), run.StatusRequest{Dir: p.dir, Package: "catalog"}); !errors.Is(err, run.ErrUsage) {
+		t.Fatalf("a gone Package is no Package to ask for: %v", err)
 	}
 }
 
@@ -280,12 +362,12 @@ func TestWhatAChangeReaches(t *testing.T) {
 		}, "loan-limit"},
 		{"a changed file reaches what its row names", func(p *plain) {
 			p.write("src/members/loans/loan.go", limit3)
-		}, "loan-limit,members/loans/loan"},
+		}, "loan-limit,members/loans/loan,members/loans/loans"},
 		{"a row that gains a Definition reaches it", func(p *plain) {
-			p.write(project.RegistryDir+"/members.md", "---\npaths: [src/members/**]\n---\n"+table+"| src/members/member.go | [[members/member]], [[loan-limit]] | Member |\n")
+			p.write(project.RegistryDir+"/members.md", "---\npaths: [src/members/**]\n---\n"+table+"| src/members/member.go | [[members/member]], [[members/members]], [[loan-limit]] | Member |\n")
 		}, "loan-limit"},
 		{"a row that drops a Definition reaches it, though the file did not change", func(p *plain) {
-			p.write(project.RegistryDir+"/members/loans.md", "---\npaths: [src/members/loans/**]\n---\n"+table+"| src/members/loans/loan.go | [[members/loans/loan]] | Loans |\n")
+			p.write(project.RegistryDir+"/members/loans.md", "---\npaths: [src/members/loans/**]\n---\n"+table+"| src/members/loans/loan.go | [[members/loans/loan]], [[members/loans/loans]] | Loans |\n")
 		}, "loan-limit"},
 		{"a changed row reason reaches nothing", func(p *plain) {
 			p.write(project.RootPage, table+"| README.md | [[project]] | The overview |\n")
@@ -335,7 +417,7 @@ func TestAChangedKindReachesItsDefinitions(t *testing.T) {
 // of its Kinds is to verify.
 func TestALibraryCountsByItsLockDigest(t *testing.T) {
 	files := library()
-	files[project.ManifestFile] = "libraries:\n  std: 1.1.0\n  web: 0.1.0\n"
+	files[project.ManifestFile] = "libraries:\n  std: 1.2.0\n  web: 0.1.0\n"
 	files[project.LibraryDir+"/web/Page.md"] = "---\nkind: Kind\n---\n# Page\n"
 	files[project.LibraryDir+"/web/Form.md"] = "---\nkind: Kind\n---\n# Form\n"
 	files[m+"catalog/search.md"] = def("web/Form", "Search", "Finds a [[catalog/book]].")
@@ -431,7 +513,7 @@ func TestMarkRefusesAStaleFingerprintAndMissingEvidence(t *testing.T) {
 // Definition back on the list.
 func TestChangedEvidenceIsToVerify(t *testing.T) {
 	p := newPlain(t)
-	p.write(project.RegistryDir+"/members.md", "---\npaths: [src/members/**]\n---\n"+table+"| src/members/member.go | [[members/member]] | Member |\n| src/members/member_test.go | [[members/member]] | Test |\n")
+	p.write(project.RegistryDir+"/members.md", "---\npaths: [src/members/**]\n---\n"+table+"| src/members/member.go | [[members/member]], [[members/members]] | Member |\n| src/members/member_test.go | [[members/member]] | Test |\n")
 	p.write("src/members/member_test.go", "package members\n")
 	p.write("README.md", "# Library\n\nThe loan limit is 5.\n")
 	p.verifyAll()
@@ -585,7 +667,7 @@ func TestAGoneDefinition(t *testing.T) {
 	}
 	has(t, p.status(false).Text(), "recorded: fail: src/catalog/shelf.go is still there")
 	p.remove("src/catalog/shelf.go")
-	p.write(project.RegistryDir+"/catalog.md", "---\npaths: [src/catalog/**]\n---\n"+table+"| src/catalog/book.go | [[catalog/book]] | Book |\n")
+	p.write(project.RegistryDir+"/catalog.md", "---\npaths: [src/catalog/**]\n---\n"+table+"| src/catalog/book.go | [[catalog/book]], [[catalog/catalog]] | Book |\n")
 	st = p.status(false)
 	if listed(st) != "catalog/shelf" || len(st.Errors) != 0 {
 		t.Fatalf("%s", st.Text())
@@ -607,7 +689,7 @@ func TestMergedLines(t *testing.T) {
 	p.verifyAll()
 	before := p.read(project.ReviewFile)
 	p.write("src/members/loans/loan.go", limit3)
-	for _, id := range []string{"loan-limit", "members/loans/loan"} {
+	for _, id := range []string{"loan-limit", "members/loans/loan", "members/loans/loans"} {
 		if _, ok := p.review(id, run.VerdictOK, p.item(p.status(false), id).Fingerprint, []string{"src/members/loans/loan.go:3"}, ""); !ok {
 			t.Fatal("not recorded")
 		}
@@ -635,7 +717,7 @@ func TestMergedLines(t *testing.T) {
 		t.Fatal("not recorded")
 	}
 	rec := p.read(project.ReviewFile)
-	if n := len(strings.Split(strings.TrimSuffix(rec, "\n"), "\n")); n != 5 {
+	if n := len(strings.Split(strings.TrimSuffix(rec, "\n"), "\n")); n != 8 {
 		t.Fatalf("not written clean, %d lines:\n%s", n, rec)
 	}
 	if !p.status(false).Clean() {
@@ -653,7 +735,7 @@ func TestAnUnreadableLine(t *testing.T) {
 	if st.Clean() || len(st.Unreadable) != 2 {
 		t.Fatalf("%s", st.Text())
 	}
-	has(t, st.Text(), ".markitect/review.sum:6: record.unreadable: ", ".markitect/review.sum:7: record.unreadable: ")
+	has(t, st.Text(), ".markitect/review.sum:9: record.unreadable: ", ".markitect/review.sum:10: record.unreadable: ")
 	at := p.item(p.status(true), "loan-limit").Fingerprint
 	if text, ok := p.review("loan-limit", run.VerdictOK, at, []string{"README.md"}, ""); ok || !strings.Contains(text, "cannot read every line") {
 		t.Fatalf("%s", text)

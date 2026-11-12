@@ -24,7 +24,7 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 	var pkg string
 	fs := c.flags("status", &o)
 	fs.BoolVar(&all, "all", false, "list every Definition, to verify everything again")
-	fs.StringVar(&pkg, "package", "", "list only the items whose Definition lies directly in this Package, Root for the one at the top")
+	fs.StringVar(&pkg, "package", "", "list only the items whose Definition belongs to this Package, Root for the one at the top")
 	if positional, err := parse(fs, args); err != nil {
 		return Misused, err
 	} else if len(positional) != 0 {

@@ -30,14 +30,16 @@ func TestNotesLine(t *testing.T) {
 	}
 }
 
-// doc of a Package shows its public Definitions, what it publishes, apart from
-// its internal ones, and leaves out a heading with nothing under it.
+// doc of a Package opens with the text of its anchor, then shows its public
+// Definitions, what it publishes, apart from its internal ones, and leaves out
+// a heading with nothing under it.
 func TestRenderDocPackageSeparatesPublicFromInternal(t *testing.T) {
-	got := renderDocPackage(analysis.DocPackage{Name: "members", Parent: "Root", Definitions: []analysis.ListedDefinition{
+	got := renderDocPackage(analysis.DocPackage{Name: "members", Parent: "Root", Anchor: "members/members", Text: "# Members\n\nWho may borrow.\n", Definitions: []analysis.ListedDefinition{
 		{ID: "members/limit", Title: "Limit", Kind: "std/Rule", Internal: true},
 		{ID: "members/member", Title: "Member", Kind: "std/Concept"},
 	}})
 	want := "Package members, in Root\n" +
+		"\n# Members\n\nWho may borrow.\n" +
 		"\nPublic Definitions:\n  members/member: Member (std/Concept)\n" +
 		"\nInternal Definitions:\n  members/limit: Limit (std/Rule)\n"
 	if got != want {
