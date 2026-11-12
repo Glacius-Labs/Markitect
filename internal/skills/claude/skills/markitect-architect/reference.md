@@ -240,7 +240,7 @@ What a description of a product covers, by folder, in the order of the interview
 - What runs, how its parts talk and where it runs: Components, Connectors and Deployments in `architecture/runtime/`. How a Component starts and stops, and what it does for its own upkeep, are Rules in its `rules/`. `architecture/runtime/` is a Package once it names what lies in the areas, since it then depends on them, and nothing in an area links into it; a Rule that an area relies on lies in `architecture/rules/`.
 
 **`scenarios/`**
-- The paths through several areas worth checking: Scenarios in `scenarios/`. A Scenario is verified by a test that runs what the project delivers, the built program started as the spec says, and walks it, so state each step so that it can be taken through the interface its Actor uses.
+- The paths through several areas worth checking: Scenarios in `scenarios/`. A Scenario is verified by a test that runs what the project delivers, the built program started as the spec says, and walks it, so state each step so that it can be taken through the interface its Actor uses. Where a Scenario or a Reaction depends on time passing, state in a Rule of `architecture/rules/` how a test sets the time of the running program; without it such a Scenario stays a question for the owner.
 
 **`administration/`**
 - What the person who runs the system does to it, such as installing, deploying and rolling back, backing up and restoring, upgrading and finding a fault: Tasks in `administration/tasks/`.
