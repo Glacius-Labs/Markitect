@@ -214,7 +214,9 @@ func TestStatusOfOneSlice(t *testing.T) {
 	has(t, st.Plan(), "so there is no list until it compiles")
 }
 
-// Nothing to build is no slice.
+// Nothing to build is no slice, and neither is a list of nothing but what
+// waits for the owner. An error in the realization alone is one slice: a
+// builder settles it.
 func TestNothingToBuildIsNoSlice(t *testing.T) {
 	p := newPlain(t)
 	p.verifyAll()
@@ -223,4 +225,29 @@ func TestNothingToBuildIsNoSlice(t *testing.T) {
 		t.Fatalf("slices: %+v", st.Slices)
 	}
 	has(t, st.Plan(), "Nothing to verify")
+
+	p.write("src/unlisted.go", "package src\n")
+	st = p.sliced(1)
+	same(t, plan(st), []string{"rest 0: markitect status"})
+	has(t, st.Plan(), "The list is built in one slice (0 items and 1 error in the realization):", "1. markitect status\n")
+	p.remove("src/unlisted.go")
+
+	p.write(m+"members/member.md", def("std/Concept", "Member", "A person who may borrow."))
+	it := p.item(p.status(false), "members/member")
+	if text, ok := p.review(it.Definition, run.VerdictSpecProblem, it.Fingerprint, nil, "who may borrow?"); !ok {
+		t.Fatal(text)
+	}
+	for _, other := range p.status(false).Items {
+		if other.State == run.StateSpecProblem {
+			continue
+		}
+		if text, ok := p.review(other.Definition, run.VerdictOK, other.Fingerprint, []string{"README.md:1"}, ""); !ok {
+			t.Fatal(text)
+		}
+	}
+	st = p.sliced(1)
+	if len(st.Slices) != 0 || !st.ForTheOwner() {
+		t.Fatalf("only a spec-problem left: %+v\n%s", st.Slices, st.Text())
+	}
+	has(t, st.Plan(), "Only spec-problems are left")
 }

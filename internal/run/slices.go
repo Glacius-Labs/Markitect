@@ -90,8 +90,10 @@ func packageOrder(sp *spec.Spec) []string {
 // planSlices cuts the items into the slices of a build. A list of at most
 // size items is one slice. A longer one goes Package by Package in the
 // order of their dependencies, neighbours joined while they stay within
-// size, and ends with a slice for the rest.
-func planSlices(sp *spec.Spec, items []Item, size int) []Slice {
+// size, and ends with a slice for the rest. With no item a builder can
+// settle, errors in the realization are still one slice of work, and a list
+// of nothing but what waits for the owner is none.
+func planSlices(sp *spec.Spec, items []Item, errors, size int) []Slice {
 	if size <= 0 {
 		size = SliceSize
 	}
@@ -106,7 +108,7 @@ func planSlices(sp *spec.Spec, items []Item, size int) []Slice {
 			perPackage[sp.PackageOf(it.Definition)]++
 		}
 	}
-	if total == 0 {
+	if total == 0 && errors == 0 {
 		return nil
 	}
 	rest := Slice{Packages: []string{}, Through: []string{}, Items: total, Rest: true, Command: "markitect status"}
@@ -201,7 +203,11 @@ func (s Status) Plan() string {
 	var b strings.Builder
 	if len(s.Slices) == 1 {
 		n := s.Slices[0].Items
-		fmt.Fprintf(&b, "The list is built in one slice (%d %s):\n\n1. %s\n", n, plural(n, "item", "items"), s.Slices[0].Command)
+		what := fmt.Sprintf("%d %s", n, plural(n, "item", "items"))
+		if e := len(s.Errors); e > 0 {
+			what += fmt.Sprintf(" and %d %s in the realization", e, plural(e, "error", "errors"))
+		}
+		fmt.Fprintf(&b, "The list is built in one slice (%s):\n\n1. %s\n", what, s.Slices[0].Command)
 		return b.String()
 	}
 	fmt.Fprintf(&b, "The list is built in %d slices, one after the other, each built and verified before the next:\n\n", len(s.Slices))

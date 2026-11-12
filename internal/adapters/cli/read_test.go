@@ -42,8 +42,8 @@ func TestRenderReadIsOneTextToRead(t *testing.T) {
 // A heading of a text moves below the heading it stands under and never
 // deeper than six; what only looks like one stays.
 func TestHeadingsBelow(t *testing.T) {
-	text := "## One\n\n#tag and # in a line\n\n    # indented code\n\n~~~\n## fenced\n~~~\n\n#### Deep\n"
-	want := "#### One\n\n#tag and # in a line\n\n    # indented code\n\n~~~\n## fenced\n~~~\n\n###### Deep\n"
+	text := "## One\n\n#tag and # in a line\n\n    # indented code\n\n~~~\n## fenced\n~~~\n\n````\n```\n## in a long fence\n````\n\nUnderlined\n----------\n\n- an item\n---\n\n#### Deep\n"
+	want := "#### One\n\n#tag and # in a line\n\n    # indented code\n\n~~~\n## fenced\n~~~\n\n````\n```\n## in a long fence\n````\n\n#### Underlined\n\n\n- an item\n---\n\n###### Deep\n"
 	if got := headingsBelow(text, 3); got != want {
 		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
 	}

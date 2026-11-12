@@ -13,4 +13,4 @@ A Scenario Definition describes one path a [[std/Stakeholder]] takes through the
 
 What holds at the end are its [[std/Outcome|Outcomes]], under `outcomes/`.
 
-Verified when it has been run: a test starts the system as it is built and takes each step as the Actor would, through the interface the Actor uses, and each Outcome holds at the end. Reading the code verifies no Scenario.
+Verified when it has been run: a test runs what the project delivers, the built program where it delivers one, started the way the spec says it is started, and takes each step as the Actor would, through the interface the Actor uses, and each Outcome holds at the end. A test that wires parts of the system together inside itself verifies no Scenario, and neither does reading the code.

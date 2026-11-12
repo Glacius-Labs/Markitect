@@ -111,8 +111,9 @@ func renderRead(folder string, entries []analysis.ReadEntry) string {
 
 // headingsBelow moves the headings of a text below a heading of a level,
 // so that a section of a Definition reads as a part of it: a heading of
-// level n becomes one of level+n-1, and none goes deeper than six. Lines in
-// a fenced block stay as they are.
+// level n becomes one of level+n-1, and none goes deeper than six. A line
+// underlined with hyphens is a heading of level two, and is written with
+// number signs. Lines in a fenced block stay as they are.
 func headingsBelow(text string, level int) string {
 	lines := strings.Split(text, "\n")
 	fence := ""
@@ -122,14 +123,22 @@ func headingsBelow(text string, level int) string {
 			continue
 		}
 		if fence != "" {
+			// A fence ends with a line of at least as many of its marks.
 			if strings.HasPrefix(trimmed, fence) && strings.Trim(trimmed, fence[:1]+" ") == "" {
 				fence = ""
 			}
 			continue
 		}
 		if strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~") {
-			fence = trimmed[:3]
+			fence = trimmed[:len(trimmed)-len(strings.TrimLeft(trimmed, trimmed[:1]))]
 			continue
+		}
+		if under := strings.TrimRight(trimmed, " "); i > 0 && under != "" && strings.Trim(under, "-") == "" {
+			if above := strings.TrimSpace(lines[i-1]); above != "" && !strings.HasPrefix(above, "#") && !strings.HasPrefix(above, "- ") && !strings.HasPrefix(above, "|") {
+				lines[i-1] = strings.Repeat("#", min(level+1, 6)) + " " + above
+				lines[i] = ""
+				continue
+			}
 		}
 		n := len(trimmed) - len(strings.TrimLeft(trimmed, "#"))
 		if n == 0 || n > 6 || (len(trimmed) > n && trimmed[n] != ' ') {

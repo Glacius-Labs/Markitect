@@ -185,7 +185,7 @@ func (e *Engine) Status(_ context.Context, req StatusRequest) (Status, error) {
 		return st, err
 	}
 	if len(st.SpecErrors) == 0 {
-		st.Slices = planSlices(f.cur.Spec, st.Items, req.SliceSize)
+		st.Slices = planSlices(f.cur.Spec, st.Items, len(st.Errors), req.SliceSize)
 	}
 	switch {
 	case len(req.Slice) > 0:
