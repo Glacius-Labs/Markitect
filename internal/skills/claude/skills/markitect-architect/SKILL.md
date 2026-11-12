@@ -91,6 +91,8 @@ Use the tools while you work, not only at the end:
 - `markitect check --spec` after every few files. It looks only at the spec, which is what a change of the spec asks, and prints every error as `file:line: code: message`; fix the first ones and run it again. Plain `markitect check` also lists what the project does not realize yet, which is the build's work and not an error of your change.
 - `markitect doc TARGET` before you rename, move or delete a Definition: it shows who links to it and which files realize it.
 - `markitect list --deps` when you add a link between Packages: it shows the new dependency and the links behind it.
+- `markitect list --kinds` to see what the spec describes so far: every Kind with how many Definitions it has, and the Kinds it has none of.
+- `markitect doc --read FOLDER` when the owner wants to read what you wrote: it prints everything at or below a folder as one text, the whole spec without a folder.
 - `markitect vet` at the end: coupling, size, hubs. Fix each warning or give one line why it stays. Its last line counts its notes; `markitect vet --strict` lists them. Link each unlinked mention the Definition relies on, and leave the ones that are ordinary words.
 - `markitect status` on your change: it lists the items the change puts back on the list to verify. Give the owner that list; it is what the builder will work on.
 - After a manifest or Library change run `markitect tidy` and include the new `lock.yaml` in the diff.

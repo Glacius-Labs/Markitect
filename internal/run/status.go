@@ -47,6 +47,9 @@ type Item struct {
 	// Verdicts are the different verdicts of a conflict.
 	Verdicts []string `json:"verdicts,omitempty"`
 	Look     []string `json:"look,omitempty"`
+	// Last says that the item is built and verified last, on the whole
+	// project: its Kind declares so, or that no file realizes it.
+	Last bool `json:"last,omitempty"`
 }
 
 // Status is what is to verify in a project folder.
@@ -82,6 +85,13 @@ type Status struct {
 	// Package leaves out, since it belongs to no Package: the errors in the
 	// realization and the lines of the record markitect cannot read.
 	ErrorsElsewhere, UnreadableElsewhere int
+	// Slices are the slices a build of the list goes in, in order (DEC-112);
+	// empty when no builder can settle anything.
+	Slices []Slice
+	// Slice names the Packages of the one slice the list is limited to, if
+	// any, and ItemsElsewhere counts the items that list leaves out.
+	Slice          []string
+	ItemsElsewhere int
 }
 
 // PackageItems is one Package with the items of status whose Definition
@@ -135,6 +145,11 @@ type StatusRequest struct {
 	// Package limits the list to the items whose Definition belongs to the
 	// Package of that name, as a strand of a parallel run works on them.
 	Package string
+	// Slice limits the list to one slice of a build: to the items of the
+	// named Packages that are not verified last.
+	Slice []string
+	// SliceSize is how many items a slice holds at most; 0 means SliceSize.
+	SliceSize int
 }
 
 // Status says what is to verify in the folder, and changes nothing.
@@ -164,11 +179,17 @@ func (e *Engine) Status(_ context.Context, req StatusRequest) (Status, error) {
 	if err != nil {
 		return st, err
 	}
-	if req.Package == "" {
-		st.Questions = f.set[project.QuestionsFile]
-		return st, nil
+	if len(st.SpecErrors) == 0 {
+		st.Slices = planSlices(f.cur.Spec, st.Items, req.SliceSize)
 	}
-	return st.only(req.Package)
+	switch {
+	case len(req.Slice) > 0:
+		return st.inSlice(req.Slice)
+	case req.Package != "":
+		return st.only(req.Package)
+	}
+	st.Questions = f.set[project.QuestionsFile]
+	return st, nil
 }
 
 // only limits status to the Package of a name: to the items and notes whose
@@ -244,7 +265,7 @@ func (f *folder) see(rec Record) (view, error) {
 	lines := rec.byDefinition()
 	for _, id := range sortedKeys(now) {
 		d := f.cur.Spec.Definitions[id]
-		it := Item{Definition: id, Title: d.Title, Parts: now[id].Files(InputPart), Fingerprint: now[id].Fingerprint(), Look: append([]string{d.File}, now[id].Files(InputFile)...)}
+		it := Item{Definition: id, Title: d.Title, Parts: now[id].Files(InputPart), Fingerprint: now[id].Fingerprint(), Look: append([]string{d.File}, now[id].Files(InputFile)...), Last: f.cur.Spec.VerifiedLast(id)}
 		s := settle(lines[id], now[id], evidence)
 		switch {
 		case len(lines[id]) == 0:
@@ -416,7 +437,11 @@ func (s Status) Text() string {
 		if b.Len() > 0 {
 			b.WriteString("\n")
 		}
-		fmt.Fprintf(&b, "Nothing to verify%s: the spec compiles, and %s verified at %s current inputs.\n", s.inPackage(), every(s.Definitions), plural(s.Definitions, "its", "their"))
+		if len(s.Slice) > 0 {
+			fmt.Fprintf(&b, "Nothing to verify%s: every item of it is verified at its current inputs.\n", s.inPackage())
+		} else {
+			fmt.Fprintf(&b, "Nothing to verify%s: the spec compiles, and %s verified at %s current inputs.\n", s.inPackage(), every(s.Definitions), plural(s.Definitions, "its", "their"))
+		}
 	}
 	if s.ForTheOwner() {
 		fmt.Fprintf(&b, "\nOnly spec-problems are left%s: they wait for the owner, and no builder settles them.\n", s.inPackage())
@@ -426,6 +451,9 @@ func (s Status) Text() string {
 			b.WriteString("\n")
 		}
 		fmt.Fprintf(&b, "The architect's questions for the owner wait in %s.\n", project.QuestionsFile)
+	}
+	if n := s.ItemsElsewhere; n > 0 {
+		fmt.Fprintf(&b, "\nNot listed: %d %s of other slices; markitect status lists %s.\n", n, plural(n, "item", "items"), plural(n, "it", "them"))
 	}
 	if n := s.ErrorsElsewhere + s.UnreadableElsewhere; n > 0 {
 		var parts []string
@@ -440,9 +468,13 @@ func (s Status) Text() string {
 	return b.String()
 }
 
-// inPackage names the Package a list is limited to, for a heading.
+// inPackage names the Package or the slice a list is limited to, for a
+// heading.
 func (s Status) inPackage() string {
-	if s.Package == "" {
+	switch {
+	case len(s.Slice) > 0:
+		return " in the slice of " + packagesText(s.Slice)
+	case s.Package == "":
 		return ""
 	}
 	return " in Package " + s.Package

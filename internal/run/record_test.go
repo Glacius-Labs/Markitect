@@ -198,7 +198,7 @@ func TestStatusCountsItemsPerPackage(t *testing.T) {
 			t.Fatalf("after a spec-problem: %+v", pk)
 		}
 	}
-	if broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 2.0.0\n", project.SpecDir + "/x.md": "no front matter\n"}).status(false); len(broken.Packages) != 0 {
+	if broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 2.1.0\n", project.SpecDir + "/x.md": "no front matter\n"}).status(false); len(broken.Packages) != 0 {
 		t.Fatalf("a spec with errors has Packages: %+v", broken.Packages)
 	}
 }
@@ -260,7 +260,7 @@ func TestStatusOfOnePackage(t *testing.T) {
 		t.Fatalf("a Package the spec does not have: %v", err)
 	}
 	// A spec with errors has no list to limit, whatever Package is asked for.
-	broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 2.0.0\n", project.SpecDir + "/x.md": "no front matter\n"})
+	broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 2.1.0\n", project.SpecDir + "/x.md": "no front matter\n"})
 	if st, err := broken.engine.Status(context.Background(), run.StatusRequest{Dir: broken.dir, Package: "nowhere"}); err != nil || len(st.SpecErrors) == 0 {
 		t.Fatalf("a spec with errors: %v\n%s", err, st.Text())
 	}
@@ -535,7 +535,7 @@ func TestAChangedKindReachesItsDefinitions(t *testing.T) {
 // of its Kinds is to verify.
 func TestALibraryCountsByItsLockDigest(t *testing.T) {
 	files := library()
-	files[project.ManifestFile] = "libraries:\n  std: 2.0.0\n  web: 0.1.0\n"
+	files[project.ManifestFile] = "libraries:\n  std: 2.1.0\n  web: 0.1.0\n"
 	files[project.LibraryDir+"/web/Page.md"] = "---\nkind: Kind\n---\n# Page\n"
 	files[project.LibraryDir+"/web/Form.md"] = "---\nkind: Kind\n---\n# Form\n"
 	files[m+"catalog/search.md"] = def("web/Form", "Search", "Finds a [[catalog/book]].")

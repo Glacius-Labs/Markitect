@@ -57,7 +57,7 @@ func WriteLock(f Folder) (libs []spec.LibrarySource, named []string, problems sp
 }
 
 // shipStandard returns the manifest with each standard Library at the version
-// this binary ships, and what it changed, each as "std 2.0.0, where it named
+// this binary ships, and what it changed, each as "std 2.1.0, where it named
 // 1.0.0". It writes the version where the manifest's parser found the old one,
 // plain or in quotes, and keeps every other byte; a version it does not find
 // there it leaves, and the Library's error says to name it by hand. A manifest

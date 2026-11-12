@@ -1,5 +1,6 @@
 ---
 kind: Kind
+last: true
 fields:
   Measure:
   Matters to: {links: std/Stakeholder}

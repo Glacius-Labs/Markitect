@@ -184,10 +184,12 @@ type DocDeclares struct {
 	// Links are the Kinds a link of a Definition may name where a field does
 	// not say for itself; null when the Kind does not say.
 	Links []string `json:"links"`
-	// Unrealized says that no file realizes a Definition of the Kind, and
-	// Binds that one binds its Package and those below it without a link.
+	// Unrealized says that no file realizes a Definition of the Kind,
+	// Binds that one binds its Package and those below it without a link,
+	// and Last that one is built and verified last, on the whole project.
 	Unrealized bool `json:"unrealized,omitempty"`
 	Binds      bool `json:"binds,omitempty"`
+	Last       bool `json:"last,omitempty"`
 }
 
 // DocDeclaredField is one field a Kind declares. Links is null when a link
@@ -267,7 +269,7 @@ func DocDefinitionOf(p *project.Project, d *spec.Definition) DocDefinition {
 		}
 	}
 	if s := d.Schema; s != nil {
-		dd.Declares = &DocDeclares{Unrealized: s.Unrealized, Binds: s.Binds}
+		dd.Declares = &DocDeclares{Unrealized: s.Unrealized, Binds: s.Binds, Last: s.Last}
 		if s.Limited {
 			dd.Declares.Links = append([]string{}, s.Links...)
 		}

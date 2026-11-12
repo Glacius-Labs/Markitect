@@ -167,6 +167,15 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - `vet` follows: a part's name is no unlinked mention, what one part of a thing links is linked for all of it, and of several Definitions with one name a mention names the nearest. Root is not measured by its size in a spec with Packages, and no Package is asked for path patterns before something is built.
 - `fail` on a thing says in its reason which part fails. One verdict per part was the alternative: it keeps a finer record and costs a mark, a reading and a registry row per sentence of the spec.
 
+### DEC-112 A long list is built in slices
+
+- A build of a long list goes slice by slice. `markitect status --slices` cuts what a builder can settle into slices, and the session starts a fresh builder with its reviewer for each, one after the other, and commits after each. A list of at most 40 items is one slice and is built by one builder, as before.
+- The cut follows the Packages in the order of their dependencies: a Package comes after the one above it and after every Package it depends on. Neighbours are joined while a slice stays within 40 items, and a Package is never cut. The last slice is whatever is left: what is verified last, the errors in the realization and what an earlier slice left.
+- A Kind may declare `last: true`: a Definition of the Kind is judged on the whole project, as a `std/Quality` is, and is built and verified in the last slice. What no file realizes (`realized: false`) is verified last without saying so, since it can only be judged on what the others built. `std` is 2.1.0 with it.
+- One builder and its reviewer have been shown on lists of up to about 64 items, and the first build of a described project lists more than a hundred, half of them in Root. A slice keeps the task of each agent within what has been shown, what others rely on exists before they are built, and a build that stops keeps the slices that are committed.
+- `markitect status --slice A,B` lists one slice. A slice is named by its Packages, so it stays the same list while the slices before it are verified, and `--size N` sets another size for one run.
+- The parallel strategy was the alternative for a first build. It builds at once Packages that do not exist for each other yet, and a first build has nothing to build on.
+
 ## The tool
 
 <a id="dec-096-markitect-computes-and-checks-a-driver-acts"></a>

@@ -192,7 +192,7 @@ func TestCompileADeclarationIsChecked(t *testing.T) {
 	}
 	// Only a Kind declares.
 	_, ds := typed(t, map[string]string{"goal.md": "---\nkind: typed/Goal\nfields:\n  Who:\n---\n# Goal\n"})
-	expect(t, ds, "definition.front_matter", "only a Kind declares fields, parts, links, realized and binds")
+	expect(t, ds, "definition.front_matter", "only a Kind declares fields, parts, links, realized, binds and last")
 	if len(ds) != 1 {
 		t.Fatalf("want one finding:\n%v", ds)
 	}

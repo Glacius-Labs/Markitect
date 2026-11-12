@@ -13,7 +13,7 @@ func TestUnusedCountsAThingAsOneAndLeavesOutWhatIsNotRealized(t *testing.T) {
 		return "---\nkind: " + kind + "\n---\n# " + title + "\n\n" + body + "\n"
 	}
 	r := memRepo{files: map[string]string{
-		ManifestFile:            "libraries:\n  std: 2.0.0\n",
+		ManifestFile:            "libraries:\n  std: 2.1.0\n",
 		LockFile:                stdLock(t),
 		SpecDir + "/project.md": def("std/Project", "Demo", "A demo."),
 		// Not realized by its Kind: an Exclusion and an Assumption.

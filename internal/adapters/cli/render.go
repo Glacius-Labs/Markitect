@@ -56,6 +56,61 @@ func renderList(pkgs []analysis.ListedPackage, packagesOnly bool) string {
 	return b.String()
 }
 
+// renderKinds prints every Kind with the Definitions the spec has of it:
+// first those it has some of, with the top-level folders they lie in, then
+// those it has none of.
+func renderKinds(kinds []analysis.KindCount) string {
+	var b strings.Builder
+	var none []string
+	b.WriteString("Kinds and how many Definitions the spec has of each:\n\n")
+	for _, k := range kinds {
+		if k.Definitions == 0 {
+			none = append(none, k.Kind)
+			continue
+		}
+		fmt.Fprintf(&b, "  %s: %d, in %s\n", k.Kind, k.Definitions, strings.Join(k.Folders, ", "))
+	}
+	if len(none) > 0 {
+		fmt.Fprintf(&b, "\nNo Definition yet: %s\n", strings.Join(none, ", "))
+	}
+	b.WriteString("\nmarkitect doc KIND prints what a Kind is for.\n")
+	return b.String()
+}
+
+// renderRead prints the Definitions at or below a folder as one text to
+// read, in Markdown: a heading for each folder, each Definition under its
+// title with its ID and Kind, and a part one level below its whole.
+func renderRead(folder string, entries []analysis.ReadEntry) string {
+	var b strings.Builder
+	if folder == spec.RootPackage {
+		b.WriteString("# The spec\n")
+	} else {
+		fmt.Fprintf(&b, "# The spec: %s\n", folder)
+	}
+	fmt.Fprintf(&b, "\n%d %s, as markitect doc --read prints them. The files under .markitect/spec are the spec; this text is a view of them.\n", len(entries), plural(len(entries), "Definition", "Definitions"))
+	at := "\x00"
+	for _, e := range entries {
+		level := "###"
+		if e.Whole != "" {
+			level = "####"
+		} else if group := spec.FolderOf(thing(e.ID)); group != at {
+			at = group
+			if group != spec.RootPackage {
+				fmt.Fprintf(&b, "\n## %s\n", group)
+			}
+		}
+		title := e.Title
+		if title == "" {
+			title = e.ID
+		}
+		fmt.Fprintf(&b, "\n%s %s\n\n`%s`, %s\n", level, title, e.ID, e.Kind)
+		if text := strings.TrimSpace(partText(either(e.Shown, e.Text))); text != "" {
+			b.WriteString("\n" + text + "\n")
+		}
+	}
+	return b.String()
+}
+
 // definitionLine is a Definition on one line: its ID, title and Kind.
 func definitionLine(d analysis.ListedDefinition) string {
 	return fmt.Sprintf("%s: %s (%s)", d.ID, d.Title, d.Kind)
@@ -144,6 +199,9 @@ func renderDocDefinition(d analysis.DocDefinition) string {
 		}
 		if s.Binds {
 			b.WriteString("\nDeclares that a Definition of this Kind binds its Package and those below it without a link.\n")
+		}
+		if s.Last {
+			b.WriteString("\nDeclares that a Definition of this Kind is built and verified last, on the whole project.\n")
 		}
 		if s.Unrealized {
 			b.WriteString("\nDeclares that no file realizes a Definition of this Kind.\n")

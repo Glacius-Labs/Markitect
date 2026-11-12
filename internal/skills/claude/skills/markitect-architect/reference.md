@@ -6,7 +6,7 @@ A compact summary of the spec language, the standard Library and the tools.
 
 ```text
 .markitect/
-  manifest.yaml        Libraries and versions (std: 2.0.0)
+  manifest.yaml        Libraries and versions (std: 2.1.0)
   lock.yaml            Library digests, written by markitect tidy
   spec/                the spec; this folder is the Root Package
     project.md         the project Definition (std/Project), which opens the spec
@@ -29,7 +29,7 @@ Everything under `.markitect/` is accounted for by the compiler and needs no reg
 
 One Markdown file with YAML front matter.
 
-- Front matter: `kind` (required) and `internal: true` (optional); a Kind may also declare `fields`, `parts`, `links`, `realized` and `binds`. Another key is `definition.front_matter`.
+- Front matter: `kind` (required) and `internal: true` (optional); a Kind may also declare `fields`, `parts`, `links`, `realized`, `binds` and `last`. Another key is `definition.front_matter`.
 - File name without `.md` is the name, the path below `spec/` is the ID (`domain/members/concepts/member/attributes/email`). Names: letters, digits, `-`, `_`, starting with a letter or digit (`spec.name`).
 - Body: one level-1 heading, the title, first; no second one (`definition.title`); then the Definition's own sentences, then its fields. Exact values in backticks.
 - **A field** starts with a bold label ending in a colon at the start of a line, such as `**Satisfies:**`, and reaches to the next field; a label inside a list, a quotation or a sentence starts none. Which fields a Definition has, which it must have and what a link in each may name, its Kind declares.
@@ -103,7 +103,7 @@ A Kind is a Definition with `kind: Kind`; its body says what a Definition of tha
 - **An API and a command line** are both a Package under `interfaces/` with an Interface and its Routes: a Route names the method and path, or the command and its arguments, in backticks.
 - `Package` is Core's own, written without a Library: the anchor of a Package says what it is responsible for and what it keeps to itself, not what it contains or depends on.
 
-A project writes its own Kinds as small files (`kind: Kind`) anywhere in its spec; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. The standard Library ships in the binary at one version, as in `std: 2.0.0`. After a manifest change run `markitect tidy`.
+A project writes its own Kinds as small files (`kind: Kind`) anywhere in its spec; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. The standard Library ships in the binary at one version, as in `std: 2.1.0`. After a manifest change run `markitect tidy`.
 
 ### What a Kind declares
 
@@ -128,6 +128,7 @@ parts:
 - `links` at the top names the Kinds any link of the Definition may name, in its own sentences and in every field that does not name its Kinds itself (`link.target`), as `std/Term` declares `links: std/Term`.
 - `realized: false` declares that no file realizes a Definition of the Kind: it is verified, needs no registry row and is never `definition.unused`.
 - `binds: true` declares that a Definition of the Kind binds its Package and every Package below it without a link.
+- `last: true` declares that a Definition of the Kind is built and verified last, on the whole project, as a `std/Quality` is.
 - A key with nothing after it declares that there is none: `fields:` alone allows no field, `parts:` alone no part, `links:` alone no link. A Kind that leaves a key out declares nothing about it, and nothing is checked.
 - Only a Kind declares (`definition.front_matter` elsewhere). A declaration that cannot be read, or that names something that is no Kind, is `kind.schema`.
 
