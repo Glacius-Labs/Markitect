@@ -106,7 +106,7 @@ Markitect needs Claude Code. Pick one way to get the `markitect` command:
 
 ## Status
 
-Markitect is built, released and covered by tests. An earlier form of the build and review flow passed three small real changes, and the parallel workflow passed two real runs on a project of 6 Definitions, and a build in slices passed once on a project of 24 items; the first slice of a spec of 158 items was built once. A review has found planted defects behind weakened tests on one small project. A real project and reliability on Sonnet over a series of changes come next ([roadmap](docs/roadmap.md#current-steps)).
+Markitect is built, released and covered by tests. An earlier form of the build and review flow passed three small real changes, and the parallel workflow passed two real runs on a project of 6 Definitions, and a build in slices passed once on a project of 24 items; the first two slices of a spec of 158 items were built once. A review has found planted defects behind weakened tests on one small project. A real project and reliability on Sonnet over a series of changes come next ([roadmap](docs/roadmap.md#current-steps)).
 
 ### Limits
 
