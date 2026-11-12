@@ -40,7 +40,7 @@ A Kind is a Definition with `kind: Kind`; its body says what a Definition of tha
 
 | Kind | Use for |
 |---|---|
-| `std/Project` | The anchor at Root: what the project is, for whom, the Packages, what is out of scope. |
+| `std/Project` | The project's anchor, at Root: what the project is, for whom, the Packages, what is out of scope. |
 | `std/Package` | The anchor of a Package: what it is responsible for and what it keeps to itself. |
 | `std/Rule` | Something every artifact in its scope must satisfy: policies, conventions, layout, quality. |
 | `std/Concept` | One domain thing: what it is, its attributes, relations, states, invariants. |

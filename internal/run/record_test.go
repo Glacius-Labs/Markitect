@@ -331,6 +331,20 @@ func TestStatusCountsASortFolderForThePackageAbove(t *testing.T) {
 	if only := of("members"); !strings.Contains(listed(only), "members/loans/loan") || !strings.Contains(listed(only), "members/loans/loans") {
 		t.Fatalf("a gone Package's Definitions are not members':\n%s", only.Text())
 	}
+	// A Package at the top that is gone is not listed either: its Definitions
+	// count for Root, and it is no Package to ask for.
+	p.write(m+"project.md", def("std/Project", "Library", "Parts: [[members]]."))
+	p.remove(m + "catalog/catalog.md")
+	p.remove(m + "catalog/book.md")
+	if last := p.status(false); len(last.Packages) != 2 || p.item(last, "catalog/book").State != run.StateGone {
+		t.Fatalf("a gone Package at the top:\n%s", last.Text())
+	}
+	if root := of("Root"); !strings.Contains(listed(root), "catalog/book") || !strings.Contains(listed(root), "catalog/catalog") {
+		t.Fatalf("a gone top Package's Definitions are not Root's:\n%s", root.Text())
+	}
+	if _, err := p.engine.Status(context.Background(), run.StatusRequest{Dir: p.dir, Package: "catalog"}); !errors.Is(err, run.ErrUsage) {
+		t.Fatalf("a gone Package is no Package to ask for: %v", err)
+	}
 }
 
 // What is to verify is what a change touches at distance 0 and 1.

@@ -411,6 +411,16 @@ func TestVetUnlinkedMentions(t *testing.T) {
 			t.Fatalf("the name of a Package reported as a mention of its anchor: %s", line)
 		}
 	}
+	// The anchor's name still covers its words: "book catalog" does not name
+	// the book inside it.
+	r[m+"catalog/catalog.md"] = def("std/Package", "Book catalog", "What can be borrowed.")
+	r[m+"catalog/shelf.md"] = def("std/Concept", "Shelf", "A part of the book catalog.")
+	for _, line := range noteLines(vetNotes(t, r, nil), "vet.unlinked_mention") {
+		if strings.Contains(line, "catalog/shelf.md") {
+			t.Fatalf("a word inside the name of a Package reported: %s", line)
+		}
+	}
+	r[m+"catalog/catalog.md"] = def("std/Package", "Catalog", "What can be borrowed.")
 	// A linked Definition's name covers the words: "members" beside a linked
 	// members/member is no mention of members/member, nor of anything else.
 	r[m+"catalog/book.md"] = def("std/Concept", "Book", "Lent to [[members/member]]s; members queue.")
