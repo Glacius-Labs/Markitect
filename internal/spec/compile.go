@@ -48,6 +48,7 @@ func Compile(src Source) (*Spec, Diagnostics) {
 		c.loadLibrary(lib)
 	}
 	c.loadSpec(src)
+	c.wholes()
 	c.resolve()
 	c.checkCycles()
 	for _, p := range c.spec.Packages {
@@ -205,6 +206,27 @@ func (c *compiler) loadSpec(src Source) {
 	sort.Strings(topNames)
 	for _, name := range topNames {
 		c.reserved(src.Dir, name)
+	}
+}
+
+// wholes finds, for every Definition of the spec, the Definition it is a part
+// of: a thing with parts is a folder that holds the Definition of its own
+// name and, in it or below it, its parts. A Package ends the search: an
+// anchor is no whole, and what lies in a Package is no part of something
+// outside it.
+func (c *compiler) wholes() {
+	for _, id := range c.spec.OwnDefinitions() {
+		d := c.spec.Definitions[id]
+		at := FolderOf(id)
+		if id == AnchorOf(at) {
+			at = FolderOf(at) // its own folder names it: look above
+		}
+		for ; at != RootPackage && c.spec.Packages[at] == nil; at = FolderOf(at) {
+			if thing, ok := c.spec.Thing(at); ok && thing != id {
+				d.Whole = thing
+				break
+			}
+		}
 	}
 }
 
@@ -378,13 +400,13 @@ func (c *compiler) resolveLink(d *Definition, raw string, line int, kind bool) L
 			if kind {
 				instead = "name a Kind in it"
 			}
-			if own := c.spec.Definitions[AnchorOf(target)]; own != nil && own.Own() && !kind {
-				// A thing with parts: the folder holds the Definition that names it.
-				c.diags.Add(code, d.File, line, "%s %q names a folder, which is no Package; the Definition of that name is %s", what, raw, AnchorOf(target))
+			// A folder that holds a Definition of its own name stands for it.
+			thing, ok := c.spec.Thing(target)
+			if !ok {
+				c.diags.Add(code, d.File, line, "%s %q names a folder that is no Package: %s; %s", what, raw, c.spec.WhyNoPackage(target), instead)
 				return link
 			}
-			c.diags.Add(code, d.File, line, "%s %q names a folder that is no Package: %s; %s", what, raw, c.spec.WhyNoPackage(target), instead)
-			return link
+			link.Target = thing
 		} else if strings.EqualFold(target, CoreKind) || strings.EqualFold(target, CorePackage) {
 			c.diags.Add(code, d.File, line, "%s %q resolves to nothing; Core's two Kinds are written %s and %s", what, raw, CoreKind, CorePackage)
 			return link

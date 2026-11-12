@@ -128,12 +128,21 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 ### DEC-108 A folder is a namespace; a Package is declared by its anchor
 
-- A folder of the spec is a namespace, as in C#: it gives its Definitions their path and means nothing else. A project orders its Definitions as it reads best, and a thing with parts is a folder that holds a Definition of its own name and its parts. Markitect prescribes no layout.
+- A folder of the spec is a namespace, as in C#: it gives its Definitions their path and means nothing else. A project orders its Definitions as it reads best, and Markitect prescribes no layout.
 - A Package is a module, as a project is in C#: the unit of the dependency check, of visibility and of file ownership. A folder is a Package when it holds its anchor, a Definition of kind `Package` that carries the folder's name and says what the Package is responsible for and what it keeps to itself. Core provides that Kind beside `Kind`.
-- What lies in a folder that is no Package belongs to the nearest Package above, shares its scope, visibility and dependencies, and keeps the folder in its ID. A folder that is no Package is no link target and has no registry page.
+- What lies in a folder that is no Package belongs to the nearest Package above, shares its scope, visibility and dependencies, and keeps the folder in its ID. A folder that is no Package has no registry page, and is a link target only as a thing with parts ([DEC-109](#dec-109-a-thing-with-parts-is-read-as-a-whole)).
 - A folder and a module are two things. Were every folder a Package, ordering an area's Definitions in folders would cut the area into modules: the links inside it would be Package cycles, and the area would hold nothing. Were a file of the folder's name to make the Package, a thing with parts could not hold the Definition that names it without becoming a module, and the Definitions beside it could not link its parts.
 - A link to a Package stays what [DEC-104](#dec-104-a-link-is-never-decorative-identity-and-surface-are-written-as-code-writes-them) says: it names the module and does not rely on the anchor's text. A Definition that relies on that text links the anchor.
 - A project in which every folder was a Package gives each of them its anchor. Until then its folders are namespaces of Root: `check` says so at each link to one and at each registry page of one, and where a project has neither, `markitect list` shows the Packages it has left.
+
+### DEC-109 A thing with parts is read as a whole
+
+- A Definition states one thing, so that it can be verified alone and changes alone. A thing that has parts is therefore a folder: it holds the Definition of its own name, the whole, and its parts in it or below it, each a Definition of its own.
+- A reader needs the thing on one page all the same. `doc` shows a whole with its parts, the parts of one folder together, in the order the whole links them and then by ID. A whole whose parts have an order states it by linking them in that order.
+- A link to the folder means the whole, so that a link names a thing once: `[[members/operations/lend]]`.
+- `vet` counts things: parts do not count for the size of a Package, and a part may name its whole without linking it.
+- A Package ends a thing: an anchor is no whole, and what lies in a Package is no part of a thing above it. A Package is a module ([DEC-108](#dec-108-a-folder-is-a-namespace-a-package-is-declared-by-its-anchor)), and a thing with parts is one thing written in several files.
+- The whole keeps the ID its file gives it. Giving it the folder's path as its ID was weighed and not chosen: a Package and its anchor would then share one ID, and a link to a Package is not a link to its anchor ([DEC-104](#dec-104-a-link-is-never-decorative-identity-and-surface-are-written-as-code-writes-them)).
 
 ## The tool
 

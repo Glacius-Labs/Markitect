@@ -128,6 +128,13 @@ func TestCommandsEndToEnd(t *testing.T) {
 		t.Fatalf("doc of a folder: %d %s", code, errOut)
 	}
 	wantAll(t, mustRun(t, r.Dir, "doc", "members/rules/late"), "members/rules/late: Late (std/Rule)\n", "Package members, .markitect/spec/members/rules/late.md\n")
+	// A folder that holds a Definition of its own name stands for it, in a
+	// link and for doc, which shows the thing with its parts.
+	r.Write(".markitect/spec/members/rules/fees/fees.md", "---\nkind: std/Rule\n---\n# Fees\n\nA [[members/member]] pays when [[members/rules/late]].\n")
+	r.Write(".markitect/spec/members/rules/fees/amounts/per-day.md", "---\nkind: std/Rule\n---\n# Per day\n\n`1` euro a day.\n")
+	r.Write(".markitect/spec/members/rules/late.md", "---\nkind: std/Rule\n---\n# Late\n\nA [[members/member]] is late after `14` days, and [[members/rules/fees]] follow.\n")
+	wantAll(t, mustRun(t, r.Dir, "doc", "members/rules/fees"), "members/rules/fees/fees: Fees (std/Rule)\n", "\namounts:\n\n  Per day (members/rules/fees/amounts/per-day)\n    `1` euro a day.\n", "Linked from:\n  members/rules/late (link)")
+	wantAll(t, mustRun(t, r.Dir, "doc", "members/rules/fees/amounts/per-day"), "Part of members/rules/fees/fees\n")
 	if err := os.RemoveAll(filepath.Join(r.Dir, ".markitect", "spec", "members", "rules")); err != nil {
 		t.Fatal(err)
 	}

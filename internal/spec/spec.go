@@ -81,9 +81,13 @@ type Definition struct {
 	File     string // repository-relative file
 	Kind     string // resolved Kind ID; "" when it does not resolve
 	Internal bool
-	Title    string
-	Words    int
-	Data     []byte // the file's bytes, for comparison
+	// Whole is the Definition this one is a part of: the nearest Definition
+	// above it that carries its folder's name, within the same Package. ""
+	// for a Definition that is no part of another.
+	Whole string
+	Title string
+	Words int
+	Data  []byte // the file's bytes, for comparison
 	// Links holds the front matter's Kind reference first (Kind is true),
 	// then every body link.
 	Links []Link
@@ -140,6 +144,48 @@ func (s *Spec) PackageOf(id string) string {
 		}
 	}
 	return RootPackage
+}
+
+// Thing returns the Definition a folder that is no Package stands for: the
+// one in it that carries the folder's name. A link to the folder means it.
+func (s *Spec) Thing(folder string) (string, bool) {
+	if !s.PlainFolders[folder] {
+		return "", false
+	}
+	d := s.Definitions[AnchorOf(folder)]
+	return AnchorOf(folder), d != nil && d.Own()
+}
+
+// Parts returns the Definitions that are parts of a Definition, directly or
+// through a part, in the order the Definition links them and then by ID.
+func (s *Spec) Parts(id string) []string {
+	whole := s.Definitions[id]
+	if whole == nil {
+		return nil
+	}
+	rank := map[string]int{}
+	for i, l := range whole.Links {
+		if _, seen := rank[l.Target]; !seen && l.Target != "" {
+			rank[l.Target] = i + 1
+		}
+	}
+	var out []string
+	for _, other := range s.OwnDefinitions() {
+		for at := s.Definitions[other].Whole; at != ""; at = s.Definitions[at].Whole {
+			if at == id {
+				out = append(out, other)
+				break
+			}
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		a, b := rank[out[i]], rank[out[j]]
+		if (a == 0) != (b == 0) {
+			return a != 0
+		}
+		return a < b
+	})
+	return out
 }
 
 // WhyNoPackage says, for a folder that is no Package, what it lacks: an

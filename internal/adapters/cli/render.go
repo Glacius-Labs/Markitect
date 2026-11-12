@@ -59,7 +59,29 @@ func renderDocDefinition(d analysis.DocDefinition) string {
 	default:
 		fmt.Fprintf(&b, "Package %s, %s\n", d.Package, d.File)
 	}
+	if d.Whole != "" {
+		fmt.Fprintf(&b, "Part of %s\n", d.Whole)
+	}
 	fmt.Fprintf(&b, "\n%s", d.Text)
+	// A thing is read whole: its parts follow, each group under the name of
+	// its folder, a part's title before its text.
+	group := "\x00"
+	for _, part := range d.Parts {
+		if part.Group != group {
+			group = part.Group
+			if group != "" {
+				fmt.Fprintf(&b, "\n%s:\n", group)
+			}
+		}
+		fmt.Fprintf(&b, "\n  %s (%s)\n", part.Title, part.ID)
+		for _, line := range strings.Split(strings.TrimSpace(partText(part.Text)), "\n") {
+			if line == "" {
+				b.WriteString("\n")
+				continue
+			}
+			fmt.Fprintf(&b, "    %s\n", line)
+		}
+	}
 	if len(d.Links) > 0 {
 		fmt.Fprintf(&b, "\nLinks to: %s\n", strings.Join(d.Links, ", "))
 	}
@@ -86,6 +108,17 @@ func renderDocDefinition(d analysis.DocDefinition) string {
 		b.WriteString("\n")
 	}
 	return b.String()
+}
+
+// partText is a part's text without its title, which doc prints above it.
+func partText(text string) string {
+	if rest, ok := strings.CutPrefix(text, "# "); ok {
+		if i := strings.IndexByte(rest, '\n'); i >= 0 {
+			return rest[i+1:]
+		}
+		return ""
+	}
+	return text
 }
 
 // renderDocPackage prints a Package as doc shows it.

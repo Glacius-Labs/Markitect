@@ -30,6 +30,32 @@ func TestNotesLine(t *testing.T) {
 	}
 }
 
+// doc of a thing prints its parts below its text, each folder's under the
+// folder's name, a part's title before its text; and a part names its whole.
+func TestRenderDocDefinitionWithParts(t *testing.T) {
+	got := renderDocDefinition(analysis.DocDefinition{
+		ListedDefinition: analysis.ListedDefinition{ID: "catalog/operations/lend/lend", Title: "Lend", Kind: "std/Feature", File: "lend.md"},
+		Package:          "catalog", Text: "# Lend\n\nA copy goes home.\n",
+		Parts: []analysis.DocPart{
+			{ID: "catalog/operations/lend/conditions/free", Title: "Free", Group: "conditions", Text: "# Free\n\nNobody holds it.\n\n**Refusal:** `held`.\n"},
+			{ID: "catalog/operations/lend/outcomes/lent", Title: "Lent", Group: "outcomes", Text: "# Lent\n\nSomebody holds it.\n"},
+		},
+	})
+	want := "catalog/operations/lend/lend: Lend (std/Feature)\nPackage catalog, lend.md\n\n# Lend\n\nA copy goes home.\n" +
+		"\nconditions:\n\n  Free (catalog/operations/lend/conditions/free)\n    Nobody holds it.\n\n    **Refusal:** `held`.\n" +
+		"\noutcomes:\n\n  Lent (catalog/operations/lend/outcomes/lent)\n    Somebody holds it.\n"
+	if got != want {
+		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
+	}
+	got = renderDocDefinition(analysis.DocDefinition{
+		ListedDefinition: analysis.ListedDefinition{ID: "catalog/operations/lend/conditions/free", Title: "Free", Kind: "std/Rule", File: "free.md"},
+		Package:          "catalog", Text: "# Free\n", Whole: "catalog/operations/lend/lend",
+	})
+	if want := "catalog/operations/lend/conditions/free: Free (std/Rule)\nPackage catalog, free.md\nPart of catalog/operations/lend/lend\n\n# Free\n"; got != want {
+		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
 // doc of a Package opens with the text of its anchor, then shows its public
 // Definitions, what it publishes, apart from its internal ones, and leaves out
 // a heading with nothing under it.

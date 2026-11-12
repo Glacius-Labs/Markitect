@@ -143,12 +143,26 @@ type Realizer struct {
 // DocDefinition is one Definition as doc shows it.
 type DocDefinition struct {
 	ListedDefinition
-	Package    string     `json:"package"`
-	Library    string     `json:"library,omitempty"`
-	Text       string     `json:"text"`
+	Package string `json:"package"`
+	Library string `json:"library,omitempty"`
+	Text    string `json:"text"`
+	// Whole is the Definition this one is a part of, and Parts are its own
+	// parts with their text, in the order it links them and then by ID.
+	Whole      string     `json:"whole,omitempty"`
+	Parts      []DocPart  `json:"parts"`
 	LinkedFrom []Ref      `json:"linked_from"`
 	RealizedBy []Realizer `json:"realized_by"`
 	Record     *DocRecord `json:"record,omitempty"`
+}
+
+// DocPart is one part of a Definition as doc shows it. Group is the folder it
+// lies in below its whole: conditions for .../lend/conditions/in-stock.
+type DocPart struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+	Kind  string `json:"kind"`
+	Group string `json:"group"`
+	Text  string `json:"text"`
 }
 
 // DocPackage is one Package as doc shows it.
@@ -170,10 +184,17 @@ type DocPackage struct {
 
 // DocDefinitionOf gathers what doc shows of a Definition but its record.
 func DocDefinitionOf(p *project.Project, d *spec.Definition) DocDefinition {
-	dd := DocDefinition{ListedDefinition: listDefinition(d, true), Package: spec.PackageName(d.Package), Library: d.Library, Text: body(d.Data), LinkedFrom: []Ref{}, RealizedBy: []Realizer{}}
+	dd := DocDefinition{ListedDefinition: listDefinition(d, true), Package: spec.PackageName(d.Package), Library: d.Library, Text: body(d.Data), Whole: d.Whole, Parts: []DocPart{}, LinkedFrom: []Ref{}, RealizedBy: []Realizer{}}
 	if d.Library != "" {
 		dd.Package = ""
 	}
+	below := spec.FolderOf(d.ID) + "/"
+	for _, id := range p.Spec.Parts(d.ID) {
+		part := p.Spec.Definitions[id]
+		dd.Parts = append(dd.Parts, DocPart{ID: id, Title: part.Title, Kind: part.Kind, Group: spec.FolderOf(strings.TrimPrefix(id, below)), Text: body(part.Data)})
+	}
+	// The parts of one folder stay together, in the order they came.
+	sort.SliceStable(dd.Parts, func(i, j int) bool { return dd.Parts[i].Group < dd.Parts[j].Group })
 	refs, _ := Refs(p, d.ID)
 	for _, r := range refs {
 		if r.Via == "registry" {

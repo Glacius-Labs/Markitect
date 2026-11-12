@@ -55,6 +55,25 @@ func TestDocViews(t *testing.T) {
 	if !reflect.DeepEqual(from, []string{"catalog/book", "members/loans/loan"}) || !reflect.DeepEqual(files, []string{"README.md", "src/members/member.go"}) {
 		t.Fatalf("linked from %v, realized by %v", from, files)
 	}
+	// A thing is shown whole: its parts with their text, a folder's parts
+	// together, in the order the thing links them and then by ID.
+	r := library(t)
+	r[m+"catalog/operations/lend/lend.md"] = def("std/Feature", "Lend", "First [[catalog/operations/lend/conditions/free]].")
+	r[m+"catalog/operations/lend/conditions/free.md"] = def("std/Rule", "Free", "Nobody holds it.")
+	r[m+"catalog/operations/lend/conditions/an-earlier-name.md"] = def("std/Rule", "An earlier name", "By name it comes first.")
+	r[m+"catalog/operations/lend/outcomes/lent.md"] = def("std/Rule", "Lent", "Somebody holds it.")
+	q := loadRepo(t, r)
+	lend := DocDefinitionOf(q, q.Spec.Definitions["catalog/operations/lend/lend"])
+	var parts []string
+	for _, part := range lend.Parts {
+		parts = append(parts, part.Group+" "+part.Title+": "+part.Text)
+	}
+	if want := []string{"conditions Free: # Free\n\nNobody holds it.\n", "conditions An earlier name: # An earlier name\n\nBy name it comes first.\n", "outcomes Lent: # Lent\n\nSomebody holds it.\n"}; !reflect.DeepEqual(parts, want) || lend.Whole != "" {
+		t.Fatalf("parts of lend: %q", parts)
+	}
+	if free := DocDefinitionOf(q, q.Spec.Definitions["catalog/operations/lend/conditions/free"]); free.Whole != "catalog/operations/lend/lend" || len(free.Parts) != 0 {
+		t.Fatalf("free: %+v", free)
+	}
 	dp := DocPackageOf(p, p.Spec.Packages[p.Spec.Definitions["members/member"].Package])
 	if dp.Anchor != "members/members" || dp.Text != "# Members\n\nWho may borrow.\n" {
 		t.Fatalf("anchor of members: %+v", dp)
