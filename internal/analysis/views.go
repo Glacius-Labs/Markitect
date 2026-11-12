@@ -1,6 +1,7 @@
 package analysis
 
 import (
+	"regexp"
 	"sort"
 	"strings"
 
@@ -146,8 +147,12 @@ type DocDefinition struct {
 	Package string `json:"package"`
 	Library string `json:"library,omitempty"`
 	Text    string `json:"text"`
-	// Whole is the Definition this one is a part of, and Parts are its own
-	// parts with their text, in the order it links them and then by ID.
+	// Shown is the text as doc prints it: each link by its label, or by the
+	// title of what it names.
+	Shown string `json:"-"`
+	// Whole is the Definition this one is a part of. Parts are its own parts
+	// and the parts of other things it links, with their text, each folder's
+	// together, in the order it links them and then by ID.
 	Whole      string     `json:"whole,omitempty"`
 	Parts      []DocPart  `json:"parts"`
 	LinkedFrom []Ref      `json:"linked_from"`
@@ -155,14 +160,18 @@ type DocDefinition struct {
 	Record     *DocRecord `json:"record,omitempty"`
 }
 
-// DocPart is one part of a Definition as doc shows it. Group is the folder it
-// lies in below its whole: conditions for .../lend/conditions/in-stock.
+// DocPart is one part as doc shows it with a Definition. Group is the folder
+// it lies in below its whole: conditions for .../lend/conditions/in-stock. Of
+// is its whole when that is another Definition than the one shown: a part of
+// another thing, which the Definition links.
 type DocPart struct {
 	ID    string `json:"id"`
 	Title string `json:"title"`
 	Kind  string `json:"kind"`
 	Group string `json:"group"`
+	Of    string `json:"of,omitempty"`
 	Text  string `json:"text"`
+	Shown string `json:"-"`
 }
 
 // DocPackage is one Package as doc shows it.
@@ -188,13 +197,66 @@ func DocDefinitionOf(p *project.Project, d *spec.Definition) DocDefinition {
 	if d.Library != "" {
 		dd.Package = ""
 	}
-	below := spec.FolderOf(d.ID) + "/"
-	for _, id := range p.Spec.Parts(d.ID) {
-		part := p.Spec.Definitions[id]
-		dd.Parts = append(dd.Parts, DocPart{ID: id, Title: part.Title, Kind: part.Kind, Group: spec.FolderOf(strings.TrimPrefix(id, below)), Text: body(part.Data)})
+	dd.Shown = shown(p.Spec, dd.Text)
+	rank := map[string]int{}
+	for i, l := range d.Links {
+		if _, seen := rank[l.Target]; !seen && l.Target != "" {
+			rank[l.Target] = i + 1
+		}
 	}
-	// The parts of one folder stay together, in the order they came.
-	sort.SliceStable(dd.Parts, func(i, j int) bool { return dd.Parts[i].Group < dd.Parts[j].Group })
+	add := func(id, whole, of string) {
+		part := p.Spec.Definitions[id]
+		text := body(part.Data)
+		group := spec.FolderOf(strings.TrimPrefix(id, spec.FolderOf(whole)+"/"))
+		if id == spec.AnchorOf(spec.FolderOf(id)) {
+			group = spec.FolderOf(group) // a part with parts of its own: beside its siblings
+		}
+		dd.Parts = append(dd.Parts, DocPart{ID: id, Title: part.Title, Kind: part.Kind, Group: group, Of: of, Text: text, Shown: shown(p.Spec, text)})
+	}
+	own := map[string]bool{d.ID: true}
+	for _, id := range p.Spec.Parts(d.ID) {
+		own[id] = true
+		add(id, d.ID, "")
+	}
+	// The parts of other things that the Definition links are read with it: a
+	// Condition several Operations share lies with what it is about.
+	for _, l := range d.Links {
+		t := p.Spec.Definitions[l.Target]
+		if l.Kind || l.Package || t == nil || !t.Own() || t.Whole == "" || own[l.Target] {
+			continue
+		}
+		own[l.Target] = true
+		add(l.Target, t.Whole, t.Whole)
+	}
+	// The parts of one folder stay together. Folders and parts come in the
+	// order the Definition links them, then the others by name and by ID.
+	first := map[string]int{}
+	for _, part := range dd.Parts {
+		if r := rank[part.ID]; r != 0 && (first[part.Group] == 0 || r < first[part.Group]) {
+			first[part.Group] = r
+		}
+	}
+	sort.SliceStable(dd.Parts, func(i, j int) bool {
+		a, b := dd.Parts[i], dd.Parts[j]
+		if a.Group != b.Group {
+			fa, fb := first[a.Group], first[b.Group]
+			if (fa == 0) != (fb == 0) {
+				return fa != 0
+			}
+			if fa != fb {
+				return fa < fb
+			}
+			return a.Group < b.Group
+		}
+		ra, rb := rank[a.ID], rank[b.ID]
+		if (ra == 0) != (rb == 0) {
+			return ra != 0
+		}
+		if ra != rb {
+			return ra < rb
+		}
+		return a.ID < b.ID
+	})
 	refs, _ := Refs(p, d.ID)
 	for _, r := range refs {
 		if r.Via == "registry" {
@@ -239,6 +301,44 @@ func DocPackageOf(p *project.Project, pkg *spec.Package) DocPackage {
 		}
 	}
 	return dp
+}
+
+var shownLink = regexp.MustCompile(`\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\\?\|([^\]]*))?\]\]`)
+
+// shown returns a text as doc prints it for reading: a link is shown by its
+// label, or by the title of the Definition it names. Links in code stay as
+// written, and so does a link that names nothing.
+func shown(sp *spec.Spec, text string) string {
+	lines := strings.Split(text, "\n")
+	fenced := false
+	for i, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "```") {
+			fenced = !fenced
+			continue
+		}
+		if fenced {
+			continue
+		}
+		lines[i] = shownLink.ReplaceAllStringFunc(line, func(link string) string {
+			at := strings.Index(line, link)
+			if strings.Count(line[:at], "`")%2 == 1 {
+				return link // inside a code span
+			}
+			m := shownLink.FindStringSubmatch(link)
+			if m[2] != "" {
+				return m[2]
+			}
+			target := strings.TrimSuffix(m[1], ".md")
+			if thing, ok := sp.Thing(target); ok {
+				target = thing
+			}
+			if d := sp.Definitions[target]; d != nil && d.Title != "" {
+				return d.Title
+			}
+			return link
+		})
+	}
+	return strings.Join(lines, "\n")
 }
 
 // body is a Definition's text without its front matter.

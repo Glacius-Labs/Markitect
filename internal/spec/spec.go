@@ -156,6 +156,29 @@ func (s *Spec) Thing(folder string) (string, bool) {
 	return AnchorOf(folder), d != nil && d.Own()
 }
 
+// Lookup returns the Definition a path names: the Definition of that ID, or
+// the one a folder stands for as a thing with parts.
+func (s *Spec) Lookup(target string) *Definition {
+	if d := s.Definitions[target]; d != nil {
+		return d
+	}
+	if thing, ok := s.Thing(target); ok {
+		return s.Definitions[thing]
+	}
+	return nil
+}
+
+// IsPartOf reports whether a Definition is a part of another, directly or
+// through a part.
+func (s *Spec) IsPartOf(id, whole string) bool {
+	for d := s.Definitions[id]; d != nil && d.Whole != ""; d = s.Definitions[d.Whole] {
+		if d.Whole == whole {
+			return true
+		}
+	}
+	return false
+}
+
 // Parts returns the Definitions that are parts of a Definition, directly or
 // through a part, in the order the Definition links them and then by ID.
 func (s *Spec) Parts(id string) []string {
@@ -171,11 +194,8 @@ func (s *Spec) Parts(id string) []string {
 	}
 	var out []string
 	for _, other := range s.OwnDefinitions() {
-		for at := s.Definitions[other].Whole; at != ""; at = s.Definitions[at].Whole {
-			if at == id {
-				out = append(out, other)
-				break
-			}
+		if s.IsPartOf(other, id) {
+			out = append(out, other)
 		}
 	}
 	sort.SliceStable(out, func(i, j int) bool {

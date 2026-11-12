@@ -62,9 +62,10 @@ func renderDocDefinition(d analysis.DocDefinition) string {
 	if d.Whole != "" {
 		fmt.Fprintf(&b, "Part of %s\n", d.Whole)
 	}
-	fmt.Fprintf(&b, "\n%s", d.Text)
+	fmt.Fprintf(&b, "\n%s", either(d.Shown, d.Text))
 	// A thing is read whole: its parts follow, each group under the name of
-	// its folder, a part's title before its text.
+	// its folder, a part's title before its text. A part of another thing,
+	// which the Definition links, names the thing it is a part of.
 	group := "\x00"
 	for _, part := range d.Parts {
 		if part.Group != group {
@@ -73,8 +74,12 @@ func renderDocDefinition(d analysis.DocDefinition) string {
 				fmt.Fprintf(&b, "\n%s:\n", group)
 			}
 		}
-		fmt.Fprintf(&b, "\n  %s (%s)\n", part.Title, part.ID)
-		for _, line := range strings.Split(strings.TrimSpace(partText(part.Text)), "\n") {
+		if part.Of != "" {
+			fmt.Fprintf(&b, "\n  %s (%s), a part of %s\n", part.Title, part.ID, part.Of)
+		} else {
+			fmt.Fprintf(&b, "\n  %s (%s)\n", part.Title, part.ID)
+		}
+		for _, line := range strings.Split(strings.TrimSpace(partText(either(part.Shown, part.Text))), "\n") {
 			if line == "" {
 				b.WriteString("\n")
 				continue
@@ -110,13 +115,24 @@ func renderDocDefinition(d analysis.DocDefinition) string {
 	return b.String()
 }
 
-// partText is a part's text without its title, which doc prints above it.
+// either returns the text as doc shows it, or the text as written when a
+// caller gave only that.
+func either(shown, text string) string {
+	if shown != "" {
+		return shown
+	}
+	return text
+}
+
+// partText is a part's text without its title, which doc prints above it:
+// a first line that starts with "# ", or one underlined with "=".
 func partText(text string) string {
-	if rest, ok := strings.CutPrefix(text, "# "); ok {
-		if i := strings.IndexByte(rest, '\n'); i >= 0 {
-			return rest[i+1:]
-		}
-		return ""
+	first, rest, _ := strings.Cut(text, "\n")
+	if strings.HasPrefix(first, "# ") {
+		return rest
+	}
+	if under, after, _ := strings.Cut(rest, "\n"); under != "" && strings.Trim(under, "=") == "" {
+		return after
 	}
 	return text
 }

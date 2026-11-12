@@ -66,7 +66,7 @@ func unlinkedMentions(p *project.Project) []Note {
 				continue
 			}
 			// A part speaks of the thing it is a part of without linking it.
-			if partOf(sp, d, dd) {
+			if sp.IsPartOf(x, dd) {
 				continue
 			}
 			if _, ok := first[dd]; ok || covered(s.words, linked, nameList) {
@@ -107,17 +107,6 @@ func unlinkedMentions(p *project.Project) []Note {
 		}
 	}
 	return out
-}
-
-// partOf reports whether a Definition is a part of another, directly or
-// through a part.
-func partOf(sp *spec.Spec, d *spec.Definition, whole string) bool {
-	for at := d.Whole; at != ""; at = sp.Definitions[at].Whole {
-		if at == whole {
-			return true
-		}
-	}
-	return false
 }
 
 // named is one name of a Definition, as lowercase words.

@@ -141,7 +141,7 @@ CRAP, the change-risk measure for code, is *comp² × (1 − cov)³ + comp*, wit
 
 **Good.** Each area's Concepts sit in its area Package, and the two shared Kinds sit at Root. The formats are used by Root's own Rules (`time`, `money`) and by `audit-entry`, so their lowest common parent is Root: split there, as thirteen Definitions, every link is exact. Split into a `values/` Package instead, they show as an edge from each module, but Root's five users can no longer link them, and a change to a format stops reaching them. At Root they make Root 33 Definitions, and `vet.package_size` warns: the sign that Root holds a module, which only moving the module and the Kind's links out would cure.
 
-**Signal.** `vet.package_size` warns above 25 Definitions, Root included. `vet.placement` notes, shown with `--strict`, a Definition whose users all lie below it in one Package. `vet.hub` counts Root, which the earlier `vet.reach` skipped.
+**Signal.** `vet.package_size` warns above 25 Definitions, Root included and the parts of a thing not counted. `vet.placement` notes, shown with `--strict`, a Definition whose users all lie below it in one Package. `vet.hub` counts Root, which the earlier `vet.reach` skipped.
 
 ## Say it once, link exactly what you use
 

@@ -184,10 +184,8 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 	}
 	c.warnErrors(p)
 	target := strings.TrimSuffix(strings.TrimSuffix(strings.TrimPrefix(positional[0], "[["), "]]"), ".md")
-	if thing, ok := p.Spec.Thing(target); ok {
-		target = thing // a folder that holds a Definition of its own name stands for it
-	}
-	if d := p.Spec.Definitions[target]; d != nil {
+	// A folder that holds a Definition of its own name stands for it.
+	if d := p.Spec.Lookup(target); d != nil {
 		dd := c.docDefinition(ctx, o, p, d)
 		if o.json {
 			return OK, c.printJSON(struct {

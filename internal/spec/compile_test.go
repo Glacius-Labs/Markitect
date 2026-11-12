@@ -241,6 +241,37 @@ func TestCompileWholeAndParts(t *testing.T) {
 	if _, ok := m.Thing("members/rules"); ok {
 		t.Fatal("a folder without a Definition of its name is taken for a thing")
 	}
+	// A Package below a thing is no part of it: neither its anchor nor what
+	// lies in it.
+	m, ds = compile(t, map[string]string{
+		"interfaces/interfaces.md":     def("std/Rule", "# Interfaces\n"),
+		"interfaces/limits/width.md":   def("std/Rule", "# Width\n"),
+		"interfaces/site/site.md":      anchor("Site"),
+		"interfaces/site/page.md":      def("std/Rule", "# Page\n"),
+		"interfaces/site/form/form.md": def("std/Rule", "# Form\n"),
+		"interfaces/site/form/name.md": def("std/Rule", "# Name\n"),
+	})
+	clean(t, ds)
+	for id, whole := range map[string]string{
+		"interfaces/limits/width":   "interfaces/interfaces",
+		"interfaces/site/site":      "",
+		"interfaces/site/page":      "",
+		"interfaces/site/form/form": "",
+		"interfaces/site/form/name": "interfaces/site/form/form",
+	} {
+		if got := m.Definitions[id].Whole; got != whole {
+			t.Errorf("%s is a part of %q, want %q", id, got, whole)
+		}
+	}
+	if got := strings.Join(m.Parts("interfaces/interfaces"), ","); got != "interfaces/limits/width" {
+		t.Fatalf("parts of interfaces = %q", got)
+	}
+	if m.Lookup("interfaces/site/form") != m.Definitions["interfaces/site/form/form"] || m.Lookup("interfaces/site/page") == nil || m.Lookup("interfaces/site") != nil || m.Lookup("nothing") != nil {
+		t.Fatal("Lookup is wrong")
+	}
+	if !m.IsPartOf("interfaces/site/form/name", "interfaces/site/form/form") || m.IsPartOf("interfaces/site/form/name", "interfaces/interfaces") || m.IsPartOf("gone", "interfaces/interfaces") {
+		t.Fatal("IsPartOf is wrong")
+	}
 }
 
 // A broken anchor is one error: its folder stays a Package, so what lies in

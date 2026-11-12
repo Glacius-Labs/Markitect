@@ -347,6 +347,29 @@ func TestStatusCountsAFolderForThePackageAbove(t *testing.T) {
 	}
 }
 
+// A link to the folder of a thing with parts relies on the thing: a change of
+// the whole reaches the Definition that links the folder, and a change of a
+// part does not.
+func TestAChangedWholeReachesWhatLinksItsFolder(t *testing.T) {
+	files := library()
+	files[m+"members/rules/fees/fees.md"] = def("std/Rule", "Fees", "A fee per day.")
+	files[m+"members/rules/fees/amounts/per-day.md"] = def("std/Rule", "Per day", "`1` euro.")
+	files[m+"catalog/book.md"] = def("std/Concept", "Book", "A book has a title, and [[members/rules/fees]] apply.")
+	files[project.RegistryDir+"/members.md"] += "| src/members/fees.go | [[members/rules/fees]], [[members/rules/fees/amounts/per-day]] | Fees |\n"
+	files["src/members/fees.go"] = "package members\n"
+	p := newPlainOf(t, files)
+	p.verifyAll()
+	p.write(m+"members/rules/fees/amounts/per-day.md", def("std/Rule", "Per day", "`2` euros."))
+	if got := listed(p.status(false)); got != "members/rules/fees/amounts/per-day" {
+		t.Fatalf("after a change of a part, listed %q", got)
+	}
+	p.verifyAll()
+	p.write(m+"members/rules/fees/fees.md", def("std/Rule", "Fees", "A fee per week."))
+	if got := listed(p.status(false)); got != "catalog/book,members/rules/fees/fees" {
+		t.Fatalf("after a change of the whole, listed %q", got)
+	}
+}
+
 // What is to verify is what a change touches at distance 0 and 1.
 func TestWhatAChangeReaches(t *testing.T) {
 	cases := []struct {

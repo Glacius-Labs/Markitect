@@ -218,6 +218,9 @@ func (c *compiler) wholes() {
 	for _, id := range c.spec.OwnDefinitions() {
 		d := c.spec.Definitions[id]
 		at := FolderOf(id)
+		if c.spec.Packages[at] != nil {
+			continue // what lies in a Package's folder, its anchor too, is no part
+		}
 		if id == AnchorOf(at) {
 			at = FolderOf(at) // its own folder names it: look above
 		}

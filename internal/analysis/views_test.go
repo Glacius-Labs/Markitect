@@ -1,7 +1,9 @@
 package analysis
 
 import (
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -73,6 +75,46 @@ func TestDocViews(t *testing.T) {
 	}
 	if free := DocDefinitionOf(q, q.Spec.Definitions["catalog/operations/lend/conditions/free"]); free.Whole != "catalog/operations/lend/lend" || len(free.Parts) != 0 {
 		t.Fatalf("free: %+v", free)
+	}
+	// Folders come in the order the thing links their parts, and a part that
+	// has parts of its own sits with its siblings, its parts after it.
+	r[m+"catalog/operations/lend/lend.md"] = def("std/Feature", "Lend", "Afterwards [[catalog/operations/lend/outcomes/lent]]; first [[catalog/operations/lend/conditions/free]].")
+	r[m+"catalog/operations/lend/outcomes/due/due.md"] = def("std/Rule", "Due", "It is due.")
+	r[m+"catalog/operations/lend/outcomes/due/after.md"] = def("std/Rule", "After", "After `14` days.")
+	q = loadRepo(t, r)
+	parts = nil
+	for _, part := range DocDefinitionOf(q, q.Spec.Definitions["catalog/operations/lend/lend"]).Parts {
+		parts = append(parts, part.Group+" "+part.Title)
+	}
+	if want := []string{"outcomes Lent", "outcomes Due", "conditions Free", "conditions An earlier name", "outcomes/due After"}; !reflect.DeepEqual(parts, want) {
+		t.Fatalf("order of folders and parts: %q", parts)
+	}
+	delete(r, m+"catalog/operations/lend/outcomes/due/due.md")
+	delete(r, m+"catalog/operations/lend/outcomes/due/after.md")
+	// A part of another thing that the Definition links is read with it, in
+	// its place in the order and with the thing it is a part of; and the text
+	// is shown with each link by its label or by the title of what it names.
+	r[m+"catalog/book/book.md"] = def("std/Concept", "Book", "Lent to a [[members/member]].")
+	r[m+"catalog/book/conditions/exists.md"] = def("std/Rule", "Book exists", "A [[catalog/book]] with this `isbn` exists.")
+	r[m+"catalog/operations/lend/lend.md"] = def("std/Feature", "Lend", "Checked: [[catalog/book/conditions/exists]], then [[catalog/operations/lend/conditions/free|that it is free]]; see `[[catalog/book]]`.\n\n```\n[[catalog/book]]\n```")
+	delete(r, m+"catalog/book.md")
+	r[project.RegistryDir+"/catalog.md"] = "---\npaths: [src/catalog/**]\n---\n" + table + "| src/catalog/book.go | [[catalog/book]] [[catalog/shelf]] [[catalog/catalog]] | Types |\n"
+	q = loadRepo(t, r)
+	lend = DocDefinitionOf(q, q.Spec.Definitions["catalog/operations/lend/lend"])
+	parts = nil
+	for _, part := range lend.Parts {
+		parts = append(parts, part.Group+" "+part.Title+" of "+part.Of+": "+part.Shown)
+	}
+	if want := []string{
+		"conditions Book exists of catalog/book/book: # Book exists\n\nA Book with this `isbn` exists.\n",
+		"conditions Free of : # Free\n\nNobody holds it.\n",
+		"conditions An earlier name of : # An earlier name\n\nBy name it comes first.\n",
+		"outcomes Lent of : # Lent\n\nSomebody holds it.\n",
+	}; !reflect.DeepEqual(parts, want) {
+		t.Fatalf("parts of lend with a part of another thing:\n%q", parts)
+	}
+	if want := "# Lend\n\nChecked: Book exists, then that it is free; see `[[catalog/book]]`.\n\n```\n[[catalog/book]]\n```\n"; lend.Shown != want || !strings.Contains(lend.Text, "[[catalog/book/conditions/exists]]") {
+		t.Fatalf("shown:\n%q\ntext:\n%q", lend.Shown, lend.Text)
 	}
 	dp := DocPackageOf(p, p.Spec.Packages[p.Spec.Definitions["members/member"].Package])
 	if dp.Anchor != "members/members" || dp.Text != "# Members\n\nWho may borrow.\n" {

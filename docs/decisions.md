@@ -138,7 +138,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 ### DEC-109 A thing with parts is read as a whole
 
 - A Definition states one thing, so that it can be verified alone and changes alone. A thing that has parts is therefore a folder: it holds the Definition of its own name, the whole, and its parts in it or below it, each a Definition of its own.
-- A reader needs the thing on one page all the same. `doc` shows a whole with its parts, the parts of one folder together, in the order the whole links them and then by ID. A whole whose parts have an order states it by linking them in that order.
+- A reader needs the thing on one page all the same. `doc` shows a whole with its parts, the parts of one folder together, folders and parts in the order the whole links them and then by name and by ID, and shows each link by its label or by the title of what it names. A whole whose parts have an order states it by linking them in that order. A part that several things share lies with the thing it is about and is linked by the others; `doc` shows it with each of them, in its place, and says what it is a part of.
 - A link to the folder means the whole, so that a link names a thing once: `[[members/operations/lend]]`.
 - `vet` counts things: parts do not count for the size of a Package, and a part may name its whole without linking it.
 - A Package ends a thing: an anchor is no whole, and what lies in a Package is no part of a thing above it. A Package is a module ([DEC-108](#dec-108-a-folder-is-a-namespace-a-package-is-declared-by-its-anchor)), and a thing with parts is one thing written in several files.
