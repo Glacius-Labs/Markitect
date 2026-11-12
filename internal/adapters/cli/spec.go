@@ -209,7 +209,7 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 	if read {
 		folder := spec.RootPackage
 		if len(positional) == 1 && positional[0] != "Root" && positional[0] != "." {
-			folder = strings.Trim(strings.TrimSuffix(strings.TrimPrefix(positional[0], "[["), "]]"), "/")
+			folder = specTarget(positional[0])
 		}
 		entries := analysis.Read(p, folder)
 		if len(entries) == 0 {
@@ -234,7 +234,7 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 		fmt.Fprint(c.Stdout, renderRead(folder, entries))
 		return OK, nil
 	}
-	target := strings.TrimSuffix(strings.TrimSuffix(strings.TrimPrefix(positional[0], "[["), "]]"), ".md")
+	target := strings.TrimSuffix(specTarget(positional[0]), ".md")
 	// A folder that holds a Definition of its own name stands for it.
 	if d := p.Spec.Lookup(target); d != nil {
 		dd := c.docDefinition(ctx, o, p, d)
@@ -275,6 +275,24 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 	}
 	fmt.Fprintf(c.Stderr, "markitect doc: %s\n", ds[0].String())
 	return Failed, nil
+}
+
+// specTarget turns what a person or agent names to doc into the ID or folder
+// the spec knows: a link, an ID, or a path as status prints it after look at,
+// with the spec folder's prefix, a leading ./ or backslashes. A path under the
+// project folder but outside the spec folder stays as it is and so stays unknown.
+// The folder of the spec itself is the Root.
+func specTarget(s string) string {
+	s = strings.ReplaceAll(s, `\`, "/")
+	for strings.HasPrefix(s, "./") {
+		s = strings.TrimPrefix(s, "./")
+	}
+	s = strings.TrimSuffix(strings.TrimPrefix(s, "[["), "]]")
+	s = strings.TrimRight(s, "/")
+	if s == project.SpecDir {
+		return spec.RootPackage
+	}
+	return strings.TrimPrefix(s, project.SpecDir+"/")
 }
 
 // docDefinition gathers what doc shows of a Definition, with its record.
