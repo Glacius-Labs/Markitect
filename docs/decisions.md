@@ -178,6 +178,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - An item of a slice is judged on the project as it stands. A Rule of Root is `ok` in the first slice when what exists keeps to it and what it asks for itself is built: what a later slice builds answers for the Rules above it when it is verified, as every later change does, and the record brings the Rule back when a file it rests on changes. So a slice ends with an empty list, and nothing is put off for the end but what a Kind declares so. Such an `ok` says what held when the slice was built: whether what is built later keeps to a Rule above it rests on the review of each later item, which reads what binds it, and a review of everything, `/markitect-review --all`, judges the Rule on the whole project. A file that no registry page lists is the work of the slice that added it, and its list names it.
 - The parallel workflow takes Root's strand last, since that strand makes the changes the others ask for in shared files. A build in slices takes Root's Rules, Decisions and components first, since nothing exists yet that the others could build on. The two orders serve different lists and are computed apart.
 - The parallel strategy was the alternative for a first build. It builds at once Packages that do not exist for each other yet, and a first build has nothing to build on.
+- It rests on what no test shows. One builder with its reviewer has to settle a slice of a real project's size, such as the 36 items Root lists first for a booking system; where one does not finish a slice of about 40 items, a Package is cut by its top-level folders. And a slice that shortened its list has to leave the project fit to build on; where later slices fail on what an earlier one left, a slice is merged only when it is settled.
 
 ### DEC-113 What binds is an input of what it binds
 
@@ -191,6 +192,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - Where the record no longer holds the directory a line names, or the line has no `bound:` input, as in a record of an earlier release, `status` names the Package, as in `bound:Root (new)`. Such a record lists each bound item once more.
 - The item of a binding Definition verifies what the Definition asks for itself and that nothing that exists contradicts it; what it binds is verified against it item by item, as `std/Rule`, `std/Decision` and `std/Constraint` say. The binding Definition's own item as the one verdict on the whole project was the alternative. It puts the trust into one verdict whose evidence cannot enumerate the project.
 - `vet.hub` counts links: what a Definition binds by its place is no finding.
+- It rests on reviewers verifying an item against what binds it, which `doc` lists. In one small real run the reviewers read the whole project at once and did not look at what binds each item, which is sound where a project can be read at once. Where a review of everything turns an `ok` on a larger project, the item of a binding Definition gets a closing review on the whole project.
 
 ## The tool
 
