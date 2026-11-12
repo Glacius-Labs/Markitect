@@ -59,7 +59,7 @@ Usage:
   markitect vet    [--repo DIR] [--json] [--strict]
                                                   analyse the spec's design: coupling, size, how far a change reaches;
                                                   it warns, and exits 1 only with --strict
-  markitect list   [--repo DIR] [--json] [--deps] the Packages and their Definitions; --deps adds what each depends on
+  markitect list   [--repo DIR] [--json] [--deps] [--packages]  the Packages and their Definitions; --deps adds what each depends on, --packages prints the Packages alone
   markitect doc    [--repo DIR] [--json] TARGET   a Definition or Package: its text, its links both ways, its files
                                                   and its record
   markitect status [--repo DIR] [--json] [--all]  what is to verify: each Definition with a changed input or no record,

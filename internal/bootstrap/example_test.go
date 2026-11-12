@@ -67,8 +67,8 @@ func TestArchitectExampleIsWhatTheToolsPrint(t *testing.T) {
 	}
 	page := strings.ReplaceAll(string(data), "\r\n", "\n")
 	files := exampleFiles(t, page)
-	if len(files) != 19 {
-		t.Fatalf("the page shows %d files of the example, want the manifest, 14 Definitions, 3 registry pages and the ignore file", len(files))
+	if len(files) != 33 {
+		t.Fatalf("the page shows %d files of the example, want the manifest, 26 Definitions, 5 registry pages and the ignore file", len(files))
 	}
 	// build writes the example with a change into a folder, and every file its
 	// registry pages and its ignore file name.
@@ -129,19 +129,19 @@ func TestArchitectExampleIsWhatTheToolsPrint(t *testing.T) {
 	// Verified once, the change of the limit the page describes lists what it
 	// says.
 	for _, item := range listed(r) {
-		mustRun(t, r.Dir, "mark", item, "ok", "-e", "README.md", "--cases", "1", "--covered", "1")
+		mustRun(t, r.Dir, "mark", item, "ok", "-e", "go.mod", "--cases", "1", "--covered", "1")
 	}
 	mustRun(t, r.Dir, "status")
-	const limit = ".markitect/spec/members/loan-limit.md"
+	const limit = ".markitect/spec/domain/members/concepts/member/invariants/within-the-loan-limit.md"
 	r.Write(limit, strings.Replace(read(t, r.Dir, limit), "`3`", "`5`", 1))
 	var changed []string
 	for _, item := range listed(r) {
 		changed = append(changed, item[:strings.Index(item, "@")])
 	}
-	if got := strings.Join(changed, ", "); got != "catalog/borrow-book, members/loan-limit" {
+	if got := strings.Join(changed, ", "); got != "domain/catalog/operations/borrow-book/borrow-book, domain/members/concepts/member/member" {
 		t.Errorf("after the limit changed, status lists %s", got)
 	}
-	shown("status", "`markitect status` lists `members/loan-limit` and `catalog/borrow-book`")
+	shown("status", "`markitect status` lists `domain/catalog/operations/borrow-book/borrow-book` and `domain/members/concepts/member/member`")
 
 	// Each error the page warns of, from the change it names.
 	for code, c := range map[string]struct {
@@ -149,17 +149,17 @@ func TestArchitectExampleIsWhatTheToolsPrint(t *testing.T) {
 		change func(files map[string]string)
 		file   string
 	}{
-		"package.cycle": {says: "The books a member holds are listed in [[catalog/book]].", change: func(f map[string]string) {
-			f["spec/members/member.md"] += "- The books a member holds are listed in [[catalog/book]].\n"
+		"package.cycle": {says: "The books a member holds are listed in [[domain/catalog/concepts/book]].", change: func(f map[string]string) {
+			f["spec/domain/members/concepts/member/member.md"] += "\nThe books a member holds are listed in [[domain/catalog/concepts/book]].\n"
 		}},
-		"link.downward": {says: "Staff lend books with [[catalog/post-loans]].", change: func(f map[string]string) {
-			f["spec/project.md"] += "\nStaff lend books with [[catalog/post-loans]].\n"
+		"link.downward": {says: "Staff lend books with [[domain/catalog/operations/borrow-book]].", change: func(f map[string]string) {
+			f["spec/project.md"] += "\nStaff lend books with [[domain/catalog/operations/borrow-book]].\n"
 		}},
-		"link.internal": {says: "- The receipt goes to the member's [[members/email]].", change: func(f map[string]string) {
-			f["spec/catalog/borrow-book.md"] += "- The receipt goes to the member's [[members/email]].\n"
+		"link.internal": {says: "A receipt goes to the member's [[domain/members/concepts/member/attributes/email]].", change: func(f map[string]string) {
+			f["spec/domain/catalog/operations/borrow-book/outcomes/member-holds-the-book.md"] += "\nA receipt goes to the member's [[domain/members/concepts/member/attributes/email]].\n"
 		}},
-		"registry.wrong_owner": {says: "| `internal/members/http.go` | [[members/post-members]] | The handler |", change: func(f map[string]string) {
-			f["registry/catalog.md"] += "| `internal/members/http.go` | [[members/post-members]] | The handler |\n"
+		"registry.wrong_owner": {says: "| `internal/members/member.go` | [[domain/members/concepts/member]] | The member |", change: func(f map[string]string) {
+			f["registry/domain/catalog.md"] += "| `internal/members/member.go` | [[domain/members/concepts/member]] | The member |\n"
 		}},
 		"file.unregistered": {says: "`newfile.txt`", file: "newfile.txt"},
 	} {

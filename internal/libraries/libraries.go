@@ -1,5 +1,6 @@
 // Package libraries holds the standard Libraries that ship inside the
-// markitect binary: std, rest and cli, each a folder of Kind Definitions.
+// markitect binary, each a folder of Kind Definitions: std, the Kinds of a
+// project's description.
 package libraries
 
 import (
@@ -10,9 +11,9 @@ import (
 )
 
 // Version is the version of every standard Library in this binary.
-const Version = "1.1.0"
+const Version = "2.0.0"
 
-//go:embed std rest cli
+//go:embed std
 var files embed.FS
 
 // File is one file of a standard Library.
@@ -24,7 +25,7 @@ type File struct {
 var crlf, lf = []byte{13, 10}, []byte{10}
 
 // Names returns the names of the standard Libraries, sorted.
-func Names() []string { return []string{"cli", "rest", "std"} }
+func Names() []string { return []string{"std"} }
 
 // Files returns the files of a standard Library, or false when there is no
 // standard Library of that name.

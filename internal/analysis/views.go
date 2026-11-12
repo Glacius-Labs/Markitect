@@ -152,11 +152,57 @@ type DocDefinition struct {
 	// Whole is the Definition this one is a part of. Parts are its own parts
 	// and the parts of other things it links, with their text, each folder's
 	// together, in the order it links them and then by ID.
-	Whole      string     `json:"whole,omitempty"`
-	Parts      []DocPart  `json:"parts"`
-	LinkedFrom []Ref      `json:"linked_from"`
-	RealizedBy []Realizer `json:"realized_by"`
-	Record     *DocRecord `json:"record,omitempty"`
+	Whole string    `json:"whole,omitempty"`
+	Parts []DocPart `json:"parts"`
+	// Fields are the labelled fields of the text, each with what it links.
+	Fields []DocField `json:"fields,omitempty"`
+	// BoundBy are the Definitions that bind this one without a link: those of
+	// a Kind that declares binds, in its Package or a Package above it, parts
+	// left out since their whole stands for them.
+	BoundBy []ListedDefinition `json:"bound_by,omitempty"`
+	// Declares is what a Kind declares about its Definitions: their fields
+	// and the folders of their parts.
+	Declares   *DocDeclares `json:"declares,omitempty"`
+	LinkedFrom []Ref        `json:"linked_from"`
+	RealizedBy []Realizer   `json:"realized_by"`
+	Record     *DocRecord   `json:"record,omitempty"`
+}
+
+// DocField is one labelled field of a Definition's text with the Definitions
+// and Packages it links.
+type DocField struct {
+	Label string   `json:"label"`
+	Links []string `json:"links"`
+}
+
+// DocDeclares is what a Kind declares. Fields or Parts is null when the Kind
+// declares nothing about them, and empty when it declares that there are
+// none.
+type DocDeclares struct {
+	Fields []DocDeclaredField `json:"fields"`
+	Parts  []DocDeclaredPart  `json:"parts"`
+	// Links are the Kinds a link of a Definition may name where a field does
+	// not say for itself; null when the Kind does not say.
+	Links []string `json:"links"`
+	// Unrealized says that no file realizes a Definition of the Kind, and
+	// Binds that one binds its Package and those below it without a link.
+	Unrealized bool `json:"unrealized,omitempty"`
+	Binds      bool `json:"binds,omitempty"`
+}
+
+// DocDeclaredField is one field a Kind declares. Links is null when a link
+// in the field may name anything.
+type DocDeclaredField struct {
+	Name     string   `json:"name"`
+	Required bool     `json:"required"`
+	Links    []string `json:"links"`
+}
+
+// DocDeclaredPart is one folder of parts a Kind declares; the folder "."
+// stands for the thing's own folder.
+type DocDeclaredPart struct {
+	Folder string   `json:"folder"`
+	Kinds  []string `json:"kinds"`
 }
 
 // DocPart is one part as doc shows it with a Definition. Group is the folder
@@ -199,6 +245,49 @@ func DocDefinitionOf(p *project.Project, d *spec.Definition) DocDefinition {
 		dd.Package = ""
 	}
 	dd.Shown = shown(p.Spec, d.Data)
+	for _, f := range d.Fields {
+		field := DocField{Label: f.Label, Links: []string{}}
+		for _, l := range d.Links {
+			if l.Field == f.Label && !l.Kind && l.Target != "" {
+				field.Links = append(field.Links, l.Target)
+			}
+		}
+		dd.Fields = append(dd.Fields, field)
+	}
+	if d.Own() {
+		unit := p.Spec.UnitOf(d.ID)
+		for _, id := range p.Spec.OwnDefinitions() {
+			other := p.Spec.Definitions[id]
+			kind := p.Spec.Definitions[other.Kind]
+			// Neither the Definition's own thing nor a thing it is a part of.
+			if other.Whole != "" || id == unit || p.Spec.IsPartOf(d.ID, id) || kind == nil || kind.Schema == nil || !kind.Schema.Binds || !spec.Within(d.Package, other.Package) {
+				continue
+			}
+			dd.BoundBy = append(dd.BoundBy, listDefinition(other, false))
+		}
+	}
+	if s := d.Schema; s != nil {
+		dd.Declares = &DocDeclares{Unrealized: s.Unrealized, Binds: s.Binds}
+		if s.Limited {
+			dd.Declares.Links = append([]string{}, s.Links...)
+		}
+		if s.HasFields {
+			dd.Declares.Fields = []DocDeclaredField{}
+		}
+		for _, f := range s.Fields {
+			declared := DocDeclaredField{Name: f.Name, Required: f.Required}
+			if f.Limited {
+				declared.Links = append([]string{}, f.Links...)
+			}
+			dd.Declares.Fields = append(dd.Declares.Fields, declared)
+		}
+		if s.HasParts {
+			dd.Declares.Parts = []DocDeclaredPart{}
+		}
+		for _, part := range s.Parts {
+			dd.Declares.Parts = append(dd.Declares.Parts, DocDeclaredPart{Folder: part.Folder, Kinds: append([]string{}, part.Kinds...)})
+		}
+	}
 	rank := map[string]int{}
 	for i, l := range d.Links {
 		if _, seen := rank[l.Target]; !seen && l.Target != "" {

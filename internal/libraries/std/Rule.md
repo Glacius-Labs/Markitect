@@ -1,13 +1,16 @@
 ---
 kind: Kind
+binds: true
+fields:
+  Applies to:
+  Derived from: {links: [std/Goal, std/Constraint, std/Decision, std/Quality, std/Assumption, std/Term, std/ExternalSystem, std/Expectation, std/Rule, std/Concern, std/Wish]}
+parts:
+  .: std/Rule
 ---
 # Rule
 
-A Rule Definition states something every artifact in its scope must satisfy: a policy, a constraint, a convention or a quality requirement.
+A Rule Definition states something the owner chose that holds across Concepts or Operations, or for the work itself, as a property a reviewer can decide, with exact values in backticks. This includes the definition of a notion and who counts as which role. It lives under `rules/`: of an area or of `domain/` when it is about what the system does, and of `architecture/` or of a Component when it binds how the project is built, tested and run.
 
-- Its scope is its location. A Rule in the Root Package binds the whole project; a Rule in a Package binds that Package and every Package below it.
-- State it so that a reviewer can decide whether an artifact conforms: what must hold, and where it applies when that is narrower than the scope.
-- Give exact values in backticks: limits, error codes, names.
-- Say why when the reason helps a reader apply the Rule to a case it does not name.
+**Applies to:** where, when narrower than its place, which is its scope. **Derived from:** what is behind it: a [[std/Goal]], [[std/Constraint]], [[std/Decision]] or [[std/Quality]], a [[std/Concern]] or [[std/Wish]] it answers, an [[std/Assumption]], a [[std/Term]], an [[std/ExternalSystem|External system]] or one of its [[std/Expectation|Expectations]] it rests on, or another Rule. A Rule inside the folder of another Rule is part of it and follows from what that one follows from.
 
-Layout conventions, such as where tests live, are Rules in the Root Package.
+Verified when it holds wherever it applies.

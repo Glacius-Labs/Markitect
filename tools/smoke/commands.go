@@ -47,7 +47,7 @@ func (s *smoke) specCommands() error {
 	markitect := func(args ...string) (string, error) { return s.run(repo, nil, s.tool("markitect"), args...) }
 	if out, err := markitect("init", "--name", "Lending library"); err != nil {
 		return err
-	} else if err := requireContains(out, "created .markitect/manifest.yaml", "wrote .markitect/lock.yaml: std 1.1.0", "installed the harness"); err != nil {
+	} else if err := requireContains(out, "created .markitect/manifest.yaml", "wrote .markitect/lock.yaml: std 2.0.0", "installed the harness"); err != nil {
 		return err
 	}
 	if err := requirePresent(repo, ".claude/skills/markitect-architect/SKILL.md", ".claude/agents/markitect-architect.md", ".claude/workflows/markitect-parallel.js", ".markitect/spec/project.md"); err != nil {
@@ -79,7 +79,7 @@ func (s *smoke) specCommands() error {
 	}
 	if out, err := markitect("tidy"); err != nil {
 		return err
-	} else if err := requireContains(out, "std 1.1.0"); err != nil {
+	} else if err := requireContains(out, "std 2.0.0"); err != nil {
 		return err
 	}
 	if out, err := markitect("doc", "members/member"); err != nil {
@@ -125,7 +125,7 @@ func (s *smoke) specCommands() error {
 	if err := os.WriteFile(limit, []byte(strings.Replace(smokeSpec[".markitect/spec/loan-limit.md"], "`5`", "`3`", 1)), 0o644); err != nil {
 		return err
 	}
-	if out, err := markitect("status"); err == nil || !strings.Contains(out, "To verify (1 of 6 Definitions)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self") {
+	if out, err := markitect("status"); err == nil || !strings.Contains(out, "To verify (1 of 6 items)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self") {
 		return fmt.Errorf("status after the change of the loan limit: %v\n%s", err, tail(out))
 	}
 	if err := verifyAll(markitect, 1); err != nil {

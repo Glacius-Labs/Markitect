@@ -134,12 +134,13 @@ func notesLine(notes []analysis.Note) string {
 }
 
 // list prints the Packages and their Definitions; with --deps, what each
-// depends on.
+// depends on; with --packages, the Packages alone.
 func (c CLI) list(_ context.Context, args []string) (int, error) {
 	var o options
-	var deps bool
+	var deps, packages bool
 	fs := c.flags("list", &o)
 	fs.BoolVar(&deps, "deps", false, "add what each Package and Definition depends on, and each Package's coupling, abstractness and distance")
+	fs.BoolVar(&packages, "packages", false, "print the Packages alone: with --deps each dependency on one line with the number of links behind it")
 	if positional, err := parse(fs, args); err != nil {
 		return Misused, err
 	} else if len(positional) != 0 {
@@ -160,7 +161,7 @@ func (c CLI) list(_ context.Context, args []string) (int, error) {
 		}
 		return OK, nil
 	}
-	fmt.Fprint(c.Stdout, renderList(pkgs))
+	fmt.Fprint(c.Stdout, renderList(pkgs, packages))
 	return OK, nil
 }
 
@@ -232,7 +233,8 @@ func (c CLI) docDefinition(ctx context.Context, o options, p *project.Project, d
 	if d.Own() {
 		if st, err := c.Record.Status(ctx, run.StatusRequest{Dir: o.repo, All: true}); err == nil {
 			for _, it := range st.Items {
-				if it.Definition != d.ID {
+				// A part is verified with its whole: its record is the whole's.
+				if it.Definition != p.Spec.UnitOf(d.ID) {
 					continue
 				}
 				r := &analysis.DocRecord{Item: it.Definition + "@" + it.Fingerprint, State: it.State, Verdict: it.Verdict, Why: it.Why}

@@ -1,15 +1,11 @@
 ---
 kind: Kind
+realized: false
+fields:
+parts:
 ---
 # Project
 
-A Project Definition is the project's anchor: what the project is, for whom, and what it deliberately does not do. It sits in the spec folder itself, the Root Package, so it reaches the whole project.
+A Project Definition opens the spec, as `project.md` in the Root Package: what the system is and the problem it removes, in a few sentences. Its [[std/Stakeholder|Stakeholders]], [[std/Goal|Goals]] and [[std/Exclusion|Exclusions]] live under `purpose/`; what the system consists of is said by the Packages, each in its anchor.
 
-Write it as the opening page of good documentation:
-
-- what the project is and the problem it solves, in a few sentences;
-- who uses it and through which interfaces;
-- the main parts, each a Package, linked by path (`[[members]]`);
-- what is out of scope.
-
-There is usually one Project Definition. Project-wide [[std/Rule|Rules]], layout conventions and the architecture are separate Definitions beside it in the Root Package.
+Verified when behavior exists for every Goal and nothing is built that an Exclusion leaves out.

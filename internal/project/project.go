@@ -144,11 +144,11 @@ func (p *Project) RealizationErrors() spec.Diagnostics {
 }
 
 // NothingBuilt says that all that stands between the spec and the work is that the
-// work has not begun: the registry lists no file, and the only errors are
-// Definitions nothing realizes. Only the check command reads this; status does
+// work has not begun: the registry lists no file, and the only errors, if any,
+// are Definitions nothing realizes. Only the check command reads this; status does
 // not, so the work still has to realize every Definition.
 func (p *Project) NothingBuilt() bool {
-	if len(p.Errors) == 0 || p.Registry == nil || len(p.Registry.Entries) > 0 {
+	if p.Registry == nil || len(p.Registry.Entries) > 0 {
 		return false
 	}
 	for _, d := range p.Errors {
@@ -272,24 +272,44 @@ func addRealizationErrors(ds *spec.Diagnostics, sp *spec.Spec, reg *realization.
 	if sp == nil {
 		return
 	}
-	incoming := map[string]bool{}
+	// A thing with parts is used as one: when a file realizes it or one of its
+	// parts, or when a Definition outside it links it or one of its parts.
+	used := map[string]bool{}
 	for _, d := range sp.Definitions {
+		from := d.ID
+		if d.Own() {
+			from = sp.UnitOf(d.ID)
+		}
 		for _, l := range d.Links {
-			if l.Target != d.ID {
-				incoming[l.Target] = true
+			if l.Target == "" || l.Package {
+				continue
+			}
+			if to := sp.UnitOf(l.Target); to != from {
+				used[to] = true
 			}
 		}
 	}
-	realized := map[string]bool{}
 	if reg != nil {
 		for _, e := range reg.Entries {
 			for _, id := range e.Realizes {
-				realized[id] = true
+				used[sp.UnitOf(id)] = true
 			}
 		}
 	}
+	// A thing whose part is a thing of its own is used when that one is.
+	for id := range used {
+		for d := sp.Definitions[id]; d != nil && d.Whole != ""; d = sp.Definitions[d.Whole] {
+			used[sp.UnitOf(d.Whole)] = true
+		}
+	}
+	// A Kind may declare that no file realizes its Definitions.
+	unrealized := func(id string) bool {
+		kind := sp.Definitions[sp.Definitions[id].Kind]
+		return kind != nil && kind.Schema != nil && kind.Schema.Unrealized
+	}
+	units := sp.Units()
 	for _, id := range sp.OwnDefinitions() {
-		if !incoming[id] && !realized[id] {
+		if _, unit := units[id]; unit && !used[id] && !unrealized(id) {
 			ds.Add(CodeUnused, sp.Definitions[id].File, 0, "nothing links to %s and no file realizes it", id)
 		}
 	}

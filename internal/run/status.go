@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"path"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -30,10 +31,13 @@ const (
 	StateSkip = VerdictSkip
 )
 
-// Item is one Definition to verify, with what changed and where to look.
+// Item is one unit to verify, with what changed and where to look: a
+// Definition that is no part of another, with the parts it covers.
 type Item struct {
-	Definition  string   `json:"definition"`
-	Title       string   `json:"title,omitempty"`
+	Definition string `json:"definition"`
+	Title      string `json:"title,omitempty"`
+	// Parts are the parts the item covers, verified with it as one.
+	Parts       []string `json:"parts,omitempty"`
 	State       string   `json:"state"`
 	Fingerprint string   `json:"fingerprint"`
 	Changes     []Change `json:"changes,omitempty"`
@@ -62,8 +66,10 @@ type Status struct {
 	// project.QuestionsFile (DEC-100). They are a note: they do not count, and a
 	// list limited to a Package leaves them out, since they belong to none.
 	Questions bool
-	// Definitions counts the Definitions of the spec.
+	// Definitions counts the Definitions of the spec, and Units what is
+	// verified as one: a thing with its parts is one unit.
 	Definitions int
+	Units       int
 	// Packages are the spec's Packages with what each has on the list and the
 	// Packages it depends on, sorted by name: what a driver needs to plan work
 	// per Package in the order of their dependencies (DEC-103).
@@ -83,8 +89,10 @@ type Status struct {
 type PackageItems struct {
 	// Package is the Package's name: its path, or Root.
 	Package string `json:"package"`
-	// Definitions counts the Definitions that belong to it.
+	// Definitions counts the Definitions that belong to it, and Units what
+	// of them is verified as one.
 	Definitions int `json:"definitions"`
+	Units       int `json:"units"`
 	// Items counts its items, and SpecProblems those of them recorded
 	// spec-problem, which wait for the owner.
 	Items        int `json:"items"`
@@ -175,7 +183,7 @@ func (s Status) only(name string) (Status, error) {
 	known := false
 	for _, p := range s.Packages {
 		if p.Package == name {
-			known, s.Definitions = true, p.Definitions
+			known, s.Definitions, s.Units = true, p.Definitions, p.Units
 		}
 	}
 	if !known {
@@ -209,6 +217,9 @@ type view struct {
 	goneInputs map[string]Inputs
 	// evidence hashes a file of the folder as evidence.
 	evidence func(file string) string
+	// covered holds the Definitions of the spec that have no item of their
+	// own: the parts a whole is verified with.
+	covered map[string]bool
 }
 
 // see settles the record against the folder.
@@ -224,11 +235,16 @@ func (f *folder) see(rec Record) (view, error) {
 		}
 		return hashOrGone(h)
 	}
-	v := view{now: now, items: map[string]Item{}, goneInputs: map[string]Inputs{}, evidence: evidence}
+	v := view{now: now, items: map[string]Item{}, goneInputs: map[string]Inputs{}, evidence: evidence, covered: map[string]bool{}}
+	for _, id := range f.cur.Spec.OwnDefinitions() {
+		if _, unit := now[id]; !unit {
+			v.covered[id] = true
+		}
+	}
 	lines := rec.byDefinition()
 	for _, id := range sortedKeys(now) {
 		d := f.cur.Spec.Definitions[id]
-		it := Item{Definition: id, Title: d.Title, Fingerprint: now[id].Fingerprint(), Look: append([]string{d.File}, now[id].Files(InputFile)...)}
+		it := Item{Definition: id, Title: d.Title, Parts: now[id].Files(InputPart), Fingerprint: now[id].Fingerprint(), Look: append([]string{d.File}, now[id].Files(InputFile)...)}
 		s := settle(lines[id], now[id], evidence)
 		switch {
 		case len(lines[id]) == 0:
@@ -249,6 +265,12 @@ func (f *folder) see(rec Record) (view, error) {
 	}
 	for _, id := range sortedKeys(lines) {
 		if _, ok := now[id]; ok {
+			continue
+		}
+		// A line on a part is of a record written before its whole was verified
+		// as one: the part is not gone, and its whole has its own item. The
+		// next verdict drops the line.
+		if v.covered[id] {
 			continue
 		}
 		in := Inputs{}
@@ -277,6 +299,7 @@ func (f *folder) status(rec Record, all bool) (Status, error) {
 	if err != nil {
 		return Status{}, err
 	}
+	st.Units = len(v.now)
 	for _, id := range sortedKeys(v.items) {
 		it := v.items[id]
 		switch {
@@ -317,6 +340,9 @@ func packageItems(sp *spec.Spec, items []Item) []PackageItems {
 		}
 		byName[p.Package] = p
 	}
+	for unit := range sp.Units() {
+		byName[spec.PackageName(sp.PackageOf(unit))].Units++
+	}
 	for _, it := range items {
 		name := spec.PackageName(sp.PackageOf(it.Definition))
 		p := byName[name]
@@ -355,7 +381,7 @@ func (s Status) Text() string {
 		}
 	}
 	if len(s.Items) > 0 {
-		fmt.Fprintf(&b, "To verify%s (%d of %d %s):\n\n", s.inPackage(), len(s.Items), s.Definitions, plural(s.Definitions, "Definition", "Definitions"))
+		fmt.Fprintf(&b, "To verify%s (%d of %d %s):\n\n", s.inPackage(), len(s.Items), s.Units, plural(s.Units, "item", "items"))
 		for _, it := range s.Items {
 			b.WriteString(it.text())
 		}
@@ -433,6 +459,9 @@ func every(n int) string {
 func (it Item) text() string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "%s@%s\n", it.Definition, it.Fingerprint)
+	if n := len(it.Parts); n > 0 {
+		fmt.Fprintf(&b, "  with its %d %s, verified as one; markitect doc %s shows it whole\n", n, plural(n, "part", "parts"), path.Dir(it.Definition))
+	}
 	switch it.State {
 	case StateNew:
 		b.WriteString("  no record yet\n")

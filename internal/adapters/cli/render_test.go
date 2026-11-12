@@ -34,7 +34,7 @@ func TestNotesLine(t *testing.T) {
 // folder's name, a part's title before its text; and a part names its whole.
 func TestRenderDocDefinitionWithParts(t *testing.T) {
 	got := renderDocDefinition(analysis.DocDefinition{
-		ListedDefinition: analysis.ListedDefinition{ID: "catalog/operations/lend/lend", Title: "Lend", Kind: "std/Feature", File: "lend.md"},
+		ListedDefinition: analysis.ListedDefinition{ID: "catalog/operations/lend/lend", Title: "Lend", Kind: "std/Operation", File: "lend.md"},
 		Package:          "catalog", Text: "# Lend\n\nA copy goes home.\n",
 		Parts: []analysis.DocPart{
 			{ID: "catalog/operations/lend/conditions/free", Title: "Free", Group: "conditions", Text: "# Free\n\nNobody holds it.\n\n**Refusal:** `held`.\n"},
@@ -42,7 +42,7 @@ func TestRenderDocDefinitionWithParts(t *testing.T) {
 			{ID: "catalog/operations/lend/outcomes/lent", Title: "Lent", Group: "outcomes", Text: "# Lent\n\nSomebody holds it.\n"},
 		},
 	})
-	want := "catalog/operations/lend/lend: Lend (std/Feature)\nPackage catalog, lend.md\n\n# Lend\n\nA copy goes home.\n" +
+	want := "catalog/operations/lend/lend: Lend (std/Operation)\nPackage catalog, lend.md\n\n# Lend\n\nA copy goes home.\n" +
 		"\nconditions:\n\n  Free (catalog/operations/lend/conditions/free)\n    Nobody holds it.\n\n    **Refusal:** `held`.\n" +
 		"\n  Book exists (catalog/book/conditions/exists), a part of catalog/book\n    A Book exists.\n" +
 		"\noutcomes:\n\n  Lent (catalog/operations/lend/outcomes/lent)\n    Somebody holds it.\n"
@@ -97,19 +97,26 @@ func TestRenderDocPackageSeparatesPublicFromInternal(t *testing.T) {
 // it depends on, with the links that make the dependency, and each Definition's
 // links.
 func TestRenderListWithDeps(t *testing.T) {
-	got := renderList([]analysis.ListedPackage{
+	pkgs := []analysis.ListedPackage{
 		{Name: "Root", Definitions: []analysis.ListedDefinition{{ID: "loan-limit", Title: "Loan limit", Kind: "std/Rule"}}, Deps: &analysis.PackageDeps{Afferent: 1, Abstractness: 0.5, Distance: 0.5}},
 		{Name: "catalog", Parent: "Root", Definitions: []analysis.ListedDefinition{{ID: "catalog/book", Title: "Book", Kind: "std/Concept", Links: []string{"members/member"}}}, Deps: &analysis.PackageDeps{Efferent: 1, Instability: 1, DependsOn: []analysis.Dependency{
 			{Package: "members", Uses: []analysis.Use{{From: "catalog/book", Target: "members/member", Via: "link"}, {From: "catalog/dvd", Target: "members/Medium", Via: "kind"}}},
 		}}},
-	})
+	}
 	want := "Root (Ca 1, Ce 0, instability 0.00, abstractness 0.50, distance 0.50)\n" +
 		"  loan-limit: Loan limit (std/Rule)\n" +
 		"catalog (Ca 0, Ce 1, instability 1.00, abstractness 0.00, distance 0.00)\n" +
 		"  depends on members: catalog/book links members/member; catalog/dvd is of Kind members/Medium\n" +
 		"  catalog/book: Book (std/Concept)\n" +
 		"    links members/member\n"
-	if got != want {
+	if got := renderList(pkgs, false); got != want {
+		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
+	}
+	// The Packages alone: a dependency is one line with the number of links.
+	want = "Root (Ca 1, Ce 0, instability 0.00, abstractness 0.50, distance 0.50), 1 Definition\n" +
+		"catalog (Ca 0, Ce 1, instability 1.00, abstractness 0.00, distance 0.00), 1 Definition\n" +
+		"  depends on members (2 links)\n"
+	if got := renderList(pkgs, true); got != want {
 		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
 	}
 }

@@ -374,7 +374,7 @@ async function run() {
     phase("Audit")
     const pkgs = st.packages.filter((p) => p.definitions > 0).map((p) => p.package)
     const tasks = pkgs.map((name) => ({ name, task: `Audit the spec of Package ${name}, and triage the unlinked mentions markitect vet --strict lists in it.${FOCUS}` }))
-    tasks.push({ name: "across Packages", task: `Audit the spec across Packages: look only for contradictions between Packages.${FOCUS}` })
+    tasks.push({ name: "across Packages", task: `Audit the spec across Packages: look for contradictions between Packages, and walk the coverage list.${FOCUS}` })
     reports = await each(tasks, "Audit", "markitect-auditor")
     rounds = 1
     return finish(reports.length === tasks.length ? "audited" : `audited, ${tasks.length - reports.length} of ${tasks.length} auditors returned nothing`)

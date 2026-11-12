@@ -15,7 +15,7 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 	var o options
 	var name string
 	fs := c.flags("init", &o)
-	fs.StringVar(&name, "name", "", "the project's title for the project anchor (default: the folder's name)")
+	fs.StringVar(&name, "name", "", "the project's title for the project Definition (default: the folder's name)")
 	if err := fs.Parse(args); err != nil {
 		return Misused, err
 	}

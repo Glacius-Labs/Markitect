@@ -105,7 +105,9 @@ func Vet(p *project.Project, h History) Report {
 				things++
 			}
 		}
-		if things > MaxPackageSize {
+		// Root holds what binds the whole project. In a spec with Packages that
+		// cannot be split off, so only a spec without any is measured there.
+		if things > MaxPackageSize && (n.Path != spec.RootPackage || len(sp.Packages) == 1) {
 			r.Warnings.Add("vet.package_size", file, 0, "%s has %d Definitions of its own, parts not counted (more than %d); consider splitting it", spec.PackageName(n.Path), things, MaxPackageSize)
 		}
 		if n.Path != spec.RootPackage && len(pkg.Definitions) == 1 && len(pkg.Children) == 1 {
@@ -113,7 +115,9 @@ func Vet(p *project.Project, h History) Report {
 		}
 		// A Package owns the files its path patterns match; without any it owns
 		// none, and Root owns what is built for it.
-		if page := p.Registry.Pages[n.Path]; n.Path != spec.RootPackage {
+		// Until something is built the registry is empty, and the builder writes
+		// the pages.
+		if page := p.Registry.Pages[n.Path]; n.Path != spec.RootPackage && len(p.Registry.Entries) > 0 {
 			switch {
 			case page == nil:
 				r.Warnings.Add("vet.no_paths", project.RegistryDir+"/"+n.Path+".md", 0, "%s has no registry page, so it owns no file; write the page with its first path patterns", n.Path)
