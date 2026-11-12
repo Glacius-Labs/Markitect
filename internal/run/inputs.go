@@ -123,8 +123,8 @@ func (s state) inputs() (map[string]Inputs, error) {
 
 // linked is the input a link contributes: the text of a Definition of the spec, or for a
 // Library Definition its Library's digest from the lock, so that a newer binary
-// changes nothing until the lock is written again. Core's Kind never changes and
-// is no input.
+// changes nothing until the lock is written again. Core's Kind and Package change
+// only with the tool and are no inputs.
 func (s state) linked(target string) (string, bool) {
 	t := s.p.Spec.Definitions[target]
 	switch {

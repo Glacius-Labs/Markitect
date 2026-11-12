@@ -34,11 +34,11 @@ of its Definitions declares.
 func Compile(src Source) (*Spec, Diagnostics) {
 	c := &compiler{
 		spec: &Spec{
-			Definitions: map[string]*Definition{},
-			Packages:    map[string]*Package{RootPackage: {Path: RootPackage}},
-			Libraries:   map[string]*Library{},
-			Edges:       map[string]map[string][]Use{},
-			Folders:     map[string]bool{},
+			Definitions:  map[string]*Definition{},
+			Packages:     map[string]*Package{RootPackage: {Path: RootPackage}},
+			Libraries:    map[string]*Library{},
+			Edges:        map[string]map[string][]Use{},
+			PlainFolders: map[string]bool{},
 		},
 		rawKind: map[string]rawKind{},
 	}
@@ -70,6 +70,7 @@ type compiler struct {
 	diags   Diagnostics
 	rawKind map[string]rawKind // Definition ID -> kind as written
 	raw     map[string][]RawLink
+	pages   map[string]parsed // by file, parsed once
 }
 
 func (c *compiler) loadLibrary(lib LibrarySource) {
@@ -122,7 +123,7 @@ func (c *compiler) loadSpec(src Source) {
 	anchored := map[string]bool{}
 	for _, f := range files {
 		id, ok := strings.CutSuffix(f.Path, ".md")
-		if !ok || !ValidPath(id) || !declaresPackage(f.Data) {
+		if !ok || !ValidPath(id) || !c.declaresPackage(path.Join(src.Dir, f.Path), f.Data) {
 			continue
 		}
 		file := path.Join(src.Dir, f.Path)
@@ -156,7 +157,7 @@ func (c *compiler) loadSpec(src Source) {
 			}
 			folder = strings.TrimPrefix(folder+"/"+s, "/")
 			if !anchored[folder] {
-				c.spec.Folders[folder] = true
+				c.spec.PlainFolders[folder] = true
 				continue
 			}
 			if _, ok := c.spec.Packages[folder]; !ok {
@@ -208,14 +209,43 @@ func (c *compiler) loadSpec(src Source) {
 }
 
 // declaresPackage reports whether a Definition file names Core's Package as
-// its kind.
-func declaresPackage(data []byte) bool {
-	page, err := ParsePage(data)
-	if err != nil {
-		return false
+// its kind. Front matter that cannot be read is searched for the line itself,
+// so that a broken anchor stays one error and its folder a Package.
+func (c *compiler) declaresPackage(file string, data []byte) bool {
+	page, err := c.page(file, data)
+	if err == nil {
+		node := page.Front["kind"]
+		return node != nil && node.Kind == yaml.ScalarNode && isCorePackage(node.Value)
 	}
-	node := page.Front["kind"]
-	return node != nil && node.Kind == yaml.ScalarNode && strings.TrimSuffix(strings.TrimSpace(node.Value), ".md") == CorePackage
+	for _, line := range strings.Split(string(data), "\n") {
+		if value, ok := strings.CutPrefix(strings.TrimSpace(line), "kind:"); ok {
+			return isCorePackage(strings.Trim(strings.TrimSpace(value), `"'`))
+		}
+	}
+	return false
+}
+
+func isCorePackage(kind string) bool {
+	return strings.TrimSuffix(strings.TrimSpace(kind), ".md") == CorePackage
+}
+
+// page parses a file once: loadSpec reads the kind of every file before it
+// reads the Definitions.
+func (c *compiler) page(file string, data []byte) (Page, error) {
+	if p, ok := c.pages[file]; ok {
+		return p.page, p.err
+	}
+	page, err := ParsePage(data)
+	if c.pages == nil {
+		c.pages = map[string]parsed{}
+	}
+	c.pages[file] = parsed{page, err}
+	return page, err
+}
+
+type parsed struct {
+	page Page
+	err  error
 }
 
 func (c *compiler) reserved(dir, name string) {
@@ -230,7 +260,7 @@ func (c *compiler) reserved(dir, name string) {
 // parseDefinition reads one Definition file. It returns nil when the file is
 // unusable; the reason is then a diagnostic.
 func (c *compiler) parseDefinition(id, file string, data []byte) *Definition {
-	page, err := ParsePage(data)
+	page, err := c.page(file, data)
 	if err != nil {
 		// Keep the Definition, so that links to it still resolve and one
 		// broken file reports one error.
@@ -336,14 +366,14 @@ func (c *compiler) resolveLink(d *Definition, raw string, line int, kind bool) L
 			return link
 		}
 	case d.Library != "":
-		c.diags.Add(code, d.File, line, "%s %q: a Library Definition may link only to Libraries the manifest names and to Kind", what, raw)
+		c.diags.Add(code, d.File, line, "%s %q: a Library Definition may link only to Libraries the manifest names and to Core's Kind and Package", what, raw)
 		return link
 	default:
 		if def, ok := c.spec.Definitions[target]; ok && def.Own() {
 			link.Target = target
 		} else if _, ok := c.spec.Packages[target]; ok {
 			link.Target, link.Package = target, true
-		} else if c.spec.Folders[target] {
+		} else if c.spec.PlainFolders[target] {
 			instead := "link a Definition in it or the Package above"
 			if kind {
 				instead = "name a Kind in it"
@@ -353,7 +383,10 @@ func (c *compiler) resolveLink(d *Definition, raw string, line int, kind bool) L
 				c.diags.Add(code, d.File, line, "%s %q names a folder, which is no Package; the Definition of that name is %s", what, raw, AnchorOf(target))
 				return link
 			}
-			c.diags.Add(code, d.File, line, "%s %q names a folder that is no Package: it holds no Definition of kind Package, %s.md; %s", what, raw, AnchorOf(target), instead)
+			c.diags.Add(code, d.File, line, "%s %q names a folder that is no Package: %s; %s", what, raw, c.spec.WhyNoPackage(target), instead)
+			return link
+		} else if strings.EqualFold(target, CoreKind) || strings.EqualFold(target, CorePackage) {
+			c.diags.Add(code, d.File, line, "%s %q resolves to nothing; Core's two Kinds are written %s and %s", what, raw, CoreKind, CorePackage)
 			return link
 		} else {
 			c.diags.Add(code, d.File, line, "%s %q resolves to no Definition, Package or Library Kind; paths start at the spec folder", what, raw)

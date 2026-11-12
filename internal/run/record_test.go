@@ -269,7 +269,7 @@ func TestStatusOfOnePackage(t *testing.T) {
 // A folder without an anchor is only a namespace: the Definitions in it
 // belong to the Package above, to its Definitions and its items, also once one
 // is gone, and the folder is no Package of its own in status.
-func TestStatusCountsASortFolderForThePackageAbove(t *testing.T) {
+func TestStatusCountsAFolderForThePackageAbove(t *testing.T) {
 	files := library()
 	files[m+"members/rules/limit.md"] = def("std/Rule", "Limit", "At most `5` open loans a [[members/member]].")
 	files[project.RegistryDir+"/members.md"] += "| src/members/limit.go | [[members/rules/limit]] | Limit |\n"

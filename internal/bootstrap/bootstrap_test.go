@@ -75,7 +75,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 	}
 
 	r.Write(".markitect/spec/loan-limit.md", "---\nkind: std/Rule\n---\n# Loan limit\n\nAt most `5` open loans, for [[members]].\n")
-	// members is a Package by its anchor, the Definition of the folder's name.
+	// members is a Package by its anchor, a Definition of kind Package.
 	r.Write(".markitect/spec/members/members.md", "---\nkind: Package\n---\n# Members\n\nWho may borrow.\n")
 	r.Write(".markitect/spec/members/member.md", "---\nkind: std/Concept\n---\n# Member\n\nA person who borrows.\n")
 	r.Write(".markitect/registry.md", read(t, r.Dir, ".markitect/registry.md")+"| `README.md` | [[project]], [[loan-limit]] | Overview |\n")
@@ -124,7 +124,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 	}
 	// A folder without an anchor is neither, and doc says that it is no Package.
 	r.Write(".markitect/spec/members/rules/late.md", "---\nkind: std/Rule\n---\n# Late\n\nA [[members/member]] is late after `14` days.\n")
-	if code, _, errOut := run(t, r.Dir, "doc", "members/rules"); code != 1 || !strings.Contains(errOut, "members/rules is a folder and no Package") {
+	if code, _, errOut := run(t, r.Dir, "doc", "members/rules"); code != 1 || !strings.Contains(errOut, "members/rules is a folder that is no Package: it holds no Definition of kind Package, members/rules/rules.md") {
 		t.Fatalf("doc of a folder: %d %s", code, errOut)
 	}
 	wantAll(t, mustRun(t, r.Dir, "doc", "members/rules/late"), "members/rules/late: Late (std/Rule)\n", "Package members, .markitect/spec/members/rules/late.md\n")

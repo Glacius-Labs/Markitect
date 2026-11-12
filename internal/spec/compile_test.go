@@ -174,8 +174,8 @@ func TestCompileAThingWithPartsIsNoPackage(t *testing.T) {
 	if got := strings.Join(m.SortedPackages(), ","); got != ",members" {
 		t.Fatalf("Packages = %q", got)
 	}
-	if !m.Folders["members/operations/lend"] || m.Definitions["members/operations/lend/lend"].Package != "members" {
-		t.Fatalf("lend is not a plain folder of members: %v", m.Folders)
+	if !m.PlainFolders["members/operations/lend"] || m.Definitions["members/operations/lend/lend"].Package != "members" {
+		t.Fatalf("lend is not a plain folder of members: %v", m.PlainFolders)
 	}
 	if len(m.Edges) != 0 {
 		t.Fatalf("links inside one Package made edges: %+v", m.Edges)
@@ -187,6 +187,35 @@ func TestCompileAThingWithPartsIsNoPackage(t *testing.T) {
 		"members/rules/stock.md":          def("std/Rule", "# Stock\n\nSee [[members/operations/lend]].\n"),
 	})
 	expect(t, ds, "link.unresolved", `link "members/operations/lend" names a folder, which is no Package; the Definition of that name is members/operations/lend/lend`)
+}
+
+// A broken anchor is one error: its folder stays a Package, so what lies in
+// it and what links to it report nothing of their own. A kind that names an
+// anchor is no Kind, and Core's two Kinds are written as they are.
+func TestCompileABrokenAnchorIsOneError(t *testing.T) {
+	m, ds := compile(t, map[string]string{
+		"project.md":         def("std/Rule", "# Project\n\nParts: [[catalog]].\n"),
+		"catalog/catalog.md": "---\nkind: Package\n# never closed\n",
+		"catalog/book.md":    def("std/Rule", "# Book\n\nBorrowed by a [[members/member]].\n"),
+		"members/members.md": anchor("Members"),
+		"members/member.md":  def("std/Rule", "# Member\n"),
+	})
+	if len(ds) != 1 || ds[0].Code != "definition.front_matter" {
+		t.Fatalf("one broken anchor must give one error, got:\n%v", ds)
+	}
+	if m.Packages["catalog"] == nil || m.Definitions["catalog/book"].Package != "catalog" {
+		t.Fatalf("Packages = %v", m.SortedPackages())
+	}
+	_, ds = compile(t, map[string]string{
+		"members/members.md": anchor("Members"),
+		"members/chair.md":   def("members/members", "# Chair, whose kind is an anchor\n"),
+		"members/clerk.md":   def("package", "# Clerk, whose kind is misspelt\n"),
+	})
+	expect(t, ds, "kind.not_a_kind", "members/chair.md:2")
+	expect(t, ds, "kind.unresolved", `kind "package" resolves to nothing; Core's two Kinds are written Kind and Package`)
+	if len(ds) != 2 {
+		t.Fatalf("diagnostics:\n%v", ds)
+	}
 }
 
 // An anchor carries the name of its folder, and the spec folder needs none.
@@ -430,7 +459,10 @@ func TestCompileLibraryErrors(t *testing.T) {
 		{Path: "Link.md", Data: []byte("---\nkind: Kind\n---\n# Link\n\nInto the spec: [[members/member]], other Library: [[rest/Endpoint]].\n")},
 	}}
 	_, ds := compile(t, map[string]string{"members/member.md": def("std/Rule", "# Member\n")}, bad,
-		LibrarySource{Name: "Bad Name", Dir: "x"})
+		LibrarySource{Name: "Bad Name", Dir: "x"}, LibrarySource{Name: "Package", Dir: "y"},
+		LibrarySource{Name: "parts", Version: "1.0.0", Dir: "parts", Files: []File{{Path: "Area.md", Data: []byte("---\nkind: Package\n---\n# Area, an anchor in a Library\n")}}})
+	expect(t, ds, "library.name", `"Package" cannot name a Library`)
+	expect(t, ds, "library.not_a_kind", "parts/Area.md")
 	expect(t, ds, "library.internal", "Page.md")
 	expect(t, ds, "library.not_a_kind", "Home.md")
 	expect(t, ds, "library.file", "nested/Thing.md")

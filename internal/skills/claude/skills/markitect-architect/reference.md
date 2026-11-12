@@ -32,7 +32,7 @@ One Markdown file with YAML front matter.
 - Body: one level-1 heading, the title, first; no second one (`definition.title`); then prose. Exact values in backticks.
 - The spec folder holds only `.md` files and folders (`spec.file`). Two entries differing only in case, or `member.md` beside `member/`, collide (`spec.collision`).
 - A folder is a namespace: it gives its Definitions their path. It is a Package when it holds its anchor, a Definition of kind `Package` that carries the folder's name: `members/members.md` makes `members` one (`spec.package` for another name, or at the top of the spec folder). What lies in any other folder belongs to the nearest Package above, and to Root if there is none.
-- A top-level name may not be a Library name or `Kind` (`spec.reserved`).
+- A top-level name may not be a Library name, `Kind` or `Package` (`spec.reserved`).
 
 ## Kinds and Libraries
 

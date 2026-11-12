@@ -223,7 +223,7 @@ func TestRegistryPageOfAFolderWithoutAnAnchor(t *testing.T) {
 	if _, ok := p.Spec.Packages["members"]; ok {
 		t.Fatal("members is a Package without an anchor")
 	}
-	expect(t, p.Errors, "stale.page", ".markitect/registry/members.md: stale.page: members is a folder and no Package, so this page belongs to none: it holds no Definition of kind Package, members/members.md")
+	expect(t, p.Errors, "stale.page", ".markitect/registry/members.md: stale.page: members is a folder that is no Package, so this page belongs to none: it holds no Definition of kind Package, members/members.md")
 	expect(t, p.Errors, "stale.page", "src/member.go is listed only on the page of members, a folder that is no Package")
 }
 

@@ -24,7 +24,7 @@ A Definition's inputs are everything its verification depended on, each by its S
 | `file:PATH` | A file whose registry row names it |
 | `evidence:PATH` | A file the reviewer gave as evidence |
 
-A Definition of the spec counts by its text. A Library Definition counts by its Library's digest in the lock, so that a newer binary changes nothing until the lock is written again; a Library counts as one, as a Go module does, so a change of one Kind of a committed Library puts the Definitions of all its Kinds on the list. Core's `Kind` is no input, and neither is a link to a Package. Line endings do not count in a text file's hash, so a checkout on another system matches.
+A Definition of the spec counts by its text. A Library Definition counts by its Library's digest in the lock, so that a newer binary changes nothing until the lock is written again; a Library counts as one, as a Go module does, so a change of one Kind of a committed Library puts the Definitions of all its Kinds on the list. Core's `Kind` and `Package` change only with the tool and are no inputs, and neither is a link to a Package. Line endings do not count in a text file's hash, so a checkout on another system matches.
 
 This reaches what the [concept](../../docs/concept.md#how-status-works) puts at distance 0 and 1: a Definition that changed, one that links to a changed Definition or is of a changed Kind, one whose files changed, and one whose registry rows gained or lost it. A changed Rule above a Package reaches only itself and what links to it. A change of a row's reason, or of a file the ignore file lists, reaches nothing. The one difference, the Library counted as a whole, lists more, never less.
 

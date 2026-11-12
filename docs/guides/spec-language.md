@@ -54,10 +54,10 @@ A [[members/member|member]] reserves a [[equipment/machine|machine]] for a slot.
 
 A folder is a namespace, as in C#: it gives the Definitions in it their path and means nothing else. A project orders its Definitions in folders as it reads best, and Markitect prescribes no layout. A thing with parts is by custom a folder that holds a Definition of its own name and its parts beside it: `operations/lend/lend.md` with `operations/lend/conditions/`.
 
-A Package is a module of the project, as a project is in C#: the unit of dependencies, of visibility and of file ownership. The spec folder itself is the Root Package. Below it, a folder is a Package when it holds its anchor, a Definition of kind `Package` that carries the folder's name: `members/members.md` makes `members` a Package ([DEC-107](../decisions.md#dec-107-a-folder-is-a-namespace-a-package-is-declared-by-its-anchor)).
+A Package is a module of the project, as a project is in C#: the unit of dependencies, of visibility and of file ownership. The spec folder itself is the Root Package. Below it, a folder is a Package when it holds its anchor, a Definition of kind `Package` that carries the folder's name: `members/members.md` makes `members` a Package ([DEC-108](../decisions.md#dec-108-a-folder-is-a-namespace-a-package-is-declared-by-its-anchor)).
 
 - **The anchor says what the Package is:** what it is responsible for and what it keeps to itself. It is verified like every Definition, a file realizes it or a Definition links to it (`definition.unused`), and a link to the Package does not link it. A Definition of kind `Package` that does not carry its folder's name, or lies at the top of the spec folder, is an error (`spec.package`). Root needs none: what the project is, the project's anchor `project.md` says by convention, and the tool gives that file no meaning of its own.
-- **What lies in a folder belongs to the nearest Package above it,** and to Root when there is none. Scope, visibility and dependencies are that Package's, so the Definitions in two folders of one Package link each other freely.
+- **What lies in a folder that is no Package belongs to the nearest Package above it,** and to Root when there is none. Scope, visibility and dependencies are that Package's, so the Definitions in two folders of one Package link each other freely.
 - **A folder that is no Package is no part of the project.** A link to it resolves to nothing (`link.unresolved`), and a registry page for it belongs to no Package (`stale.page`).
 - **A Package may lie in any folder.** `members/concepts/card/card.md` of kind `Package` makes `members/concepts/card` a Package whose parent is `members`.
 
@@ -65,7 +65,7 @@ A Package is a module of the project, as a project is in C#: the unit of depende
 
 Core offers two Definitions: `Kind` and `Package`. A Kind is a Definition whose `kind` is `Kind`; its body says what it is and how it is used. Every other Definition's `kind` names a Kind by path (`kind.unresolved`, `kind.not_a_kind`). `Package` is the Kind of an anchor, the Definition that makes its folder a [Package](#packages-and-folders).
 
-A Library is a folder of Kind Definitions, one `<Name>.md` file each at its top level (`library.file`, `library.not_a_kind`, `library.internal`); a Library's name follows the same rules as other names (`library.name`). A Library Definition may link only to Libraries the manifest names and to `Kind`. No Kind of a Library has a special meaning to Markitect.
+A Library is a folder of Kind Definitions, one `<Name>.md` file each at its top level (`library.file`, `library.not_a_kind`, `library.internal`); a Library's name follows the same rules as other names (`library.name`). A Library Definition may link only to Libraries the manifest names and to Core's `Kind` and `Package`. No Kind of a Library has a special meaning to Markitect.
 
 The standard Libraries ship inside the binary at version 1.1.0:
 

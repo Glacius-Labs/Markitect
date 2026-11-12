@@ -43,10 +43,11 @@ type Source struct {
 type Spec struct {
 	Definitions map[string]*Definition // by ID: "members/member", "std/Rule", "Kind"
 	Packages    map[string]*Package    // by path; RootPackage is ""
-	// Folders holds the folders of the spec that are no Package. A folder is a
-	// namespace and nothing more: what lies in it belongs to the Package above.
-	Folders   map[string]bool
-	Libraries map[string]*Library
+	// PlainFolders holds the folders of the spec that are no Package. Such a
+	// folder is a namespace and nothing more: what lies in it belongs to the
+	// Package above.
+	PlainFolders map[string]bool
+	Libraries    map[string]*Library
 	// Edges are the explicit dependencies between Packages: from, to, and the
 	// links that make them. The implicit edge from a child to its parent is
 	// not listed.
@@ -71,10 +72,11 @@ type Package struct {
 	Anchor      string   // the Definition that says what the Package is; "" for Root
 }
 
-// Definition is one Markdown file of the spec, of a Library, or Core's Kind.
+// Definition is one Markdown file of the spec or of a Library, or one of
+// Core's two: Kind and Package.
 type Definition struct {
 	ID       string
-	Library  string // "" for the project's spec, "core" for Kind
+	Library  string // "" for the project's spec, "core" for Kind and Package
 	Package  string // Package path for the project's spec
 	File     string // repository-relative file
 	Kind     string // resolved Kind ID; "" when it does not resolve
@@ -138,6 +140,15 @@ func (s *Spec) PackageOf(id string) string {
 		}
 	}
 	return RootPackage
+}
+
+// WhyNoPackage says, for a folder that is no Package, what it lacks: an
+// anchor, or the kind Package on the Definition that carries its name.
+func (s *Spec) WhyNoPackage(folder string) string {
+	if d := s.Definitions[AnchorOf(folder)]; d != nil && d.Own() {
+		return "its Definition " + AnchorOf(folder) + " is not of kind Package"
+	}
+	return "it holds no Definition of kind Package, " + AnchorOf(folder) + ".md"
 }
 
 // FolderOf returns the folder a path lies in: "" for a path at the top.
