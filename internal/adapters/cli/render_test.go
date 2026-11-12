@@ -44,7 +44,7 @@ func TestRenderDocDefinitionWithParts(t *testing.T) {
 	})
 	want := "catalog/operations/lend/lend: Lend (std/Feature)\nPackage catalog, lend.md\n\n# Lend\n\nA copy goes home.\n" +
 		"\nconditions:\n\n  Free (catalog/operations/lend/conditions/free)\n    Nobody holds it.\n\n    **Refusal:** `held`.\n" +
-		"\n  Book exists (catalog/book/conditions/exists), a part of catalog/book/book\n    A Book exists.\n" +
+		"\n  Book exists (catalog/book/conditions/exists), a part of catalog/book\n    A Book exists.\n" +
 		"\noutcomes:\n\n  Lent (catalog/operations/lend/outcomes/lent)\n    Somebody holds it.\n"
 	if got != want {
 		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
@@ -53,7 +53,7 @@ func TestRenderDocDefinitionWithParts(t *testing.T) {
 		ListedDefinition: analysis.ListedDefinition{ID: "catalog/operations/lend/conditions/free", Title: "Free", Kind: "std/Rule", File: "free.md"},
 		Package:          "catalog", Text: "# Free\n", Whole: "catalog/operations/lend/lend",
 	})
-	if want := "catalog/operations/lend/conditions/free: Free (std/Rule)\nPackage catalog, free.md\nPart of catalog/operations/lend/lend\n\n# Free\n"; got != want {
+	if want := "catalog/operations/lend/conditions/free: Free (std/Rule)\nPackage catalog, free.md\nPart of catalog/operations/lend\n\n# Free\n"; got != want {
 		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
 	}
 	for text, want := range map[string]string{

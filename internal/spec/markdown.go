@@ -134,6 +134,9 @@ func (p Page) NodeLine(n ast.Node, fallback int) int {
 type RawLink struct {
 	Target string // the path part: label after | and section after # removed
 	Line   int
+	// Start and End bound the link as written, brackets included, in the
+	// page's Body.
+	Start, End int
 }
 
 // wikiLink matches [[target]], [[target#section]] and [[target|label]]. The
@@ -162,7 +165,7 @@ func (p Page) LinksIn(root ast.Node) []RawLink {
 		for _, m := range wikiLink.FindAllSubmatchIndex(buf, -1) {
 			// A label bar escaped as \| in a table leaves the backslash here.
 			target := strings.TrimSuffix(string(buf[m[2]:m[3]]), `\`)
-			links = append(links, RawLink{Target: strings.TrimSpace(target), Line: p.Line(offsets[m[0]])})
+			links = append(links, RawLink{Target: strings.TrimSpace(target), Line: p.Line(offsets[m[0]]), Start: offsets[m[0]], End: offsets[m[1]-1] + 1})
 		}
 		return ast.WalkSkipChildren, nil
 	})

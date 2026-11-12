@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
 // The renderers write plain text, as Go's tools print theirs; --json gives the
@@ -60,7 +61,7 @@ func renderDocDefinition(d analysis.DocDefinition) string {
 		fmt.Fprintf(&b, "Package %s, %s\n", d.Package, d.File)
 	}
 	if d.Whole != "" {
-		fmt.Fprintf(&b, "Part of %s\n", d.Whole)
+		fmt.Fprintf(&b, "Part of %s\n", thing(d.Whole))
 	}
 	fmt.Fprintf(&b, "\n%s", either(d.Shown, d.Text))
 	// A thing is read whole: its parts follow, each group under the name of
@@ -75,7 +76,7 @@ func renderDocDefinition(d analysis.DocDefinition) string {
 			}
 		}
 		if part.Of != "" {
-			fmt.Fprintf(&b, "\n  %s (%s), a part of %s\n", part.Title, part.ID, part.Of)
+			fmt.Fprintf(&b, "\n  %s (%s), a part of %s\n", part.Title, part.ID, thing(part.Of))
 		} else {
 			fmt.Fprintf(&b, "\n  %s (%s)\n", part.Title, part.ID)
 		}
@@ -113,6 +114,15 @@ func renderDocDefinition(d analysis.DocDefinition) string {
 		b.WriteString("\n")
 	}
 	return b.String()
+}
+
+// thing names a whole as a link names it: by its folder, when the folder
+// carries its name.
+func thing(id string) string {
+	if folder := spec.FolderOf(id); id == spec.AnchorOf(folder) && folder != spec.RootPackage {
+		return folder
+	}
+	return id
 }
 
 // either returns the text as doc shows it, or the text as written when a
@@ -158,7 +168,7 @@ func renderDocPackage(p analysis.DocPackage) string {
 	// The anchor's text says what the Package is, as go doc opens with a
 	// package's comment.
 	if p.Text != "" {
-		b.WriteString("\n" + p.Text)
+		b.WriteString("\n" + either(p.Shown, p.Text))
 	}
 	// The public Definitions are what the Package publishes, as go doc shows a
 	// package's exported names; the internal ones follow apart.

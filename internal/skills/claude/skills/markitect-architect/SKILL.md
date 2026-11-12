@@ -140,7 +140,7 @@ A visitor becomes a [[members/member]] by giving a name and an email.
 
 | Code | Usual cause and fix |
 |---|---|
-| `link.unresolved` | Short or relative link. Use the full path from the spec folder; check spelling and that the target exists. A folder without an anchor is no target: link a Definition in it or the Package above, or give it its anchor. |
+| `link.unresolved` | Short or relative link. Use the full path from the spec folder; check spelling and that the target exists. A folder is a target only as a Package or as a thing with parts: otherwise link a Definition in it or the Package above. |
 | `link.syntax` | `../x`, a leading `/`, or a character other than letters, digits, `-`, `_`. Use a plain path. |
 | `link.internal` | The target is `internal` to another Package. Drop the link and describe the need in your own words, or make the target public. |
 | `link.downward` | A parent links into a child's Definition. Link the Package instead, move the Definition up, or let the child link to a need stated here. |
