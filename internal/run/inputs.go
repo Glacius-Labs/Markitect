@@ -17,18 +17,21 @@ import (
 // part of another, with the parts it covers. A change of any input puts the
 // unit back on the list. The inputs reach what a change touches at distance 0
 // and 1: a Definition or a part of it that changed, one that links to a
-// changed Definition or is of a changed Kind, one whose files changed, and one
-// whose registry rows gained or lost it.
+// changed Definition or is of a changed Kind, one whose files changed, one
+// whose registry rows gained or lost it, and one that a changed Definition
+// binds without a link (DEC-113).
 
 // Keys of the inputs: the Definition's own text, a part it covers, a Kind of
 // either, a Definition either links to, a file a registry row names for
-// either, and a file a reviewer gave as evidence.
+// either, what binds it in a Package, by the Package's name, and a file a
+// reviewer gave as evidence.
 const (
 	InputSelf     = "self"
 	InputPart     = "part:"
 	InputKind     = "kind:"
 	InputLink     = "link:"
 	InputFile     = "file:"
+	InputBound    = "bound:"
 	InputEvidence = "evidence:"
 )
 
@@ -56,13 +59,23 @@ func (in Inputs) Fingerprint() string { return in.fingerprint()[:fingerprintLen]
 
 // fingerprint is the whole hash Fingerprint starts.
 func (in Inputs) fingerprint() string {
-	h := sha256.New()
-	for _, k := range sortedKeys(in) {
+	verified := map[string]string{}
+	for k, h := range in {
 		if !strings.HasPrefix(k, InputEvidence) {
-			fmt.Fprintf(h, "%s\x00%s\n", k, in[k])
+			verified[k] = h
 		}
 	}
-	return hex.EncodeToString(h.Sum(nil))
+	return strings.TrimPrefix(digest(verified), "sha256:")
+}
+
+// digest is the SHA-256 of named hashes in the order of their names, written
+// as a hash.
+func digest(named map[string]string) string {
+	h := sha256.New()
+	for _, k := range sortedKeys(named) {
+		fmt.Fprintf(h, "%s\x00%s\n", k, named[k])
+	}
+	return "sha256:" + hex.EncodeToString(h.Sum(nil))
 }
 
 // Files are the files of the inputs with a key prefix, such as InputFile.
@@ -84,8 +97,9 @@ type state struct {
 }
 
 // inputs computes the inputs of every unit of the project's spec, without
-// evidence, by the Definition that names the unit.
-func (s state) inputs() (map[string]Inputs, error) {
+// evidence, by the Definition that names the unit, and the directory of each
+// Package that something binds, by the Package's name.
+func (s state) inputs() (map[string]Inputs, map[string]Directory, error) {
 	sp := s.p.Spec
 	rows := map[string][]string{}
 	if s.p.Registry != nil {
@@ -95,14 +109,42 @@ func (s state) inputs() (map[string]Inputs, error) {
 			}
 		}
 	}
-	out := map[string]Inputs{}
 	units := sp.Units()
-	for _, id := range sortedKeys(units) {
+	// own is a unit's own text and the texts of the parts it covers.
+	own := func(id string) Inputs {
 		in := Inputs{InputSelf: Hash(sp.Definitions[id].Data)}
+		for _, part := range units[id] {
+			in[InputPart+part] = Hash(sp.Definitions[part].Data)
+		}
+		return in
+	}
+	dirs := map[string]Directory{}
+	binding := sp.Binding()
+	for _, pkg := range sortedKeys(binding) {
+		dir := Directory{Bound: spec.PackageName(pkg), Binds: map[string]string{}}
+		for _, id := range binding[pkg] {
+			dir.Binds[id] = digest(own(id))
+		}
+		dir.Digest = digest(dir.Binds)
+		dirs[dir.Bound] = dir
+	}
+	out := map[string]Inputs{}
+	for _, id := range sortedKeys(units) {
+		in := own(id)
 		within := map[string]bool{id: true}
 		for _, part := range units[id] {
 			within[part] = true
-			in[InputPart+part] = Hash(sp.Definitions[part].Data)
+		}
+		// What binds the unit's Package and the Packages above it.
+		if sp.Bound(id) {
+			for at := sp.Definitions[id].Package; ; at = sp.Parent(at) {
+				if dir, ok := dirs[spec.PackageName(at)]; ok {
+					in[InputBound+dir.Bound] = dir.Digest
+				}
+				if at == spec.RootPackage {
+					break
+				}
+			}
 		}
 		for _, member := range append([]string{id}, units[id]...) {
 			for _, l := range sp.Definitions[member].Links {
@@ -123,14 +165,14 @@ func (s state) inputs() (map[string]Inputs, error) {
 			for _, file := range rows[member] {
 				h, err := s.hash(file)
 				if err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 				in[InputFile+file] = hashOrGone(h)
 			}
 		}
 		out[id] = in
 	}
-	return out, nil
+	return out, dirs, nil
 }
 
 // linked is the input a link contributes: the text of a Definition of the spec, or for a

@@ -158,7 +158,8 @@ type DocDefinition struct {
 	Fields []DocField `json:"fields,omitempty"`
 	// BoundBy are the Definitions that bind this one without a link: those of
 	// a Kind that declares binds, in its Package or a Package above it, parts
-	// left out since their whole stands for them.
+	// left out since their whole stands for them. Nothing binds a Definition
+	// that no file realizes (DEC-113).
 	BoundBy []ListedDefinition `json:"bound_by,omitempty"`
 	// Declares is what a Kind declares about its Definitions: their fields
 	// and the folders of their parts.
@@ -256,17 +257,21 @@ func DocDefinitionOf(p *project.Project, d *spec.Definition) DocDefinition {
 		}
 		dd.Fields = append(dd.Fields, field)
 	}
-	if d.Own() {
-		unit := p.Spec.UnitOf(d.ID)
-		for _, id := range p.Spec.OwnDefinitions() {
-			other := p.Spec.Definitions[id]
-			kind := p.Spec.Definitions[other.Kind]
-			// Neither the Definition's own thing nor a thing it is a part of.
-			if other.Whole != "" || id == unit || p.Spec.IsPartOf(d.ID, id) || kind == nil || kind.Schema == nil || !kind.Schema.Binds || !spec.Within(d.Package, other.Package) {
-				continue
+	if d.Own() && p.Spec.Bound(d.ID) {
+		unit, binding := p.Spec.UnitOf(d.ID), p.Spec.Binding()
+		for at := d.Package; ; at = p.Spec.Parent(at) {
+			for _, id := range binding[at] {
+				// Neither the Definition's own thing nor a thing it is a part of,
+				// and no part, since its whole stands for it.
+				if other := p.Spec.Definitions[id]; other.Whole == "" && id != unit && !p.Spec.IsPartOf(d.ID, id) {
+					dd.BoundBy = append(dd.BoundBy, listDefinition(other, false))
+				}
 			}
-			dd.BoundBy = append(dd.BoundBy, listDefinition(other, false))
+			if at == spec.RootPackage {
+				break
+			}
 		}
+		sort.Slice(dd.BoundBy, func(i, j int) bool { return dd.BoundBy[i].ID < dd.BoundBy[j].ID })
 	}
 	if s := d.Schema; s != nil {
 		dd.Declares = &DocDeclares{Unrealized: s.Unrealized, Binds: s.Binds, Last: s.Last}

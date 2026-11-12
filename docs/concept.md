@@ -103,15 +103,15 @@ So `check` goes red the moment the owner deletes a Definition or adds one nothin
 
 ### How `status` works
 
-Like `go test`, which does not run a test again when nothing it depends on changed, Markitect keeps for each item, a Definition with its parts, the state at which a reviewer last verified it ([DEC-099](decisions.md#dec-099-a-record-of-what-was-verified), [the inputs](../internal/run/README.md#the-inputs)). That state is the set of everything the verification depended on, its **inputs**, each by its hash: the Definition's own text and that of each of its parts; their Kinds and the Definitions they link to, a Library Definition by its Library's digest in the lock, so that a newer binary changes nothing; the files its registry rows name; and the files the reviewer gave as evidence. **What is to verify** is every Definition with a changed input or no record, computed from the folder and the record alone.
+Like `go test`, which does not run a test again when nothing it depends on changed, Markitect keeps for each item, a Definition with its parts, the state at which a reviewer last verified it ([DEC-099](decisions.md#dec-099-a-record-of-what-was-verified), [the inputs](../internal/run/README.md#the-inputs)). That state is the set of everything the verification depended on, its **inputs**, each by its hash: the Definition's own text and that of each of its parts; their Kinds and the Definitions they link to, a Library Definition by its Library's digest in the lock, so that a newer binary changes nothing; the files its registry rows name; what binds it without a link, Package by Package; and the files the reviewer gave as evidence. **What is to verify** is every Definition with a changed input or no record, computed from the folder and the record alone.
 
 | Distance | Reached | On the list |
 |---|---|---|
 | 0 | Definitions that changed, Definitions whose files or evidence changed, and Definitions a registry row gained or lost | Yes |
-| 1 | Definitions that link to a changed one or are of a changed Kind | Yes |
+| 1 | Definitions that link to a changed one, are of a changed Kind, or are bound by a changed one | Yes |
 | 2 and more | Everything further along the links | No |
 
-A changed Rule above a Package reaches only itself and what links to it. A Rule is not one of the inputs of the Definitions below it, so an `ok` below it speaks for the Rule as it stood when that Definition was verified. A Library counts as one, so a change of one Kind of a committed Library lists the Definitions of all its Kinds: more, never less. Three more kinds of item stay on the list until they are verified again: a Definition recorded `fail` or `spec-problem`, a Definition gone from the spec, with the files that realized it, and an error in the realization.
+**What binds is an input of what it binds** ([DEC-113](decisions.md#dec-113-what-binds-is-an-input-of-what-it-binds)). A changed Rule, Decision or Constraint reaches every Definition of its Package and of the Packages below it that a file realizes, and `status` names it on each of them: `changed: bound:architecture/rules/persistence`. The record keeps what bound each item when it was verified, so the name stays after the Rule itself is verified again, until each item it binds is verified against it. A Rule of Root binds everything that is built, so its change lists everything; a Rule that holds for one area lives in that area's Package. What no file realizes, such as a goal, and a Kind are bound by nothing. A Library counts as one, so a change of one Kind of a committed Library lists the Definitions of all its Kinds: more, never less. Three more kinds of item stay on the list until they are verified again: a Definition recorded `fail` or `spec-problem`, a Definition gone from the spec, with the files that realized it, and an error in the realization.
 
 `status` doesn't follow the code's own imports ([roadmap](roadmap.md#later)). A full review now and then, `/markitect-review --all`, is the safety net. On the change steps of Makerspace, a study project, one step of links reached 33 of the 36 existing files that truly changed, and deeper reach 35 ([measurement](https://github.com/Glacius-Labs/Markitect/blob/d0c23a31efc928e95f3acc0633deb01a5f887884/docs/validation/impact-reach-20261103.md)).
 
@@ -179,7 +179,7 @@ The owner architects the project until the spec looks right, then uses `/markite
 
 ## 6. The record
 
-`.markitect/review.sum` is the record of what was verified, committed with the project like `go.sum` ([the record](../internal/run/README.md#the-record-file)). It holds one line per item, a Definition with its parts ([DEC-111](decisions.md#dec-111-a-thing-with-parts-is-built-and-verified-as-one)), sorted, each a JSON object: the verdict, the hash of each input ([§3](#how-status-works)), the evidence the reviewer gave, why, with an `ok` or a `skip` the reviewer's counts of cases, and the number of revisions.
+`.markitect/review.sum` is the record of what was verified, committed with the project like `go.sum` ([the record](../internal/run/README.md#the-record-file)). It holds one line per item, a Definition with its parts ([DEC-111](decisions.md#dec-111-a-thing-with-parts-is-built-and-verified-as-one)), sorted, each a JSON object: the verdict, the hash of each input ([§3](#how-status-works)), the evidence the reviewer gave, why, with an `ok` or a `skip` the reviewer's counts of cases, and the number of revisions. After the lines come the directories they name: for a Package that something binds, each binding Definition with its hash, so that `status` can say later which of them changed ([DEC-113](decisions.md#dec-113-what-binds-is-an-input-of-what-it-binds)).
 
 | Verdict | Means |
 |---|---|
@@ -194,7 +194,7 @@ The owner architects the project until the spec looks right, then uses `/markite
 
 **How it is written.** `mark` writes under a short lock in the user's cache folder, as one whole file, so parallel reviewers, for example one per Package, do not lose lines. A gone Definition stays on the list with the files that realized it until a reviewer finds them removed or with a new basis and records `ok`, which removes its line.
 
-**How it merges.** `init` writes `.markitect/.gitattributes` with `merge=union` for the record, so Git keeps both sides. Of two lines for one Definition, `status` takes the one whose inputs match the folder; if both match with different verdicts, it lists the Definition as a conflict to verify. The next `mark` writes the file clean.
+**How it merges.** `init` writes `.markitect/.gitattributes` with `merge=union` for the record, so Git keeps both sides. Of two lines for one Definition, `status` takes the one whose inputs match the folder; if both match with different verdicts, it lists the Definition as a conflict to verify. The directories of both sides are kept. The next `mark` writes the file clean and drops the directories no line names.
 
 **What it is:** a record, not a proof. A line written by hand shows in the diff, and the hook keeps agents from writing one. It holds hashes, not text: what a changed Definition said before comes from Git. A CI job runs `markitect status`, and any item fails the build.
 
@@ -205,7 +205,7 @@ The tool can't stop a determined agent that runs as the user on the user's machi
 | What the owner wants | What secures it | How firm |
 |---|---|---|
 | The spec compiles before it is verified | `status` gives no list and `mark` records nothing while the spec has errors | Firm |
-| Every Definition is verified at the state it is in | The record's inputs, and `mark` binding a verdict to the fingerprint the reviewer read | Firm for one step of links and the registry; deeper reach and the code's imports are not followed |
+| Every Definition is verified at the state it is in | The record's inputs, and `mark` binding a verdict to the fingerprint the reviewer read | Firm for one step of links, the registry and what binds a Definition: a changed Rule lists what it binds, by name; deeper reach and the code's imports are not followed |
 | What is committed is what was verified | The session commits the work with the record; the tool commits nothing | Seen, not prevented: `status` on any checkout lists what differs from the record, and a CI check can refuse it |
 | The work doesn't stop to wait for someone | Nothing: the agents work under the owner's session's permission mode. In early trials in `auto` mode, five of six runs had no denial ([trials](https://github.com/Glacius-Labs/Markitect/blob/d0c23a31efc928e95f3acc0633deb01a5f887884/docs/validation/lean-trials-20261107.md#what-the-flow-showed)) | Weak by choice: the owner is there to answer. How often manual mode asks is not known |
 | The work doesn't mix with the owner's own | The builder works in a worktree of its own, and its work comes back by a merge | Good: a conflict stops the merge. What the owner did not commit is not built. In a folder without Git the work shares the owner's folder |

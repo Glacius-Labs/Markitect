@@ -15,4 +15,4 @@ A Constraint Definition states something imposed that restricts what the system 
 
 **Source:** who or what imposes it. **Applies to:** where, in words, when narrower than its place. A Constraint inside the folder of another has that one's source.
 
-Verified when the project respects it wherever it applies.
+Verified when what it asks for itself is built and nothing that exists contradicts it; where it asks nothing for itself, the places searched for a contradiction are the evidence. What it binds is verified against it item by item.

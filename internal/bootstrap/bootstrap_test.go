@@ -107,16 +107,17 @@ func TestCommandsEndToEnd(t *testing.T) {
 		t.Fatalf("a second init changed files: %v", diff)
 	}
 
-	// A changed Rule is to verify again, and nothing else is.
+	// A changed Rule is to verify again, and so is what it binds, which names
+	// it; the project, which no file realizes, is not.
 	r.Write(".markitect/spec/loan-limit.md", "---\nkind: std/Rule\n---\n# Loan limit\n\nAt most `3` open loans, for [[members]].\n")
 	code, out, _ = run(t, r.Dir, "status")
-	if code != 1 || !strings.Contains(out, "To verify (1 of 4 items)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self\n") {
+	if code != 1 || !strings.Contains(out, "To verify (3 of 4 items)") || !strings.Contains(out, "\nloan-limit@") || !strings.Contains(out, "changed: self\n") || strings.Count(out, "changed: bound:loan-limit\n") != 2 {
 		t.Fatalf("status after a change of the spec: %d\n%s", code, out)
 	}
 
 	// doc shows a Definition with its text, its links both ways, its files and its
 	// record; and a Package.
-	wantAll(t, mustRun(t, r.Dir, "doc", "[[members/member]]"), "members/member: Member (std/Concept)\n", "Package members, .markitect/spec/members/member.md\n", "A person who borrows.", "Realized by:\n  src/members/member.go, .markitect/registry/members.md:", "Record: members/member@", ", ok")
+	wantAll(t, mustRun(t, r.Dir, "doc", "[[members/member]]"), "members/member: Member (std/Concept)\n", "Package members, .markitect/spec/members/member.md\n", "A person who borrows.", "Realized by:\n  src/members/member.go, .markitect/registry/members.md:", "Record: members/member@", ", changed: bound:loan-limit\n")
 	wantAll(t, mustRun(t, r.Dir, "doc", "loan-limit"), "Links to: members\n", "Realized by:\n  README.md", ", changed: self")
 	wantAll(t, mustRun(t, r.Dir, "doc", "members"), "Package members, in Root\n", "paths src/members/**", "\n# Members\n\nWho may borrow.\n", "members/member: Member (std/Concept)", "Linked from:\n  loan-limit (link)", "Files:\n  src/members/member.go")
 	if code, _, errOut := run(t, r.Dir, "doc", "members/nobody"); code != 1 || !strings.Contains(errOut, "neither a Definition nor a Package") {
@@ -147,7 +148,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 			Record     struct{ State string }
 		}
 	}
-	if code, out, _ := run(t, r.Dir, "doc", "--json", "members/member"); code != 0 || json.Unmarshal([]byte(out), &doc) != nil || doc.Kind != "doc" || doc.Definition.ID != "members/member" || len(doc.Definition.RealizedBy) != 1 || doc.Definition.Record.State != "ok" {
+	if code, out, _ := run(t, r.Dir, "doc", "--json", "members/member"); code != 0 || json.Unmarshal([]byte(out), &doc) != nil || doc.Kind != "doc" || doc.Definition.ID != "members/member" || len(doc.Definition.RealizedBy) != 1 || doc.Definition.Record.State != "changed" {
 		t.Fatalf("doc --json: %d %s", code, out)
 	}
 	// list shows the Packages and their Definitions; --deps what each depends on.
@@ -191,7 +192,7 @@ func TestCommandsEndToEnd(t *testing.T) {
 		Items       []struct{ Definition, State, Fingerprint string }
 		Diagnostics []struct{ Severity, Code string }
 	}
-	if code, out, _ := run(t, r.Dir, "status", "--json"); code != 1 || json.Unmarshal([]byte(out), &stated) != nil || stated.Kind != "status" || stated.Clean || len(stated.Items) != 2 || stated.Items[0].Definition != "loan-limit" || len(stated.Diagnostics) != 1 || stated.Diagnostics[0].Code != "definition.unused" {
+	if code, out, _ := run(t, r.Dir, "status", "--json"); code != 1 || json.Unmarshal([]byte(out), &stated) != nil || stated.Kind != "status" || stated.Clean || len(stated.Items) != 4 || stated.Items[0].Definition != "loan-limit" || len(stated.Diagnostics) != 1 || stated.Diagnostics[0].Code != "definition.unused" {
 		t.Fatalf("status --json: %d %s", code, out)
 	}
 

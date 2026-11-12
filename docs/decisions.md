@@ -179,6 +179,19 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - The parallel workflow takes Root's strand last, since that strand makes the changes the others ask for in shared files. A build in slices takes Root's Rules, Decisions and components first, since nothing exists yet that the others could build on. The two orders serve different lists and are computed apart.
 - The parallel strategy was the alternative for a first build. It builds at once Packages that do not exist for each other yet, and a first build has nothing to build on.
 
+### DEC-113 What binds is an input of what it binds
+
+- A Definition of a Kind that declares `binds: true` binds its Package and every Package below it ([DEC-110](#dec-110-a-kind-declares-fields-and-parts-and-std-describes-a-whole-project)). This binding is an input of what it binds, beside the inputs [DEC-099](#dec-099-a-record-of-what-was-verified) lists. What binds a Package is each item that lies in the Package itself and whose Kind binds, an item being a Definition that is no part of another, with its parts ([DEC-111](#dec-111-a-thing-with-parts-is-built-and-verified-as-one)).
+- An item a file realizes carries one input for its Package and for each Package above it that something binds: `bound:Root`, `bound:domain/staff`. Its value is the digest of the Package's directory, which maps each thing that binds the Package to the hash of its text and the texts of its parts. So a changed Rule, Decision or Constraint puts everything it binds back on the list, the binding Definitions themselves included.
+- `status` names on each item the binding Definition that changed, in place of the Package: `changed: bound:architecture/rules/persistence`, `(new)` for one that binds the item since its verdict and `(gone)` for one that no longer does. The item itself is left out, since its own inputs say how it changed.
+- Why: `status` promises to list what a change reaches. Since DEC-110 a Rule binds by its place and is no longer linked, so the links that carried a change of a Rule to what keeps to it are gone. A changed Rule was then one item: every `ok` below it stayed as given under the old Rule, and a place the builder forgot was listed nowhere.
+- Only what a file realizes is bound. A Goal, an Exclusion, a Term or the Project is bound by nothing, and neither is a Kind: nothing is built for them, so no statement about what is built holds for them. `doc` shows no `Bound by` for them.
+- A Rule of Root binds everything that is built, so its change rightly lists everything. A Rule that holds for one area lives in that area's Package and reaches only there.
+- The record keeps, beside its lines, the directory of each Package and digest that a line names. `mark` writes it with the verdict, and it is dropped when no line names it any more. The name of the changed Definition must survive the verification of that Definition: once the Rule is `ok` again, what it binds is still listed and still says which Rule to check it against. One input per binding Definition on every line was the alternative; it repeats the same content on every line of the record.
+- Where the record no longer holds the directory a line names, or the line has no `bound:` input, as in a record of an earlier release, `status` names the Package, as in `bound:Root (new)`. Such a record lists each bound item once more.
+- The item of a binding Definition verifies what the Definition asks for itself and that nothing that exists contradicts it; what it binds is verified against it item by item, as `std/Rule`, `std/Decision` and `std/Constraint` say. The binding Definition's own item as the one verdict on the whole project was the alternative. It puts the trust into one verdict whose evidence cannot enumerate the project.
+- `vet.hub` counts links: what a Definition binds by its place is no finding.
+
 ## The tool
 
 <a id="dec-096-markitect-computes-and-checks-a-driver-acts"></a>

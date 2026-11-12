@@ -125,7 +125,8 @@ func (p *plain) verifyAll() {
 }
 
 // With no record, every Definition is to verify; once each is recorded ok, status
-// is empty, and the record holds one sorted line per Definition with full hashes.
+// is empty, and the record holds one sorted line per Definition with full hashes,
+// and after them the directory of what binds Root.
 func TestStatusEmptiesAsTheReviewerRecords(t *testing.T) {
 	p := newPlain(t)
 	st := p.status(false)
@@ -142,10 +143,10 @@ func TestStatusEmptiesAsTheReviewerRecords(t *testing.T) {
 	has(t, p.status(false).Text(), "Nothing to verify: the spec compiles, and all 8 Definitions are verified at their current inputs.")
 	rec := p.read(project.ReviewFile)
 	lines := strings.Split(strings.TrimSuffix(rec, "\n"), "\n")
-	if len(lines) != 8 || !strings.HasPrefix(lines[0], `{"definition":"catalog/book","verdict":"ok","inputs":{`) {
+	if len(lines) != 9 || !strings.HasPrefix(lines[0], `{"definition":"catalog/book","verdict":"ok","inputs":{`) || !strings.HasPrefix(lines[8], `{"bound":"Root",`) {
 		t.Fatalf("record:\n%s", rec)
 	}
-	has(t, rec, `"file:src/members/loans/loan.go":"sha256:`, `"kind:std/Rule":"sha256:`, `"link:members/member":"sha256:`, `"evidence":["src/members/loans/loan.go:1"]`)
+	has(t, rec, `"bound:Root":"sha256:`, `"file:src/members/loans/loan.go":"sha256:`, `"kind:std/Rule":"sha256:`, `"link:members/member":"sha256:`, `"evidence":["src/members/loans/loan.go:1"]`)
 	parsed := run.ParseRecord([]byte(rec))
 	if len(parsed.Unreadable) != 0 || len(parsed.Lines[0].Inputs[run.InputSelf]) != len("sha256:")+64 {
 		t.Fatalf("%+v", parsed)
@@ -306,7 +307,8 @@ func TestStatusCountsAFolderForThePackageAbove(t *testing.T) {
 	if _, err := p.engine.Status(context.Background(), run.StatusRequest{Dir: p.dir, Package: "members/rules"}); !errors.Is(err, run.ErrUsage) {
 		t.Fatalf("a folder without an anchor is no Package to ask for: %v", err)
 	}
-	// Gone, the Definition is still counted for the Package above its folder.
+	// Gone, the Definition is still counted for the Package above its folder,
+	// and what it bound there is listed with it.
 	p.verifyAll()
 	p.remove(m + "members/rules/limit.md")
 	st = p.status(false)
@@ -314,10 +316,10 @@ func TestStatusCountsAFolderForThePackageAbove(t *testing.T) {
 	if gone.State != run.StateGone || len(st.Packages) != 4 {
 		t.Fatalf("a gone Definition of a folder below a Package:\n%s", st.Text())
 	}
-	if pk := members(st); pk.Definitions != 2 || pk.Items != 1 {
+	if pk := members(st); pk.Definitions != 2 || pk.Items != 3 {
 		t.Fatalf("the gone item is not members': %+v", pk)
 	}
-	if only := of("members"); listed(only) != "members/rules/limit" || only.Definitions != 2 || listed(of("members/loans")) != "" || listed(of("Root")) != "" {
+	if only := of("members"); listed(only) != "members/member,members/members,members/rules/limit" || only.Definitions != 2 || listed(of("members/loans")) != "members/loans/loan,members/loans/loans" || listed(of("Root")) != "" {
 		t.Fatalf("status of members:\n%s", only.Text())
 	}
 	// So are the Definitions of a whole Package that is gone: they count for
@@ -350,14 +352,15 @@ func TestStatusCountsAFolderForThePackageAbove(t *testing.T) {
 // A thing with parts is verified as one: status lists the whole with its
 // parts and no part alone, a change of a part or of a file a part's row names
 // lists the whole, a verdict on a part is refused, and a part needs no row of
-// its own. A part with parts of its own is a thing of its own.
+// its own. A part with parts of its own is a thing of its own. The things are
+// of a Kind that binds nothing, so that only their links reach.
 func TestAThingWithPartsIsVerifiedAsOne(t *testing.T) {
 	files := library()
-	files[m+"catalog/operations/lend/lend.md"] = def("std/Rule", "Lend", "A copy goes home.")
-	files[m+"catalog/operations/lend/free.md"] = def("std/Rule", "Free", "Nobody holds it; see [[catalog/book]].")
-	files[m+"catalog/operations/lend/due/due.md"] = def("std/Rule", "Due", "It comes back.")
-	files[m+"catalog/operations/lend/due/after.md"] = def("std/Rule", "After", "After `14` days.")
-	files[m+"catalog/operations/lend/alone/alone.md"] = def("std/Rule", "Alone", "A part in a folder of its name, with no parts.")
+	files[m+"catalog/operations/lend/lend.md"] = def("std/Quality", "Lend", "A copy goes home.")
+	files[m+"catalog/operations/lend/free.md"] = def("std/Quality", "Free", "Nobody holds it; see [[catalog/book]].")
+	files[m+"catalog/operations/lend/due/due.md"] = def("std/Quality", "Due", "It comes back.")
+	files[m+"catalog/operations/lend/due/after.md"] = def("std/Quality", "After", "After `14` days.")
+	files[m+"catalog/operations/lend/alone/alone.md"] = def("std/Quality", "Alone", "A part in a folder of its name, with no parts.")
 	files[project.RegistryDir+"/catalog.md"] += "| src/catalog/lend.go | [[catalog/operations/lend]], [[catalog/operations/lend/due/after]] | Lending |\n"
 	files["src/catalog/lend.go"] = "package catalog\n"
 	p := newPlainOf(t, files)
@@ -390,7 +393,7 @@ func TestAThingWithPartsIsVerifiedAsOne(t *testing.T) {
 		t.Fatalf("not clean after verifying everything:\n%s", st.Text())
 	}
 	// A part changes: its whole is listed, and what the part links is not.
-	p.write(m+"catalog/operations/lend/free.md", def("std/Rule", "Free", "Nobody holds or has reserved it; see [[catalog/book]]."))
+	p.write(m+"catalog/operations/lend/free.md", def("std/Quality", "Free", "Nobody holds or has reserved it; see [[catalog/book]]."))
 	st = p.status(false)
 	if got := listed(st); got != "catalog/operations/lend/lend" {
 		t.Fatalf("after a change of a part, listed %q", got)
@@ -444,22 +447,23 @@ func TestAThingWithPartsIsVerifiedAsOne(t *testing.T) {
 
 // A link to the folder of a thing with parts relies on the thing: a change of
 // the whole reaches the Definition that links the folder, and a change of a
-// part lists the whole alone.
+// part lists the whole alone. The thing is of a Kind that binds nothing, so
+// that only links reach.
 func TestAChangedWholeReachesWhatLinksItsFolder(t *testing.T) {
 	files := library()
-	files[m+"members/rules/fees/fees.md"] = def("std/Rule", "Fees", "A fee per day.")
-	files[m+"members/rules/fees/per-day.md"] = def("std/Rule", "Per day", "`1` euro.")
+	files[m+"members/rules/fees/fees.md"] = def("std/Quality", "Fees", "A fee per day.")
+	files[m+"members/rules/fees/per-day.md"] = def("std/Quality", "Per day", "`1` euro.")
 	files[m+"catalog/book.md"] = def("std/Concept", "Book", "A book has a title, and [[members/rules/fees]] apply.")
 	files[project.RegistryDir+"/members.md"] += "| src/members/fees.go | [[members/rules/fees]], [[members/rules/fees/per-day]] | Fees |\n"
 	files["src/members/fees.go"] = "package members\n"
 	p := newPlainOf(t, files)
 	p.verifyAll()
-	p.write(m+"members/rules/fees/per-day.md", def("std/Rule", "Per day", "`2` euros."))
+	p.write(m+"members/rules/fees/per-day.md", def("std/Quality", "Per day", "`2` euros."))
 	if got := listed(p.status(false)); got != "members/rules/fees/fees" {
 		t.Fatalf("after a change of a part, listed %q", got)
 	}
 	p.verifyAll()
-	p.write(m+"members/rules/fees/fees.md", def("std/Rule", "Fees", "A fee per week."))
+	p.write(m+"members/rules/fees/fees.md", def("std/Quality", "Fees", "A fee per week."))
 	if got := listed(p.status(false)); got != "catalog/book,members/rules/fees/fees" {
 		t.Fatalf("after a change of the whole, listed %q", got)
 	}
@@ -475,9 +479,9 @@ func TestWhatAChangeReaches(t *testing.T) {
 		{"a changed Definition and what links to it, one step", func(p *plain) {
 			p.write(m+"members/member.md", def("std/Concept", "Member", "A person with a card."))
 		}, "members/loans/loan,members/member"},
-		{"a changed Rule above a Package reaches only itself and what links to it", func(p *plain) {
+		{"a changed Rule above a Package reaches itself and every Definition it binds", func(p *plain) {
 			p.write(m+"loan-limit.md", def("std/Rule", "Loan limit", "At most `3` open loans."))
-		}, "loan-limit"},
+		}, "catalog/book,catalog/catalog,loan-limit,members/loans/loan,members/loans/loans,members/member,members/members"},
 		{"a changed file reaches what its row names", func(p *plain) {
 			p.write("src/members/loans/loan.go", limit3)
 		}, "loan-limit,members/loans/loan,members/loans/loans"},
@@ -835,7 +839,7 @@ func TestMergedLines(t *testing.T) {
 		t.Fatal("not recorded")
 	}
 	rec := p.read(project.ReviewFile)
-	if n := len(strings.Split(strings.TrimSuffix(rec, "\n"), "\n")); n != 8 {
+	if n := len(strings.Split(strings.TrimSuffix(rec, "\n"), "\n")); n != 9 {
 		t.Fatalf("not written clean, %d lines:\n%s", n, rec)
 	}
 	if !p.status(false).Clean() {
@@ -853,7 +857,7 @@ func TestAnUnreadableLine(t *testing.T) {
 	if st.Clean() || len(st.Unreadable) != 2 {
 		t.Fatalf("%s", st.Text())
 	}
-	has(t, st.Text(), ".markitect/review.sum:9: record.unreadable: ", ".markitect/review.sum:10: record.unreadable: ")
+	has(t, st.Text(), ".markitect/review.sum:10: record.unreadable: ", ".markitect/review.sum:11: record.unreadable: ")
 	at := p.item(p.status(true), "loan-limit").Fingerprint
 	if text, ok := p.review("loan-limit", run.VerdictOK, at, []string{"README.md"}, ""); ok || !strings.Contains(text, "cannot read every line") {
 		t.Fatalf("%s", text)

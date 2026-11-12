@@ -236,7 +236,10 @@ func (s Status) only(name string) (Status, error) {
 
 // view is the folder's inputs and its record, settled per Definition.
 type view struct {
-	now   map[string]Inputs
+	now map[string]Inputs
+	// dirs holds the directory of each Package that something binds, as it
+	// is now, by the Package's name.
+	dirs  map[string]Directory
 	items map[string]Item
 	// goneInputs holds the inputs of a gone Definition: the files its lines name,
 	// as they are now.
@@ -250,7 +253,7 @@ type view struct {
 
 // see settles the record against the folder.
 func (f *folder) see(rec Record) (view, error) {
-	now, err := state{p: f.cur, hash: f.hash}.inputs()
+	now, dirs, err := state{p: f.cur, hash: f.hash}.inputs()
 	if err != nil {
 		return view{}, err
 	}
@@ -261,7 +264,11 @@ func (f *folder) see(rec Record) (view, error) {
 		}
 		return hashOrGone(h)
 	}
-	v := view{now: now, items: map[string]Item{}, goneInputs: map[string]Inputs{}, evidence: evidence, covered: map[string]bool{}}
+	v := view{now: now, dirs: dirs, items: map[string]Item{}, goneInputs: map[string]Inputs{}, evidence: evidence, covered: map[string]bool{}}
+	recorded := map[string]Directory{}
+	for _, d := range rec.Directories {
+		recorded[d.key()] = d
+	}
 	for _, id := range f.cur.Spec.OwnDefinitions() {
 		if _, unit := now[id]; !unit {
 			v.covered[id] = true
@@ -284,7 +291,7 @@ func (f *folder) see(rec Record) (view, error) {
 			it.State, it.Verdict, it.Why = s.match.Verdict, s.match.Verdict, s.match.Why
 			it.Look = appendNew(it.Look, s.match.Inputs.Files(InputEvidence)...)
 		default:
-			it.State, it.Changes, it.Verdict, it.Why = StateChanged, s.changes, s.closest.Verdict, s.closest.Why
+			it.State, it.Changes, it.Verdict, it.Why = StateChanged, v.binding(id, s.closest.Inputs, s.changes, recorded), s.closest.Verdict, s.closest.Why
 			it.Look = appendNew(it.Look, s.closest.Inputs.Files(InputEvidence)...)
 		}
 		v.items[id] = it
@@ -312,6 +319,54 @@ func (f *folder) see(rec Record) (view, error) {
 		v.items[id] = it
 	}
 	return v, nil
+}
+
+// binding names, in place of each changed input bound:P of an item, the
+// binding Definitions that differ between the directory of P the line names
+// and the directory of P now: bound:ID, (new) for one the line's directory
+// lacks and (gone) for one the directory now lacks. The item itself is left
+// out, since its own inputs say how it changed. Where the line has no bound:P,
+// or the record no longer holds the directory it names, the Package stays
+// named, as any other input.
+func (v view) binding(id string, line Inputs, changes []Change, recorded map[string]Directory) []Change {
+	var out []Change
+	for _, c := range changes {
+		name, ok := strings.CutPrefix(c.Key, InputBound)
+		var was Directory
+		if ok && c.How != "new" {
+			was, ok = recorded[Directory{Bound: name, Digest: line[c.Key]}.key()]
+		}
+		if !ok || c.How == "new" {
+			out = append(out, c)
+			continue
+		}
+		is := v.dirs[name].Binds
+		ids := map[string]bool{}
+		for b := range was.Binds {
+			ids[b] = true
+		}
+		for b := range is {
+			ids[b] = true
+		}
+		for _, b := range sortedKeys(ids) {
+			before, after := was.Binds[b], is[b]
+			switch {
+			case b == id || before == after:
+			case before == "":
+				out = append(out, Change{InputBound + b, "new"})
+			case after == "":
+				out = append(out, Change{InputBound + b, "gone"})
+			default:
+				out = append(out, Change{InputBound + b, "changed"})
+			}
+		}
+	}
+	// What changed in a directory is never the item alone without its own
+	// inputs saying so; should it be, the Packages stay named.
+	if len(out) == 0 {
+		return changes
+	}
+	return out
 }
 
 func (f *folder) status(rec Record, all bool) (Status, error) {
