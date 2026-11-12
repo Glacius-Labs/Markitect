@@ -254,6 +254,17 @@ func TestAccountPageOfAFolderThatIsNoPackage(t *testing.T) {
 	if len(ds) != 0 {
 		t.Fatalf("stale is no error here:\n%v", ds)
 	}
+	// A row that links a folder which holds a Definition of its name links it.
+	src.Files = append(src.Files, spec.File{Path: "notes/plan/plan.md", Data: []byte("---\nkind: std/Rule\n---\n# Plan\n")})
+	withThing, ds := spec.Compile(src)
+	if len(ds) != 0 {
+		t.Fatalf("fixture spec: %v", ds)
+	}
+	thing, ds := Account(Input{Spec: withThing, OwnDir: ".markitect", Files: []string{"src/plan.go"},
+		Pages: []PageFile{page("", table+"| src/plan.go | [[notes/plan]] | The plan |\n")}})
+	if len(ds) != 0 || len(thing.Entries["src/plan.go"].Realizes) != 1 || thing.Entries["src/plan.go"].Realizes[0] != "notes/plan/plan" {
+		t.Fatalf("a link to a thing's folder: %v %+v", ds, thing.Entries["src/plan.go"])
+	}
 	// A row that links the folder itself links no Definition.
 	_, linked := Account(Input{Spec: m, OwnDir: ".markitect", Files: []string{"src/todo.go"},
 		Pages: []PageFile{page("", table+"| src/todo.go | [[notes]] | The folder |\n")}})

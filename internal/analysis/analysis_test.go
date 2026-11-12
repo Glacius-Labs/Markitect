@@ -230,7 +230,19 @@ func TestVetSizes(t *testing.T) {
 	}
 	ds := vetCodes(t, r)
 	expectWarning(t, ds, "vet.definition_size", "catalog/book.md: vet.definition_size")
-	expectWarning(t, ds, "vet.package_size", "big has 26 Definitions")
+	expectWarning(t, ds, "vet.package_size", "big has 26 Definitions of its own, parts not counted")
+	// The parts of a thing do not count: thirty conditions of one Operation
+	// leave members as small as it was.
+	r = library(t)
+	r[m+"members/operations/lend/lend.md"] = def("std/Feature", "Lend", "")
+	for i := 0; i < 30; i++ {
+		r[m+fmt.Sprintf("members/operations/lend/conditions/c%02d.md", i)] = def("std/Rule", "C", "")
+	}
+	for _, d := range vetCodes(t, r) {
+		if d.Code == "vet.package_size" {
+			t.Fatalf("parts counted: %v", d)
+		}
+	}
 }
 
 func TestVetThinPackage(t *testing.T) {
@@ -421,6 +433,22 @@ func TestVetUnlinkedMentions(t *testing.T) {
 		}
 	}
 	r[m+"catalog/catalog.md"] = def("Package", "Catalog", "What can be borrowed.")
+	// A part speaks of the thing it is a part of without linking it; another
+	// Definition that names the thing is noted as before.
+	r[m+"catalog/operations/lend/lend.md"] = def("std/Feature", "Lend", "A copy goes home.")
+	r[m+"catalog/operations/lend/conditions/free.md"] = def("std/Rule", "Free", "To lend it, nobody else holds it.")
+	r[m+"catalog/shelf.md"] = def("std/Concept", "Shelf", "What the library can lend.")
+	part, other := false, false
+	for _, line := range noteLines(vetNotes(t, r, nil), "vet.unlinked_mention") {
+		part = part || strings.Contains(line, "conditions/free.md")
+		other = other || strings.Contains(line, "catalog/shelf.md:6: vet.unlinked_mention: names catalog/operations/lend/lend")
+	}
+	if part || !other {
+		t.Fatalf("a part naming its whole is noted (%v), or another naming it is not (%v)", part, !other)
+	}
+	delete(r, m+"catalog/operations/lend/lend.md")
+	delete(r, m+"catalog/operations/lend/conditions/free.md")
+	r[m+"catalog/shelf.md"] = def("std/Concept", "Shelf", "Holds books.")
 	// A linked Definition's name covers the words: "members" beside a linked
 	// members/member is no mention of members/member, nor of anything else.
 	r[m+"catalog/book.md"] = def("std/Concept", "Book", "Lent to [[members/member]]s; members queue.")

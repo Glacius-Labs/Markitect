@@ -101,7 +101,7 @@ Knowledge sits broad at the top and deep below. An agent working on a Package re
 
 - **Root** (the spec folder itself): the project anchor (`std/Project`), project-wide Rules, layout conventions (where code and tests live), the architecture, shared Kinds.
 - **One Package per real area** of the system, with a single responsibility and its own code folder. Its anchor (`members/members.md`, of kind `Package`) says what it is responsible for and what it keeps to itself; without the anchor the folder is no Package. It holds that area's Concepts, Features and interfaces (`rest/Endpoint`, `cli/Command`) and the Rules only it follows. Do not make a Package of an anchor and one Definition.
-- **A folder is a namespace.** Below a Package, folders order its Definitions, by Kind (`members/rules/loan-limit`) or as a thing with its parts (`members/operations/lend/lend.md` beside `members/operations/lend/conditions/`). They belong to the Package, keep the folder in their path, and make no dependency among themselves. Nothing links to a folder that is no Package.
+- **A folder is a namespace.** Below a Package, folders order its Definitions, by Kind (`members/rules/loan-limit`) or as a thing with its parts (`members/operations/lend/lend.md` beside `members/operations/lend/conditions/`), which is linked by its folder, `[[members/operations/lend]]`, and which `markitect doc` shows whole. They belong to the Package, keep the folder in their path, and make no dependency among themselves. Nothing links to any other folder that is no Package.
 - **Shared things go to the lowest common parent** of the Packages that use them. A Kind used by several Packages sits at Root, because using a Kind is a dependency.
 - **Dependencies point up or sideways, never down, and never in a circle.** A link to an ancestor's Definition is free. A link to another Package's Definition is a dependency; keep them few. A parent may name a child Package (`[[members]]`), not a Definition inside it.
 - **Mark a Definition `internal: true`** when only its own Package should link to it.
@@ -140,7 +140,7 @@ A visitor becomes a [[members/member]] by giving a name and an email.
 
 | Code | Usual cause and fix |
 |---|---|
-| `link.unresolved` | Short or relative link. Use the full path from the spec folder; check spelling and that the target exists. A folder without an anchor is no target: link a Definition in it or the Package above, or give it its anchor. |
+| `link.unresolved` | Short or relative link. Use the full path from the spec folder; check spelling and that the target exists. A folder is a target only as a Package or as a thing with parts: otherwise link a Definition in it or the Package above. |
 | `link.syntax` | `../x`, a leading `/`, or a character other than letters, digits, `-`, `_`. Use a plain path. |
 | `link.internal` | The target is `internal` to another Package. Drop the link and describe the need in your own words, or make the target public. |
 | `link.downward` | A parent links into a child's Definition. Link the Package instead, move the Definition up, or let the child link to a need stated here. |

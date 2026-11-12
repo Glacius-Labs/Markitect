@@ -65,6 +65,10 @@ func unlinkedMentions(p *project.Project) []Note {
 			if dd == x || linked[dd] || t.Kind == spec.CoreKind || sp.Packages[t.Package].Anchor == dd || !mayLink(d, t) {
 				continue
 			}
+			// A part speaks of the thing it is a part of without linking it.
+			if sp.IsPartOf(x, dd) {
+				continue
+			}
 			if _, ok := first[dd]; ok || covered(s.words, linked, nameList) {
 				continue
 			}

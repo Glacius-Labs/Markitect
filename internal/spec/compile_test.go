@@ -180,13 +180,98 @@ func TestCompileAThingWithPartsIsNoPackage(t *testing.T) {
 	if len(m.Edges) != 0 {
 		t.Fatalf("links inside one Package made edges: %+v", m.Edges)
 	}
-	// The folder itself is no link target, and the message names the thing.
-	_, ds = compile(t, map[string]string{
-		"members/members.md":              anchor("Members"),
-		"members/operations/lend/lend.md": def("std/Rule", "# Lend\n"),
-		"members/rules/stock.md":          def("std/Rule", "# Stock\n\nSee [[members/operations/lend]].\n"),
+}
+
+// A thing with parts is a whole. A link to its folder means the Definition
+// that carries the folder's name, also as a kind; its parts are what lies
+// below, in the order it links them and then by ID; and a Package ends it:
+// an anchor is no whole, and nothing in a Package is a part of a thing above.
+func TestCompileWholeAndParts(t *testing.T) {
+	m, ds := compile(t, map[string]string{
+		"members/members.md":                                     anchor("Members"),
+		"members/operations/lend/lend.md":                        def("std/Rule", "# Lend\n\nChecked in this order: [[members/operations/lend/conditions/member-is-active]], [[members/operations/lend/conditions/in-stock]].\n"),
+		"members/operations/lend/conditions/in-stock.md":         def("std/Rule", "# In stock\n"),
+		"members/operations/lend/conditions/a-first.md":          def("std/Rule", "# A first, by name\n"),
+		"members/operations/lend/conditions/member-is-active.md": def("std/Rule", "# Member is active\n"),
+		"members/operations/lend/outcomes/lent/lent.md":          def("std/Rule", "# Lent\n"),
+		"members/operations/lend/outcomes/lent/until.md":         def("std/Rule", "# Until\n"),
+		"members/rules/stock.md":                                 def("std/Rule", "# Stock\n\nFor [[members/operations/lend]], whose [[members/operations/lend/outcomes/lent]] counts.\n"),
+		"members/kinds/Role/Role.md":                             def("Kind", "# Role\n"),
+		"members/kinds/Role/notes.md":                            def("std/Rule", "# Notes on roles\n"),
+		"members/chair.md":                                       def("members/kinds/Role", "# Chair\n"),
+		"members/loans/loans.md":                                 anchor("Loans"),
+		"members/loans/loan.md":                                  def("std/Rule", "# Loan\n"),
 	})
-	expect(t, ds, "link.unresolved", `link "members/operations/lend" names a folder, which is no Package; the Definition of that name is members/operations/lend/lend`)
+	clean(t, ds)
+	stock := m.Definitions["members/rules/stock"]
+	if got := stock.Links[1].Target + "," + stock.Links[2].Target; got != "members/operations/lend/lend,members/operations/lend/outcomes/lent/lent" || stock.Links[1].Package {
+		t.Fatalf("links of stock = %+v", stock.Links)
+	}
+	if got := m.Definitions["members/chair"].Kind; got != "members/kinds/Role/Role" {
+		t.Fatalf("kind of chair = %q", got)
+	}
+	for id, whole := range map[string]string{
+		"members/operations/lend/lend":                "",
+		"members/operations/lend/conditions/in-stock": "members/operations/lend/lend",
+		"members/operations/lend/outcomes/lent/lent":  "members/operations/lend/lend",
+		"members/operations/lend/outcomes/lent/until": "members/operations/lend/outcomes/lent/lent",
+		"members/kinds/Role/notes":                    "members/kinds/Role/Role",
+		"members/rules/stock":                         "",
+		"members/members":                             "",
+		"members/loans/loans":                         "",
+		"members/loans/loan":                          "",
+	} {
+		if got := m.Definitions[id].Whole; got != whole {
+			t.Errorf("%s is a part of %q, want %q", id, got, whole)
+		}
+	}
+	want := "members/operations/lend/conditions/member-is-active,members/operations/lend/conditions/in-stock,members/operations/lend/conditions/a-first,members/operations/lend/outcomes/lent/lent,members/operations/lend/outcomes/lent/until"
+	if got := strings.Join(m.Parts("members/operations/lend/lend"), ","); got != want {
+		t.Fatalf("parts of lend:\n%s\nwant:\n%s", got, want)
+	}
+	if got := m.Parts("members/members"); len(got) != 0 {
+		t.Fatalf("an anchor has parts: %v", got)
+	}
+	if thing, ok := m.Thing("members/operations/lend"); !ok || thing != "members/operations/lend/lend" {
+		t.Fatalf("Thing = %q, %v", thing, ok)
+	}
+	if _, ok := m.Thing("members"); ok {
+		t.Fatal("a Package is taken for a thing")
+	}
+	if _, ok := m.Thing("members/rules"); ok {
+		t.Fatal("a folder without a Definition of its name is taken for a thing")
+	}
+	// A Package below a thing is no part of it: neither its anchor nor what
+	// lies in it.
+	m, ds = compile(t, map[string]string{
+		"interfaces/interfaces.md":     def("std/Rule", "# Interfaces\n"),
+		"interfaces/limits/width.md":   def("std/Rule", "# Width\n"),
+		"interfaces/site/site.md":      anchor("Site"),
+		"interfaces/site/page.md":      def("std/Rule", "# Page\n"),
+		"interfaces/site/form/form.md": def("std/Rule", "# Form\n"),
+		"interfaces/site/form/name.md": def("std/Rule", "# Name\n"),
+	})
+	clean(t, ds)
+	for id, whole := range map[string]string{
+		"interfaces/limits/width":   "interfaces/interfaces",
+		"interfaces/site/site":      "",
+		"interfaces/site/page":      "",
+		"interfaces/site/form/form": "",
+		"interfaces/site/form/name": "interfaces/site/form/form",
+	} {
+		if got := m.Definitions[id].Whole; got != whole {
+			t.Errorf("%s is a part of %q, want %q", id, got, whole)
+		}
+	}
+	if got := strings.Join(m.Parts("interfaces/interfaces"), ","); got != "interfaces/limits/width" {
+		t.Fatalf("parts of interfaces = %q", got)
+	}
+	if m.Lookup("interfaces/site/form") != m.Definitions["interfaces/site/form/form"] || m.Lookup("interfaces/site/page") == nil || m.Lookup("interfaces/site") != nil || m.Lookup("nothing") != nil {
+		t.Fatal("Lookup is wrong")
+	}
+	if !m.IsPartOf("interfaces/site/form/name", "interfaces/site/form/form") || m.IsPartOf("interfaces/site/form/name", "interfaces/interfaces") || m.IsPartOf("gone", "interfaces/interfaces") {
+		t.Fatal("IsPartOf is wrong")
+	}
 }
 
 // A broken anchor is one error: its folder stays a Package, so what lies in

@@ -222,7 +222,11 @@ func (a *accountant) parsePage(src PageFile) {
 // Definition that does not exist is stale, not an error.
 func (a *accountant) resolve(src PageFile, raw spec.RawLink, entry *Entry) (string, bool) {
 	target := strings.TrimSuffix(raw.Target, ".md")
-	d, ok := a.in.Spec.Definitions[target]
+	d := a.in.Spec.Lookup(target)
+	ok := d != nil
+	if ok {
+		target = d.ID
+	}
 	switch {
 	case ok && d.Own():
 		return target, true
