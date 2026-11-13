@@ -230,17 +230,16 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 			return Failed, nil
 		}
 		if bound {
-			boundBy, linked := analysis.ReadBound(p, entries)
+			br := analysis.ReadBound(p, folder, entries)
 			if o.json {
 				return OK, c.printJSON(struct {
 					envelope
-					Folder      string               `json:"folder"`
-					BoundBy     []analysis.ReadEntry `json:"bound_by"`
+					Folder string `json:"folder"`
+					analysis.BoundRead
 					Definitions []analysis.ReadEntry `json:"definitions"`
-					Linked      []analysis.ReadEntry `json:"linked"`
-				}{newEnvelope("doc"), folder, boundBy, entries, linked})
+				}{newEnvelope("doc"), folder, br, entries})
 			}
-			fmt.Fprint(c.Stdout, renderReadBound(folder, boundBy, entries, linked))
+			fmt.Fprint(c.Stdout, renderReadBound(folder, br, entries))
 			return OK, nil
 		}
 		if o.json {

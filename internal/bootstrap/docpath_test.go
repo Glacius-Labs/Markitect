@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -81,9 +82,11 @@ func TestDocTakesAFilePath(t *testing.T) {
 	}
 }
 
-// doc --read --bound prints the folder's text between what binds it from
-// outside and what outside it it links, each once, with --json too; --bound
-// without --read is refused.
+// doc --read --bound lists the Operations and Reactions whose own Package is
+// the folder's, not those of a Package below it, and prints the folder's
+// text between what binds it from outside and what outside it it links, each
+// Definition once, in the text and in --json alike; --bound without --read
+// is refused.
 func TestDocReadBound(t *testing.T) {
 	emptyHome(t)
 	r := newFolder(t)
@@ -95,24 +98,59 @@ func TestDocReadBound(t *testing.T) {
 	r.Write(".markitect/spec/members/members.md", def("Package", "Members", "Who may borrow."))
 	r.Write(".markitect/spec/members/member.md", def("std/Concept", "Member", "A person at the [[places/desk]], a [[std/Concept]]."))
 	r.Write(".markitect/spec/members/card.md", def("std/Concept", "Card", "What a [[members/member]] shows at the [[places/desk]]."))
+	r.Write(".markitect/spec/members/operations/join.md", def("std/Operation", "Join", "A person becomes a [[members/member]].\n\n**Who:** `staff`\n\n**Satisfies:** [[loan-limit]]"))
+	r.Write(".markitect/spec/members/loans/loans.md", def("Package", "Loans", "What is lent out."))
+	r.Write(".markitect/spec/members/loans/operations/lend.md", def("std/Operation", "Lend", "Lend a book to a [[members/member]].\n\n**Who:** `staff`\n\n**Satisfies:** [[loan-limit]]"))
 	r.Write(".markitect/spec/places/places.md", def("Package", "Places", "Where lending happens."))
 	r.Write(".markitect/spec/places/desk.md", def("std/Concept", "Desk", "Where a book is handed over."))
 
 	out := mustRun(t, r.Dir, "doc", "--read", "members", "--bound")
-	for _, id := range []string{"`loan-limit`", "`members/member`", "`places/desk`"} {
+	walk := "\n- members/operations/join: Join (std/Operation)\n"
+	if !strings.Contains(out, walk) || strings.Contains(out, "- members/loans/operations/lend:") {
+		t.Errorf("the Operations of members:\n%s", out)
+	}
+	for _, id := range []string{"`loan-limit`", "`members/member`", "`members/loans/operations/lend`", "`places/desk`"} {
 		if strings.Count(out, id) != 1 {
 			t.Errorf("%s %d times:\n%s", id, strings.Count(out, id), out)
 		}
 	}
-	if !(strings.Index(out, "`loan-limit`") < strings.Index(out, "`members/member`") && strings.Index(out, "`members/member`") < strings.Index(out, "`places/desk`")) {
+	if !(strings.Index(out, walk) < strings.Index(out, "`loan-limit`") && strings.Index(out, "`loan-limit`") < strings.Index(out, "`members/member`") && strings.Index(out, "`members/member`") < strings.Index(out, "`places/desk`")) {
 		t.Errorf("order:\n%s", out)
 	}
 	if strings.Contains(out, "`std/Concept`") {
 		t.Errorf("a Kind of a Library:\n%s", out)
 	}
-	if js := mustRun(t, r.Dir, "doc", "--json", "--read", "members", "--bound"); !strings.Contains(js, `"bound_by"`) || !strings.Contains(js, `"linked"`) {
-		t.Errorf("JSON:\n%s", js)
+
+	var doc struct {
+		Package     string `json:"package"`
+		Walk        []struct{ ID string }
+		BoundBy     []struct{ ID string } `json:"bound_by"`
+		Definitions []struct{ ID string }
+		Linked      []struct{ ID string }
 	}
+	if err := json.Unmarshal([]byte(mustRun(t, r.Dir, "doc", "--json", "--read", "members", "--bound")), &doc); err != nil {
+		t.Fatal(err)
+	}
+	ids := func(entries []struct{ ID string }) string {
+		var out []string
+		for _, e := range entries {
+			out = append(out, e.ID)
+		}
+		return strings.Join(out, ",")
+	}
+	if got := ids(doc.Walk); doc.Package != "members" || got != "members/operations/join" {
+		t.Errorf("JSON walk of %s: %s", doc.Package, got)
+	}
+	if got := ids(doc.BoundBy); got != "loan-limit" {
+		t.Errorf("JSON bound_by: %s", got)
+	}
+	if got := ids(doc.Linked); got != "places/desk" {
+		t.Errorf("JSON linked: %s", got)
+	}
+	if got := ids(doc.Definitions); strings.Count(got, "members/member,") != 1 || strings.Contains(got, "loan-limit") || strings.Contains(got, "places/") {
+		t.Errorf("JSON definitions: %s", got)
+	}
+
 	if code, _, errOut := run(t, r.Dir, "doc", "--bound", "members"); code != 2 || !strings.Contains(errOut, "--bound goes with --read") {
 		t.Errorf("doc --bound: exit %d, %s", code, errOut)
 	}

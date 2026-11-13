@@ -1,6 +1,7 @@
 package analysis
 
 import (
+	"slices"
 	"sort"
 	"strings"
 
@@ -41,22 +42,48 @@ func Read(p *project.Project, folder string) []ReadEntry {
 			ids = append(ids, id)
 		}
 	}
-	return readEntries(p.Spec, ids, 0)
+	return readEntries(p.Spec, ids)
 }
 
-// ReadBound returns what doc --read --bound prints around the Definitions of
-// a folder, entries as Read returns them, so that one text holds all an
-// audit of the folder reads. Bound are the Definitions that bind one of them
-// from outside the folder without a link, what doc lists under Bound by;
-// Linked are the Definitions outside the folder that one of them links, but
-// Kinds and what Libraries hold. Each comes with its parts, as doc shows it,
-// and in reading order; no Definition comes twice, nor one of the folder.
-// Depth counts the wholes between a part and the Definition it comes with.
-func ReadBound(p *project.Project, entries []ReadEntry) (bound, linked []ReadEntry) {
+// Walked are the Kinds whose Definitions doc --read --bound lists first, so
+// that an audit of a Package walks each of them: what a caller or an event
+// sets off, the contracts of the project.
+var Walked = []string{"std/Operation", "std/Reaction"}
+
+// BoundRead is what doc --read --bound prints around the Definitions of a
+// folder, so that one text holds all an audit of the folder reads.
+type BoundRead struct {
+	// Package is the Package the folder belongs to: the folder itself when it
+	// is one, "" for Root.
+	Package string `json:"package"`
+	// Walk are the Definitions of a Kind in Walked whose own Package is
+	// Package and that lie at or below the folder, in reading order: not those
+	// of a Package below it.
+	Walk []ListedDefinition `json:"walk"`
+	// BoundBy are the Definitions that bind one of the folder's from outside
+	// the folder without a link, what doc lists under Bound by; Linked those
+	// outside the folder that one of the folder's links, but Kinds and what
+	// Libraries hold. Each comes with its parts, as doc shows it, and in
+	// reading order; no Definition comes twice, nor one of the folder.
+	BoundBy []ReadEntry `json:"bound_by"`
+	Linked  []ReadEntry `json:"linked"`
+}
+
+// ReadBound returns what doc --read --bound adds to the Definitions of a
+// folder, entries as Read returns them.
+func ReadBound(p *project.Project, folder string, entries []ReadEntry) BoundRead {
 	sp := p.Spec
+	pkg := folder
+	for pkg != spec.RootPackage && sp.Packages[pkg] == nil {
+		pkg = spec.FolderOf(pkg)
+	}
+	out := BoundRead{Package: pkg, Walk: []ListedDefinition{}}
 	printed, listed := map[string]bool{}, map[string]bool{}
 	for _, e := range entries {
 		printed[e.ID], listed[e.ID] = true, true
+		if d := sp.Definitions[e.ID]; d.Package == pkg && slices.Contains(Walked, d.Kind) {
+			out.Walk = append(out.Walk, listDefinition(d, false))
+		}
 	}
 	binding := sp.Binding()
 	var binds, links []string
@@ -78,7 +105,8 @@ func ReadBound(p *project.Project, entries []ReadEntry) (bound, linked []ReadEnt
 			links = append(links, l.Target)
 		}
 	}
-	return withParts(sp, binds, printed), withParts(sp, links, printed)
+	out.BoundBy, out.Linked = withParts(sp, binds, printed), withParts(sp, links, printed)
+	return out
 }
 
 // withParts returns Definitions in reading order, each followed by its
@@ -103,11 +131,7 @@ func withParts(sp *spec.Spec, ids []string, printed map[string]bool) []ReadEntry
 				unit = append(unit, part)
 			}
 		}
-		base := 0
-		for w := sp.Definitions[sp.Definitions[root].Whole]; w != nil; w = sp.Definitions[w.Whole] {
-			base++
-		}
-		out = append(out, readEntries(sp, unit, base)...)
+		out = append(out, readEntries(sp, unit)...)
 	}
 	return out
 }
@@ -131,13 +155,12 @@ func readOrder(sp *spec.Spec, ids []string) []string {
 	return out
 }
 
-// readEntries returns the entries of Definitions in reading order, each
-// Depth less base.
-func readEntries(sp *spec.Spec, ids []string, base int) []ReadEntry {
+// readEntries returns the entries of Definitions in reading order.
+func readEntries(sp *spec.Spec, ids []string) []ReadEntry {
 	out := []ReadEntry{}
 	for _, id := range readOrder(sp, ids) {
 		d := sp.Definitions[id]
-		e := ReadEntry{ID: id, Title: d.Title, Kind: d.Kind, Folder: spec.FolderOf(id), Whole: d.Whole, Text: body(d.Data), Shown: shown(sp, d.Data), Depth: -base}
+		e := ReadEntry{ID: id, Title: d.Title, Kind: d.Kind, Folder: spec.FolderOf(id), Whole: d.Whole, Text: body(d.Data), Shown: shown(sp, d.Data)}
 		if _, thing := sp.Thing(e.Folder); thing && id == spec.AnchorOf(e.Folder) {
 			e.Folder = spec.FolderOf(e.Folder)
 		}

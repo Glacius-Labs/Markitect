@@ -68,19 +68,27 @@ func TestRenderKinds(t *testing.T) {
 	}
 }
 
-// doc --read --bound prints what binds the folder from outside before its
+// doc --read --bound prints first the Operations and Reactions of the
+// folder's own Package, then what binds the folder from outside before its
 // text and what outside it it links after, each under a heading of its own,
-// a part one heading below its whole; and says so when there is none.
+// a part one heading below its whole, whatever the depth of that whole; and
+// says so when there is none.
 func TestRenderReadBound(t *testing.T) {
-	got := renderReadBound("members",
-		[]analysis.ReadEntry{{ID: "loan-limit", Title: "Loan limit", Kind: "std/Rule", Text: "# Loan limit\n\nAt most `5`.\n"}},
-		[]analysis.ReadEntry{{ID: "members/member", Title: "Member", Kind: "std/Concept", Folder: "members", Text: "# Member\n\nA person.\n"}},
-		[]analysis.ReadEntry{
+	got := renderReadBound("members", analysis.BoundRead{
+		Package: "members",
+		Walk:    []analysis.ListedDefinition{{ID: "members/operations/join/join", Title: "Join", Kind: "std/Operation"}},
+		BoundBy: []analysis.ReadEntry{{ID: "loan-limit", Title: "Loan limit", Kind: "std/Rule", Text: "# Loan limit\n\nAt most `5`.\n"}},
+		Linked: []analysis.ReadEntry{
 			{ID: "places/rules/hours/hours", Title: "Hours", Kind: "std/Rule", Folder: "places/rules", Text: "# Hours\n\nBy day.\n"},
-			{ID: "places/rules/hours/morning", Title: "Morning", Kind: "std/Rule", Folder: "places/rules/hours", Depth: 1, Text: "# Morning\n\nFrom `8`.\n"},
-		})
+			{ID: "places/rules/hours/morning", Title: "Morning", Kind: "std/Rule", Folder: "places/rules/hours", Whole: "places/rules/hours/hours", Depth: 1, Text: "# Morning\n\nFrom `8`.\n"},
+			{ID: "places/desk/attributes/height", Title: "Height", Kind: "std/Attribute", Folder: "places/desk/attributes", Whole: "places/desk/desk", Depth: 1, Text: "# Height\n\nIn `cm`.\n"},
+		},
+	}, []analysis.ReadEntry{{ID: "members/member", Title: "Member", Kind: "std/Concept", Folder: "members", Text: "# Member\n\nA person.\n"}})
 	want := "# The spec: members, with what binds it and what it links\n" +
-		"\n4 Definitions, as markitect doc --read --bound prints them: 1 outside members that binds its Definitions without a link, then its 1, then 2 outside it that they link. The files under .markitect/spec are the spec; this text is a view of them.\n" +
+		"\n5 Definitions, as markitect doc --read --bound prints them: 1 outside members that binds its Definitions without a link, then its 1, then 3 outside it that they link. The files under .markitect/spec are the spec; this text is a view of them.\n" +
+		"\n## Operations and Reactions of members\n" +
+		"\nThe 1 Definition of kind std/Operation or std/Reaction here whose own Package is members, not one below it:\n\n" +
+		"- members/operations/join/join: Join (std/Operation)\n" +
 		"\n## Bound from outside members\n" +
 		"\nWhat binds a Definition of members without a link, as everything in its Package: what markitect doc lists under Bound by.\n" +
 		"\n### Loan limit\n\n`loan-limit`, std/Rule\n\nAt most `5`.\n" +
@@ -89,13 +97,15 @@ func TestRenderReadBound(t *testing.T) {
 		"\n## Linked from members, outside it\n" +
 		"\nWhat a Definition of members links outside it, but Kinds and Libraries.\n" +
 		"\n### Hours\n\n`places/rules/hours/hours`, std/Rule\n\nBy day.\n" +
-		"\n#### Morning\n\n`places/rules/hours/morning`, std/Rule\n\nFrom `8`.\n"
+		"\n#### Morning\n\n`places/rules/hours/morning`, std/Rule\n\nFrom `8`.\n" +
+		"\n### Height\n\n`places/desk/attributes/height`, std/Attribute\n\nIn `cm`.\n"
 	if got != want {
 		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
 	}
-	none := renderReadBound("", nil, []analysis.ReadEntry{{ID: "project", Title: "Library", Kind: "std/Project", Text: "# Library\n"}}, nil)
+	none := renderReadBound("", analysis.BoundRead{}, []analysis.ReadEntry{{ID: "project", Title: "Library", Kind: "std/Project", Text: "# Library\n"}})
 	for _, line := range []string{
 		"# The spec, with what binds it and what it links\n",
+		"\n## Operations and Reactions of Root\n\nNo Definition of kind std/Operation or std/Reaction here has Root as its own Package.\n",
 		"\nNothing outside Root binds a Definition in it.\n",
 		"\n## Root\n\n### Library\n",
 		"\nNo Definition of Root links one outside it, but Kinds and Libraries.\n",
