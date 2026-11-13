@@ -65,9 +65,11 @@ Usage:
                                                   how many Definitions the spec has of it
   markitect doc    [--repo DIR] [--json] TARGET   a Definition or Package: its text, its links both ways, its files
                                                   and its record
-  markitect doc    [--repo DIR] [--json] --read [FOLDER]
+  markitect doc    [--repo DIR] [--json] --read [FOLDER] [--bound]
                                                   every Definition at or below a folder as one text to read, the whole
-                                                  spec without a folder
+                                                  spec without a folder; --bound adds, each once, what binds them from
+                                                  outside the folder and what outside it they link, but Kinds and
+                                                  Libraries
   markitect status [--repo DIR] [--json] [--all] [--package P] [--slices [--size N]] [--slice A,B]
                                                   what is to verify: each Definition with a changed input or no record,
                                                   with what changed, where to look and its fingerprint; --all lists

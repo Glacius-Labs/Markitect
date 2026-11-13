@@ -97,6 +97,7 @@ function world(spec) {
         return Promise.resolve(status())
       }
       if (prompt.startsWith("Run `markitect status")) return Promise.resolve(spec.loseStatus ? null : status())
+      if (prompt.startsWith("Run `markitect list --json`")) return Promise.resolve({ packages: spec.walked || [] })
       throw new Error("unexpected agent: " + prompt.slice(0, 80))
     },
   }
@@ -309,14 +310,30 @@ for (const bad of [{}, { mode: "deploy" }, { mode: "cleanup" }, undefined]) {
   assert(all.calls[0].prompt.includes("markitect status --all --json"))
 }
 
-// Audit: one auditor per Package with Definitions and one across them.
+// Audit: one auditor per Package but Root that holds Operations or Reactions,
+// as markitect list shows them, and one for the rest, with the skill's
+// messages.
 {
-  const { result, calls } = await run({ mode: "audit", focus: "fees" }, world(base()))
+  const s = base()
+  s.walked = ["Root", "c", "a"]
+  const { result, calls } = await run({ mode: "audit", focus: "fees" }, world(s))
   const auditors = calls.filter((c) => c.opts.agentType === "markitect-auditor")
-  assert.strictEqual(auditors.length, 7)
-  assert(auditors.some((c) => c.prompt.startsWith("Audit the spec across Packages")))
+  assert.deepStrictEqual(
+    auditors.map((c) => c.prompt.replace(" What the user asked for: fees", "")),
+    [
+      "Audit Package a: read markitect doc --read a --bound first, and triage the unlinked mentions markitect vet --strict lists in it.",
+      "Audit Package c: read markitect doc --read c --bound first, and triage the unlinked mentions markitect vet --strict lists in it.",
+      "Audit the rest of the spec: Root's own folders, the Packages b, d, e, and the edges between Packages. Read markitect doc --read --bound first and write the lines for Root's own Operations and Reactions; walk the coverage list, and triage the unlinked mentions markitect vet --strict lists there.",
+    ],
+  )
   assert(auditors.every((c) => c.prompt.includes("What the user asked for: fees")))
   assert.strictEqual(result.stopped, "audited")
+  // Every Package with an auditor of its own: the rest names no other.
+  s.walked = ["a", "b", "c", "d", "e"]
+  const all = await run({ mode: "audit" }, world(s))
+  const rest = all.calls.filter((c) => c.opts.agentType === "markitect-auditor")
+  assert.strictEqual(rest.length, 6)
+  assert(rest[5].prompt.startsWith("Audit the rest of the spec: Root's own folders, no other Package, and"))
 }
 
 // Bughunt: hunters per Package, the record committed, then build rounds.

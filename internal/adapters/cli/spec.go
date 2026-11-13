@@ -185,15 +185,20 @@ func (c CLI) list(_ context.Context, args []string) (int, error) {
 // the files that realize it and its record; or a Package with its public and
 // its internal Definitions apart, its registry page and its files. A target
 // that is neither exits 1. With --read it prints every Definition at or below
-// a folder as one text to read, the whole spec when it names none.
+// a folder as one text to read, the whole spec when it names none; --bound
+// adds what binds them from outside the folder and what outside it they link.
 func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 	var o options
-	var read bool
+	var read, bound bool
 	fs := c.flags("doc", &o)
 	fs.BoolVar(&read, "read", false, "print every Definition at or below a folder as one text to read; the whole spec when no folder is named")
+	fs.BoolVar(&bound, "bound", false, "with --read: add, each once, what binds the folder's Definitions from outside it and what outside it they link, but Kinds and Libraries")
 	positional, err := parse(fs, args)
 	if err != nil {
 		return Misused, err
+	}
+	if bound && !read {
+		return Misused, fmt.Errorf("--bound goes with --read: it adds to the text of a folder what binds it from outside and what outside it it links")
 	}
 	if read && len(positional) > 1 {
 		return Misused, fmt.Errorf("--read names one folder of the spec, such as purpose or domain/members, or none for the whole spec")
@@ -223,6 +228,19 @@ func (c CLI) doc(ctx context.Context, args []string) (int, error) {
 			}
 			fmt.Fprintf(c.Stderr, "markitect doc: %s\n", ds[0].String())
 			return Failed, nil
+		}
+		if bound {
+			br := analysis.ReadBound(p, folder, entries)
+			if o.json {
+				return OK, c.printJSON(struct {
+					envelope
+					Folder string `json:"folder"`
+					analysis.BoundRead
+					Definitions []analysis.ReadEntry `json:"definitions"`
+				}{newEnvelope("doc"), folder, br, entries})
+			}
+			fmt.Fprint(c.Stdout, renderReadBound(folder, br, entries))
+			return OK, nil
 		}
 		if o.json {
 			return OK, c.printJSON(struct {
