@@ -238,7 +238,7 @@ A skill names which agent the owner's session starts and on what task; the agent
 
 Only the owner starts the skills that change code or set up routines: their files set `disable-model-invocation`.
 
-**Whether the spec says what the owner meant** the owner answers from the architect's hand-over of a new spec, which has a fixed shape: what the system now is, the Scenarios told as stories, a table of what the session decided beside what else would do, the Package cut and technical choices, and the audit's questions. `vet` and the audit support it. A reading view that shows the spec whole is an idea, not built ([roadmap](roadmap.md#ideas)).
+**Whether the spec says what the owner meant** the owner answers from the architect's hand-over of a new spec, which rests on a fresh auditor's retelling of the spec and has a fixed shape: what the system now is and the Scenarios told as stories, as the reader told them, what its users will notice, a table of what the session decided beside what else would do, the Package cut and technical choices, and the audit's questions. `vet` and the audit support it. A reading view that shows the spec whole is an idea, not built ([roadmap](roadmap.md#ideas)).
 
 ## 9. The harness
 
