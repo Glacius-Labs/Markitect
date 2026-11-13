@@ -9,7 +9,7 @@ export const meta = {
     { title: "Merge", detail: "merge the strands' branches by name into the run's branch" },
     { title: "Review", detail: "one reviewer per Package, on the run's branch" },
     { title: "Record", detail: "commit the verdicts and read status again" },
-    { title: "Audit", detail: "one auditor per Package and one across Packages" },
+    { title: "Audit", detail: "one auditor per Package with Operations or Reactions, and one for the rest" },
   ],
 }
 
@@ -25,7 +25,8 @@ export const meta = {
 //     them;
 //   - the work is done by the four roles' agents only: markitect-builder,
 //     markitect-reviewer, markitect-architect, markitect-auditor. A plain agent
-//     does only what a script cannot: run markitect status and the Git steps;
+//     does only what a script cannot: run markitect status, markitect list and
+//     the Git steps;
 //   - it stops when status lists nothing a builder can settle, or when three
 //     rounds in a row leave the list no shorter than it has been, and returns
 //     what remains.
@@ -372,9 +373,24 @@ async function run() {
 
   if (MODE === "audit") {
     phase("Audit")
-    const pkgs = st.packages.filter((p) => p.definitions > 0).map((p) => p.package)
-    const tasks = pkgs.map((name) => ({ name, task: `Audit the spec of Package ${name}, and triage the unlinked mentions markitect vet --strict lists in it.${FOCUS}` }))
-    tasks.push({ name: "across Packages", task: `Audit the spec across Packages: look for contradictions between Packages, and walk the coverage list.${FOCUS}` })
+    // As the audit skill does: one auditor per Package but Root that holds an
+    // Operation or a Reaction, and one for the rest.
+    const found = await agent(
+      "Run `markitect list --json` in your working folder and return in packages the name of each Package, other than Root, that holds a Definition of kind std/Operation or std/Reaction. Change nothing.",
+      { label: "Packages with Operations", phase: "Audit", schema: { type: "object", required: ["packages"], properties: { packages: { type: "array", items: { type: "string" } } } }, effort: "low" },
+    )
+    if (!found) throw new Lost("Packages with Operations: the step returned nothing")
+    const walked = new Set(found.packages.filter((n) => n !== ROOT))
+    const others = st.packages.map((p) => p.package).filter((n) => n !== ROOT && !walked.has(n))
+    const tasks = [...walked].sort().map((name) => ({
+      name,
+      task: `Audit Package ${name}: read markitect doc --read ${name} --bound first, and triage the unlinked mentions markitect vet --strict lists in it.${FOCUS}`,
+    }))
+    const rest = others.length > 0 ? `the Packages ${others.join(", ")}` : "no other Package"
+    tasks.push({
+      name: "the rest",
+      task: `Audit the rest of the spec: Root's own folders, ${rest}, and the edges between Packages. Read markitect doc --read --bound first and write the lines for Root's own Operations and Reactions; walk the coverage list, and triage the unlinked mentions markitect vet --strict lists there.${FOCUS}`,
+    })
     reports = await each(tasks, "Audit", "markitect-auditor")
     rounds = 1
     return finish(reports.length === tasks.length ? "audited" : `audited, ${tasks.length - reports.length} of ${tasks.length} auditors returned nothing`)
