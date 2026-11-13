@@ -1,6 +1,6 @@
 # Example: a lending library
 
-A small Go service that lends the books of a neighborhood library to its members: the staff use it in a browser at the desk, and a member gets an e-mail for each book they borrow. It compiles as written, and the outputs shown are what the tools print. To stay short it states two Operations, borrowing a book and listing the loans, and leaves out much of what the [coverage list](reference.md#coverage) asks of a spec handed over: registering a member, returning a book, the mail server as an External system, how long a loan is kept, how the site looks, most qualities, the technology, the Scenarios and how it is run. The spec has Root and four Packages: the areas `domain/members` and `domain/catalog`, the site `interfaces/desk` and the e-mails `interfaces/email`.
+A small Go service that lends the books of a neighborhood library to its members: the staff use it in a browser at the desk, and a member gets an e-mail for each book they borrow. It compiles as written, and the outputs shown are what the tools print. To stay short it states two Operations, borrowing a book and listing the loans, and leaves out much of what the [coverage list](reference.md#coverage) asks of a spec handed over: registering a member, returning a book, the members as Stakeholders, a Rule for the role `anyone`, a Constraint on the personal data it stores, the mail server as an External system, how long a loan is kept, how the site looks, most qualities, the technology, the Scenarios and how it is run. The spec has Root and four Packages: the areas `domain/members` and `domain/catalog`, the site `interfaces/desk` and the e-mails `interfaces/email`.
 
 ## The repository
 
@@ -373,7 +373,7 @@ The member holds the [[domain/catalog/concepts/book]].
 
 `markitect doc domain/catalog/operations/borrow-book` shows the Operation with its Conditions in that order and its Outcome, and under `Bound by` the Rules that bind it without a link: the layout and the refusal codes.
 
-Listing the loans is an Operation of one file, without parts. It is what lets the staff see who holds a book, so it satisfies the Goal.
+Listing the loans is an Operation of one file, without parts. It is what lets the staff see who holds a book, so it satisfies the Goal. Without returning a book, which the example leaves out, the list of loans would not stay true.
 
 `spec/domain/catalog/operations/list-loans.md`
 
@@ -441,7 +441,7 @@ kind: std/Refusal
 ---
 # Refused
 
-A refused loan leads back to this page, which shows the code [[domain/catalog/operations/borrow-book]] answered above the form, with the `memberId` and the `isbn` still in it.
+A refused loan leads back to this page, which says above the form, in the staff's words, which check of [[domain/catalog/operations/borrow-book]] failed, with the `memberId` and the `isbn` still in it.
 ```
 
 ## Package interfaces/email

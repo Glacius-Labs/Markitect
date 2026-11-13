@@ -8,11 +8,11 @@ import (
 	"testing"
 )
 
-// markitect help names every flag of each command, so that a session that
-// reads the help finds each command the skills and guides tell it to run. The
-// flags are read from the commands themselves, as -h prints them, so a new
-// flag fails here until the help names it. config and mark print usages of
-// their own.
+// markitect help names every flag of each command, whole and in the lines of
+// that command, so that a session that reads the help finds each command the
+// skills and guides tell it to run. The flags are read from the commands
+// themselves, as -h prints them, so a new flag fails here until the help names
+// it. config and mark print usages of their own.
 func TestHelpNamesEveryFlag(t *testing.T) {
 	flag := regexp.MustCompile(`(?m)^  -(\w+)`)
 	for _, cmd := range []string{"update", "init", "tidy", "check", "vet", "list", "doc", "status", "version"} {
@@ -29,7 +29,8 @@ func TestHelpNamesEveryFlag(t *testing.T) {
 			t.Fatalf("the help has no line for %s", cmd)
 		}
 		for _, f := range flags {
-			if !strings.Contains(usage, "--"+f[1]) {
+			// --slices does not name --slice, nor --packages --package.
+			if !regexp.MustCompile(`--` + regexp.QuoteMeta(f[1]) + `(?:[^\w-]|$)`).MatchString(usage) {
 				t.Errorf("the help of %s does not name --%s:\n%s", cmd, f[1], usage)
 			}
 		}

@@ -72,8 +72,9 @@ Usage:
                                                   what is to verify: each Definition with a changed input or no record,
                                                   with what changed, where to look and its fingerprint; --all lists
                                                   every Definition, to verify everything again, --package only those of
-                                                  one Package; --slices prints the slices a build of the list goes in,
-                                                  --slice A,B lists one of them
+                                                  one Package; --slices, without --all and --package, prints the slices
+                                                  a build of the list goes in, and --slice A,B, without --package and
+                                                  --slices, lists one of them
   markitect mark   [--repo DIR] [--json] DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m "WHY"] [--cases N --covered M]
                                                   record a verdict at the state status printed: ok, fail, skip or
                                                   spec-problem; evidence is path:line or path; only the
