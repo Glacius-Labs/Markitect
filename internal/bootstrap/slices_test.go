@@ -126,7 +126,7 @@ func TestABuildInSlicesThroughTheCommandLine(t *testing.T) {
 
 	// The spec as one text to read, whole or below a folder, and the Kinds
 	// with what the spec has of each.
-	if code, out, _ := run(t, r.Dir, "doc", "--read"); code != 0 || !strings.HasPrefix(out, "# The spec\n") || strings.Count(out, "\n### ")+strings.Count(out, "\n#### ") != 26 {
+	if code, out, _ := run(t, r.Dir, "doc", "--read"); code != 0 || !strings.HasPrefix(out, "# The spec\n") || strings.Count(out, "\n### ")+strings.Count(out, "\n#### ") != 31 {
 		t.Errorf("doc --read: %d\n%s", code, out)
 	}
 	if code, out, _ := run(t, r.Dir, "doc", "--read", "purpose"); code != 0 || !strings.HasPrefix(out, "# The spec: purpose\n") || !strings.Contains(out, "\n## purpose/goals\n") || strings.Contains(out, "`domain/") {

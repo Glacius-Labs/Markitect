@@ -19,7 +19,7 @@ Make one clean and simple version work reliably on Sonnet ([DEC-009](decisions.m
 
 **The way of working:**
 
-1. A person architects the project in an ordinary Claude Code session, with the architect skill: the session asks, proposes and writes the spec, and hands a large draft to the architect agent. The person reads the Markdown diff or goes through it with the session, and commits it.
+1. A person architects the project in an ordinary Claude Code session, with the architect skill: the session asks, proposes and writes the spec, and hands a large draft to the architect agent. The person goes through it with the session, or reads the Markdown diff of a change, and the session commits it with the person's word.
 2. The person runs the build skill. Agents started by the person's own session apply the spec as it stands, in a worktree of their own, so the person can go on architecting. They ask nothing about the spec, and nobody has to watch.
 3. The spec stays as it was while they work: the hook keeps the agents that build out of it.
 4. When `markitect status` lists nothing, or only `spec-problem`s for the person, the session commits the work with the record of what was verified and brings it to the person's branch. The person reads the verdicts when they want to, and answers only when the spec has a problem.
@@ -227,12 +227,12 @@ A skill names which agent the owner's session starts and on what task; the agent
 
 | Skill | Started by | Does |
 |---|---|---|
-| `markitect-architect` | The owner or Claude | Architects the project with the owner, in their own session. It sees whether the folder is an empty project, a project without a spec or an existing spec, and starts the spec one question at a time, draws it from the project and has a reviewer verify it against the project, or changes it. The session writes the spec, since it holds the conversation; a large draft, such as a first spec drawn from a large project, it hands to the `markitect-architect` agent, which hands its questions back. It links the real unlinked mentions that `vet` notes. What the owner cannot answer at once, the session keeps in `.markitect/questions.md`, and `status` says while that file is there |
+| `markitect-architect` | The owner or Claude | Architects the project with the owner, in their own session. It sees whether the folder is an empty project, a project without a spec or an existing spec, and starts the spec by asking what only the owner can know and proposing the rest, with one audit before it hands the spec over, draws it from the project and has a reviewer verify it against the project, or changes it. The session writes the spec, since it holds the conversation; a large draft, such as a first spec drawn from a large project, it hands to the `markitect-architect` agent, which hands its questions back. It links the real unlinked mentions that `vet` notes. What the owner cannot answer at once, the session keeps in `.markitect/questions.md`, and `status` says while that file is there |
 | `/markitect-build` | The owner | [§5](#5-what-build-does) |
 | `/markitect-review` | The owner or Claude | The `markitect-reviewer` agent verifies what `status` lists, or with `--all` every Definition, records each verdict and reports what failed and what is a `spec-problem`. With the `parallel` strategy it starts one reviewer per Package ([§10](#10-drivers)). The session commits the record |
 | `/markitect-cleanup` | The owner | The builder, in a worktree of its own, refactors without changing behaviour, and the reviewer verifies again what that put back on the list. The work comes back when it leaves nothing worse |
 | `/markitect-bughunt` | The owner | The reviewer hunts beyond the list and records each bug as `fail`, or as `spec-problem` where the spec does not cover it; the builder repairs, and the reviewer verifies again. The work comes back when it leaves nothing worse |
-| `/markitect-audit` | The owner or Claude | The `markitect-auditor` agent reads the spec fresh for contradictions, gaps, unclear and duplicated statements, triages the unlinked mentions `vet` notes, and reports to the owner. Nothing is recorded or committed |
+| `/markitect-audit` | The owner or Claude | The `markitect-auditor` agent reads the spec fresh for contradictions, among them a case that an Operation or a Reaction and what binds it decide differently, gaps, unclear and duplicated statements, triages the unlinked mentions `vet` notes, and reports to the owner. Nothing is recorded or committed |
 | `/markitect-schedule` | The owner | Sets up cleanup, bughunt and `review --all` as routines ([§12](#12-schedules-and-continuous-work)) |
 | `/markitect-config` | The owner or Claude | Takes a request on the agents' model and effort, a skill's strategy or a custom workflow in plain words, asks whether it is for this project or all of the user's, and runs `markitect config` |
 
@@ -252,7 +252,7 @@ For Claude Code, `markitect init` writes these project files, so they are versio
 | `.claude/skills/markitect-schedule/` | The routine setup, and `routine.md`, which every scheduled run reads when it starts |
 | `.claude/agents/markitect-builder.md` | The builder's three tasks, build, clean up and hunt bugs, and how it works. Tools Read, Edit, Write, Glob, Grep, Bash and `Agent(markitect-reviewer)`; model `sonnet`, effort `high`, as the reviewer; the architect and the auditor have `opus` and `medium` |
 | `.claude/agents/markitect-reviewer.md` | The reviewer's two tasks, verify and hunt bugs, and the verdict words. No edit or agent tools |
-| `.claude/agents/markitect-architect.md` | Write a large part of the spec as the architect skill says, only under `.markitect/`, and hand every question back. No agent tool |
+| `.claude/agents/markitect-architect.md` | Write a large part of the spec as the architect skill says, only under `.markitect/`, and hand back every question and what it wrote that the owner's answers and the project do not state. No agent tool |
 | `.claude/agents/markitect-auditor.md` | Read the spec fresh and report what is wrong with it. No edit or agent tools |
 | `.claude/settings.json` | The hooks, below, and `worktree.baseRef: "head"` unless the settings name a base, added to whatever settings the project already has |
 | `.markitect/.gitattributes` | `review.sum merge=union` |

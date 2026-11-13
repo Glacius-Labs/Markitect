@@ -1,6 +1,6 @@
 # Example: a lending library
 
-A small Go service that lends the books of a neighborhood library to its members: the staff use it in a browser at the desk, and a member gets an e-mail for each book they borrow. It compiles as written, and the outputs shown are what the tools print. To stay short it states one Operation, borrowing a book, and leaves out much of what the [coverage list](reference.md#coverage) asks of a spec handed over: returning a book, refusing a member or a book the library does not know, how a refusal reaches the person at the desk, most qualities, the technology and how it is run. The spec has Root and four Packages: the areas `domain/members` and `domain/catalog`, the site `interfaces/desk` and the e-mails `interfaces/email`.
+A small Go service that lends the books of a neighborhood library to its members: the staff use it in a browser at the desk, and a member gets an e-mail for each book they borrow. It compiles as written, and the outputs shown are what the tools print. To stay short it states two Operations, borrowing a book and listing the loans, and leaves out much of what the [coverage list](reference.md#coverage) asks of a spec handed over: registering a member, returning a book, the members as Stakeholders, a Rule for the role `anyone`, a Constraint on the personal data it stores, the mail server as an External system, how long a loan is kept, how the site looks, most qualities, the technology, the Scenarios and how it is run. The spec has Root and four Packages: the areas `domain/members` and `domain/catalog`, the site `interfaces/desk` and the e-mails `interfaces/email`.
 
 ## The repository
 
@@ -9,7 +9,7 @@ LICENSE  go.mod
 .github/workflows/ci.yml
 cmd/library/main.go
 internal/members/{member.go, member_test.go}
-internal/catalog/{book.go, borrow.go, borrow_test.go}
+internal/catalog/{book.go, borrow.go, borrow_test.go, loans.go, loans_test.go}
 internal/desk/{pages.go, borrow_test.go}
 internal/email/{receipt.go, receipt_test.go}
 .markitect/
@@ -24,19 +24,21 @@ internal/email/{receipt.go, receipt_test.go}
     context/terms/isbn.md
     quality/performance-efficiency/{performance-efficiency, a-loan-within-a-second}.md
     architecture/rules/layout.md
+    domain/rules/refusal-codes.md
     domain/members/
       members.md
       concepts/member/{member, attributes/member-id, attributes/email, invariants/within-the-loan-limit}.md
     domain/catalog/
       catalog.md
       concepts/book/{book, attributes/isbn}.md
+      operations/list-loans.md
       operations/borrow-book/
         borrow-book.md
-        conditions/{book-is-available, member-is-under-the-limit}.md
+        conditions/{member-is-registered, book-is-owned, book-is-available, member-is-under-the-limit}.md
         outcomes/member-holds-the-book.md
     interfaces/desk/
       desk.md
-      pages/borrow/{borrow, actions/borrow}.md
+      pages/borrow/{borrow, actions/borrow, refusals/refused}.md
     interfaces/email/
       email.md
       messages/loan-receipt.md
@@ -49,9 +51,9 @@ libraries:
   std: 2.1.0
 ```
 
-## Root: purpose, context, quality and architecture
+## Root: purpose, context, quality, architecture and the refusal codes
 
-Root holds what binds the whole project. Its top-level folders sort it by question and are no Packages here: `purpose/` says why the system exists, `context/` what is given from outside, `quality/` how well it must work, `architecture/` how it is built. A folder appears when the project has something to say there.
+Root holds what binds the whole project. Its top-level folders sort it by question and are no Packages here: `purpose/` says why the system exists, `context/` what is given from outside, `quality/` how well it must work, `architecture/` how it is built. `domain/` holds no anchor either, so its `rules/` belong to Root and hold what binds every area. A folder appears when the project has something to say there.
 
 `spec/project.md` is the project Definition, which opens the spec: what the system is and the problem it removes.
 
@@ -166,6 +168,17 @@ kind: std/Rule
 The code of each Package lives in `internal/<name>/`, where `<name>` is the last part of the Package's path, with its tests beside it as `*_test.go`, and `go test ./...` runs them all. The program starts in `cmd/library/main.go`.
 ```
 
+`spec/domain/rules/refusal-codes.md` is such a Rule. It names the codes every area refuses with, one small vocabulary for the whole project; each Operation gives a code its place.
+
+```markdown
+---
+kind: std/Rule
+---
+# Refusal codes
+
+A refused call changes nothing and answers with one of the codes `member_unknown`, `book_unknown`, `book_unavailable` and `limit_reached`. No area refuses with another code.
+```
+
 The project needs no Kind of its own. A project Kind earns its place when several Definitions share a form that no Library Kind gives.
 
 ## Package domain/members
@@ -204,7 +217,7 @@ kind: std/Attribute
 ---
 # Member id
 
-`memberId` is the member's identity: an opaque string the library issues at registration, which never changes and is never reused.
+`memberId` is the member's identity: an opaque string that names one member, never changes and is never reused.
 ```
 
 `spec/domain/members/concepts/member/attributes/email.md` is `internal: true`: the anchor says the Package keeps it to itself, so only `domain/members` may link to it.
@@ -287,15 +300,41 @@ Lends a book to a member. The service has no sign-in, so any caller may.
 
 **Checked in this order:**
 
-1. [[domain/catalog/operations/borrow-book/conditions/book-is-available]]: `book_unavailable`.
-2. [[domain/catalog/operations/borrow-book/conditions/member-is-under-the-limit]]: `limit_reached`.
+1. [[domain/catalog/operations/borrow-book/conditions/member-is-registered]]: `member_unknown`.
+2. [[domain/catalog/operations/borrow-book/conditions/book-is-owned]]: `book_unknown`.
+3. [[domain/catalog/operations/borrow-book/conditions/book-is-available]]: `book_unavailable`.
+4. [[domain/catalog/operations/borrow-book/conditions/member-is-under-the-limit]]: `limit_reached`.
 
 **Returns:** the `memberId` and the `isbn`.
 
-**Satisfies:** [[purpose/goals/know-who-holds-each-book]] and [[purpose/stakeholders/staff/wishes/lend-a-book]].
+**Satisfies:** [[purpose/stakeholders/staff/wishes/lend-a-book]].
 ```
 
+Borrowing records who holds a book but shows it to no one, so it satisfies the staff's Wish and not the Goal.
+
 A Condition states what must hold and nothing about its code, which the Operation gives.
+
+`spec/domain/catalog/operations/borrow-book/conditions/member-is-registered.md`
+
+```markdown
+---
+kind: std/Condition
+---
+# Member is registered
+
+The [[domain/members/concepts/member/attributes/member-id|`memberId`]] given names a [[domain/members/concepts/member]].
+```
+
+`spec/domain/catalog/operations/borrow-book/conditions/book-is-owned.md`
+
+```markdown
+---
+kind: std/Condition
+---
+# Book is owned
+
+The library owns a [[domain/catalog/concepts/book]] with the [[domain/catalog/concepts/book/attributes/isbn|`isbn`]] given.
+```
 
 `spec/domain/catalog/operations/borrow-book/conditions/book-is-available.md`
 
@@ -332,7 +371,26 @@ kind: std/Outcome
 The member holds the [[domain/catalog/concepts/book]].
 ```
 
-`markitect doc domain/catalog/operations/borrow-book` shows the Operation with its Conditions in that order and its Outcome, and the Rules that bind it without a link, such as the layout.
+`markitect doc domain/catalog/operations/borrow-book` shows the Operation with its Conditions in that order and its Outcome, and under `Bound by` the Rules that bind it without a link: the layout and the refusal codes.
+
+Listing the loans is an Operation of one file, without parts. It is what lets the staff see who holds a book, so it satisfies the Goal. Without returning a book, which the example leaves out, the list of loans would not stay true.
+
+`spec/domain/catalog/operations/list-loans.md`
+
+```markdown
+---
+kind: std/Operation
+---
+# List loans
+
+Tells which member holds each book on loan.
+
+**Who:** `anyone`.
+
+**Returns:** the [[domain/catalog/concepts/book/attributes/isbn|`isbn`]] of each book on loan, with the `memberId` of the member who holds it, a [[domain/members/concepts/member/attributes/member-id|member identity]].
+
+**Satisfies:** [[purpose/goals/know-who-holds-each-book]].
+```
 
 ## Package interfaces/desk
 
@@ -351,7 +409,7 @@ The pages the staff use in a browser at the desk.
 It keeps to itself how a page calls the service.
 ```
 
-`spec/interfaces/desk/pages/borrow/borrow.md` is a Page with one Action as its part.
+`spec/interfaces/desk/pages/borrow/borrow.md` is a Page with an Action and a Refusal as its parts.
 
 ```markdown
 ---
@@ -361,7 +419,7 @@ kind: std/Page
 
 **For:** `anyone`, at `/` in the browser at the desk.
 
-**Shows:** what [[domain/catalog/operations/borrow-book]] returns for the last loan.
+**Shows:** the books on loan with who holds each, as [[domain/catalog/operations/list-loans]] returns them, or that no book is on loan.
 ```
 
 `spec/interfaces/desk/pages/borrow/actions/borrow.md`
@@ -373,6 +431,17 @@ kind: std/Action
 # Borrow
 
 Asks for a `memberId` and an `isbn`, performs [[domain/catalog/operations/borrow-book]], and leads back to this page.
+```
+
+`spec/interfaces/desk/pages/borrow/refusals/refused.md` says how a refused loan reaches the staff.
+
+```markdown
+---
+kind: std/Refusal
+---
+# Refused
+
+A refused loan leads back to this page, which says above the form, in the staff's words, which check of [[domain/catalog/operations/borrow-book]] failed, with the `memberId` and the `isbn` still in it.
 ```
 
 ## Package interfaces/email
@@ -400,7 +469,7 @@ kind: std/Message
 ---
 # Loan receipt
 
-Tells a member which book they borrowed.
+Tells a member which book they borrowed. A receipt the mail server does not accept is not sent again, and the loan stands.
 
 **To:** the member who borrowed the book, at the address [[domain/members]] keeps for them.
 
@@ -437,7 +506,7 @@ Root owns every file no other Package claims.
 | `cmd/library/main.go` | [[architecture/rules/layout]] | Starts the server and wires the Packages |
 ```
 
-Each Package claims its folder by pattern and lists every file in it. A test file lists what it checks, the Quality it measures included.
+Each Package claims its folder by pattern and lists every file in it. A test file lists what it checks, the Quality it measures included, and a file lists a Rule of Root it realizes, as `borrow.go` the refusal codes.
 
 `registry/domain/members.md`
 
@@ -466,8 +535,10 @@ paths:
 | File | Realizes | Why |
 |---|---|---|
 | `internal/catalog/book.go` | [[domain/catalog/catalog]] [[domain/catalog/concepts/book]] | The book |
-| `internal/catalog/borrow.go` | [[domain/catalog/operations/borrow-book]] | Borrowing |
+| `internal/catalog/borrow.go` | [[domain/catalog/operations/borrow-book]] [[domain/rules/refusal-codes]] | Borrowing, and the codes it refuses with |
 | `internal/catalog/borrow_test.go` | [[domain/catalog/operations/borrow-book]] | Tests |
+| `internal/catalog/loans.go` | [[domain/catalog/operations/list-loans]] | The loans |
+| `internal/catalog/loans_test.go` | [[domain/catalog/operations/list-loans]] | Tests |
 ```
 
 `registry/interfaces/desk.md`
@@ -511,7 +582,7 @@ LICENSE
 
 ```text
 $ markitect check
-ok: 26 Definitions in 5 Packages, 12 files accounted
+ok: 31 Definitions in 5 Packages, 14 files accounted
 ```
 
 `markitect vet` shows no warnings. After the limit in `within-the-loan-limit.md` changes from `3` to `5`, `markitect status` lists `domain/catalog/operations/borrow-book/borrow-book` and `domain/members/concepts/member/member`, each as one item with its parts and with the files the registry names for it, such as `internal/catalog/borrow.go` and `internal/members/member.go`. The member is listed because its Invariant changed, the Operation because its Condition `member-is-under-the-limit` links the Invariant.
@@ -537,7 +608,7 @@ Describe the need in `domain/catalog`'s own words, or make the Definition public
 The page of `domain/catalog` gains the row ``| `internal/members/member.go` | [[domain/members/concepts/member]] | The member |``, and a file `newfile.txt` appears that no page lists:
 
 ```text
-.markitect/registry/domain/catalog.md:12: registry.wrong_owner: internal/members/member.go is owned by domain/members, so it belongs on .markitect/registry/domain/members.md
+.markitect/registry/domain/catalog.md:14: registry.wrong_owner: internal/members/member.go is owned by domain/members, so it belongs on .markitect/registry/domain/members.md
 newfile.txt: file.unregistered: neither registered nor ignored: list it on .markitect/registry.md, the page of its owner Root, or add it to the ignore file
 ```
 

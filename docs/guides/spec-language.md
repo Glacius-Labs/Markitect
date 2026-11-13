@@ -47,7 +47,7 @@ A [[members/member|member]] holds at most `5` loans at once.
 ```
 
 - The front matter holds `kind` and, where needed, `internal: true`. Nothing else; another key is an error (`definition.front_matter`). A Kind's front matter may also declare `fields`, `parts`, `links`, `realized` and `binds`.
-- The file name without `.md` is the Definition's name, and its path below `spec/` is its ID: `members/member.md` is `members/member`. Names start with a letter or digit and use only letters, digits, `-` and `_` (`spec.name`).
+- The file name without `.md` is the Definition's name, and its path below `spec/` is its ID: `members/member.md` is `members/member`. Names start with a letter or digit and use only the letters `a` to `z` and `A` to `Z`, digits, `-` and `_`, so no umlaut, accent or space (`spec.name`).
 - The body starts with one level-1 heading, the title; no other level-1 heading follows (`definition.title`).
 - The rest is documentation. Exact values such as wire names and error codes are written in backticks.
 - A line that starts with a bold label ending in a colon, such as `**Derived from:**`, starts a field. Which fields a Definition has, and what a link in one may name, its Kind may declare ([what a Kind declares](#what-a-kind-declares)).

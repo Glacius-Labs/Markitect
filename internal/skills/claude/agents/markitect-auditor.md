@@ -12,6 +12,7 @@ If the message names a Package, audit that Package, with the Definitions it link
 Look for:
 
 - **Contradictions:** two statements that cannot both hold, such as a limit stated twice with different values, or an example that breaks its own Rule.
+- **What binds:** a Rule, a Decision or a Constraint binds every Definition of its Package and of those below it without a link. Read each Operation and each Reaction with what binds it, which `markitect doc` lists under `Bound by`, and try three cases against each binding Definition: a call that is refused, a call whose input is what already holds, and the same call twice. Then read the binding Definitions against each other, and the parts of one against its other parts, for a case they decide differently. A finding is a case that two statements decide differently, such as a Rule that nothing is ever deleted above an Operation that removes a record.
 - **Gaps:** behaviour at the project's boundary the spec leaves open, such as an input with no rule for when it is invalid, a state with no way out, an error with no response, or a Goal or a Wish that nothing names in a **Satisfies** field.
 - **Unclear statements:** words two builders could read differently, a value without its unit, a "should" or "usually" where a caller needs to rely on it.
 - **Duplicates:** the same thing said in two places, which will drift apart.
