@@ -22,15 +22,15 @@ If `.markitect/questions.md` exists, read it first: it holds what waits for the 
 
 ## Who decides
 
-The owner accepts every change of the spec. You propose; the owner reads the Markdown diff, or goes through it with you, and merges it.
+The owner accepts every change of the spec. You propose; the owner goes through it with you, or reads the Markdown diff, and accepts it. Who answers a question is decided by who can know, not by the folder it lies in.
 
-- What only the owner knows is theirs to say: the purpose, the context, the domain (its areas, what the system keeps, what can be done and what is refused) and what the people who use it see. Write what the owner, the requirements or the project's own artifacts state there, and invent nothing.
-- For quality, architecture and administration you propose, as [start a project](#start-a-project) says, and the owner accepts or changes it.
-- The cut into Packages and the directions of dependencies are the owner's decision. If they are not decided, propose them: a table of each Package, what it holds and what it may depend on.
-- The names of the refusal codes are your proposal: one small vocabulary for the whole project, stated as one Rule in `domain/rules/` that names the codes every area uses, which you ask the owner about once.
-- Two statements that contradict each other, or one you cannot write without guessing, go back to the owner as a question.
+- What only the owner can know is theirs to say, and you ask it in the words of their trade: the purpose, what is given from outside, what the system keeps, what can be done and what is refused, what the people who use it see, and who will run the system and where. Write what the owner, the requirements or the project's own artifacts state, and invent nothing.
+- What takes an engineer to answer is your proposal, in whichever folder it lies: limits and formats, the order of checks and the names of refusal codes, how signing in is protected, what holds when another system fails, technical Assumptions, paths, and how a test sets the time; and so is the rest of quality, architecture and administration. The owner accepts or changes it.
+- The cut into Packages and the directions of dependencies are the owner's decision. If they are not decided, propose them, as [start a project](#start-a-project) says.
+- The refusal codes are one small vocabulary for the whole project, stated as one Rule in `domain/rules/` that names the codes every area uses. The owner decides which cases are refused; you name the codes, and the hand-over names them.
+- Where two statements decide a case differently and both are your proposals, settle it and name it in the hand-over. When one of them is the owner's, it goes back to the owner as a question, and so does a statement you cannot write without guessing.
 
-Ask one question at a time, in plain words, and say why you ask when it isn't obvious. Skip what the owner has already said. When they are unsure, offer a suggestion and let them accept or change it.
+Ask what is really open one question at a time, in plain words, and say why you ask when it isn't obvious. Where the owner's notes already suggest an answer, propose it and ask for a yes; several such confirmations may go in one message. Skip what the owner has already said. When they are unsure, offer a suggestion and let them accept or change it.
 
 When the owner cannot answer now, or has not yet confirmed a proposal, state your proposal in the spec so that it is whole, and add the point to `.markitect/questions.md`, where it stays open until the owner answers: one numbered point per question, with what you found, where, what you proposed and what else the owner could choose; a proposal for quality, architecture or administration is one point per folder, with its list. A point about an item that `markitect status` lists names it; the record keeps its verdict. The file goes into the same commit as the spec. When the owner has answered a point, change the spec as they said and remove the point, and remove the file with its last point. While the file exists, `markitect status` says so. The owner's session keeps the file, and no agent writes it.
 
@@ -42,11 +42,14 @@ If you are the `markitect-architect` agent, your agent file says how you use thi
 
 ## Start a project
 
-Take the owner from an empty skeleton to a spec that is clear enough to build, along the [coverage list](reference.md#coverage) in its order.
+Take the owner from an empty skeleton to a spec that is clear enough to build, along the [coverage list](reference.md#coverage) in its order. A spec starts small: few Definitions per topic, not topics left unasked.
 
-1. **Ask what only the owner knows,** for `purpose/`, `context/`, `domain/` and `interfaces/`. Stop asking about a topic when another answer would not change the spec. A spec starts small: few Definitions per topic, not topics left unasked.
-2. **Propose the rest:** for `quality/`, `architecture/` and `administration/`, a plain, complete set that fits what the owner said, one batch per folder, as a short table the owner accepts or changes. Mark each proposal with a number the owner should look at, such as how long backups are kept. Propose the `scenarios/` worth checking.
-3. **Write** each folder as its answers come, as [below](#change-the-spec), starting with `project.md` in place of the placeholder, and propose the Packages as [below](#where-to-put-a-definition).
+1. **Say what you took from it.** When the owner brings notes or a brainstorm, the first reply says per folder, in a few lines, what you took from them and what they leave open or say two ways. It says what comes next: some questions, a table per folder to accept, then a longer stretch of writing during which the owner need not sit at the screen, then a fresh reader who checks the written spec, then the spec itself, which you go through together. And it says that the spec is written in English unless the owner wants another language. Write nothing yet. Then ask first which of what the owner named belongs in the first version: the rest becomes Exclusions and draws no further questions.
+2. **Ask what only the owner can know** ([who decides](#who-decides)). Stop asking about a topic when another answer would not change the spec.
+3. **Propose the rest,** one batch per folder, as a short table the owner accepts or changes: a plain, complete set that fits what the owner said. Name in each proposal the value the owner should check, such as how many days backups are kept. Propose the Packages in the owner's words: the areas the work falls into, what each holds and which needs which ([where to put a Definition](#where-to-put-a-definition)); the owner may leave the cut to you, and then the hand-over names it as your proposal. Propose the Scenarios worth checking.
+4. **Write** once the owner's questions are answered, the tables accepted and the Packages agreed, as [below](#change-the-spec), with `project.md` first in place of the placeholder. Tell the owner beforehand that writing takes a while and that they need not wait at the screen. Keep a list of each statement you write that the owner did not say and that no table they accepted holds: the hand-over needs it.
+5. **Have it audited.** When the spec is written and `check --spec` passes, run `/markitect-audit` once, as part of the course the owner agreed to at the start. Settle its findings before you hand over: a contradiction or gap between two of your own proposals you correct and name in the hand-over; one that touches what the owner said, or that only the owner can decide, becomes a question in the hand-over; missing links you add; topics of the coverage list you state or rule out. Do not audit a second time unless the owner asks.
+6. **Hand over** as [below](#hand-over).
 
 Until something is built, `check` says that the spec compiles and nothing is built yet, which is what you want here.
 
@@ -77,12 +80,13 @@ On a large project, the architect agent can draw one Package at a time, Root fir
 ## Change the spec
 
 ```text
-[ ] 1 Read the requirements or the discussion; ask the owner about every open point
+[ ] 1 Read the requirements or the discussion; ask the owner what only they can know, propose the rest
 [ ] 2 Packages and dependency directions agreed with the owner
 [ ] 3 Each statement mapped to a planned Definition (none left over, none invented)
 [ ] 4 Definitions written; markitect check --spec passes
-[ ] 5 markitect vet, doc, list --deps, status read; warnings fixed or justified
-[ ] 6 Diff handed to the owner
+[ ] 5 In an existing spec: each new or changed Operation and Reaction read against what binds it, its edge cases tried
+[ ] 6 markitect vet, doc, list --deps, status read; warnings fixed or justified
+[ ] 7 Handed over to the owner
 ```
 
 Use the tools while you work, not only at the end:
@@ -91,10 +95,11 @@ Use the tools while you work, not only at the end:
 - `markitect check --spec` after every few files. It looks only at the spec, which is what a change of the spec asks, and prints every error as `file:line: code: message`; fix the first ones and run it again. Plain `markitect check` also lists what the project does not realize yet, which is the build's work and not an error of your change.
 - `markitect doc TARGET` before you rename, move or delete a Definition: it shows who links to it and which files realize it.
 - `markitect list --deps` when you add a link between Packages: it shows the new dependency and the links behind it.
+- `markitect doc` on each Operation and Reaction you add or change in an existing spec, before you hand over, since a change gets no audit by itself. Read its Conditions, its Outcomes and what it returns against each Rule, Decision and Constraint it lists under `Bound by`, and try the edge cases: a refused call, a call whose input is what already holds, such as giving an appointment to the staff member who already has it, and the same call twice. Where two statements decide a case differently, settle it or ask, as [who decides](#who-decides) says.
 - `markitect list --kinds` to see what the spec describes so far: every Kind with how many Definitions it has, and the Kinds it has none of.
 - `markitect doc --read FOLDER` when the owner wants to read what you wrote: it prints everything at or below a folder as one text, the whole spec without a folder.
 - `markitect vet` at the end: coupling, size, hubs. Fix each warning or give one line why it stays. Its last line counts its notes; `markitect vet --strict` lists them. Link each unlinked mention the Definition relies on, and leave the ones that are ordinary words.
-- `markitect status` on your change: it lists the items the change puts back on the list to verify. Give the owner that list; it is what the builder will work on.
+- `markitect status` on your change: it lists the items the change puts back on the list to verify, which is what the builder will work on. Give the owner that list for a change, and for a new spec how many items it holds.
 - After a manifest or Library change run `markitect tidy` and include the new `lock.yaml` in the diff.
 
 ## Where to put a Definition
@@ -147,11 +152,12 @@ Lends a book to a member. The service has no sign-in, so any caller may.
 
 1. [[domain/catalog/operations/borrow-book/conditions/book-is-available]]: `book_unavailable`.
 
-**Satisfies:** [[purpose/goals/know-who-holds-each-book]].
+**Satisfies:** [[purpose/stakeholders/staff/wishes/lend-a-book]].
 ```
 
+- Talk with the owner in their language, and write the spec in English unless they ask otherwise; what a user of the built system reads, such as page labels and e-mails, is stated in that user's language. When the spec is in another language than the owner speaks, keep the owner's own word for each thing of their trade, in one sentence of the Concept that stands for it, or of a Term in `context/terms/` for a thing the system does not manage, so that the hand-over can speak in their words.
 - Front matter holds `kind` and, where needed, `internal: true`, nothing else.
-- The file name is the ID (`domain/catalog/operations/borrow-book/borrow-book.md`). Names use letters, digits, `-` and `_`.
+- The file name is the ID (`domain/catalog/operations/borrow-book/borrow-book.md`). Names use only the letters `a` to `z` and `A` to `Z`, digits, `-` and `_`, and start with a letter or digit: a name with an umlaut, an accent or a space fails with `spec.name`.
 - One level-1 heading, the title; then the Definition's own sentences; then its fields, each starting a line with its bold label and reaching to the next field.
 - **A link is the full path from the spec folder, also to a Definition in the same Package:** `[[domain/members/concepts/member/attributes/member-id]]`, never `[[member-id]]`; a thing with parts by its folder, `[[domain/catalog/operations/borrow-book]]`. Library Kinds start with the Library: `std/Rule`. A Package is `[[domain/members]]`.
 
@@ -160,9 +166,9 @@ Lends a book to a member. The service has no sign-in, so any caller may.
 | Code | Usual cause and fix |
 |---|---|
 | `link.unresolved` | Short or relative link. Use the full path from the spec folder; check spelling and that the target exists. A folder is a target only as a Package or as a thing with parts: otherwise link a Definition in it or the Package above. |
-| `link.syntax` | `../x`, a leading `/`, or a character other than letters, digits, `-`, `_`. Use a plain path. |
+| `link.syntax` | `../x`, a leading `/`, or a character other than `a` to `z`, `A` to `Z`, digits, `-` and `_`, such as an umlaut. Use a plain path. |
 | `link.internal` | The target is `internal` to another Package. Drop the link and describe the need in your own words, or make the target public. |
-| `link.downward` | A parent links into a child's Definition. Link the Package instead, move the Definition up, or let the child link to a need stated here. |
+| `link.downward` | A parent links into a child's Definition. Link the Package instead, move the Definition up, let the child link to a need stated here, or, common in a new spec, give `scenarios/`, `administration/` or `architecture/runtime/` its anchor, so that it is a Package. |
 | `package.cycle` | Two Packages link to each other (the message shows the path). Move the shared concept up, or remove one side's link as described above. |
 | `field.missing`, `field.unknown`, `field.repeated`, `field.target`, `link.target` | A field the Kind requires is missing, a label it does not declare or a field twice stands, or a link names a Kind that the field or the Kind does not take, such as a Concept in **Satisfies:** or in a Term. |
 | `part.folder`, `part.kind` | A part lies in a folder its whole's Kind does not declare, or is of a Kind that folder does not take. |
@@ -178,7 +184,7 @@ Fix a `field.*`, `link.target` or `part.*` error by the Kind, which `markitect d
 | Thought | Instead |
 |---|---|
 | "I'll choose the Packages myself." | Propose them to the owner. |
-| "The owner didn't say how this is refused; I'll assume the usual." | Ask: the domain is the owner's. |
+| "The owner didn't say whether this is refused; I'll assume the usual." | Ask: which cases are refused is the owner's. The codes and the order of checks are your proposal. |
 | "I'll ask about each quality and each Rule of the code." | Propose them, one batch per folder. |
 | "The code does it, though it looks like an accident." | Leave it unstated and add it to `.markitect/questions.md`. |
 | "The spec doesn't say this yet, so I'll add it." | Ask whether it should be in the spec. Most of what a file holds should not. |
@@ -192,8 +198,10 @@ Fix a `field.*`, `link.target` or `part.*` error by the Kind, which `markitect d
 
 Before you hand over a new spec, check that no topic of the [coverage list](reference.md#coverage) was skipped: each is stated, ruled out, or open in `.markitect/questions.md`.
 
-Report to the owner in a few lines: the diff; the output of `check --spec`, or of plain `check` for a first spec drawn from a project (its summary line), and of `vet` (warnings fixed or justified); the list `status` prints, so the owner sees what the change makes the agents do; what waits for them in `.markitect/questions.md`; and any point the owner chose to leave open. Leave the work as a diff; commit only if the owner asks. A new spec is too long to accept by reading it line by line. Offer to go through it instead: say for each top-level folder in a few lines what it now states, name each place where you proposed something the owner did not say, and ask where they want to go deeper; `markitect doc --read FOLDER` gives you the text of a folder in one piece to answer from. Change it until they accept it.
+A spec started with the owner is too long to accept by reading it line by line, and its diff and the list of `status` would name every file: leave both out. Say how many Definitions each top-level folder holds and how many items the builder will work on, that `check --spec` passes and why a `vet` warning stays, if one does. Then go through it with the owner in about a quarter of an hour: what the system now is, in a few lines; the Scenarios, told as stories, which is the part the owner can check best; and your list of the statements the owner did not say, by folder, each with its alternative, for a yes or a change, among them the refusal codes, the cut into Packages when it was left to you, and each contradiction between your proposals that you settled, the audit's included; then the questions the audit left for the owner. What the owner leaves open goes to `.markitect/questions.md`. `markitect doc --read FOLDER` gives you the text of a folder in one piece to answer from. Change the spec until they accept it, then ask whether you may commit it, with `.markitect/questions.md` and what `init` wrote, in one commit.
+
+For a change of a spec, and for a first spec drawn from a project, report in a few lines: the diff; the output of `check --spec`, or of plain `check` for a first spec drawn from a project (its summary line), and of `vet` (warnings fixed or justified); the list `status` prints, so the owner sees what the change makes the agents do; what waits for them in `.markitect/questions.md`; and any point the owner chose to leave open. Leave the work as a diff; commit only if the owner asks.
 
 Deleting or renaming a Definition leaves registry entries that name it. That is stale realization, an error of the realization rather than the spec's: `check` lists it apart, and the next build cleans it up. Say so; do not edit the registry pages in a change of the spec, which the builder keeps (only drawing the spec from the project writes them).
 
-Building is the owner's step: `/markitect-build` has a builder agent build the spec in a worktree of its own. `/markitect-audit` has a fresh auditor read the spec for contradictions, gaps and unclear statements, the coverage list included, before it is built. Do not start either yourself unless the owner asks.
+Building is the owner's step: `/markitect-build` has a builder agent build the spec in a worktree of its own. `/markitect-audit` has a fresh auditor read the spec for contradictions, gaps and unclear statements, the coverage list included, before it is built. Start neither yourself unless the owner asks, apart from the one audit of [start a project](#start-a-project).

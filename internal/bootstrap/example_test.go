@@ -67,8 +67,8 @@ func TestArchitectExampleIsWhatTheToolsPrint(t *testing.T) {
 	}
 	page := strings.ReplaceAll(string(data), "\r\n", "\n")
 	files := exampleFiles(t, page)
-	if len(files) != 33 {
-		t.Fatalf("the page shows %d files of the example, want the manifest, 26 Definitions, 5 registry pages and the ignore file", len(files))
+	if len(files) != 38 {
+		t.Fatalf("the page shows %d files of the example, want the manifest, 31 Definitions, 5 registry pages and the ignore file", len(files))
 	}
 	// build writes the example with a change into a folder, and every file its
 	// registry pages and its ignore file name.

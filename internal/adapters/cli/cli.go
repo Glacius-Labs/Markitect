@@ -59,12 +59,21 @@ Usage:
   markitect vet    [--repo DIR] [--json] [--strict]
                                                   analyse the spec's design: coupling, size, how far a change reaches;
                                                   it warns, and exits 1 only with --strict
-  markitect list   [--repo DIR] [--json] [--deps] [--packages]  the Packages and their Definitions; --deps adds what each depends on, --packages prints the Packages alone
+  markitect list   [--repo DIR] [--json] [--deps] [--packages] | --kinds
+                                                  the Packages and their Definitions; --deps adds what each depends on,
+                                                  --packages prints the Packages alone; --kinds prints every Kind with
+                                                  how many Definitions the spec has of it
   markitect doc    [--repo DIR] [--json] TARGET   a Definition or Package: its text, its links both ways, its files
                                                   and its record
-  markitect status [--repo DIR] [--json] [--all]  what is to verify: each Definition with a changed input or no record,
+  markitect doc    [--repo DIR] [--json] --read [FOLDER]
+                                                  every Definition at or below a folder as one text to read, the whole
+                                                  spec without a folder
+  markitect status [--repo DIR] [--json] [--all] [--package P] [--slices [--size N]] [--slice A,B]
+                                                  what is to verify: each Definition with a changed input or no record,
                                                   with what changed, where to look and its fingerprint; --all lists
-                                                  every Definition, to verify everything again
+                                                  every Definition, to verify everything again, --package only those of
+                                                  one Package; --slices prints the slices a build of the list goes in,
+                                                  --slice A,B lists one of them
   markitect mark   [--repo DIR] [--json] DEFINITION@FINGERPRINT VERDICT [-e EVIDENCE]... [-m "WHY"] [--cases N --covered M]
                                                   record a verdict at the state status printed: ok, fail, skip or
                                                   spec-problem; evidence is path:line or path; only the
