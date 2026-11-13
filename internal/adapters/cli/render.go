@@ -88,25 +88,65 @@ func renderRead(folder string, entries []analysis.ReadEntry) string {
 		fmt.Fprintf(&b, "# The spec: %s\n", folder)
 	}
 	fmt.Fprintf(&b, "\n%d %s, as markitect doc --read prints them. The files under .markitect/spec are the spec; this text is a view of them.\n", len(entries), plural(len(entries), "Definition", "Definitions"))
+	writeEntries(&b, entries, true, false)
+	return b.String()
+}
+
+// renderReadBound prints what doc --read --bound prints: the text of a
+// folder as renderRead prints it, after what binds its Definitions from
+// outside it and before what outside it they link, each under a heading of
+// its own and with its parts.
+func renderReadBound(folder string, bound, entries, linked []analysis.ReadEntry) string {
+	var b strings.Builder
+	name := spec.PackageName(folder)
+	if folder == spec.RootPackage {
+		b.WriteString("# The spec, with what binds it and what it links\n")
+	} else {
+		fmt.Fprintf(&b, "# The spec: %s, with what binds it and what it links\n", folder)
+	}
+	fmt.Fprintf(&b, "\n%d %s, as markitect doc --read --bound prints them: %d outside %s that %s its Definitions without a link, then its %d, then %d outside it that they link. The files under .markitect/spec are the spec; this text is a view of them.\n",
+		len(bound)+len(entries)+len(linked), plural(len(bound)+len(entries)+len(linked), "Definition", "Definitions"),
+		len(bound), name, plural(len(bound), "binds", "bind"), len(entries), len(linked))
+	fmt.Fprintf(&b, "\n## Bound from outside %s\n", name)
+	if len(bound) == 0 {
+		fmt.Fprintf(&b, "\nNothing outside %s binds a Definition in it.\n", name)
+	} else {
+		fmt.Fprintf(&b, "\nWhat binds a Definition of %s without a link, as everything in its Package: what markitect doc lists under Bound by.\n", name)
+		writeEntries(&b, bound, false, false)
+	}
+	writeEntries(&b, entries, true, true)
+	fmt.Fprintf(&b, "\n## Linked from %s, outside it\n", name)
+	if len(linked) == 0 {
+		fmt.Fprintf(&b, "\nNo Definition of %s links one outside it, but Kinds and Libraries.\n", name)
+	} else {
+		fmt.Fprintf(&b, "\nWhat a Definition of %s links outside it, but Kinds and Libraries.\n", name)
+		writeEntries(&b, linked, false, false)
+	}
+	return b.String()
+}
+
+// writeEntries writes Definitions of the reading view, each under its title
+// with its ID and Kind and a part one level below its whole; with folders,
+// under a heading for each folder, the Root's too with root.
+func writeEntries(b *strings.Builder, entries []analysis.ReadEntry, folders, root bool) {
 	at := "\x00"
 	for _, e := range entries {
 		level := min(3+e.Depth, 6)
-		if e.Depth == 0 && e.Folder != at {
+		if folders && e.Depth == 0 && e.Folder != at {
 			at = e.Folder
-			if at != spec.RootPackage {
-				fmt.Fprintf(&b, "\n## %s\n", at)
+			if at != spec.RootPackage || root {
+				fmt.Fprintf(b, "\n## %s\n", spec.PackageName(at))
 			}
 		}
 		title := e.Title
 		if title == "" {
 			title = e.ID
 		}
-		fmt.Fprintf(&b, "\n%s %s\n\n`%s`, %s\n", strings.Repeat("#", level), title, e.ID, e.Kind)
+		fmt.Fprintf(b, "\n%s %s\n\n`%s`, %s\n", strings.Repeat("#", level), title, e.ID, e.Kind)
 		if text := strings.TrimSpace(headingsBelow(partText(either(e.Shown, e.Text)), level)); text != "" {
 			b.WriteString("\n" + text + "\n")
 		}
 	}
-	return b.String()
 }
 
 // headingsBelow moves the headings of a text below a heading of a level,

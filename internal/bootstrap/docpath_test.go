@@ -80,3 +80,40 @@ func TestDocTakesAFilePath(t *testing.T) {
 		t.Errorf("doc of no file of the spec: exit %d, %s", code, errOut)
 	}
 }
+
+// doc --read --bound prints the folder's text between what binds it from
+// outside and what outside it it links, each once, with --json too; --bound
+// without --read is refused.
+func TestDocReadBound(t *testing.T) {
+	emptyHome(t)
+	r := newFolder(t)
+	mustRun(t, r.Dir, "init", "--name", "Library")
+	def := func(kind, title, body string) string {
+		return "---\nkind: " + kind + "\n---\n# " + title + "\n\n" + body + "\n"
+	}
+	r.Write(".markitect/spec/loan-limit.md", def("std/Rule", "Loan limit", "At most `5` open loans."))
+	r.Write(".markitect/spec/members/members.md", def("Package", "Members", "Who may borrow."))
+	r.Write(".markitect/spec/members/member.md", def("std/Concept", "Member", "A person at the [[places/desk]], a [[std/Concept]]."))
+	r.Write(".markitect/spec/members/card.md", def("std/Concept", "Card", "What a [[members/member]] shows at the [[places/desk]]."))
+	r.Write(".markitect/spec/places/places.md", def("Package", "Places", "Where lending happens."))
+	r.Write(".markitect/spec/places/desk.md", def("std/Concept", "Desk", "Where a book is handed over."))
+
+	out := mustRun(t, r.Dir, "doc", "--read", "members", "--bound")
+	for _, id := range []string{"`loan-limit`", "`members/member`", "`places/desk`"} {
+		if strings.Count(out, id) != 1 {
+			t.Errorf("%s %d times:\n%s", id, strings.Count(out, id), out)
+		}
+	}
+	if !(strings.Index(out, "`loan-limit`") < strings.Index(out, "`members/member`") && strings.Index(out, "`members/member`") < strings.Index(out, "`places/desk`")) {
+		t.Errorf("order:\n%s", out)
+	}
+	if strings.Contains(out, "`std/Concept`") {
+		t.Errorf("a Kind of a Library:\n%s", out)
+	}
+	if js := mustRun(t, r.Dir, "doc", "--json", "--read", "members", "--bound"); !strings.Contains(js, `"bound_by"`) || !strings.Contains(js, `"linked"`) {
+		t.Errorf("JSON:\n%s", js)
+	}
+	if code, _, errOut := run(t, r.Dir, "doc", "--bound", "members"); code != 2 || !strings.Contains(errOut, "--bound goes with --read") {
+		t.Errorf("doc --bound: exit %d, %s", code, errOut)
+	}
+}

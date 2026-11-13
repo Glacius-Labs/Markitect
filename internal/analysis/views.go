@@ -241,6 +241,31 @@ type DocPackage struct {
 	Files       []string           `json:"files"`
 }
 
+// boundBy returns what binds a Definition without a link, sorted: the units
+// that bind its Package or a Package above it, as binding holds them, but
+// neither its own thing nor a thing it is a part of, and no part, since its
+// whole stands for it. Nothing binds a Definition that no file realizes
+// (DEC-113), nor one of a Library.
+func boundBy(sp *spec.Spec, binding map[string][]string, d *spec.Definition) []string {
+	if !d.Own() || !sp.Bound(d.ID) {
+		return nil
+	}
+	var out []string
+	unit := sp.UnitOf(d.ID)
+	for at := d.Package; ; at = sp.Parent(at) {
+		for _, id := range binding[at] {
+			if sp.Definitions[id].Whole == "" && id != unit && !sp.IsPartOf(d.ID, id) {
+				out = append(out, id)
+			}
+		}
+		if at == spec.RootPackage {
+			break
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
 // DocDefinitionOf gathers what doc shows of a Definition but its record.
 func DocDefinitionOf(p *project.Project, d *spec.Definition) DocDefinition {
 	dd := DocDefinition{ListedDefinition: listDefinition(d, true), Package: spec.PackageName(d.Package), Library: d.Library, Text: body(d.Data), Whole: d.Whole, Parts: []DocPart{}, LinkedFrom: []Ref{}, RealizedBy: []Realizer{}}
@@ -257,21 +282,8 @@ func DocDefinitionOf(p *project.Project, d *spec.Definition) DocDefinition {
 		}
 		dd.Fields = append(dd.Fields, field)
 	}
-	if d.Own() && p.Spec.Bound(d.ID) {
-		unit, binding := p.Spec.UnitOf(d.ID), p.Spec.Binding()
-		for at := d.Package; ; at = p.Spec.Parent(at) {
-			for _, id := range binding[at] {
-				// Neither the Definition's own thing nor a thing it is a part of,
-				// and no part, since its whole stands for it.
-				if other := p.Spec.Definitions[id]; other.Whole == "" && id != unit && !p.Spec.IsPartOf(d.ID, id) {
-					dd.BoundBy = append(dd.BoundBy, listDefinition(other, false))
-				}
-			}
-			if at == spec.RootPackage {
-				break
-			}
-		}
-		sort.Slice(dd.BoundBy, func(i, j int) bool { return dd.BoundBy[i].ID < dd.BoundBy[j].ID })
+	for _, id := range boundBy(p.Spec, p.Spec.Binding(), d) {
+		dd.BoundBy = append(dd.BoundBy, listDefinition(p.Spec.Definitions[id], false))
 	}
 	if s := d.Schema; s != nil {
 		dd.Declares = &DocDeclares{Unrealized: s.Unrealized, Binds: s.Binds, Last: s.Last}

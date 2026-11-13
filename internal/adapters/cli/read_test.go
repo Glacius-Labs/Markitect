@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/analysis"
@@ -64,5 +65,43 @@ func TestRenderKinds(t *testing.T) {
 		"\nmarkitect doc KIND prints what a Kind is for.\n"
 	if got != want {
 		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+// doc --read --bound prints what binds the folder from outside before its
+// text and what outside it it links after, each under a heading of its own,
+// a part one heading below its whole; and says so when there is none.
+func TestRenderReadBound(t *testing.T) {
+	got := renderReadBound("members",
+		[]analysis.ReadEntry{{ID: "loan-limit", Title: "Loan limit", Kind: "std/Rule", Text: "# Loan limit\n\nAt most `5`.\n"}},
+		[]analysis.ReadEntry{{ID: "members/member", Title: "Member", Kind: "std/Concept", Folder: "members", Text: "# Member\n\nA person.\n"}},
+		[]analysis.ReadEntry{
+			{ID: "places/rules/hours/hours", Title: "Hours", Kind: "std/Rule", Folder: "places/rules", Text: "# Hours\n\nBy day.\n"},
+			{ID: "places/rules/hours/morning", Title: "Morning", Kind: "std/Rule", Folder: "places/rules/hours", Depth: 1, Text: "# Morning\n\nFrom `8`.\n"},
+		})
+	want := "# The spec: members, with what binds it and what it links\n" +
+		"\n4 Definitions, as markitect doc --read --bound prints them: 1 outside members that binds its Definitions without a link, then its 1, then 2 outside it that they link. The files under .markitect/spec are the spec; this text is a view of them.\n" +
+		"\n## Bound from outside members\n" +
+		"\nWhat binds a Definition of members without a link, as everything in its Package: what markitect doc lists under Bound by.\n" +
+		"\n### Loan limit\n\n`loan-limit`, std/Rule\n\nAt most `5`.\n" +
+		"\n## members\n" +
+		"\n### Member\n\n`members/member`, std/Concept\n\nA person.\n" +
+		"\n## Linked from members, outside it\n" +
+		"\nWhat a Definition of members links outside it, but Kinds and Libraries.\n" +
+		"\n### Hours\n\n`places/rules/hours/hours`, std/Rule\n\nBy day.\n" +
+		"\n#### Morning\n\n`places/rules/hours/morning`, std/Rule\n\nFrom `8`.\n"
+	if got != want {
+		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
+	}
+	none := renderReadBound("", nil, []analysis.ReadEntry{{ID: "project", Title: "Library", Kind: "std/Project", Text: "# Library\n"}}, nil)
+	for _, line := range []string{
+		"# The spec, with what binds it and what it links\n",
+		"\nNothing outside Root binds a Definition in it.\n",
+		"\n## Root\n\n### Library\n",
+		"\nNo Definition of Root links one outside it, but Kinds and Libraries.\n",
+	} {
+		if !strings.Contains(none, line) {
+			t.Errorf("lacks %q:\n%s", line, none)
+		}
 	}
 }
