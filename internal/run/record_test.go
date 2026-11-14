@@ -1038,6 +1038,16 @@ func TestCochanges(t *testing.T) {
 			t.Fatalf("a verdict keeps what its line counted: %+v", l)
 		}
 	}
+	// Nor does it count again when member changed once more before book's
+	// verdict: book's change counted with member already.
+	p.write(m+"catalog/book.md", def("std/Concept", "Book", "A book that waits again."))
+	p.write(m+"members/member.md", def("std/Concept", "Member", "A person, four times."))
+	mark("members/member")
+	p.write(m+"members/member.md", def("std/Concept", "Member", "A person, five times."))
+	mark("catalog/book")
+	if got := cochanges()["catalog/book"]["members/member"]; got != 6 {
+		t.Fatalf("one change of book counted %d times with member, from 5", got-5)
+	}
 }
 
 // mark keeps the reviewer's counts of cases on the line, and the record counts

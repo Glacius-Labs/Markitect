@@ -137,9 +137,10 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 	// verdict. A revision counts a co-change with each other item of its round;
 	// that item's own verdict later sees this one verified, and that item's line
 	// names this one as counted, so that its one change counts with this one
-	// once however often this one is revised before it. A round of more than
-	// maxChangeSet counts nothing, and its other items' lines say so, so that
-	// they count with nothing while the round shrinks as it is verified.
+	// once however often this one is revised before it, and this one's change
+	// counts with none its own line names. A round of more than maxChangeSet
+	// counts nothing, and its other items' lines say so, so that they count
+	// with nothing while the round shrinks as it is verified.
 	revised := line.Revisions > mostRevisions(before[req.definition])
 	others := changed(before, v.now, req.definition)
 	round := len(others)
@@ -149,8 +150,9 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 	large := round > maxChangeSet
 	var with []string
 	if revised && !large && !batched(before[req.definition]) {
+		counted := mostCounted(before[req.definition])
 		for _, id := range others {
-			if !batched(before[id]) && !slices.Contains(mostCounted(before[id]), req.definition) {
+			if !batched(before[id]) && !slices.Contains(mostCounted(before[id]), req.definition) && !slices.Contains(counted, id) {
 				with = append(with, id)
 			}
 		}
