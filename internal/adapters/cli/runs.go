@@ -151,6 +151,9 @@ func (c CLI) runEnd(ctx context.Context, dir string, positional []string, rounds
 func said(ev run.Event) string {
 	switch ev.Type {
 	case run.EventRunStart:
+		if n := ev.Counts.SpecErrors; n > 0 {
+			return fmt.Sprintf("Run started: %s, with %d %s in the spec and so no list.", ev.Kind, n, plural(n, "error", "errors"))
+		}
 		return fmt.Sprintf("Run started: %s, %d %s on the list in %d %s.", ev.Kind, *ev.Items, plural(*ev.Items, "item", "items"), *ev.Slices, plural(*ev.Slices, "slice", "slices"))
 	case run.EventRunSlice:
 		what := "a round over the whole list"
