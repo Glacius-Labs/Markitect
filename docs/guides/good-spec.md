@@ -28,7 +28,7 @@ The rules below each name their **signal**: a warning or a note of `markitect ve
 | [Accidental complexity](#accidental-complexity) | Write only what good documentation would state | `definition.unused`, `vet.thin_package`; auditor |
 | [Abstraction levels](#one-level-of-abstraction-per-definition) | One level per Definition | Auditor |
 | [Placement](#everything-has-its-place) | Each Definition in the lowest Package that holds all its users; Root minimal | `vet.package_size`, `vet.placement`, `vet.hub` |
-| [Say it once](#say-it-once-link-exactly-what-you-use) | One fact in one place; link exactly what you use, directly, from the specific to the general; no central page of values | `vet.unlinked_mention`, which the auditor triages; `vet.hub` |
+| [Say it once](#say-it-once-link-exactly-what-you-use) | One fact in one place; link exactly what you use, directly, from the specific to the general; no central page of values | `vet.unlinked_mention`, which the auditor triages; `vet.change_coupling`; `vet.hub` |
 | [Every link is a relation](#every-link-is-a-relation) | No link for navigation; name a record by its identity; a Package publishes what is public; name the modules used by Package | `doc PACKAGE`; auditor |
 
 ## Bounded contexts and ubiquitous language
@@ -179,7 +179,7 @@ The member's identity links the identifier's format, and the field relies on the
 
 **A milder case.** 17 of the 24 Definitions that link `members/member` do so only to say that an identifier names an existing member; a new field of the member puts them all back on the list. Give the member's identity a Definition of its own and link that ([below](#every-link-is-a-relation)).
 
-**Signal.** `vet.unlinked_mention` notes a Definition's title or name in another Definition's prose with no link to it; on the Makerspace specs half to three-quarters of what it finds are real missing links, and the rest ordinary words and other meanings of a name. Plain `vet` counts them in its last line, and `/markitect-audit` has the auditor triage them into missing links and ordinary words, so that the architect adds the links. `vet.hub` points at a Definition many link to. Whether they use all of it, or only part, and whether a Definition relies on something it neither links nor names, are the auditor's questions.
+**Signal.** `vet.unlinked_mention` notes a Definition's title or name in another Definition's prose with no link to it; on the Makerspace specs half to three-quarters of what it finds are real missing links, and the rest ordinary words and other meanings of a name. Plain `vet` counts them in its last line, and `/markitect-audit` has the auditor triage them into missing links and ordinary words, so that the architect adds the links. `vet.change_coupling` notes two Definitions whose own texts kept changing together between verdicts while neither links the other, from the record: probably one relies on the other without a link, and the history shows it where the prose does not name it. Link what the one relies on in the other, or, when they only happen to change together, say why in one of them. `vet.hub` points at a Definition many link to. Whether they use all of it, or only part, and whether a Definition relies on something it neither links nor names, are the auditor's questions.
 
 ## Every link is a relation
 
@@ -209,6 +209,7 @@ The member's identity links the identifier's format, and the field relies on the
 | Instability I | Ce / (Ca + Ce) | 0 to 1 | 0 to 1 | `vet.unstable_dependency` |
 | Abstractness A, distance D | Share of Definitions of Kind `Kind`; \|A + I − 1\| | A 0.10 at Root, 0 elsewhere; 4 Packages in the zone of pain | 0.10, 0; 9 in the zone of pain | In `list --deps`; zone notes wait |
 | Volatility × fan-in | Revisions of a Definition's text times its fan-in | at most 14; no hub changed | 5 above 42, `members/member` 90; 248 of 468 items from 9 hubs | `vet.hotspot`, from the record |
+| Change coupling | Rounds in which two Definitions' texts changed together, against their mean revisions | no record yet | no record yet | `vet.change_coupling`, from the record |
 | Cohesion | Groups of a Package joined by its own links | none split at c8; `bookings` at w0 and c1, by scope Rules | none split | Read, not warned |
 | Unlinked mentions | A Definition's name in another's prose, with no link | 233 pairs, 52–65 % real in a sample | 863, 57–70 % | `vet.unlinked_mention` |
 | Size | Words in a Definition's body | median 88, max 430 | 99, 995 | `vet.definition_size` |

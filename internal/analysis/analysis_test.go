@@ -339,6 +339,55 @@ func TestVetHotspot(t *testing.T) {
 		m+"members/member.md: vet.hotspot: its own text changed 11 times between verdicts, and 2 Definitions link to it or are of it as Kind, so its changes put about 22 back on the list to verify, more than a tenth of the spec; split what changes from what relies on it")
 }
 
+// vet.change_coupling notes two Definitions whose own texts changed together
+// at least 5 times, each at least 5 times, and together in at least 30 % of
+// their mean revisions, once, on the first by ID, unless something ties them: a
+// link either way, also from a part, one unit, binding by scope, or a Kind.
+func TestVetChangeCoupling(t *testing.T) {
+	r := library(t)
+	r[m+"feature.md"] = def("Kind", "Feature", "One thing a user can do.")
+	delete(r, m+"catalog/book.md")
+	r[m+"catalog/book/book.md"] = def("std/Concept", "Book", "A book.")
+	r[m+"catalog/book/attributes/title.md"] = def("std/Attribute", "Title", "As a [[members/loans/loan]] shows it.")
+	coupling := func(revisions map[string]int, pairs ...[3]any) []string {
+		t.Helper()
+		co := map[string]map[string]int{}
+		for _, p := range pairs {
+			a, b, n := p[0].(string), p[1].(string), p[2].(int)
+			for _, ab := range [][2]string{{a, b}, {b, a}} {
+				if co[ab[0]] == nil {
+					co[ab[0]] = map[string]int{}
+				}
+				co[ab[0]][ab[1]] = n
+			}
+		}
+		return noteLines(Vet(loadRepo(t, r), History{Revisions: revisions, Cochanges: co}).Notes, "vet.change_coupling")
+	}
+	// Below each line: 4 together, 4 revisions of one with 5 together, 5 together
+	// of 17 each.
+	for _, c := range []struct {
+		shelf, member, together int
+	}{{5, 6, 4}, {4, 6, 5}, {17, 17, 5}} {
+		if got := coupling(map[string]int{"catalog/shelf": c.shelf, "members/member": c.member}, [3]any{"catalog/shelf", "members/member", c.together}); len(got) != 0 {
+			t.Fatalf("%+v noted: %v", c, got)
+		}
+	}
+	tied := [][3]any{
+		{"catalog/book/book", "members/loans/loan", 6},            // linked by a part of the book
+		{"members/loans/loan", "members/member", 6},               // linked
+		{"catalog/book/attributes/title", "catalog/book/book", 6}, // one unit
+		{"catalog/shelf", "loan-limit", 6},                        // the Rule binds by scope
+		{"feature", "catalog/shelf", 6},                           // a Kind
+	}
+	revisions := map[string]int{"catalog/shelf": 5, "members/member": 6}
+	for _, p := range tied {
+		revisions[p[0].(string)], revisions[p[1].(string)] = 6, 6
+	}
+	revisions["catalog/shelf"] = 5
+	expectLines(t, coupling(revisions, append(tied, [3]any{"catalog/shelf", "members/member", 5})...),
+		m+"catalog/shelf.md: vet.change_coupling: its own text changed together with that of members/member 5 times between verdicts, of its 5 revisions and that one's 6, yet neither links the other, so status lets a change to one pass the other; link what one relies on in the other, or say in one of them why they change together")
+}
+
 // vet.risk notes a Definition whose ok or skip rests on thin evidence, by
 // the reviewer's counts in the record: c² × (1 − e)³ + c above 30, with c one
 // more than its cases and e the share of them the evidence demonstrates.

@@ -66,7 +66,8 @@ func (c CLI) vet(_ context.Context, args []string) (int, error) {
 }
 
 // historyOf reads from the project's record what vet knows of the spec's past:
-// how often each Definition's own text changed between verdicts, and what the
+// how often each Definition's own text changed between verdicts, alone and
+// together with another's, and what the
 // reviewer counted with an ok or a skip on its text as it is. Nothing when there
 // is no record. A line it cannot read counts nothing here: status names it.
 func historyOf(ws Workspace, p *project.Project) analysis.History {
@@ -75,7 +76,7 @@ func historyOf(ws Workspace, p *project.Project) analysis.History {
 		return analysis.History{}
 	}
 	rec := run.ParseRecord(data)
-	h := analysis.History{Revisions: rec.Revisions(), Counts: map[string]analysis.Count{}}
+	h := analysis.History{Revisions: rec.Revisions(), Cochanges: rec.Cochanges(), Counts: map[string]analysis.Count{}}
 	self := map[string]string{}
 	if p.Spec != nil {
 		for id, d := range p.Spec.Definitions {

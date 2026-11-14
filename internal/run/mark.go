@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -130,7 +131,36 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 	for k, h := range inputs {
 		line.Inputs[k] = h
 	}
-	line.Revisions = revisions(rec.byDefinition()[req.definition], inputs)
+	before := rec.byDefinition()
+	line.Revisions = revisions(before[req.definition], inputs)
+	// A round of change is every item whose own text changed since its last
+	// verdict. A revision counts a co-change with each other item of its round;
+	// that item's own verdict later sees this one verified, and that item's line
+	// names this one as counted, so that its one change counts with this one
+	// once however often this one is revised before it, and this one's change
+	// counts with none its own line names. A round of more than maxChangeSet
+	// counts nothing, and its other items' lines say so, so that they count
+	// with nothing while the round shrinks as it is verified.
+	revised := line.Revisions > mostRevisions(before[req.definition])
+	others := changed(before, v.now, req.definition)
+	round := len(others)
+	if revised {
+		round++
+	}
+	large := round > maxChangeSet
+	var with []string
+	if revised && !large && !batched(before[req.definition]) {
+		counted := mostCounted(before[req.definition])
+		for _, id := range others {
+			if !batched(before[id]) && !slices.Contains(mostCounted(before[id]), req.definition) && !slices.Contains(counted, id) {
+				with = append(with, id)
+			}
+		}
+	}
+	line.Cochanges = live(req.definition, mostCochanges(before[req.definition]), v.now)
+	for _, id := range with {
+		line.Cochanges[id]++
+	}
 	var missing []string
 	for _, ev := range evidence {
 		h, err := f.hash(ev.File)
@@ -148,6 +178,18 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 		return refuse("The evidence must be files of the project folder, and these are not: %s.", strings.Join(missing, ", "))
 	}
 	lines := clean(rec, v, req.definition)
+	for i := range lines {
+		lines[i].Cochanges = live(lines[i].Definition, lines[i].Cochanges, v.now)
+		lines[i].Counted = liveIDs(lines[i].Counted, v.now)
+		if slices.Contains(with, lines[i].Definition) {
+			lines[i].Cochanges[req.definition]++
+			lines[i].Counted = append(lines[i].Counted, req.definition)
+			slices.Sort(lines[i].Counted)
+		}
+		if large && slices.Contains(others, lines[i].Definition) {
+			lines[i].Batch = true
+		}
+	}
 	removed := it.State == StateGone && req.Verdict == VerdictOK
 	dirs := rec.Directories
 	if !removed {
@@ -173,8 +215,10 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 // clean keeps one line per Definition, except the one being marked: of several,
 // as after a merge, the one whose inputs match the folder, or both of a conflict,
 // or else the closest; a gone Definition keeps one line with every file its lines
-// named. A kept line counts the most revisions any of its Definition's lines
-// counted, so that a merge loses none.
+// named. A kept line counts the most revisions and co-changes any of its
+// Definition's lines counted, so that a merge loses none, names every
+// Definition any of them names as counted, and is in a large round when any of
+// them is.
 func clean(rec Record, v view, except string) []Line {
 	var out []Line
 	for id, lines := range rec.byDefinition() {
@@ -195,11 +239,11 @@ func clean(rec Record, v view, except string) []Line {
 					}
 				}
 			}
-			merged.Revisions = mostRevisions(lines)
+			merged.Revisions, merged.Cochanges, merged.Counted, merged.Batch = mostRevisions(lines), mostCochanges(lines), mostCounted(lines), batched(lines)
 			out = append(out, merged)
 		default:
 			for _, l := range keep(lines, v.now[id], v) {
-				l.Revisions = mostRevisions(lines)
+				l.Revisions, l.Cochanges, l.Counted, l.Batch = mostRevisions(lines), mostCochanges(lines), mostCounted(lines), batched(lines)
 				out = append(out, l)
 			}
 		}
@@ -214,6 +258,33 @@ func mostRevisions(lines []Line) int {
 		n = max(n, l.Revisions)
 	}
 	return n
+}
+
+// live keeps, in a new map, the co-changes of a line on id with items of the
+// spec as it is: a Definition gone from it changes with nothing any more.
+func live(id string, cochanges map[string]int, now map[string]Inputs) map[string]int {
+	out := map[string]int{}
+	if _, ok := now[id]; !ok {
+		return out
+	}
+	for id, n := range cochanges {
+		if _, ok := now[id]; ok {
+			out[id] = n
+		}
+	}
+	return out
+}
+
+// liveIDs keeps, in a new slice, the Definitions that are items of the spec as
+// it is.
+func liveIDs(ids []string, now map[string]Inputs) []string {
+	var out []string
+	for _, id := range ids {
+		if _, ok := now[id]; ok {
+			out = append(out, id)
+		}
+	}
+	return out
 }
 
 // keep chooses among the lines of one live Definition.

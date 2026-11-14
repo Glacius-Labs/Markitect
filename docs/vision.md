@@ -19,7 +19,7 @@ Markitect expects people's work to move from writing code to architecture: desig
 
 **What it builds on: proven practice.**
 - **Requirements traceability.** Tools such as IBM DOORS and Polarion keep a traceability matrix that links requirements to what realizes them, in both directions, and mark a link suspect when either end changes; DO-178C, ISO 26262 and IEC 62304 require such traceability. In Markitect the registry is the matrix, `markitect status` lists the suspect items, and `markitect mark` records a verdict on each; an `ok` with its evidence clears it.
-- **Architecture metrics.** The spec's design is judged with the principles that keep code changeable: Clean Architecture's Dependency Rule, domain-driven design's bounded contexts, cohesion and coupling, Robert C. Martin's stability measures and Adam Tornhill's change hotspots ([what makes a good spec](guides/good-spec.md)).
+- **Architecture metrics.** The spec's design is judged with the principles that keep code changeable: Clean Architecture's Dependency Rule, domain-driven design's bounded contexts, cohesion and coupling, Robert C. Martin's stability measures and Adam Tornhill's change hotspots and change coupling ([what makes a good spec](guides/good-spec.md)).
 - **Go's conventions.** `vet`, `list`, `doc` and `tidy` do what their Go namesakes do, diagnostics read `file:line: code: message`, exit codes follow Go's, and the record of what was verified works like Go's test cache.
 
 **What is new.**
