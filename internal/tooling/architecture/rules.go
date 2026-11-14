@@ -57,7 +57,7 @@ var Table = Rules{
 		{Name: "domain", Title: "Realization record", Meaning: "Registry pages, ownership and file accounting over a compiled spec.", Imports: []string{"spec"}},
 		{Name: "project", Title: "Project", Meaning: "Loads and checks a project's Markitect folder from the files of a project folder.", Imports: []string{"spec", "assets", "harness", "domain"}},
 		{Name: "service", Title: "Analysis", Meaning: "Questions about a loaded project: what it holds, what depends on what, and vet.", Imports: []string{"spec", "assets", "domain", "project"}},
-		{Name: "run", Title: "The record", Meaning: "The record of what was verified, without Git: the inputs of each Definition, review.sum, the history history.jsonl, status and mark.", Imports: []string{"spec", "assets", "domain", "project"}},
+		{Name: "run", Title: "The record", Meaning: "The record of what was verified, without Git: the inputs of each Definition, review.sum, the history history.jsonl, the inbox inbox.jsonl, status and mark.", Imports: []string{"spec", "assets", "domain", "project"}},
 		{Name: "guard", Title: "The agents' rights", Meaning: "Which role may write what and start whom, the hook that holds it and its entries in a project's settings, over supplied bytes.", Imports: []string{"project"}},
 		{Name: "setup", Title: "Project setup", Meaning: "What Markitect writes into a project: its first files, the skills and the harness, the settings, the Git attributes, the ignore line and the lock.", Imports: []string{"spec", "assets", "harness", "project", "guard"}},
 		{Name: "build", Title: "Build data", Meaning: "Version identity and embedded license notices."},

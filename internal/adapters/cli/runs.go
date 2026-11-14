@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/harness"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
@@ -144,6 +145,18 @@ func (c CLI) runEnd(ctx context.Context, dir string, positional []string, rounds
 	}
 	counts := run.CountsOf(st)
 	ev.Counts = &counts
+	// An audit's end counts what it opened in the inbox, by kind.
+	if ws, err := c.Folders.Project(dir); err == nil {
+		if data, err := ws.Read(project.HistoryFile); err == nil {
+			if start, ok := run.ParseHistory(data).OpenRun(); ok && start.Kind == "audit" {
+				if b, err := c.Record.Inbox(ctx, dir); err == nil {
+					if found := b.Found("audit", start.Time); len(found) > 0 {
+						ev.Found = found
+					}
+				}
+			}
+		}
+	}
 	return ev, nil
 }
 

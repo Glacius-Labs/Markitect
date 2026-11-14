@@ -33,7 +33,7 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 | Registry pages, ownership by path pattern, file accounting and stale realization | `internal/realization` | Spec language |
 | Loading and checking a project's `.markitect/` folder from one set of files | `internal/project` | Spec language, the built-in files, the harness configuration, realization; its own `Repository` port |
 | What a project holds and who links to what, the Package graph, the views of `list` and `doc`, vet | `internal/analysis` | Project and the packages below it |
-| The record: the inputs of each Definition, `review.sum`, the history `history.jsonl`, `status` and `mark` | `internal/run` | Project and the packages below it |
+| The record: the inputs of each Definition, `review.sum`, the history `history.jsonl`, the inbox `inbox.jsonl`, `status` and `mark` | `internal/run` | Project and the packages below it |
 | The agents' rights: which role may write what and start whom, the hook that holds them and its entries in a project's settings | `internal/guard` | Project, for the layout of `.markitect/` |
 | What Markitect writes into a project: its first files, the skills and the harness, the hooks and worktree base in its settings, the Git attributes, the ignore line and the lock | `internal/setup` | Spec language, the built-in files, the harness configuration, Project and the agents' rights; its own `Folder` port |
 | Project-folder, command-line and update adapters; no adapter imports another | `internal/adapters/folder`, `internal/adapters/cli`, `internal/adapters/upgrade` | Their inward consumers and build data |

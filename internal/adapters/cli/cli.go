@@ -86,6 +86,12 @@ Usage:
                                                   tell the project's history that a run starts, a slice or a round
                                                   starts, or the run ends: done, no-progress, stopped or failed; the
                                                   tool adds what the list says then; the skills and workflows run it
+  markitect inbox  [--repo DIR] [--json] [--all]  what waits, for the owner or for an agent: the open items, or with
+                                                  --all every item
+  markitect inbox  [--repo DIR] add --source NAME --kind NAME --settle owner|agent -m "TEXT" [--ask "Q"] [--place P]...
+  markitect inbox  [--repo DIR] close ID --settled|--answered|--dropped -m "WHY"
+                                                  open an item, once, or close one; a subagent closes only an item an
+                                                  agent may settle
   markitect config [--repo DIR] KEY | [--user] KEY VALUE | [--user] --unset KEY | --list [--json]
                                                   read or change the harness configuration: the agents' model and
                                                   effort per role, the strategy per skill and custom workflows; the
@@ -167,6 +173,8 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 		code, err = c.config(ctx, rest)
 	case "run":
 		code, err = c.runs(ctx, rest)
+	case "inbox":
+		code, err = c.inbox(ctx, rest)
 	case "hook":
 		code, err = c.hook(ctx, rest)
 	case "version":

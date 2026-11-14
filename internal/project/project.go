@@ -40,15 +40,13 @@ const (
 	// model and effort, the strategies and the custom workflows. It is the
 	// owner's, and no agent changes it.
 	HarnessFile = Dir + "/" + harness.FileName
-	// QuestionsFile holds what the architect has to ask the owner and the owner
-	// cannot answer at once (DEC-100). It is plain Markdown, nothing compiles
-	// it, the owner's session keeps it, and it is gone once every question is
-	// settled.
-	QuestionsFile = Dir + "/questions.md"
+	// InboxFile holds what waits (DEC-115): one line opens an item, a later
+	// line closes it, and the tool's commands alone write it.
+	InboxFile = Dir + "/inbox.jsonl"
 )
 
 // Attributes is the content of AttributesFile.
-const Attributes = "review.sum merge=union\nhistory.jsonl merge=union\n"
+const Attributes = "review.sum merge=union\nhistory.jsonl merge=union\ninbox.jsonl merge=union\n"
 
 // harnessPrefixes are what the files of the harness start with, in lower case.
 var harnessPrefixes = []string{".claude/agents/markitect-", ".claude/skills/markitect-", ".claude/workflows/markitect-"}
@@ -190,7 +188,7 @@ func Load(repo Repository) (*Project, error) {
 			continue
 		}
 		switch first, rest, _ := strings.Cut(rel, "/"); {
-		case f == ManifestFile, f == LockFile, f == IgnoreFile, f == ReviewFile, f == HistoryFile, f == AttributesFile, f == QuestionsFile:
+		case f == ManifestFile, f == LockFile, f == IgnoreFile, f == ReviewFile, f == HistoryFile, f == AttributesFile, f == InboxFile:
 		case f == HarnessFile:
 			if data, ok := read(f); ok {
 				if _, err := harness.Parse(data); err != nil {
@@ -216,8 +214,10 @@ func Load(repo Repository) (*Project, error) {
 			}
 		case first == "libraries" && strings.Contains(rest, "/"):
 			libraryFiles = append(libraryFiles, f)
+		case rel == "questions.md":
+			ds.Add("project.file", f, 0, "what waits for the owner lives in the inbox %s: open each question there with markitect inbox add and remove this file", InboxFile)
 		default:
-			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the harness configuration %s, the questions for the owner %s, the registry, the spec, Libraries, the record %s, the history %s and their %s", Dir, HarnessFile, QuestionsFile, ReviewFile, HistoryFile, AttributesFile)
+			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the harness configuration %s, the registry, the spec, Libraries, the record %s, the history %s, the inbox %s and their %s", Dir, HarnessFile, ReviewFile, HistoryFile, InboxFile, AttributesFile)
 		}
 	}
 	local := map[string][]spec.File{}
