@@ -192,8 +192,9 @@ func (c CLI) mark(ctx context.Context, args []string) (int, error) {
 
 // hook is what the project's hook and the plugin's call before a tool call. It
 // reads the provider's input on standard input and always exits 0: a problem of
-// its own must not stop an agent.
-func (c CLI) hook(_ context.Context, args []string) (int, error) {
+// its own must not stop an agent. What it refuses it appends to the history of
+// the project the call came from.
+func (c CLI) hook(ctx context.Context, args []string) (int, error) {
 	if len(args) != 1 || args[0] != "pretool" {
 		return Misused, errors.New("names its event: markitect hook pretool")
 	}
@@ -203,6 +204,7 @@ func (c CLI) hook(_ context.Context, args []string) (int, error) {
 	}
 	if out := guard.Guard(input); len(out) > 0 {
 		c.Stdout.Write(out)
+		c.refused(ctx, input, out)
 	}
 	return OK, nil
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/spec"
 )
 
 // The history (DEC-114) is read in time order, whatever order a merge left its
@@ -154,5 +155,16 @@ func TestCochangesNeedAVerdictBefore(t *testing.T) {
 	c := derived(event(1, "d", "d0"), event(2, "d", "d1", "x"), event(3, "x", "x0"))
 	if len(c.Cochanges) != 0 {
 		t.Fatalf("a partner without a verdict before counts: %v", c.Cochanges)
+	}
+}
+
+// The counts of a run's start and end: a gone Definition is left to verify but
+// no item of the spec, a skip is verified as far as it goes, and the rest is
+// verified.
+func TestCountsOf(t *testing.T) {
+	st := run.Status{Units: 5, SpecErrors: make(spec.Diagnostics, 2), Errors: make(spec.Diagnostics, 3), Items: []run.Item{{State: run.StateGone}, {State: run.StateFail}, {State: run.StateSpecProblem}, {State: run.StateNew}}, Skipped: []run.Item{{State: run.StateSkip}}}
+	got := run.CountsOf(st)
+	if want := (run.RunCounts{Verified: 1, Fail: 1, SpecProblem: 1, Skip: 1, Left: 4, SpecErrors: 2, RealizationErrors: 3}); got != want {
+		t.Fatalf("counts: %+v, want %+v", got, want)
 	}
 }

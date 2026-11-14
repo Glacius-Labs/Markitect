@@ -81,6 +81,11 @@ Usage:
                                                   record a verdict at the state status printed: ok, fail, skip or
                                                   spec-problem; evidence is path:line or path; only the
                                                   markitect-reviewer agent runs it
+  markitect run    [--repo DIR] start KIND [--strategy STRATEGY] [--trigger owner|routine|claude]
+  markitect run    [--repo DIR] slice [PACKAGES] | end OUTCOME [--rounds N]
+                                                  tell the project's history that a run starts, a slice or a round
+                                                  starts, or the run ends: done, no-progress, stopped or failed; the
+                                                  tool adds what the list says then; the skills and workflows run it
   markitect config [--repo DIR] KEY | [--user] KEY VALUE | [--user] --unset KEY | --list [--json]
                                                   read or change the harness configuration: the agents' model and
                                                   effort per role, the strategy per skill and custom workflows; the
@@ -160,6 +165,8 @@ func (c CLI) Run(ctx context.Context, args []string) int {
 		code, err = c.mark(ctx, rest)
 	case "config":
 		code, err = c.config(ctx, rest)
+	case "run":
+		code, err = c.runs(ctx, rest)
 	case "hook":
 		code, err = c.hook(ctx, rest)
 	case "version":

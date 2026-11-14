@@ -106,6 +106,15 @@ It writes under a lock in the user's cache folder (`markitect/locks/`, one per p
 - `cases` and `covered`, when the reviewer gave them.
 - `pending`: the other Definitions, sorted, whose own text is none of the `self` hashes of their record lines, changed since their last verdict and not verified again. A Definition with no line yet has no change pending. Beyond 30 the event gives only their number, `pending_count`.
 
+The drivers' events come from `markitect run` (the command line adapter builds them and the engine appends them under the same lock):
+
+- `run-start`: `kind`, `strategy` when the driver gives it, `trigger`, and what the tool knows then: `items` on the list, the `slices` a build of it goes in at the default size, `roles`, each role's `model` and `effort` from the harness configuration, and `counts` as at the end.
+- `run-slice`: the `packages` the slice's command lists, those of the slices before included, none for a round over the whole list, and its `items`. A slice ends where the next starts or the run ends.
+- `run-end`: `outcome` (`done`, `no-progress`, `stopped` or `failed`), `rounds` when the driver counts them, and `counts` from the list then: `verified`, `fail`, `spec_problem`, `skip`, `left`, and the `spec_errors`, which leave no list, and `realization_errors`.
+- `refusal`: what the hook refused: the `agent`, empty for the owner's session, the `tool`, the `target` it named and `why`. The hook waits at most a second for the lock and drops the line past it, so that it never holds up an agent.
+
+A verdict belongs to the run whose start and end enclose its time. A run without an end is open. Two runs at once, in two worktrees, each write their own history; after the merge their windows overlap, and a verdict in both windows cannot be told apart by time alone.
+
 Reading it, `ParseHistory` orders the events by time, keeping the file's order among equal times, keeps a line that both sides of a merge hold once, and skips a line it cannot read. The time is the writing machine's clock, so a clock set back can reorder events and shift a count. `Changes` derives, from the verdicts in that order:
 
 - **Revisions:** a verdict at another `self` than the Definition's verdict before it. A first verdict is none, and so is a verdict without `self`. Counting starts with the history: a project's first verdict in it is a first verdict.
