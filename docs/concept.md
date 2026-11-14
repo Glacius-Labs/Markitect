@@ -144,6 +144,7 @@ A spec is judged like code, so it gets the same kind of analysis code gets. `che
 | A Definition named in prose without a link | An undeclared dependency | Notes `vet.unlinked_mention`; the auditor tells missing links from ordinary words |
 | A Definition all of whose users lie in one Package below it | Misplaced code | Notes `vet.placement` |
 | Change hotspots: revisions between verdicts times fan-in | Churn | Notes `vet.hotspot`; the record counts revisions, since the tool reads no Git history |
+| Two Definitions whose texts keep changing together with no link between them | Change coupling | Notes `vet.change_coupling`; the record counts co-changes |
 | Abstractness and distance from the main sequence | Martin's metrics | Shown by `list --deps`, no warning |
 | Size against what the evidence demonstrates | CRAP | Notes `vet.risk`, from the reviewer's counts on `mark` |
 | The spec's dependencies against the code's imports | Architecture tests | Not yet |
@@ -190,7 +191,7 @@ The owner architects the project until the spec looks right, then uses `/markite
 
 **A verdict is bound to what the reviewer read.** `status` prints each item as `DEFINITION@FINGERPRINT`, the fingerprint being the start of the hash of every input but the evidence, and `mark` refuses when the inputs changed since: a builder editing a file beside the reviewer, or the reviewer's own test run changing one. The evidence, `path` or `path:line`, must be files of the folder, and their hashes become inputs, so a weakened test that served as evidence puts its Definition back on the list. Go does the same: it does not cache a result whose inputs changed while the test ran.
 
-**Revisions** count how often a Definition's own text changed between verdicts, as the basis for `vet.hotspot` without Git history. A first verdict counts none, and a change of a link, a file or the evidence counts none.
+**Revisions** count how often a Definition's own text changed between verdicts, as the basis for `vet.hotspot` without Git history. A first verdict counts none, and a change of a link, a file or the evidence counts none. **Co-changes** count, per pair, how often two Definitions' own texts changed in one round, as the basis for `vet.change_coupling`: a revision counts one with each other Definition whose own text changed since its last verdict, and a round of more than 30 changed Definitions, such as a reorganisation, counts none.
 
 **How it is written.** `mark` writes under a short lock in the user's cache folder, as one whole file, so parallel reviewers, for example one per Package, do not lose lines. A gone Definition stays on the list with the files that realized it until a reviewer finds them removed or with a new basis and records `ok`, which removes its line.
 

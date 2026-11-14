@@ -28,8 +28,9 @@ const (
 var Verdicts = []string{VerdictOK, VerdictFail, VerdictSkip, VerdictSpecProblem}
 
 // Line is one line of the record: the verdict on one Definition at its inputs.
-// Cases, Covered and Revisions came with 0.23.0 (DEC-102) and are left out when
-// empty, so a line written before reads as no count and no revision.
+// Cases, Covered and Revisions came with 0.23.0 (DEC-102), Cochanges and Batch
+// later; each is left out when empty, so a line written before reads as no
+// count, no revision and no co-change.
 type Line struct {
 	Definition string   `json:"definition"`
 	Verdict    string   `json:"verdict"`
@@ -44,7 +45,21 @@ type Line struct {
 	// Revisions counts how often the Definition's own text changed between two
 	// verdicts on it: a verdict at another text than every line before it adds one.
 	Revisions int `json:"revisions,omitempty"`
+	// Cochanges counts, per other Definition, how often its own text had changed
+	// too, and was not verified again yet, when a verdict counted a revision of
+	// this one: how often the two changed in one round.
+	Cochanges map[string]int `json:"cochanges,omitempty"`
+	// Batch says that the Definition's own text changed, since this line, in a
+	// round of more than maxChangeSet Definitions, so that the verdict on that
+	// text counts no co-change.
+	Batch bool `json:"batch,omitempty"`
 }
+
+// maxChangeSet is the most Definitions one round of change may hold for mark
+// to count its co-changes: a larger batch, such as a reorganisation, says
+// nothing about which of them belong together. It is code-maat's largest
+// change set.
+const maxChangeSet = 30
 
 // Revisions returns, per Definition, how often its own text changed between two
 // verdicts on it: of several lines, as after a merge, the most. Definitions with
@@ -54,6 +69,26 @@ func (r Record) Revisions() map[string]int {
 	for _, l := range r.Lines {
 		if l.Revisions > out[l.Definition] {
 			out[l.Definition] = l.Revisions
+		}
+	}
+	return out
+}
+
+// Cochanges returns, per pair of Definitions, how often both own texts changed
+// in one round, in both directions: of several lines, as after a merge, the
+// most. Definitions with none are left out.
+func (r Record) Cochanges() map[string]map[string]int {
+	out := map[string]map[string]int{}
+	add := func(a, b string, n int) {
+		if out[a] == nil {
+			out[a] = map[string]int{}
+		}
+		out[a][b] = max(out[a][b], n)
+	}
+	for _, l := range r.Lines {
+		for id, n := range l.Cochanges {
+			add(l.Definition, id, n)
+			add(id, l.Definition, n)
 		}
 	}
 	return out
@@ -110,6 +145,51 @@ func revisions(before []Line, now Inputs) int {
 		n++
 	}
 	return n
+}
+
+// changed lists, sorted, the items other than except whose own text is none of
+// the texts the record's lines on them hold: what changed since its last
+// verdict and is not verified again yet. An item with no line yet has no
+// change to count.
+func changed(lines map[string][]Line, now map[string]Inputs, except string) []string {
+	var out []string
+	for _, id := range sortedKeys(now) {
+		if id == except || len(lines[id]) == 0 {
+			continue
+		}
+		same := false
+		for _, l := range lines[id] {
+			if l.Inputs[InputSelf] == now[id][InputSelf] {
+				same = true
+			}
+		}
+		if !same {
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
+// mostCochanges is, per other Definition, the most co-changes any of the lines
+// counts.
+func mostCochanges(lines []Line) map[string]int {
+	out := map[string]int{}
+	for _, l := range lines {
+		for id, n := range l.Cochanges {
+			out[id] = max(out[id], n)
+		}
+	}
+	return out
+}
+
+// batched says whether any of the lines is in a round too large to count.
+func batched(lines []Line) bool {
+	for _, l := range lines {
+		if l.Batch {
+			return true
+		}
+	}
+	return false
 }
 
 // Directory is what bound a Package and every Package below it when a line

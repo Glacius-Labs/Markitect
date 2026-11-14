@@ -915,6 +915,18 @@ func TestDocAndVetDocuments(t *testing.T) {
 	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 0 || !strings.Contains(out, ".markitect/spec/project.md: vet.hotspot: its own text changed 21 times between verdicts, and 1 Definition links to it or is of it as Kind, so its changes put about 21 back") {
 		t.Fatalf("vet --strict with a hotspot: %d %s", code, out)
 	}
+	// vet reads from the record how often two own texts changed together: the
+	// anchor and a Concept that neither links nor binds the other changed
+	// together 5 times. A note leaves the exit code alone.
+	r.Write(".markitect/spec/small.md", "---\nkind: std/Concept\n---\n# Small\n\nA small thing.\n")
+	r.Write(".markitect/review.sum", `{"definition":"project","verdict":"ok","inputs":{"self":"sha256:0"},"revisions":5,"cochanges":{"small":5}}`+"\n"+
+		`{"definition":"small","verdict":"ok","inputs":{"self":"sha256:0"},"revisions":6,"cochanges":{"project":5}}`+"\n")
+	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 0 || !strings.Contains(out, ".markitect/spec/project.md: vet.change_coupling: its own text changed together with that of small 5 times between verdicts, of its 5 revisions and that one's 6") {
+		t.Fatalf("vet --strict with change coupling: %d %s", code, out)
+	}
+	if err := os.Remove(filepath.Join(r.Dir, ".markitect", "spec", "small.md")); err != nil {
+		t.Fatal(err)
+	}
 	// vet reads the reviewer's counts from the record too: an ok on evidence for
 	// 2 of 9 cases is a risk. A note leaves the exit code alone.
 	r.Write(".markitect/review.sum", `{"definition":"project","verdict":"ok","inputs":{"self":"sha256:0"},"cases":9,"covered":2}`+"\n")

@@ -28,6 +28,13 @@ const (
 	// never fewer than MinHotspot, before vet.hotspot notes it.
 	MaxHotspotShare = 0.1
 	MinHotspot      = 20
+	// Two Definitions whose own texts changed together at least MinCochanges
+	// times, each changing at least MinCochangeRevisions times, and together in
+	// at least MinCochangeShare of their mean revisions, are noted by
+	// vet.change_coupling when nothing ties them: code-maat's defaults.
+	MinCochangeRevisions = 5
+	MinCochanges         = 5
+	MinCochangeShare     = 0.3
 	// MaxRisk is the risk a verified Definition may have before vet.risk notes
 	// it: the line CRAP draws for code. With c one more than the cases a reviewer
 	// counted and e the share of them the evidence demonstrates, the risk is
@@ -59,6 +66,9 @@ type History struct {
 	// Revisions counts, per Definition, how often its own text changed between
 	// two verdicts on it.
 	Revisions map[string]int
+	// Cochanges counts, per pair of Definitions in both directions, how often
+	// their own texts changed in one round between verdicts.
+	Cochanges map[string]map[string]int
 	// Counts holds, per Definition with an ok or a skip at its text as it is,
 	// what the reviewer counted with it.
 	Counts map[string]Count
@@ -87,7 +97,8 @@ func (c Count) Risk() float64 {
 }
 
 // Vet analyses the design of a loaded project like code: coupling, size, hubs
-// and, as notes, unlinked mentions, statements, placement, hotspots and risk.
+// and, as notes, unlinked mentions, statements, placement, hotspots, change
+// coupling and risk.
 func Vet(p *project.Project, h History) Report {
 	var r Report
 	sp := p.Spec
@@ -178,6 +189,7 @@ func Vet(p *project.Project, h History) Report {
 			notes.Add("vet.hotspot", d.File, 0, "its own text changed %d %s between verdicts, and %s, so its changes put about %d back on the list to verify, more than a tenth of the spec; split what changes from what relies on it", rev, plural(rev, "time", "times"), linkers, fan*rev)
 		}
 	}
+	changeCoupling(sp, h, &notes)
 	r.Warnings = r.Warnings.Sorted()
 	for _, d := range notes {
 		r.Notes = append(r.Notes, Note{Diagnostic: d})
@@ -185,6 +197,57 @@ func Vet(p *project.Project, h History) Report {
 	r.Notes = append(r.Notes, unlinkedMentions(p)...)
 	sort.SliceStable(r.Notes, func(i, j int) bool { return less(r.Notes[i].Diagnostic, r.Notes[j].Diagnostic) })
 	return r
+}
+
+// changeCoupling notes two Definitions whose own texts keep changing together
+// between verdicts although nothing ties them: probably one relies on the other
+// without a link, and status, which follows links, lets a change to one pass the
+// other (DEC-102). The note stands once, on the first of the two by ID. Two are
+// tied when either links to the other, as a unit with its parts, when they
+// belong to one unit, when one binds the other by scope, or when either is a
+// Kind, whose change concerns its Definitions by design.
+func changeCoupling(sp *spec.Spec, h History, notes *spec.Diagnostics) {
+	linked := map[string]map[string]bool{}
+	for _, id := range sp.OwnDefinitions() {
+		unit := sp.UnitOf(id)
+		if linked[unit] == nil {
+			linked[unit] = map[string]bool{}
+		}
+		for _, l := range sp.Definitions[id].Links {
+			if t := sp.Definitions[l.Target]; !l.Package && t != nil && t.Own() {
+				linked[unit][sp.UnitOf(l.Target)] = true
+			}
+		}
+	}
+	binder := map[string]string{}
+	for pkg, ids := range sp.Binding() {
+		for _, id := range ids {
+			binder[id] = pkg
+		}
+	}
+	binds := func(a, b string) bool {
+		pkg, ok := binder[sp.UnitOf(a)]
+		return ok && sp.Bound(b) && spec.Within(sp.Definitions[b].Package, pkg)
+	}
+	tied := func(a, b string) bool {
+		ua, ub := sp.UnitOf(a), sp.UnitOf(b)
+		return ua == ub || linked[ua][ub] || linked[ub][ua] || binds(a, b) || binds(b, a) ||
+			sp.Definitions[a].Kind == spec.CoreKind || sp.Definitions[b].Kind == spec.CoreKind
+	}
+	for _, a := range sortedKeys(h.Cochanges) {
+		for _, b := range sortedKeys(h.Cochanges[a]) {
+			da, db := sp.Definitions[a], sp.Definitions[b]
+			if b <= a || da == nil || db == nil || !da.Own() || !db.Own() {
+				continue
+			}
+			shared, ra, rb := h.Cochanges[a][b], h.Revisions[a], h.Revisions[b]
+			if ra < MinCochangeRevisions || rb < MinCochangeRevisions || shared < MinCochanges ||
+				float64(shared) < MinCochangeShare*float64(ra+rb)/2 || tied(a, b) {
+				continue
+			}
+			notes.Add("vet.change_coupling", da.File, 0, "its own text changed together with that of %s %d times between verdicts, of its %d revisions and that one's %d, yet neither links the other, so status lets a change to one pass the other; link what one relies on in the other, or say in one of them why they change together", b, shared, ra, rb)
+		}
+	}
 }
 
 // placement returns the Package below a Definition's own into which it could move,
