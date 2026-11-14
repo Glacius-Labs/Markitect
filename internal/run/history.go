@@ -2,6 +2,7 @@ package run
 
 import (
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -99,24 +100,27 @@ type Changes struct {
 // own texts changed in one round (DEC-102).
 //
 // A verdict at another own text than the Definition's verdict before it is a
-// revision. A revision counts a co-change with each Definition pending beside it.
-// Each change counts once with each partner: a pending change that counted with
-// a Definition counts with it no more, however often that one is revised before
-// its verdict, and the verdict on it counts with none it counted with already.
-// A round of more than maxChangeSet Definitions, the revision included, counts
-// nothing, and neither does any change verified after such a round was seen and
-// before its verdict: what changes during a reorganisation is part of it, and a
-// round shrinks as it is verified. A Definition's verdict ends its pending
-// change. Definitions gone from the spec stay in the counts; whoever reads them
-// asks the spec.
+// revision. A revision counts a co-change with each Definition pending beside it
+// that has a verdict in the history before, so that its own verdict will be a
+// revision too. Each change counts once with each partner: a pending change that
+// counted with a Definition counts with it no more, however often that one is
+// revised before its verdict, and the verdict on it counts with none it counted
+// with already. A round of more than maxChangeSet Definitions counts nothing: no
+// verdict counts while more than maxChangeSet are pending beside it, the revision
+// included, nor the first verdict after that, which names what is left of the
+// round, and what it names counts with nothing until its own verdict. A
+// Definition's verdict ends its pending change. Definitions gone from the spec
+// stay in the counts; whoever reads them asks the spec.
 func (h History) Changes() Changes {
 	c := Changes{Revisions: map[string]int{}, Cochanges: map[string]map[string]int{}}
 	last := map[string]string{}
+	seen := map[string]bool{}
 	// counted holds, per Definition, the partners its pending change counted
-	// with; large counts the large rounds seen, and largeAt how many had been
-	// seen at a Definition's last verdict.
+	// with; batch what is left of a large round; ending says that a large round
+	// was seen and no verdict since has named what is left of it.
 	counted := map[string]map[string]bool{}
-	large, largeAt := 0, map[string]int{}
+	batch := map[string]bool{}
+	ending := false
 	add := func(a, b string) {
 		for _, p := range [][2]string{{a, b}, {b, a}} {
 			if c.Cochanges[p[0]] == nil {
@@ -130,8 +134,8 @@ func (h History) Changes() Changes {
 			continue
 		}
 		d := e.Definition
-		was, seen := last[d]
-		revised := seen && e.Self != "" && was != "" && e.Self != was
+		was := last[d]
+		revised := was != "" && e.Self != "" && e.Self != was
 		if e.Self != "" {
 			last[d] = e.Self
 		}
@@ -140,12 +144,17 @@ func (h History) Changes() Changes {
 			c.Revisions[d]++
 			round++
 		}
-		if round > maxChangeSet {
-			large++
-		}
-		if revised && large == largeAt[d] {
+		switch {
+		case round > maxChangeSet:
+			ending = true
+		case ending:
+			ending = false
 			for _, x := range e.Pending {
-				if x == d || large != largeAt[x] || counted[d][x] || counted[x][d] {
+				batch[x] = true
+			}
+		case revised && !batch[d]:
+			for _, x := range e.Pending {
+				if x == d || !seen[x] || batch[x] || counted[d][x] || counted[x][d] {
 					continue
 				}
 				add(d, x)
@@ -155,27 +164,40 @@ func (h History) Changes() Changes {
 				counted[x][d] = true
 			}
 		}
+		seen[d] = true
 		delete(counted, d)
-		largeAt[d] = large
+		delete(batch, d)
 	}
 	return c
 }
 
-// appendHistory adds an event to a project's history as its last line, in one
-// step: a crash leaves the history as it was or with the line. mark calls it
-// under the lock of the record.
+// appendHistory adds an event to a project's history as its last line, with one
+// write that appends: the history is never rewritten. mark calls it under the
+// lock of the record.
 func appendHistory(root string, e Event) error {
-	data, err := readOwnFile(root, project.HistoryFile)
-	if err != nil {
-		return err
-	}
 	line, err := marshal(e)
 	if err != nil {
 		return err
 	}
-	if len(data) > 0 && data[len(data)-1] != '\n' {
-		data = append(data, '\n')
+	dir := filepath.Join(root, filepath.FromSlash(project.Dir))
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
 	}
-	data = append(data, line+"\n"...)
-	return writeAtomic(filepath.Join(root, filepath.FromSlash(project.Dir)), filepath.Base(project.HistoryFile), data)
+	f, err := os.OpenFile(filepath.Join(root, filepath.FromSlash(project.HistoryFile)), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	// A line cut short, by a crash or by hand, stays a line of its own that
+	// counts nothing.
+	if st, err := f.Stat(); err == nil && st.Size() > 0 {
+		last := make([]byte, 1)
+		if _, err := f.ReadAt(last, st.Size()-1); err == nil && last[0] != '\n' {
+			line = "\n" + line
+		}
+	}
+	if _, err := f.WriteString(line + "\n"); err != nil {
+		return err
+	}
+	return f.Sync()
 }

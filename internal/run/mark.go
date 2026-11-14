@@ -173,7 +173,7 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 		return "", false, err
 	}
 	if err := appendHistory(f.root, event); err != nil {
-		return "", false, fmt.Errorf("the verdict is recorded, but %s could not take its event: %w", project.HistoryFile, err)
+		return "", false, fmt.Errorf("the verdict is recorded in %s, but %s could not take its event (%w); run the same mark again, which records the verdict once more and adds its event", project.ReviewFile, project.HistoryFile, err)
 	}
 	if removed {
 		return fmt.Sprintf("Recorded: %s is gone and its files are dealt with, so its line is removed.\n", req.definition), true, nil

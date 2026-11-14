@@ -243,7 +243,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 ### DEC-114 Process data lives in the history
 
 - What happened during the work is process data, and it lives in `.markitect/history.jsonl`: not in the record, which says what is verified now, and not in the spec, which says what should be. It is committed with the project, appended and never rewritten, and merges with `merge=union`; a reader orders its lines by time.
-- Each line is one JSON event with its `time`, in UTC, and its `type`, so that new types of events need no format version. `mark` appends a `verdict` event for each verdict, under the lock of the record and in the same step: the Definition, the verdict, the hash of its own text, the reviewer's counts, and the other Definitions whose own text was pending then, or only their number when there are more than 30.
+- Each line is one JSON event with its `time`, in UTC, and its `type`, so that new types of events need no format version. `mark` appends a `verdict` event for each verdict right after it writes the record, under the record's lock: the Definition, the verdict, the hash of its own text, the reviewer's counts, and the other Definitions whose own text was pending then, or only their number when there are more than 30.
 - The history records facts, not counts. `vet` derives its measures of change from it when it runs, so a threshold tuned later applies to the past too. Only `mark` writes it; no agent edits it.
 
 ## Skills and roles
