@@ -108,6 +108,9 @@ type Link struct {
 	Package bool   // the target is a Package
 	Kind    bool   // the front matter's kind
 	Line    int
+	// Start is the offset of the link in the text without front matter; 0 for
+	// the front matter's Kind.
+	Start int
 	// Field is the label of the field the link stands in; "" for a link in
 	// the text before the first field.
 	Field string
