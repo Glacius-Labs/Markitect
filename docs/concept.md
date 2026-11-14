@@ -227,7 +227,7 @@ A skill names which agent the owner's session starts and on what task; the agent
 
 | Skill | Started by | Does |
 |---|---|---|
-| `markitect-architect` | The owner or Claude | Architects the project with the owner, in their own session. It sees whether the folder is an empty project, a project without a spec or an existing spec, and starts the spec by asking what only the owner can know and proposing the rest, with one audit before it hands the spec over, draws it from the project and has a reviewer verify it against the project, or changes it. The session writes the spec, since it holds the conversation; a large draft, such as a first spec drawn from a large project, it hands to the `markitect-architect` agent, which hands its questions back. It links the real unlinked mentions that `vet` notes. What the owner cannot answer at once, the session keeps in `.markitect/questions.md`, and `status` says while that file is there |
+| `markitect-architect` | The owner or Claude | Architects the project with the owner, in their own session. It sees whether the folder is an empty project, a project without a spec or an existing spec, and starts the spec by asking what only the owner can know and proposing the rest, with one audit, and hands the spec over on a fresh auditor's retelling of it: what the system is, the Scenarios as stories, what its users will notice, with what else would do where the owner did not say it, and what the reader could only guess; draws it from the project and has a reviewer verify it against the project, or changes it. The session writes the spec, since it holds the conversation; a large draft, such as a first spec drawn from a large project, it hands to the `markitect-architect` agent, which hands its questions back. It links the real unlinked mentions that `vet` notes. What the owner cannot answer at once, the session keeps in `.markitect/questions.md`, and `status` says while that file is there |
 | `/markitect-build` | The owner | [§5](#5-what-build-does) |
 | `/markitect-review` | The owner or Claude | The `markitect-reviewer` agent verifies what `status` lists, or with `--all` every Definition, records each verdict and reports what failed and what is a `spec-problem`. With the `parallel` strategy it starts one reviewer per Package ([§10](#10-drivers)). The session commits the record |
 | `/markitect-cleanup` | The owner | The builder, in a worktree of its own, refactors without changing behaviour, and the reviewer verifies again what that put back on the list. The work comes back when it leaves nothing worse |
@@ -238,7 +238,7 @@ A skill names which agent the owner's session starts and on what task; the agent
 
 Only the owner starts the skills that change code or set up routines: their files set `disable-model-invocation`.
 
-**Whether the spec says what the owner meant** the owner answers from the architect's hand-over of a new spec, which has a fixed shape: what the system now is, the Scenarios told as stories, a table of what the session decided beside what else would do, the Package cut and technical choices, and the audit's questions. `vet` and the audit support it. A reading view that shows the spec whole is an idea, not built ([roadmap](roadmap.md#ideas)).
+**Whether the spec says what the owner meant** the owner answers from the architect's hand-over of a new spec, which rests on a fresh auditor's retelling of the spec and has a fixed shape: what the system now is and the Scenarios told as stories, as the reader told them, what its users will notice, a table of what the session decided beside what else would do, the Package cut and technical choices, and the audit's questions. `vet` and the audit support it. A reading view that shows the spec whole is an idea, not built ([roadmap](roadmap.md#ideas)).
 
 ## 9. The harness
 
@@ -255,7 +255,7 @@ For Claude Code, `markitect init` writes these project files, so they are versio
 | `.claude/agents/markitect-builder.md` | The builder's three tasks, build, clean up and hunt bugs, and how it works. Tools Read, Edit, Write, Glob, Grep, Bash and `Agent(markitect-reviewer)`; model `sonnet`, effort `high`, as the reviewer; the architect and the auditor have `opus` and `medium` |
 | `.claude/agents/markitect-reviewer.md` | The reviewer's two tasks, verify and hunt bugs, and the verdict words. No edit or agent tools |
 | `.claude/agents/markitect-architect.md` | Write a large part of the spec as the architect skill says, only under `.markitect/`, and hand back every question and what it wrote that the owner's answers and the project do not state. No agent tool |
-| `.claude/agents/markitect-auditor.md` | Read the spec fresh and report what is wrong with it. No edit or agent tools |
+| `.claude/agents/markitect-auditor.md` | Read the spec fresh and report what is wrong with it, or retell a new spec to its owner from the spec alone. No edit or agent tools |
 | `.claude/settings.json` | The hooks, below, and `worktree.baseRef: "head"` unless the settings name a base, added to whatever settings the project already has |
 | `.markitect/.gitattributes` | `review.sum merge=union` |
 | `.markitect/harness.yaml` | The project's harness configuration, below. `markitect config` makes it when the owner sets a value |
