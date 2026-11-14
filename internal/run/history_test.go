@@ -156,3 +156,14 @@ func TestCochangesNeedAVerdictBefore(t *testing.T) {
 		t.Fatalf("a partner without a verdict before counts: %v", c.Cochanges)
 	}
 }
+
+// The counts of a run's start and end: a gone Definition is left to verify but
+// no item of the spec, a skip is verified as far as it goes, and the rest is
+// verified.
+func TestCountsOf(t *testing.T) {
+	st := run.Status{Units: 5, Items: []run.Item{{State: run.StateGone}, {State: run.StateFail}, {State: run.StateSpecProblem}, {State: run.StateNew}}, Skipped: []run.Item{{State: run.StateSkip}}}
+	got := run.CountsOf(st)
+	if want := (run.RunCounts{Verified: 1, Fail: 1, SpecProblem: 1, Skip: 1, Left: 4}); got != want {
+		t.Fatalf("counts: %+v, want %+v", got, want)
+	}
+}

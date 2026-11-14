@@ -75,8 +75,8 @@ type Event struct {
 	// A slice's start: its Packages, none for a round over the whole list, and
 	// its items, in Items.
 	Packages []string `json:"packages,omitempty"`
-	// A run's end: how it ended, its rounds when the driver counts them, and
-	// what the list says then.
+	// A run's end: how it ended and its rounds when the driver counts them.
+	// Counts says what the list says at a run's start and at its end.
 	Outcome string     `json:"outcome,omitempty"`
 	Rounds  *int       `json:"rounds,omitempty"`
 	Counts  *RunCounts `json:"counts,omitempty"`
@@ -94,21 +94,24 @@ type Role struct {
 	Effort string `json:"effort"`
 }
 
-// RunCounts is what the list says when a run ends: the items verified at their
-// inputs, those recorded fail, spec-problem or skip there, and the items left
-// to verify, the fails and spec-problems among them.
+// RunCounts is what the list says when a run starts or ends: the items verified
+// at their inputs, those recorded fail, spec-problem or skip there, the items
+// left to verify, the fails and spec-problems among them, and the errors in
+// the spec, which leave no list, and in the realization.
 type RunCounts struct {
-	Verified    int `json:"verified"`
-	Fail        int `json:"fail"`
-	SpecProblem int `json:"spec_problem"`
-	Skip        int `json:"skip"`
-	Left        int `json:"left"`
+	Verified          int `json:"verified"`
+	Fail              int `json:"fail"`
+	SpecProblem       int `json:"spec_problem"`
+	Skip              int `json:"skip"`
+	Left              int `json:"left"`
+	SpecErrors        int `json:"spec_errors"`
+	RealizationErrors int `json:"realization_errors"`
 }
 
-// CountsOf counts a status of the whole list for a run's end. A gone
+// CountsOf counts a status of the whole list for a run's start or end. A gone
 // Definition is left to verify, but no item of the spec.
 func CountsOf(st Status) RunCounts {
-	c := RunCounts{Skip: len(st.Skipped), Left: len(st.Items)}
+	c := RunCounts{Skip: len(st.Skipped), Left: len(st.Items), SpecErrors: len(st.SpecErrors), RealizationErrors: len(st.Errors)}
 	live := 0
 	for _, it := range st.Items {
 		switch it.State {
@@ -282,7 +285,13 @@ func appendHistory(root string, e Event) error {
 
 // Append adds an event to the history of the project that holds dir, under
 // the lock of its record, with its time now when it has none.
-func (e *Engine) Append(_ context.Context, dir string, ev Event) error {
+func (e *Engine) Append(ctx context.Context, dir string, ev Event) error {
+	return e.AppendWithin(ctx, dir, ev, lockWait)
+}
+
+// AppendWithin appends as Append does, waiting at most wait for the lock, as
+// the hook does, which must not hold up an agent.
+func (e *Engine) AppendWithin(_ context.Context, dir string, ev Event, wait time.Duration) error {
 	root, err := e.Folder.Root(dir)
 	if err != nil {
 		return err
@@ -291,7 +300,7 @@ func (e *Engine) Append(_ context.Context, dir string, ev Event) error {
 	if err != nil {
 		return err
 	}
-	release, err := lock(locks, recordKey(root), lockWait)
+	release, err := lock(locks, recordKey(root), wait)
 	if err != nil {
 		return fmt.Errorf("the record of %s is locked: %w", root, err)
 	}

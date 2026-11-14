@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/harness"
 	"github.com/Glacius-Labs/Markitect/internal/run"
@@ -103,8 +104,8 @@ func (c CLI) runStart(ctx context.Context, dir string, positional []string, stra
 		model, effort := cfg.Agent(r)
 		roles[r] = run.Role{Model: model, Effort: effort}
 	}
-	items, slicesOf := len(st.Items), len(st.Slices)
-	return run.Event{Type: run.EventRunStart, Kind: kind, Strategy: strategy, Trigger: trigger, Items: &items, Slices: &slicesOf, Roles: roles}, nil
+	items, slicesOf, counts := len(st.Items), len(st.Slices), run.CountsOf(st)
+	return run.Event{Type: run.EventRunStart, Kind: kind, Strategy: strategy, Trigger: trigger, Items: &items, Slices: &slicesOf, Roles: roles, Counts: &counts}, nil
 }
 
 func (c CLI) runSlice(ctx context.Context, dir string, positional []string) (run.Event, error) {
@@ -159,8 +160,16 @@ func said(ev run.Event) string {
 		return fmt.Sprintf("Started %s: %d %s.", what, *ev.Items, plural(*ev.Items, "item", "items"))
 	}
 	c := ev.Counts
-	return fmt.Sprintf("Run ended: %s; %d verified, %d left (%d fail, %d spec-problem), %d skip.", ev.Outcome, c.Verified, c.Left, c.Fail, c.SpecProblem, c.Skip)
+	text := fmt.Sprintf("Run ended: %s; %d verified, %d left (%d fail, %d spec-problem), %d skip", ev.Outcome, c.Verified, c.Left, c.Fail, c.SpecProblem, c.Skip)
+	if c.SpecErrors > 0 || c.RealizationErrors > 0 {
+		text += fmt.Sprintf("; %d %s in the spec, %d in the realization", c.SpecErrors, plural(c.SpecErrors, "error", "errors"), c.RealizationErrors)
+	}
+	return text + "."
 }
+
+// hookWait is how long the hook waits for the lock of the record to append a
+// refusal; past it the line is dropped.
+const hookWait = time.Second
 
 // refused appends to the history of the project the call came from what the
 // hook refused. It never fails: a hook must not stop an agent.
@@ -189,5 +198,5 @@ func (c CLI) refused(ctx context.Context, input, out []byte) {
 	if r := []rune(target); len(r) > 200 {
 		target = string(r[:200]) + "…"
 	}
-	_ = c.Record.Append(ctx, in.Cwd, run.Event{Type: run.EventRefusal, Agent: in.AgentType, Tool: in.ToolName, Target: target, Why: said.Output.Why})
+	_ = c.Record.AppendWithin(ctx, in.Cwd, run.Event{Type: run.EventRefusal, Agent: in.AgentType, Tool: in.ToolName, Target: target, Why: said.Output.Why}, hookWait)
 }

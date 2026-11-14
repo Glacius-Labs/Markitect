@@ -278,7 +278,7 @@ For Claude Code, `markitect init` writes these project files, so they are versio
 | `markitect-auditor` | Nothing | No | Nothing |
 | Any other | As the builder | No | Any agent but the builder and the architect; no workflow |
 
-- **No subagent writes `.markitect/review.sum` or `.markitect/history.jsonl`,** which only `mark` writes, and none but the architect writes the rest of `.markitect/` except the registry pages. The owner's own session, where the owner architects, is not a subagent and stays free, but does not record either.
+- **No subagent writes `.markitect/review.sum` or `.markitect/history.jsonl`,** which only the tool writes, through `mark`, and for the history also `run` and the hook, and none but the architect writes the rest of `.markitect/` except the registry pages. The owner's own session, where the owner architects, is not a subagent and stays free, but does not record either.
 - **No subagent writes what steers the agents:** the project's Claude Code settings with the hook scripts and rules beside them (`.claude/hooks/`, `.claude/rules/`), Markitect's skills, agents and workflows, the harness configuration, and `AGENTS.md`, `CLAUDE.md` and `CLAUDE.local.md`. Nor does any write `.markitect/.gitattributes`, which `init` writes. The builder's work comes back without anyone reading its diff, so a builder must not be able to drop the hook on its way.
 - **Only the owner's session starts the builder and the architect, or a workflow.** Claude Code ignores the agent types listed in a subagent's own tools, so the hook holds this. A workflow the owner's session starts may start the four roles, and the hook holds their rights inside it as anywhere; so it does in the user's own skills in `.claude/skills/`, which Markitect leaves alone.
 

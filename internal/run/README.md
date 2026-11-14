@@ -108,10 +108,10 @@ It writes under a lock in the user's cache folder (`markitect/locks/`, one per p
 
 The drivers' events come from `markitect run` (the command line adapter builds them and the engine appends them under the same lock):
 
-- `run-start`: `kind`, `strategy` when the driver gives it, `trigger`, and what the tool knows then: `items` on the list, the `slices` a build of it goes in at the default size, and `roles`, each role's `model` and `effort` from the harness configuration.
-- `run-slice`: the slice's `packages`, none for a round over the whole list, and its `items`. A slice ends where the next starts or the run ends.
-- `run-end`: `outcome` (`done`, `no-progress`, `stopped` or `failed`), `rounds` when the driver counts them, and `counts` from the list then: `verified`, `fail`, `spec_problem`, `skip` and `left`.
-- `refusal`: what the hook refused: the `agent`, empty for the owner's session, the `tool`, the `target` it named and `why`.
+- `run-start`: `kind`, `strategy` when the driver gives it, `trigger`, and what the tool knows then: `items` on the list, the `slices` a build of it goes in at the default size, `roles`, each role's `model` and `effort` from the harness configuration, and `counts` as at the end.
+- `run-slice`: the `packages` the slice's command lists, those of the slices before included, none for a round over the whole list, and its `items`. A slice ends where the next starts or the run ends.
+- `run-end`: `outcome` (`done`, `no-progress`, `stopped` or `failed`), `rounds` when the driver counts them, and `counts` from the list then: `verified`, `fail`, `spec_problem`, `skip`, `left`, and the `spec_errors`, which leave no list, and `realization_errors`.
+- `refusal`: what the hook refused: the `agent`, empty for the owner's session, the `tool`, the `target` it named and `why`. The hook waits at most a second for the lock and drops the line past it, so that it never holds up an agent.
 
 A verdict belongs to the run whose start and end enclose its time. A run without an end is open. Two runs at once, in two worktrees, each write their own history; after the merge their windows overlap, and a verdict in both windows cannot be told apart by time alone.
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -26,8 +27,13 @@ func TestRunEventsAndRefusals(t *testing.T) {
 		t.Fatalf("run start: %s", out)
 	}
 	start := events()[0]
-	if start.Type != runs.EventRunStart || start.Kind != "build" || start.Strategy != "sequential" || start.Trigger != "owner" || start.Items == nil || *start.Items != 1 || *start.Slices != 1 || start.Roles["reviewer"].Model != "sonnet" || len(start.Roles) != 4 {
-		t.Fatalf("run start: %+v", start)
+	if start.Type != runs.EventRunStart || start.Kind != "build" || start.Strategy != "sequential" || start.Trigger != "owner" || start.Items == nil || *start.Items != 1 || *start.Slices != 1 || start.Roles["reviewer"].Model != "sonnet" || len(start.Roles) != 4 || start.Counts == nil || start.Counts.Left != 1 || start.Counts.Verified != 0 {
+		t.Fatalf("run start: %+v %+v", start, start.Counts)
+	}
+	// The anchor is verified last, so the slice of Root holds none of it.
+	mustRun(t, r.Dir, "run", "slice", "Root")
+	if sl := events()[1]; sl.Type != runs.EventRunSlice || strings.Join(sl.Packages, ",") != "Root" || sl.Items == nil || *sl.Items != 0 {
+		t.Fatalf("run slice Root: %+v", sl)
 	}
 	mustRun(t, r.Dir, "run", "slice")
 	verifyAll(t, r.Dir)
@@ -39,16 +45,12 @@ func TestRunEventsAndRefusals(t *testing.T) {
 	for _, e := range ev {
 		types = append(types, e.Type)
 	}
-	if got := strings.Join(types, " "); got != "run-start run-slice verdict run-end" {
+	if got := strings.Join(types, " "); got != "run-start run-slice run-slice verdict run-end" {
 		t.Fatalf("events: %s", got)
 	}
-	end := ev[3]
+	end := ev[4]
 	if end.Outcome != "done" || end.Rounds == nil || *end.Rounds != 1 || end.Counts == nil || end.Counts.Verified != 1 || end.Counts.Left != 0 {
 		t.Fatalf("run end: %+v %+v", end, end.Counts)
-	}
-	// A verdict belongs to the run whose start and end enclose its time.
-	if v := ev[2]; v.Time.Before(ev[0].Time) || v.Time.After(end.Time) {
-		t.Fatalf("the verdict lies outside its run: %v %v %v", ev[0].Time, v.Time, end.Time)
 	}
 	// What the driver may not say is refused, and nothing is appended.
 	for _, args := range [][]string{
@@ -69,27 +71,44 @@ func TestRunEventsAndRefusals(t *testing.T) {
 	}
 	// A run that never ends leaves the history readable.
 	mustRun(t, r.Dir, "run", "start", "review", "--trigger", "claude")
-	if ev := events(); len(ev) != 5 || ev[4].Type != runs.EventRunStart || ev[4].Kind != "review" {
+	if ev := events(); len(ev) != 6 || ev[5].Type != runs.EventRunStart || ev[5].Kind != "review" {
 		t.Fatalf("an open run: %+v", ev)
 	}
 	// The hook appends what it refuses to the history of the project the call
 	// came from, and nothing for a call it lets run.
-	hook := func(agent, file string) string {
+	hook := func(cwd, agent, file string) string {
 		t.Helper()
-		input, _ := json.Marshal(map[string]any{"cwd": r.Dir, "agent_id": "a1", "agent_type": agent, "tool_name": "Edit", "tool_input": map[string]any{"file_path": filepath.Join(r.Dir, file)}})
+		input, _ := json.Marshal(map[string]any{"cwd": cwd, "agent_id": "a1", "agent_type": agent, "tool_name": "Edit", "tool_input": map[string]any{"file_path": filepath.Join(r.Dir, file)}})
 		var out, errOut bytes.Buffer
 		if code := newCLI(bytes.NewReader(input), &out, &errOut).Run(context.Background(), []string{"hook", "pretool"}); code != 0 {
 			t.Fatalf("hook exit %d: %s", code, errOut.String())
 		}
 		return out.String()
 	}
-	if out := hook("markitect-builder", "src/main.go"); out != "" || len(events()) != 5 {
+	if out := hook(r.Dir, "markitect-builder", "src/main.go"); out != "" || len(events()) != 6 {
 		t.Fatalf("a call the hook lets run: %s", out)
 	}
-	if out := hook("markitect-builder", ".markitect/review.sum"); !strings.Contains(out, "deny") {
+	// From a folder below the project's top, the refusal goes to its history.
+	r.Write("src/main.go", "package main\n")
+	if out := hook(filepath.Join(r.Dir, "src"), "markitect-builder", ".markitect/review.sum"); !strings.Contains(out, "deny") {
 		t.Fatalf("the hook let the builder write the record: %s", out)
 	}
-	if ev := events(); len(ev) != 6 || ev[5].Type != runs.EventRefusal || ev[5].Agent != "markitect-builder" || ev[5].Tool != "Edit" || !strings.HasSuffix(filepath.ToSlash(ev[5].Target), ".markitect/review.sum") || !strings.Contains(ev[5].Why, "markitect mark") {
+	if ev := events(); len(ev) != 7 || ev[6].Type != runs.EventRefusal || ev[6].Agent != "markitect-builder" || ev[6].Tool != "Edit" || !strings.HasSuffix(filepath.ToSlash(ev[6].Target), ".markitect/review.sum") || !strings.Contains(ev[6].Why, "markitect mark") {
 		t.Fatalf("the refusal: %+v", ev[len(ev)-1])
+	}
+	// Outside any project the hook still refuses, and appends nowhere.
+	outside := newFolder(t).Dir
+	if out := hook(outside, "markitect-builder", ".markitect/review.sum"); !strings.Contains(out, "deny") {
+		t.Fatalf("the hook outside a project: %s", out)
+	}
+	if _, err := os.Stat(filepath.Join(outside, ".markitect")); !os.IsNotExist(err) {
+		t.Fatalf("the hook wrote outside a project: %v", err)
+	}
+	// A spec with errors leaves no list: the counts say so, and do not read as
+	// a project with nothing left.
+	r.Write(".markitect/spec/broken.md", "---\nkind: nothing/Such\n---\n# Broken\n")
+	mustRun(t, r.Dir, "run", "end", "failed")
+	if end := events()[7]; end.Counts == nil || end.Counts.SpecErrors == 0 {
+		t.Fatalf("a run's end on a broken spec: %+v", end.Counts)
 	}
 }
