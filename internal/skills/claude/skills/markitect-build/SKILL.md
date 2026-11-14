@@ -2,9 +2,11 @@
 name: markitect-build
 description: Build the spec as it stands. The markitect-builder agent works in a worktree of its own, makes the project match the spec for what markitect status lists, and starts the markitect-reviewer agent, which verifies each item and records it; a long list is built slice by slice, what others rely on first, or in parallel, per Package. The work comes back to this branch when nothing is left to verify but spec-problems, which wait for the owner. Use when the user says the spec is ready to build or apply.
 disable-model-invocation: true
-allowed-tools: Bash(markitect status), Bash(markitect status *), Bash(markitect config strategy.build)
+allowed-tools: Bash(markitect status), Bash(markitect status *), Bash(markitect config strategy.build), Bash(markitect run *)
 ---
 Run `markitect config strategy.build` for how to build: `sequential`, `parallel`, `auto` or the name of a custom workflow. With `auto`, build sequentially for now. Parallel and custom workflows need Git: in a folder that is not a Git repository, build sequentially. Tell the user in a line how you build. Change no file and record no verdict yourself.
+
+Tell the project's history about the run: `markitect run start build --strategy <how you build>` before the work, `markitect run slice <its Packages>` before each slice of a sequential build, the Packages as its command names them, or `markitect run slice` for the last, and `markitect run end <how it ended>` at the end, one of `done`, `no-progress`, `stopped` or `failed`. In a Git repository commit `.markitect/history.jsonl` alone right after each of these, so that no merge finds it in the way; for a parallel run or a custom workflow, run them in the worktree you entered.
 
 In a Git repository the work starts from the last commit of this branch, so it holds no uncommitted change: if `git status` shows any, tell the user they are not part of the build and ask whether to commit them first.
 

@@ -1,7 +1,9 @@
 package run
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -16,8 +18,24 @@ import (
 // the history says how the work went, and vet derives its measures of change
 // from it at read time, so that a threshold tuned later applies to the past too.
 
-// EventVerdict is the type of the event mark appends for each verdict it records.
-const EventVerdict = "verdict"
+// The types of the history's events.
+const (
+	// EventVerdict is the event mark appends for each verdict it records.
+	EventVerdict = "verdict"
+	// EventRunStart, EventRunSlice and EventRunEnd are what a driver says of a
+	// run: that it starts, that a slice or round starts, which ends the one
+	// before, and that it ends. A verdict belongs to the run whose start and
+	// end enclose its time; a run without an end is open.
+	EventRunStart = "run-start"
+	EventRunSlice = "run-slice"
+	EventRunEnd   = "run-end"
+	// EventRefusal is what the hook appends when it refuses a call.
+	EventRefusal = "refusal"
+)
+
+// Outcomes are how a run ends: its work is done, rounds left the list no
+// shorter, someone stopped it, or it failed.
+var Outcomes = []string{"done", "no-progress", "stopped", "failed"}
 
 // maxChangeSet is the most Definitions one round of change may hold for its
 // co-changes to count: a larger batch, such as a reorganisation, says nothing
@@ -45,6 +63,66 @@ type Event struct {
 	// than maxChangeSet.
 	Pending      []string `json:"pending,omitempty"`
 	PendingCount int      `json:"pending_count,omitempty"`
+	// A run's start: the kind of work, how it runs and what started it, as the
+	// driver says, and what the tool knows then: the items on the list, the
+	// slices a build of it goes in, and each role's model and effort.
+	Kind     string          `json:"kind,omitempty"`
+	Strategy string          `json:"strategy,omitempty"`
+	Trigger  string          `json:"trigger,omitempty"`
+	Items    *int            `json:"items,omitempty"`
+	Slices   *int            `json:"slices,omitempty"`
+	Roles    map[string]Role `json:"roles,omitempty"`
+	// A slice's start: its Packages, none for a round over the whole list, and
+	// its items, in Items.
+	Packages []string `json:"packages,omitempty"`
+	// A run's end: how it ended, its rounds when the driver counts them, and
+	// what the list says then.
+	Outcome string     `json:"outcome,omitempty"`
+	Rounds  *int       `json:"rounds,omitempty"`
+	Counts  *RunCounts `json:"counts,omitempty"`
+	// A refusal: the agent whose call it was, empty for the owner's session,
+	// the tool, what the call named, and why it was refused.
+	Agent  string `json:"agent,omitempty"`
+	Tool   string `json:"tool,omitempty"`
+	Target string `json:"target,omitempty"`
+	Why    string `json:"why,omitempty"`
+}
+
+// Role is the model and effort a role's agent runs with.
+type Role struct {
+	Model  string `json:"model"`
+	Effort string `json:"effort"`
+}
+
+// RunCounts is what the list says when a run ends: the items verified at their
+// inputs, those recorded fail, spec-problem or skip there, and the items left
+// to verify, the fails and spec-problems among them.
+type RunCounts struct {
+	Verified    int `json:"verified"`
+	Fail        int `json:"fail"`
+	SpecProblem int `json:"spec_problem"`
+	Skip        int `json:"skip"`
+	Left        int `json:"left"`
+}
+
+// CountsOf counts a status of the whole list for a run's end. A gone
+// Definition is left to verify, but no item of the spec.
+func CountsOf(st Status) RunCounts {
+	c := RunCounts{Skip: len(st.Skipped), Left: len(st.Items)}
+	live := 0
+	for _, it := range st.Items {
+		switch it.State {
+		case StateFail:
+			c.Fail++
+		case StateSpecProblem:
+			c.SpecProblem++
+		}
+		if it.State != StateGone {
+			live++
+		}
+	}
+	c.Verified = max(0, st.Units-live-c.Skip)
+	return c
 }
 
 // pending is how many other Definitions were pending at a verdict.
@@ -200,4 +278,26 @@ func appendHistory(root string, e Event) error {
 		return err
 	}
 	return f.Sync()
+}
+
+// Append adds an event to the history of the project that holds dir, under
+// the lock of its record, with its time now when it has none.
+func (e *Engine) Append(_ context.Context, dir string, ev Event) error {
+	root, err := e.Folder.Root(dir)
+	if err != nil {
+		return err
+	}
+	locks, err := e.lockDir()
+	if err != nil {
+		return err
+	}
+	release, err := lock(locks, recordKey(root), lockWait)
+	if err != nil {
+		return fmt.Errorf("the record of %s is locked: %w", root, err)
+	}
+	defer release()
+	if ev.Time.IsZero() {
+		ev.Time = e.now()
+	}
+	return appendHistory(root, ev)
 }

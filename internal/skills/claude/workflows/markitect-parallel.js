@@ -309,6 +309,20 @@ function ended(st) {
   return count(st) === 0 ? "record-unreadable: markitect status names the lines of the record the owner fixes" : "spec-problems"
 }
 
+// startRound tells the project's history that a round starts, as markitect run
+// slice records it, and commits that line alone, so that the round's merges
+// find nothing in their way. The history is no part of the work: a step that
+// returns nothing loses only the line.
+async function startRound(n) {
+  await agent(
+    `You do a step of a Markitect run, in your working folder, whose branch is the run's own. Run each command here as it stands, with no -C and no cd. Edit no file.
+
+1. Run \`markitect run slice\`.
+2. If \`git status --porcelain -- .markitect/history.jsonl\` shows a change, commit that file alone, new or changed: \`git add -- .markitect/history.jsonl\`, then \`git commit -m "markitect: round ${n}" -- .markitect/history.jsonl\`.`,
+    { label: `round ${n}`, phase: "Build", effort: "low" },
+  )
+}
+
 // round runs one round of strands: the Packages in waves, in batches, and Root
 // last and alone. Every Package lies below Root, so none depends on it as list
 // --deps counts; Root's strand also settles the errors in the realization and
@@ -316,6 +330,7 @@ function ended(st) {
 // the newest status in st as it goes, so that a run that stops halfway reports
 // what is left then.
 async function round(from, n, everything) {
+  await startRound(n)
   const verb = (name) => (MODE === "cleanup" ? `Clean up Package ${name}.` : `Build what markitect status lists in Package ${name}.`)
   const wanted = new Set(
     from.packages.filter((p) => p.package !== ROOT && (everything ? p.definitions > 0 : workable(p))).map((p) => p.package),

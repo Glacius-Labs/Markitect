@@ -2,9 +2,9 @@
 name: markitect-cleanup
 description: Clean up the code without changing what the project does. The markitect-builder agent refactors in a worktree of its own, and the markitect-reviewer agent verifies again what that put back on the list; a large project is cleaned up in parallel, per Package. The work comes back to this branch when it leaves nothing worse. Use when the user asks to clean up or refactor a Markitect project.
 disable-model-invocation: true
-allowed-tools: Bash(markitect status), Bash(markitect status *), Bash(markitect config strategy.cleanup)
+allowed-tools: Bash(markitect status), Bash(markitect status *), Bash(markitect config strategy.cleanup), Bash(markitect run *)
 ---
-Run `markitect status` and keep the Definitions it lists: the work must not add to them. Run `markitect config strategy.cleanup` for how to clean up: `sequential`, `parallel`, `auto` or the name of a custom workflow. With `auto`, work sequentially for now. Parallel and custom workflows need Git: in a folder that is not a Git repository, work sequentially. Tell the user in a line how you work. Change no file and record no verdict yourself.
+Run `markitect status` and keep the Definitions it lists: the work must not add to them. Run `markitect config strategy.cleanup` for how to clean up: `sequential`, `parallel`, `auto` or the name of a custom workflow. With `auto`, work sequentially for now. Parallel and custom workflows need Git: in a folder that is not a Git repository, work sequentially. Tell the user in a line how you work. Tell the project's history about the run: `markitect run start cleanup --strategy <how you work>` before the work and `markitect run end <how it ended>` at the end, one of `done`, `no-progress`, `stopped` or `failed`. In a Git repository commit `.markitect/history.jsonl` alone right after each of these, so that no merge finds it in the way; for a parallel run or a custom workflow, run them in the worktree you entered. Change no file and record no verdict yourself.
 
 In a Git repository the work starts from the last commit of this branch, so it holds no uncommitted change: if `git status` shows any, tell the user they are not part of the cleanup and ask whether to commit them first.
 

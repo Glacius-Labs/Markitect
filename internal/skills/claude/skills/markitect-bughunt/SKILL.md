@@ -2,9 +2,9 @@
 name: markitect-bughunt
 description: Hunt for bugs beyond what markitect status lists. In a worktree of its own, the markitect-builder agent has the markitect-reviewer agent hunt and record each bug, repairs them, and has the reviewer verify again; a bug the spec does not cover becomes a spec-problem for the owner. A large project is hunted in parallel, per Package. The work comes back to this branch when it leaves nothing worse. Use when the user asks for a bug hunt on a Markitect project.
 disable-model-invocation: true
-allowed-tools: Bash(markitect status), Bash(markitect status *), Bash(markitect config strategy.bughunt)
+allowed-tools: Bash(markitect status), Bash(markitect status *), Bash(markitect config strategy.bughunt), Bash(markitect run *)
 ---
-Run `markitect status` and keep the Definitions it lists. Run `markitect config strategy.bughunt` for how to hunt: `sequential`, `parallel`, `auto` or the name of a custom workflow. With `auto`, work sequentially for now. Parallel and custom workflows need Git: in a folder that is not a Git repository, work sequentially. Tell the user in a line how you work. Change no file and record no verdict yourself.
+Run `markitect status` and keep the Definitions it lists. Run `markitect config strategy.bughunt` for how to hunt: `sequential`, `parallel`, `auto` or the name of a custom workflow. With `auto`, work sequentially for now. Parallel and custom workflows need Git: in a folder that is not a Git repository, work sequentially. Tell the user in a line how you work. Tell the project's history about the run: `markitect run start bughunt --strategy <how you work>` before the work and `markitect run end <how it ended>` at the end, one of `done`, `no-progress`, `stopped` or `failed`. In a Git repository commit `.markitect/history.jsonl` alone right after each of these, so that no merge finds it in the way; for a parallel run or a custom workflow, run them in the worktree you entered. Change no file and record no verdict yourself.
 
 In a Git repository the work starts from the last commit of this branch, so it holds no uncommitted change: if `git status` shows any, tell the user they are not part of the hunt and ask whether to commit them first.
 
