@@ -30,9 +30,11 @@ const (
 	RootPage     = Dir + "/registry.md"
 	RegistryDir  = Dir + "/registry"
 	LibraryDir   = Dir + "/libraries"
-	// ReviewFile is the record of what was verified (DEC-099), and
-	// AttributesFile has Git merge it by keeping the lines of both sides.
+	// ReviewFile is the record of what was verified (DEC-099), HistoryFile
+	// the project's process data, appended event by event (DEC-114), and
+	// AttributesFile has Git merge both by keeping the lines of both sides.
 	ReviewFile     = Dir + "/review.sum"
+	HistoryFile    = Dir + "/history.jsonl"
 	AttributesFile = Dir + "/.gitattributes"
 	// HarnessFile is the project's harness configuration (DEC-103): the agents'
 	// model and effort, the strategies and the custom workflows. It is the
@@ -46,7 +48,7 @@ const (
 )
 
 // Attributes is the content of AttributesFile.
-const Attributes = "review.sum merge=union\n"
+const Attributes = "review.sum merge=union\nhistory.jsonl merge=union\n"
 
 // harnessPrefixes are what the files of the harness start with, in lower case.
 var harnessPrefixes = []string{".claude/agents/markitect-", ".claude/skills/markitect-", ".claude/workflows/markitect-"}
@@ -188,7 +190,7 @@ func Load(repo Repository) (*Project, error) {
 			continue
 		}
 		switch first, rest, _ := strings.Cut(rel, "/"); {
-		case f == ManifestFile, f == LockFile, f == IgnoreFile, f == ReviewFile, f == AttributesFile, f == QuestionsFile:
+		case f == ManifestFile, f == LockFile, f == IgnoreFile, f == ReviewFile, f == HistoryFile, f == AttributesFile, f == QuestionsFile:
 		case f == HarnessFile:
 			if data, ok := read(f); ok {
 				if _, err := harness.Parse(data); err != nil {
@@ -215,7 +217,7 @@ func Load(repo Repository) (*Project, error) {
 		case first == "libraries" && strings.Contains(rest, "/"):
 			libraryFiles = append(libraryFiles, f)
 		default:
-			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the harness configuration %s, the questions for the owner %s, the registry, the spec, Libraries and the record %s with its %s", Dir, HarnessFile, QuestionsFile, ReviewFile, AttributesFile)
+			ds.Add("project.file", f, 0, "%s holds only the manifest, lock, ignore file, the harness configuration %s, the questions for the owner %s, the registry, the spec, Libraries, the record %s, the history %s and their %s", Dir, HarnessFile, QuestionsFile, ReviewFile, HistoryFile, AttributesFile)
 		}
 	}
 	local := map[string][]spec.File{}

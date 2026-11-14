@@ -93,7 +93,7 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 			"/p/.markitect/registry/fees.md",
 			`C:\p\.markitect\registry\members\loans.md`,
 		},
-		"record": {"/p/.markitect/review.sum", `C:\p\.MARKITECT\review.sum`},
+		"record": {"/p/.markitect/review.sum", `C:\p\.MARKITECT\review.sum`, "/p/.markitect/history.jsonl", `C:\p\.Markitect\History.jsonl`},
 		"setup":  {"/p/.markitect/.gitattributes", `C:\p\.Markitect\.gitattributes`},
 		// The questions for the owner are the owner's session's: no subagent
 		// writes them, the architect included.
@@ -162,6 +162,7 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 	}
 	has(t, call("a1", guard.BuilderAgent, "Edit", "file_path", "/p/.markitect/spec/fee.md"), "the registry pages")
 	has(t, call("a1", guard.BuilderAgent, "Edit", "file_path", "/p/.markitect/review.sum"), "markitect mark")
+	has(t, call("a1", guard.ReviewerAgent, "Write", "file_path", "/p/.markitect/history.jsonl"), "markitect mark")
 	has(t, call("a1", guard.BuilderAgent, "Edit", "file_path", "/p/.claude/settings.json"), "steers the agents")
 	has(t, call("a1", guard.ArchitectAgent, "Edit", "file_path", "/p/.markitect/.gitattributes"), "init and update")
 	has(t, call("a1", guard.ArchitectAgent, "Write", "file_path", "/p/.markitect/harness.yaml"), "steers the agents")

@@ -20,7 +20,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `domain` | Registry pages, ownership and file accounting over a compiled spec. | `spec` | 1 |
 | `project` | Loads and checks a project's Markitect folder from the files of a project folder. | `spec`, `assets`, `harness`, `domain` | 1 |
 | `service` | Questions about a loaded project: what it holds, what depends on what, and vet. | `spec`, `assets`, `domain`, `project` | 1 |
-| `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, status and mark. | `spec`, `assets`, `domain`, `project` | 1 |
+| `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, the history history.jsonl, status and mark. | `spec`, `assets`, `domain`, `project` | 1 |
 | `guard` | Which role may write what and start whom, the hook that holds it and its entries in a project's settings, over supplied bytes. | `project` | 1 |
 | `setup` | What Markitect writes into a project: its first files, the skills and the harness, the settings, the Git attributes, the ignore line and the lock. | `spec`, `assets`, `harness`, `project`, `guard` | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |

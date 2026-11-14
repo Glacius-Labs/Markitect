@@ -57,8 +57,9 @@ const (
 )
 
 // rights are what a subagent of a role may do. A file is code when it lies
-// outside Markitect's folder, a registry page, the record, or else the spec.
-// Nobody writes the record by an edit: markitect mark writes it. And no
+// outside Markitect's folder, a registry page, the record or the history, or
+// else the spec. Nobody writes the record or the history by an edit:
+// markitect mark writes them. And no
 // subagent writes the questions for the owner, which the owner's session keeps.
 type rights struct {
 	code, spec, registry, mark bool
@@ -234,7 +235,8 @@ const (
 )
 
 // kindOf says what kind of file a path names, whatever folder it starts from:
-// one in Markitect's folder of a project is a registry page, the record, the
+// one in Markitect's folder of a project is a registry page, the record or the
+// history, the
 // record's Git attributes, which init writes, the questions for the owner, which
 // the owner's session keeps, or the spec; one that steers the agents is the
 // harness; any other is code.
@@ -247,7 +249,7 @@ func kindOf(file string) int {
 		lower := strings.ToLower(strings.Join(segments[i:], "/"))
 		registry := strings.ToLower(project.RegistryDir) + "/"
 		switch {
-		case lower == strings.ToLower(project.ReviewFile):
+		case lower == strings.ToLower(project.ReviewFile), lower == strings.ToLower(project.HistoryFile):
 			return recordFile
 		case lower == strings.ToLower(project.AttributesFile):
 			return setupFile
