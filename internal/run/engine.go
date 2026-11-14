@@ -22,6 +22,16 @@ type Engine struct {
 	// markitect, where the lock of a project's record lives.
 	Folder Folder
 	Cache  string
+	// Now is the clock of the history's events; nil is the system's.
+	Now func() time.Time
+}
+
+// now is the time of an event, in UTC.
+func (e *Engine) now() time.Time {
+	if e.Now != nil {
+		return e.Now().UTC()
+	}
+	return time.Now().UTC()
 }
 
 // folder is the project folder as one command finds it.
@@ -83,7 +93,12 @@ func (e *Engine) lockDir() (string, error) {
 
 // readRecordFile reads a project's record; nil without one.
 func readRecordFile(root string) ([]byte, error) {
-	file := filepath.Join(root, filepath.FromSlash(project.ReviewFile))
+	return readOwnFile(root, project.ReviewFile)
+}
+
+// readOwnFile reads a file of a project's own folder; nil without one.
+func readOwnFile(root, name string) ([]byte, error) {
+	file := filepath.Join(root, filepath.FromSlash(name))
 	var data []byte
 	var err error
 	for i := 0; i < 20; i++ {

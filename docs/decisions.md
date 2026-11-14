@@ -207,7 +207,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 ### DEC-097 Markitect uses no Git
 
-- The tool makes no repository, commits nothing, keeps no branches, lands nothing and reads no history. Agents and people do every Git step.
+- The tool makes no repository, commits nothing, keeps no branches, lands nothing and reads no Git history. Agents and people do every Git step.
 - It reads the project by walking its folder, skipping what the project's `.gitignore` files exclude, read as plain text.
 - So it cannot guarantee that what is committed is what was verified. `status` on any checkout shows what differs from the record, and a CI job can refuse it.
 
@@ -216,7 +216,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 ### DEC-102 What `vet` measures
 
 - `check` is the compiler; `vet` is the static analyzer. It warns about coupling and instability per Package, dependencies on less stable Packages, the size of Definitions and Packages, Packages that hold nothing, and hubs: a Definition with fan-in + 1 > max(10, N / 5), Root included, Kinds left out. It exits 1 only with `--strict`.
-- Notes never change the exit code; plain `vet` counts them on one line and `--strict` lists them. They are unlinked mentions, which the auditor triages into missing links and ordinary words, with the mentions a link to which would go against the Package structure or add a dependency counted apart; long Definitions (more than 20 statements); placement; hotspots, revisions × fan-in > max(20, N / 10), from how often a Definition's own text changed between verdicts; and change coupling, two Definitions whose own texts changed together between verdicts at least 5 times, each at least 5 times and together in at least 30 % of their mean revisions, with no link either way, no binding by scope, neither a Kind and not one unit, code-maat's defaults. The record counts a co-change only in a round of at most 30 changed Definitions.
+- Notes never change the exit code; plain `vet` counts them on one line and `--strict` lists them. They are unlinked mentions, which the auditor triages into missing links and ordinary words, with the mentions a link to which would go against the Package structure or add a dependency counted apart; long Definitions (more than 20 statements); placement; hotspots, revisions × fan-in > max(20, N / 10), from how often a Definition's own text changed between verdicts; and change coupling, two Definitions whose own texts changed together between verdicts at least 5 times, each at least 5 times and together in at least 30 % of their mean revisions, with no link either way, no binding by scope, neither a Kind and not one unit, code-maat's defaults. Both are derived from the history ([DEC-114](#dec-114-process-data-lives-in-the-history)): a co-change counts only in a round of at most 30 changed Definitions, and each change once with each partner.
 - `list --deps` shows Martin's abstractness and distance, as information only. The zone notes wait for real records; the risk measure is a note ([DEC-106](#dec-106-the-reviewer-counts-and-vet-notes-thin-evidence)). Every threshold is provisional, and `vet.unlinked_mention` becomes a warning only once a spec's own measurements show its noise low.
 - Links stay strict: the tool reports a missing link and never adds one. A value rule of the project's own is stated once, as a small Definition in the only Package that uses it or at the lowest common parent of those that share it; there is no central page of values.
 - [What makes a good spec](guides/good-spec.md) says what each measure is for.
@@ -234,11 +234,17 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 ### DEC-099 A record of what was verified
 
-- For each Definition, `.markitect/review.sum` records the inputs at which a reviewer last verified it, by their hashes: its text, its Kind and the Definitions it links to (a Library Definition by its Library's digest), its registry rows with their files, and the evidence. It is committed with the project, like `go.sum`, and merges with `merge=union`.
+- For each Definition, `.markitect/review.sum` records the inputs at which a reviewer last verified it, by their hashes: its text, its Kind and the Definitions it links to (a Library Definition by its Library's digest), its registry rows with their files, and the evidence. It is committed with the project, like `go.sum`, and merges with `merge=union`. It records only what was verified at which inputs: a verdict rewrites the line of its own Definition and no other, and how the work went belongs in the history ([DEC-114](#dec-114-process-data-lives-in-the-history)).
 - `markitect status` lists every Definition with a changed input or no record, those recorded `fail` or `spec-problem`, those gone from the spec, and the errors in the realization. It gives no list while the spec has errors. An empty `status` means that the project compiles and every Definition is verified at its current inputs.
 - `markitect mark DEFINITION@FINGERPRINT VERDICT` records `ok`, `fail`, `skip` or `spec-problem` at the state the reviewer read, with its evidence (`path` or `path:line`) or why. It refuses when an input changed since `status` printed the fingerprint.
 - A verdict holds until one of its inputs changes, so every obligation keeps a verdict, and a change puts back on the list only what it reaches, one step along the links. It is a record, not a proof, and the tool keeps no limit on rounds.
 - Tests are the project's, and they are realizations too: agents write them, so a green test is evidence, not proof. A project that wants tests states them in its spec as an ordinary Rule, with the command that runs them; the reviewer runs them as evidence. The tool knows nothing of them, and there are no required checks: if a Definition is verified that a test would have caught, they come back.
+
+### DEC-114 Process data lives in the history
+
+- What happened during the work is process data, and it lives in `.markitect/history.jsonl`: not in the record, which says what is verified now, and not in the spec, which says what should be. It is committed with the project, appended and never rewritten, and merges with `merge=union`; a reader orders its lines by time.
+- Each line is one JSON event with its `time`, in UTC, and its `type`, so that new types of events need no format version. `mark` appends a `verdict` event for each verdict right after it writes the record, under the record's lock: the Definition, the verdict, the hash of its own text, the reviewer's counts, and the other Definitions whose own text was pending then, or only their number when there are more than 30.
+- The history records facts, not counts. `vet` derives its measures of change from it when it runs, so a threshold tuned later applies to the past too. Only `mark` writes it; no agent edits it.
 
 ## Skills and roles
 

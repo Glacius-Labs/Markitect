@@ -544,7 +544,7 @@ func TestInitInstallsTheHarness(t *testing.T) {
 		t.Fatalf("init: %s", out)
 	}
 	noRepository(t, r.Dir)
-	if got := read(t, r.Dir, ".markitect/.gitattributes"); got != "review.sum merge=union\n" {
+	if got := read(t, r.Dir, ".markitect/.gitattributes"); got != "review.sum merge=union\nhistory.jsonl merge=union\n" {
 		t.Fatalf(".markitect/.gitattributes: %q", got)
 	}
 	// The skills are plain prompts: they inject no command, so no exit code can
@@ -907,20 +907,38 @@ func TestDocAndVetDocuments(t *testing.T) {
 	if code, out, _ := run(t, r.Dir, "vet", "--json", "--strict"); code != 1 || json.Unmarshal([]byte(out), &vetted) != nil || len(vetted.Diagnostics) != 1 || vetted.Diagnostics[0].Code != "vet.definition_size" {
 		t.Fatalf("vet --json --strict: %d %s", code, out)
 	}
-	// vet reads from the record how often a Definition's own text changed: the
-	// anchor, linked once and changed 21 times, is a hotspot. A note leaves the exit
-	// code alone.
+	// vet derives from the history how often a Definition's own text changed: the
+	// anchor, linked once and verified at 22 texts one after the other, is a
+	// hotspot. A note leaves the exit code alone.
+	at := 0
+	verdict := func(def string, self int, pending ...string) string {
+		at++
+		p := ""
+		if len(pending) > 0 {
+			p = `,"pending":["` + strings.Join(pending, `","`) + `"]`
+		}
+		return fmt.Sprintf(`{"time":"2026-11-14T08:%02d:%02dZ","type":"verdict","definition":%q,"verdict":"ok","self":"sha256:%d"%s}`, at/60, at%60, def, self, p) + "\n"
+	}
 	r.Write(".markitect/spec/big.md", "---\nkind: std/Rule\n---\n# Big\n\nFor the [[project]].\n")
-	r.Write(".markitect/review.sum", `{"definition":"project","verdict":"ok","inputs":{"self":"sha256:0"},"revisions":21}`+"\n")
+	history := ""
+	for i := 0; i <= 21; i++ {
+		history += verdict("project", i)
+	}
+	r.Write(".markitect/history.jsonl", history)
 	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 0 || !strings.Contains(out, ".markitect/spec/project.md: vet.hotspot: its own text changed 21 times between verdicts, and 1 Definition links to it or is of it as Kind, so its changes put about 21 back") {
 		t.Fatalf("vet --strict with a hotspot: %d %s", code, out)
 	}
-	// vet reads from the record how often two own texts changed together: the
-	// anchor and a Concept that neither links nor binds the other changed
-	// together 5 times. A note leaves the exit code alone.
+	// vet derives from the history how often two own texts changed together:
+	// the anchor and a Concept that neither links nor binds the other changed in
+	// 5 rounds, and the Concept once more alone. A note leaves the exit code
+	// alone.
 	r.Write(".markitect/spec/small.md", "---\nkind: std/Concept\n---\n# Small\n\nA small thing.\n")
-	r.Write(".markitect/review.sum", `{"definition":"project","verdict":"ok","inputs":{"self":"sha256:0"},"revisions":5,"cochanges":{"small":5}}`+"\n"+
-		`{"definition":"small","verdict":"ok","inputs":{"self":"sha256:0"},"revisions":6,"cochanges":{"project":5}}`+"\n")
+	at = 0
+	history = verdict("project", 0) + verdict("small", 0)
+	for i := 1; i <= 5; i++ {
+		history += verdict("project", i, "small") + verdict("small", i)
+	}
+	r.Write(".markitect/history.jsonl", history+verdict("small", 6))
 	if code, out, _ := run(t, r.Dir, "vet", "--strict"); code != 0 || !strings.Contains(out, ".markitect/spec/project.md: vet.change_coupling: its own text changed together with that of small 5 times between verdicts, of its 5 revisions and that one's 6") {
 		t.Fatalf("vet --strict with change coupling: %d %s", code, out)
 	}
