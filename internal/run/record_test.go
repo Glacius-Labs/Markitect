@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/folder"
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -918,23 +919,37 @@ func TestParallelReviewersLoseNoLine(t *testing.T) {
 	}
 }
 
-// The record counts how often two Definitions' own texts changed in one round
-// (DEC-102): a revision of one counts a co-change with each other Definition
-// whose own text changed since its last verdict, on both lines, once a round;
-// a round of more than 30 Definitions counts none; a merge keeps the most; and a
-// Definition gone from the spec drops out.
-func TestCochanges(t *testing.T) {
+// mark appends one verdict event to the history for each verdict it records
+// (DEC-114): when, the verdict, the Definition's own text and the reviewer's
+// counts, and the other Definitions pending beside it, or only their number
+// beyond 30. A verdict on one Definition leaves the other lines of the record as
+// they are.
+func TestMarkAppendsToTheHistory(t *testing.T) {
 	files := library()
 	var xs []string
-	for i := 0; i < 30; i++ {
+	for i := 0; i < 31; i++ {
 		files[m+fmt.Sprintf("catalog/x%02d.md", i)] = def("std/Concept", fmt.Sprintf("X%02d", i), "A thing.")
 		xs = append(xs, fmt.Sprintf("[[catalog/x%02d]]", i))
 	}
 	files[m+"catalog/catalog.md"] = def("Package", "Catalog", "The books the library holds, and "+strings.Join(xs, ", ")+".")
 	p := newPlainOf(t, files)
+	clock := time.Date(2026, 11, 14, 9, 0, 0, 0, time.FixedZone("CET", 3600))
+	p.engine.Now = func() time.Time {
+		clock = clock.Add(time.Second)
+		return clock
+	}
 	p.verifyAll()
-	if rec := p.read(project.ReviewFile); strings.Contains(rec, "cochanges") {
-		t.Fatalf("a first verdict counts no co-change:\n%s", rec)
+	events := func() []run.Event {
+		t.Helper()
+		return run.ParseHistory([]byte(p.read(project.HistoryFile))).Events
+	}
+	last := func() run.Event {
+		t.Helper()
+		ev := events()
+		return ev[len(ev)-1]
+	}
+	if ev := events(); len(ev) != len(p.status(true).Items) || ev[0].Type != run.EventVerdict || ev[0].Time.Location() != time.UTC || !ev[0].Time.Before(ev[1].Time) {
+		t.Fatalf("one event per verdict, in UTC and in order: %+v", ev[:2])
 	}
 	one := 1
 	mark := func(id string) {
@@ -944,121 +959,70 @@ func TestCochanges(t *testing.T) {
 			t.Fatalf("mark %s: %v %s", id, err, text)
 		}
 	}
-	cochanges := func() map[string]map[string]int {
-		t.Helper()
-		return run.ParseRecord([]byte(p.read(project.ReviewFile))).Cochanges()
-	}
-	// member and book change in one round; loan's link to member changes, but
-	// not its own text. member's verdict counts the pair on both lines, and
-	// book's verdict, which then sees member verified, counts it no more.
+	// member and book change; loan's link to member changes, but not its own
+	// text. member's event names book as pending, and leaves book's line alone.
 	p.write(m+"members/member.md", def("std/Concept", "Member", "A person with a card."))
 	p.write(m+"catalog/book.md", def("std/Concept", "Book", "A book has a title and a card."))
-	mark("members/member")
-	has(t, p.read(project.ReviewFile), `"cochanges":{"catalog/book":1}`, `"cochanges":{"members/member":1}`)
-	mark("catalog/book")
-	mark("members/loans/loan")
-	if got := cochanges(); len(got) != 2 || got["members/member"]["catalog/book"] != 1 || got["catalog/book"]["members/member"] != 1 {
-		t.Fatalf("one round counts the pair once: %v", got)
-	}
-	// A round of 30 Definitions counts; one of 31 is a batch and counts nothing.
-	round := func(n int, text string) {
-		t.Helper()
-		p.write(m+"members/member.md", def("std/Concept", "Member", text))
-		for i := 0; i < n-1; i++ {
-			p.write(m+fmt.Sprintf("catalog/x%02d.md", i), def("std/Concept", fmt.Sprintf("X%02d", i), text))
+	bookLine := func() string {
+		for _, l := range strings.Split(p.read(project.ReviewFile), "\n") {
+			if strings.Contains(l, `"definition":"catalog/book"`) {
+				return l
+			}
 		}
-		mark("members/member")
-		p.verifyAll()
+		return ""
 	}
-	round(30, "A person in a round of thirty.")
-	if got := cochanges()["members/member"]; len(got) != 30 || got["catalog/x28"] != 1 || got["catalog/book"] != 1 {
-		t.Fatalf("a round of 30: %v", got)
-	}
-	if got := cochanges()["catalog/x00"]; len(got) != 29 || got["catalog/x28"] != 1 || got["members/member"] != 1 {
-		t.Fatalf("a round of 30, verified one by one: %v", got)
-	}
-	// The verdicts after the first see the round shrink below 31; its lines say
-	// that it was large, until each is verified again.
-	p.write(m+"members/member.md", def("std/Concept", "Member", "A person in a round of thirty-one."))
-	for i := 0; i < 30; i++ {
-		p.write(m+fmt.Sprintf("catalog/x%02d.md", i), def("std/Concept", fmt.Sprintf("X%02d", i), "A thing in a round of thirty-one."))
-	}
+	before := bookLine()
 	mark("members/member")
-	has(t, p.read(project.ReviewFile), `"batch":true`)
-	// Once two of the round are verified, 28 of it remain; a revision of book
-	// then counts with none of them.
+	e := last()
+	if e.Definition != "members/member" || e.Verdict != run.VerdictOK || e.Self != run.Hash([]byte(p.read(m+"members/member.md"))) || e.Cases == nil || *e.Cases != 1 || fmt.Sprint(e.Pending) != "[catalog/book]" || e.PendingCount != 0 {
+		t.Fatalf("member's event: %+v", e)
+	}
+	if bookLine() != before {
+		t.Fatalf("a verdict on member rewrote book's line:\n%s\n%s", before, bookLine())
+	}
+	mark("catalog/book")
+	if e := last(); len(e.Pending) != 0 {
+		t.Fatalf("book's event, with member verified: %+v", e)
+	}
+	// Beyond 30 pending Definitions the event gives their number only.
+	for i := 0; i < 31; i++ {
+		p.write(m+fmt.Sprintf("catalog/x%02d.md", i), def("std/Concept", fmt.Sprintf("X%02d", i), "A thing that changed."))
+	}
+	p.write(m+"members/member.md", def("std/Concept", "Member", "A person in a large round."))
+	mark("members/member")
+	if e := last(); e.Pending != nil || e.PendingCount != 31 {
+		t.Fatalf("an event beside 31 pending: %+v", e)
+	}
 	mark("catalog/x00")
-	mark("catalog/x01")
-	p.write(m+"catalog/book.md", def("std/Concept", "Book", "A book in a round of thirty-one."))
-	mark("catalog/book")
-	if got := cochanges()["catalog/book"]; len(got) != 1 {
-		t.Fatalf("a large round counts with what changes beside it: %v", got)
+	if e := last(); len(e.Pending) != 30 || e.PendingCount != 0 {
+		t.Fatalf("an event beside 30 pending: %+v", e)
 	}
+	// A gone Definition's verdict has no own text.
 	p.verifyAll()
-	if got := cochanges(); len(got["members/member"]) != 30 || got["catalog/x00"]["catalog/x01"] != 1 || got["catalog/x29"] != nil {
-		t.Fatalf("a round of 31 counts nothing: %v", got)
+	p.remove(m + "catalog/x30.md")
+	p.write(m+"catalog/catalog.md", def("Package", "Catalog", "The books the library holds, and "+strings.Join(xs[:30], ", ")+"."))
+	mark("catalog/x30")
+	if e := last(); e.Definition != "catalog/x30" || e.Self != "" {
+		t.Fatalf("a gone Definition's event: %+v", e)
 	}
-	if rec := p.read(project.ReviewFile); strings.Contains(rec, "batch") {
-		t.Fatalf("a verdict keeps its line in a large round:\n%s", rec)
-	}
-	// After a merge, a line keeps the most co-changes any of the Definition's
-	// lines counted.
-	rec := p.read(project.ReviewFile)
-	for _, l := range strings.Split(rec, "\n") {
-		if strings.Contains(l, `"definition":"catalog/book"`) {
-			p.write(project.ReviewFile, rec+strings.Replace(strings.Replace(l, `"members/member":1`, `"members/member":4`, 1), `"self":"sha256:`, `"self":"sha256:0`, 1)+"\n")
-		}
-	}
-	mark("members/loans/loan")
-	if got := cochanges()["catalog/book"]["members/member"]; got != 4 {
-		t.Fatalf("a merge lost co-changes: %d", got)
-	}
-	// A Definition gone from the spec changes with nothing any more.
-	p.remove(m + "catalog/x05.md")
-	p.write(m+"catalog/catalog.md", def("Package", "Catalog", "The books the library holds, and "+strings.Join(append(xs[:5:5], xs[6:]...), ", ")+"."))
-	mark("members/loans/loan")
-	if got := cochanges(); got["catalog/x05"] != nil || got["members/member"]["catalog/x05"] != 0 {
-		t.Fatalf("a gone Definition keeps co-changes: %v", got)
-	}
-	// One change of book, waiting for its verdict while member is revised three
-	// times, counts with member once; book's verdict drops what its line names
-	// as counted.
-	p.write(m+"catalog/book.md", def("std/Concept", "Book", "A book that waits."))
-	for _, text := range []string{"A person, once.", "A person, twice.", "A person, three times."} {
-		p.write(m+"members/member.md", def("std/Concept", "Member", text))
-		mark("members/member")
-	}
-	has(t, p.read(project.ReviewFile), `"counted":["members/member"]`)
-	mark("catalog/book")
-	if got := cochanges()["catalog/book"]["members/member"]; got != 5 {
-		t.Fatalf("one change counted %d times with member, from 4", got-4)
-	}
-	for _, l := range run.ParseRecord([]byte(p.read(project.ReviewFile))).Lines {
-		if l.Definition == "catalog/book" && len(l.Counted) > 0 {
-			t.Fatalf("a verdict keeps what its line counted: %+v", l)
-		}
-	}
-	// Nor does it count again when member changed once more before book's
-	// verdict: book's change counted with member already.
-	p.write(m+"catalog/book.md", def("std/Concept", "Book", "A book that waits again."))
-	p.write(m+"members/member.md", def("std/Concept", "Member", "A person, four times."))
-	mark("members/member")
-	p.write(m+"members/member.md", def("std/Concept", "Member", "A person, five times."))
-	mark("catalog/book")
-	if got := cochanges()["catalog/book"]["members/member"]; got != 6 {
-		t.Fatalf("one change of book counted %d times with member, from 5", got-5)
+	if rec := p.read(project.ReviewFile); strings.Contains(rec, "revisions") || strings.Contains(rec, "cochanges") {
+		t.Fatalf("the record keeps counts of change:\n%s", rec)
 	}
 }
 
-// mark keeps the reviewer's counts of cases on the line, and the record counts
-// how often a Definition's own text changed between verdicts (DEC-102): a verdict
-// at another own text than every line before it adds one; a change of a link or a
-// file does not.
+// mark keeps the reviewer's counts of cases on the line, and the history shows
+// how often a Definition's own text changed between verdicts (DEC-102, DEC-114):
+// a verdict at another own text than the verdict before it is a revision; a
+// change of a link or a file is not.
 func TestCountsAndRevisions(t *testing.T) {
 	p := newPlain(t)
 	p.verifyAll()
-	if rec := p.read(project.ReviewFile); strings.Contains(rec, "revisions") {
-		t.Fatalf("a first verdict counts no revision:\n%s", rec)
+	revisions := func() map[string]int {
+		t.Helper()
+		return run.ParseHistory([]byte(p.read(project.HistoryFile))).Changes().Revisions
+	}
+	if got := revisions(); len(got) != 0 {
+		t.Fatalf("a first verdict counts no revision: %v", got)
 	}
 	mark := func(id, verdict string, cases, covered *int, why string, evidence ...string) string {
 		t.Helper()
@@ -1082,49 +1046,39 @@ func TestCountsAndRevisions(t *testing.T) {
 	p.write(m+"members/member.md", def("std/Concept", "Member", "A person with a card."))
 	mark("members/member", run.VerdictOK, &three, &two, "", "src/members/member.go:1")
 	mark("members/loans/loan", run.VerdictOK, &one, &one, "", "src/members/loans/loan.go:1")
-	if l := line("members/member"); l.Revisions != 1 || l.Cases == nil || *l.Cases != 3 || l.Covered == nil || *l.Covered != 2 {
+	if l := line("members/member"); l.Cases == nil || *l.Cases != 3 || l.Covered == nil || *l.Covered != 2 {
 		t.Fatalf("member: %+v", l)
 	}
-	if l := line("members/loans/loan"); l.Revisions != 0 || l.Cases == nil || *l.Cases != 1 {
-		t.Fatalf("a changed link is no revision of loan: %+v", l)
+	if l := line("members/loans/loan"); l.Cases == nil || *l.Cases != 1 {
+		t.Fatalf("loan: %+v", l)
 	}
-	has(t, p.read(project.ReviewFile), `"cases":3,"covered":2,"revisions":1`)
+	if got := revisions(); len(got) != 1 || got["members/member"] != 1 {
+		t.Fatalf("a changed link is no revision of loan: %v", got)
+	}
+	has(t, p.read(project.ReviewFile), `"cases":3,"covered":2}`)
 	// A changed file is no revision; a fail at a new text is one.
 	p.write("src/members/member.go", "package members\n\ntype Member struct{}\n")
 	mark("members/member", run.VerdictOK, &one, &one, "", "src/members/member.go:3")
-	if l := line("members/member"); l.Revisions != 1 || l.Cases == nil || *l.Cases != 1 {
-		t.Fatalf("after a changed file: %+v", l)
+	if l := line("members/member"); l.Cases == nil || *l.Cases != 1 || revisions()["members/member"] != 1 {
+		t.Fatalf("after a changed file: %+v %v", l, revisions())
 	}
 	p.write(m+"members/member.md", def("std/Concept", "Member", "A person with a card and a locker."))
 	zero := 0
 	mark("members/member", run.VerdictFail, &zero, nil, "no locker", "src/members/member.go:3")
-	if got := run.ParseRecord([]byte(p.read(project.ReviewFile))).Revisions(); len(got) != 1 || got["members/member"] != 2 {
+	if got := revisions(); len(got) != 1 || got["members/member"] != 2 {
 		t.Fatalf("revisions = %v", got)
-	}
-	// After a merge, the next verdict at a text no line has counts on from the most.
-	rec := p.read(project.ReviewFile)
-	for _, l := range strings.Split(rec, "\n") {
-		if strings.Contains(l, `"definition":"members/member"`) {
-			p.write(project.ReviewFile, rec+strings.Replace(strings.Replace(l, `"revisions":2`, `"revisions":5`, 1), `"self":"sha256:`, `"self":"sha256:0`, 1)+"\n")
-		}
-	}
-	// A verdict on another Definition writes the merged one's matching line with the
-	// most revisions any of its lines counted.
-	mark("catalog/book", run.VerdictOK, &one, &one, "", "src/catalog/book.go:1")
-	if got := run.ParseRecord([]byte(p.read(project.ReviewFile))).Revisions()["members/member"]; got != 5 {
-		t.Fatalf("a verdict on another Definition lost revisions of a merged one: %d", got)
 	}
 	p.write(m+"members/member.md", def("std/Concept", "Member", "A person."))
 	mark("members/member", run.VerdictOK, &one, &one, "", "src/members/member.go:3")
-	if l := line("members/member"); l.Revisions != 6 {
-		t.Fatalf("after a merge: %+v", l)
+	if got := revisions()["members/member"]; got != 3 {
+		t.Fatalf("revisions of member = %d", got)
 	}
 	// A gone Definition has no own text, so a verdict on it counts no revision.
 	p.write(m+"catalog/shelf.md", def("std/Concept", "Shelf", "Holds books."))
 	p.remove(m + "catalog/book.md")
 	mark("catalog/book", run.VerdictFail, nil, nil, "its file is still there")
-	if l := line("catalog/book"); l.Revisions != 0 || l.Verdict != run.VerdictFail {
-		t.Fatalf("a gone Definition: %+v", l)
+	if l := line("catalog/book"); l.Verdict != run.VerdictFail || revisions()["catalog/book"] != 0 {
+		t.Fatalf("a gone Definition: %+v %v", l, revisions())
 	}
 	// Counts that cannot be are refused before anything is read, and an ok or a
 	// skip without both counts is refused too: the reviewer counts with them.

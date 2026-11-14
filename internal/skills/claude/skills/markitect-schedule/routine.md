@@ -20,7 +20,7 @@ Start one agent, by the routine, and wait for it:
 - **bughunt:** the `markitect-builder` agent with the message "Hunt bugs."
 - **cleanup:** the `markitect-builder` agent with the message "Clean up."
 
-Then commit what changed, `.markitect/review.sum` included, in one commit on your branch.
+Then commit what changed, `.markitect/review.sum` and `.markitect/history.jsonl` included, in one commit on your branch.
 
 ## 4. Land, only when all three hold
 
@@ -28,7 +28,7 @@ Find the source commit again, as in step 1. If it has moved since you began, mer
 
 1. **Nothing is worse:** `markitect status` here lists no Definition that it does not also list at the source commit. Look with `markitect status --repo <folder>` in a temporary checkout of the source commit outside the project's folder (`git worktree add --detach`), and remove that checkout afterwards.
 2. **The project's tests pass** here. If you found none, say so.
-3. **The change is the agents' work alone:** `git diff --name-only <source commit>...HEAD` names nothing under `.markitect/` but `review.sum`, `registry.md` and the pages under `registry/`, and no file that steers the agents. Those are, anywhere in the tree and whatever the case of their letters: `.claude/settings.json`, `.claude/settings.local.json`, anything under `.claude/hooks/` or `.claude/rules/`, a `markitect-` skill, agent or workflow under `.claude/`, and `AGENTS.md`, `CLAUDE.md` and `CLAUDE.local.md`. The hook refuses such a change to an agent you start, but not to your own session.
+3. **The change is the agents' work alone:** `git diff --name-only <source commit>...HEAD` names nothing under `.markitect/` but `review.sum`, `history.jsonl`, `registry.md` and the pages under `registry/`, and no file that steers the agents. Those are, anywhere in the tree and whatever the case of their letters: `.claude/settings.json`, `.claude/settings.local.json`, anything under `.claude/hooks/` or `.claude/rules/`, a `markitect-` skill, agent or workflow under `.claude/`, and `AGENTS.md`, `CLAUDE.md` and `CLAUDE.local.md`. The hook refuses such a change to an agent you start, but not to your own session.
 
 Then bring the source branch to your commit, as a fast-forward and never by force. If it tracks a remote, push your commit to it: `git push <remote> HEAD:<source branch>`. Otherwise move the local branch: `git fetch . HEAD:<source branch>`, which Git refuses unless it is a fast-forward, and refuses while the source branch is checked out in a folder: then do not touch that folder, and say how to land it there, `git merge --ff-only <your branch>`.
 
