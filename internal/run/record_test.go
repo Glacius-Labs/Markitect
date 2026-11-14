@@ -985,6 +985,15 @@ func TestCochanges(t *testing.T) {
 	}
 	mark("members/member")
 	has(t, p.read(project.ReviewFile), `"batch":true`)
+	// Once two of the round are verified, 28 of it remain; a revision of book
+	// then counts with none of them.
+	mark("catalog/x00")
+	mark("catalog/x01")
+	p.write(m+"catalog/book.md", def("std/Concept", "Book", "A book in a round of thirty-one."))
+	mark("catalog/book")
+	if got := cochanges()["catalog/book"]; len(got) != 1 {
+		t.Fatalf("a large round counts with what changes beside it: %v", got)
+	}
 	p.verifyAll()
 	if got := cochanges(); len(got["members/member"]) != 30 || got["catalog/x00"]["catalog/x01"] != 1 || got["catalog/x29"] != nil {
 		t.Fatalf("a round of 31 counts nothing: %v", got)
@@ -1010,6 +1019,24 @@ func TestCochanges(t *testing.T) {
 	mark("members/loans/loan")
 	if got := cochanges(); got["catalog/x05"] != nil || got["members/member"]["catalog/x05"] != 0 {
 		t.Fatalf("a gone Definition keeps co-changes: %v", got)
+	}
+	// One change of book, waiting for its verdict while member is revised three
+	// times, counts with member once; book's verdict drops what its line names
+	// as counted.
+	p.write(m+"catalog/book.md", def("std/Concept", "Book", "A book that waits."))
+	for _, text := range []string{"A person, once.", "A person, twice.", "A person, three times."} {
+		p.write(m+"members/member.md", def("std/Concept", "Member", text))
+		mark("members/member")
+	}
+	has(t, p.read(project.ReviewFile), `"counted":["members/member"]`)
+	mark("catalog/book")
+	if got := cochanges()["catalog/book"]["members/member"]; got != 5 {
+		t.Fatalf("one change counted %d times with member, from 4", got-4)
+	}
+	for _, l := range run.ParseRecord([]byte(p.read(project.ReviewFile))).Lines {
+		if l.Definition == "catalog/book" && len(l.Counted) > 0 {
+			t.Fatalf("a verdict keeps what its line counted: %+v", l)
+		}
 	}
 }
 

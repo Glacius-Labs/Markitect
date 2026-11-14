@@ -363,10 +363,11 @@ func TestVetChangeCoupling(t *testing.T) {
 		}
 		return noteLines(Vet(loadRepo(t, r), History{Revisions: revisions, Cochanges: co}).Notes, "vet.change_coupling")
 	}
-	// Below each line: 4 together, 4 revisions of one, 5 together of 17 each.
+	// Below each line: 4 together, 4 revisions of one with 5 together, 5 together
+	// of 17 each.
 	for _, c := range []struct {
 		shelf, member, together int
-	}{{5, 6, 4}, {4, 6, 4}, {17, 17, 5}} {
+	}{{5, 6, 4}, {4, 6, 5}, {17, 17, 5}} {
 		if got := coupling(map[string]int{"catalog/shelf": c.shelf, "members/member": c.member}, [3]any{"catalog/shelf", "members/member", c.together}); len(got) != 0 {
 			t.Fatalf("%+v noted: %v", c, got)
 		}

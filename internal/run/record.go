@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -28,8 +29,8 @@ const (
 var Verdicts = []string{VerdictOK, VerdictFail, VerdictSkip, VerdictSpecProblem}
 
 // Line is one line of the record: the verdict on one Definition at its inputs.
-// Cases, Covered and Revisions came with 0.23.0 (DEC-102), Cochanges and Batch
-// later; each is left out when empty, so a line written before reads as no
+// Cases, Covered and Revisions came with 0.23.0 (DEC-102), Cochanges, Counted
+// and Batch later; each is left out when empty, so a line written before reads as no
 // count, no revision and no co-change.
 type Line struct {
 	Definition string   `json:"definition"`
@@ -49,9 +50,13 @@ type Line struct {
 	// too, and was not verified again yet, when a verdict counted a revision of
 	// this one: how often the two changed in one round.
 	Cochanges map[string]int `json:"cochanges,omitempty"`
+	// Counted names the Definitions whose revisions already counted a co-change
+	// with the Definition's own text as it changed since this line, so that one
+	// change counts with each of them once; its next verdict drops them.
+	Counted []string `json:"counted,omitempty"`
 	// Batch says that the Definition's own text changed, since this line, in a
-	// round of more than maxChangeSet Definitions, so that the verdict on that
-	// text counts no co-change.
+	// round of more than maxChangeSet Definitions, so that its change counts no
+	// co-change, by the verdict on it or by another's revision.
 	Batch bool `json:"batch,omitempty"`
 }
 
@@ -179,6 +184,20 @@ func mostCochanges(lines []Line) map[string]int {
 			out[id] = max(out[id], n)
 		}
 	}
+	return out
+}
+
+// mostCounted is, sorted, every Definition any of the lines names as counted.
+func mostCounted(lines []Line) []string {
+	var out []string
+	for _, l := range lines {
+		for _, id := range l.Counted {
+			if !slices.Contains(out, id) {
+				out = append(out, id)
+			}
+		}
+	}
+	slices.Sort(out)
 	return out
 }
 

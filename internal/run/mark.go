@@ -135,10 +135,11 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 	line.Revisions = revisions(before[req.definition], inputs)
 	// A round of change is every item whose own text changed since its last
 	// verdict. A revision counts a co-change with each other item of its round;
-	// that item's own verdict later sees this one verified, so a pair counts once
-	// a round. A round of more than maxChangeSet counts nothing, and its other
-	// items' lines say so, so that their own verdicts count nothing either while
-	// the round shrinks as it is verified.
+	// that item's own verdict later sees this one verified, and that item's line
+	// names this one as counted, so that its one change counts with this one
+	// once however often this one is revised before it. A round of more than
+	// maxChangeSet counts nothing, and its other items' lines say so, so that
+	// they count with nothing while the round shrinks as it is verified.
 	revised := line.Revisions > mostRevisions(before[req.definition])
 	others := changed(before, v.now, req.definition)
 	round := len(others)
@@ -148,7 +149,11 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 	large := round > maxChangeSet
 	var with []string
 	if revised && !large && !batched(before[req.definition]) {
-		with = others
+		for _, id := range others {
+			if !batched(before[id]) && !slices.Contains(mostCounted(before[id]), req.definition) {
+				with = append(with, id)
+			}
+		}
 	}
 	line.Cochanges = live(req.definition, mostCochanges(before[req.definition]), v.now)
 	for _, id := range with {
@@ -173,8 +178,11 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 	lines := clean(rec, v, req.definition)
 	for i := range lines {
 		lines[i].Cochanges = live(lines[i].Definition, lines[i].Cochanges, v.now)
+		lines[i].Counted = liveIDs(lines[i].Counted, v.now)
 		if slices.Contains(with, lines[i].Definition) {
 			lines[i].Cochanges[req.definition]++
+			lines[i].Counted = append(lines[i].Counted, req.definition)
+			slices.Sort(lines[i].Counted)
 		}
 		if large && slices.Contains(others, lines[i].Definition) {
 			lines[i].Batch = true
@@ -206,8 +214,9 @@ func (e *Engine) Mark(_ context.Context, req MarkRequest) (text string, recorded
 // as after a merge, the one whose inputs match the folder, or both of a conflict,
 // or else the closest; a gone Definition keeps one line with every file its lines
 // named. A kept line counts the most revisions and co-changes any of its
-// Definition's lines counted, so that a merge loses none, and is in a large
-// round when any of them is.
+// Definition's lines counted, so that a merge loses none, names every
+// Definition any of them names as counted, and is in a large round when any of
+// them is.
 func clean(rec Record, v view, except string) []Line {
 	var out []Line
 	for id, lines := range rec.byDefinition() {
@@ -228,11 +237,11 @@ func clean(rec Record, v view, except string) []Line {
 					}
 				}
 			}
-			merged.Revisions, merged.Cochanges, merged.Batch = mostRevisions(lines), mostCochanges(lines), batched(lines)
+			merged.Revisions, merged.Cochanges, merged.Counted, merged.Batch = mostRevisions(lines), mostCochanges(lines), mostCounted(lines), batched(lines)
 			out = append(out, merged)
 		default:
 			for _, l := range keep(lines, v.now[id], v) {
-				l.Revisions, l.Cochanges, l.Batch = mostRevisions(lines), mostCochanges(lines), batched(lines)
+				l.Revisions, l.Cochanges, l.Counted, l.Batch = mostRevisions(lines), mostCochanges(lines), mostCounted(lines), batched(lines)
 				out = append(out, l)
 			}
 		}
@@ -259,6 +268,18 @@ func live(id string, cochanges map[string]int, now map[string]Inputs) map[string
 	for id, n := range cochanges {
 		if _, ok := now[id]; ok {
 			out[id] = n
+		}
+	}
+	return out
+}
+
+// liveIDs keeps, in a new slice, the Definitions that are items of the spec as
+// it is.
+func liveIDs(ids []string, now map[string]Inputs) []string {
+	var out []string
+	for _, id := range ids {
+		if _, ok := now[id]; ok {
+			out = append(out, id)
 		}
 	}
 	return out
