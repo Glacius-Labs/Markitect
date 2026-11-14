@@ -226,7 +226,7 @@ What a description of a product covers, by folder, in the order in which a proje
 - What it takes for granted, and who makes it true: Assumptions in `context/assumptions/`.
 
 **`scenarios/`**
-- The paths through several areas worth checking: Scenarios in `scenarios/`. They come here first as stories, each a Stakeholder's path with its people, times and what they see, and get their exact steps once the Operations and the interfaces exist. A Scenario is verified by a test that runs what the project delivers, the built program started as the spec says, and walks it, so state each step so that it can be taken through the interface its Actor uses. A Scenario that depends on time passing needs the Rule of `architecture/rules/` on how a test sets the time.
+- The paths through several areas worth checking: Scenarios in `scenarios/`. They come here first as stories, each a Stakeholder's path with its people, times and what they see, its **Steps:** the Stakeholder's actions in plain words. They get their exact steps once the Operations and the interfaces exist: each step then names its Operation by a link, and `scenarios/scenarios.md`, of kind `Package`, is written first, since Root may not link down. A Scenario is verified by a test that runs what the project delivers, the built program started as the spec says, and walks it, so state each step so that it can be taken through the interface its Actor uses. A Scenario that depends on time passing needs the Rule of `architecture/rules/` on how a test sets the time.
 
 **`domain/`**, one Package per area
 - What it keeps: Concepts in `concepts/`, with their Attributes and values, States and Invariants.
