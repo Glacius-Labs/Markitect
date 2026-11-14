@@ -28,13 +28,13 @@ func TestDocFieldsGiveTextLinksAndItems(t *testing.T) {
 
 	lend := DocDefinitionOf(q, q.Spec.Definitions["catalog/operations/lend/lend"])
 	want := []DocField{
-		{Label: "Who", Name: "Who", Text: "`member`.", Links: []string{}},
-		{Label: "Checked in this order", Name: "Checked in this order", Text: "", Links: []string{"catalog/operations/lend/conditions/free", "members/member", "loan-limit"}, Items: []DocItem{
+		{Label: "Who", Text: "`member`.", Links: []string{}},
+		{Label: "Checked in this order", Text: "", Links: []string{"catalog/operations/lend/conditions/free", "members/member", "loan-limit"}, Items: []DocItem{
 			{Text: "[[catalog/operations/lend/conditions/free]]: `taken`.", Links: []string{"catalog/operations/lend/conditions/free"}},
 			{Text: "[[members/member]] is in good standing, and [[loan-limit]] holds: `over_limit`.", Links: []string{"members/member", "loan-limit"}},
 		}},
-		{Label: "Returns", Name: "Returns", Text: "the `loan`.", Links: []string{}},
-		{Label: "Satisfies", Name: "Satisfies", Text: "[[loan-limit]].", Links: []string{"loan-limit"}},
+		{Label: "Returns", Text: "the `loan`.", Links: []string{}},
+		{Label: "Satisfies", Text: "[[loan-limit]].", Links: []string{"loan-limit"}},
 	}
 	if !reflect.DeepEqual(lend.Fields, want) {
 		t.Fatalf("fields of lend:\n%+v\nwant:\n%+v", lend.Fields, want)
@@ -44,7 +44,7 @@ func TestDocFieldsGiveTextLinksAndItems(t *testing.T) {
 	}
 
 	// A part has its fields as a Definition has them.
-	if len(lend.Parts) != 1 || !reflect.DeepEqual(lend.Parts[0].Fields, []DocField{{Label: "Note", Name: "Note", Text: "a *bold* word, see [[members/member]].", Links: []string{"members/member"}}}) {
+	if len(lend.Parts) != 1 || !reflect.DeepEqual(lend.Parts[0].Fields, []DocField{{Label: "Note", Text: "a *bold* word, see [[members/member]].", Links: []string{"members/member"}}}) {
 		t.Fatalf("parts of lend: %+v", lend.Parts)
 	}
 
@@ -73,7 +73,7 @@ func TestDocFieldsGiveTextLinksAndItems(t *testing.T) {
 	if err := json.Unmarshal(data, &back); err != nil {
 		t.Fatal(err)
 	}
-	if _, has := back.Fields[0]["items"]; has || back.Fields[1]["items"] == nil || back.Fields[0]["label"] != "Who" || back.Fields[0]["name"] != "Who" {
+	if _, has := back.Fields[0]["items"]; has || back.Fields[1]["items"] == nil || back.Fields[0]["label"] != "Who" {
 		t.Fatalf("json of the fields: %v", back.Fields)
 	}
 }
@@ -91,18 +91,38 @@ func TestDocFieldsBulletsAndEdges(t *testing.T) {
 	q := loadRepo(t, r)
 	flow := DocDefinitionOf(q, q.Spec.Definitions["catalog/flow"])
 	want := []DocField{
-		{Label: "Steps", Name: "Steps", Text: "Do these:\n\nand then rest.", Links: []string{"loan-limit", "members/member"}, Items: []DocItem{
+		{Label: "Steps", Text: "Do these:\n\nand then rest.", Links: []string{"loan-limit", "members/member"}, Items: []DocItem{
 			{Text: "first, [[loan-limit]]", Links: []string{"loan-limit"}},
 			{Text: "second\n  - nested, [[members/member]]", Links: []string{"members/member"}},
 		}},
-		{Label: "Last", Name: "Last", Text: "a [[members/member|a member]].", Links: []string{"members/member"}},
+		{Label: "Last", Text: "a [[members/member|a member]].", Links: []string{"members/member"}},
 	}
-	if len(flow.Fields) != 2 || flow.Fields[0].Name != "Steps" {
+	if len(flow.Fields) != 2 || flow.Fields[0].Label != "Steps" {
 		t.Fatalf("fields of flow: %+v", flow.Fields)
 	}
 	// The list after "and then rest." lies in the field "Steps" too.
 	want[0].Items = append(want[0].Items, DocItem{Text: "**Inside:** a list", Links: []string{}})
 	if !reflect.DeepEqual(flow.Fields, want) {
 		t.Fatalf("fields of flow:\n%+v\nwant:\n%+v", flow.Fields, want)
+	}
+}
+
+// A link stands where it is written: the same link twice in one field is
+// listed twice, and the links before the first field and in a field after it
+// are not taken for another's.
+func TestDocFieldsLinksStandWhereTheyAreWritten(t *testing.T) {
+	r := library(t)
+	r[m+"steps.md"] = def("Kind", "Steps", "Steps.")
+	r[m+"catalog/twice.md"] = def("steps", "Twice", "Before, [[loan-limit]] and [[members/member]].\n\n"+
+		"**First:** [[loan-limit]], then [[loan-limit]] again.\n\n"+
+		"**Second:** [[members/member]] and [[loan-limit|the limit]].")
+	q := loadRepo(t, r)
+	got := DocDefinitionOf(q, q.Spec.Definitions["catalog/twice"]).Fields
+	want := []DocField{
+		{Label: "First", Text: "[[loan-limit]], then [[loan-limit]] again.", Links: []string{"loan-limit", "loan-limit"}},
+		{Label: "Second", Text: "[[members/member]] and [[loan-limit|the limit]].", Links: []string{"members/member", "loan-limit"}},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("fields:\n%+v\nwant:\n%+v", got, want)
 	}
 }

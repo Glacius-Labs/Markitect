@@ -406,6 +406,7 @@ func (c *compiler) resolve() {
 		}
 		for _, raw := range c.raw[id] {
 			link := c.resolveLink(d, raw.Target, raw.Line, false)
+			link.Start = raw.Start
 			for _, f := range c.fields[id] {
 				if raw.Start >= f.Start && raw.Start < f.End {
 					link.Field = f.Label

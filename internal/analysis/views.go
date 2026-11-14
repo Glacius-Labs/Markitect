@@ -169,14 +169,12 @@ type DocDefinition struct {
 	Record     *DocRecord   `json:"record,omitempty"`
 }
 
-// DocField is one labelled field of a Definition's text. Name is the label
-// (Label says the same, as it always did), Text what follows it as written,
-// its links as [[...]], without the entries of a list that belongs to the
-// field, which Items holds, and Links the Definitions and Packages the whole
-// field links, in its entries too.
+// DocField is one labelled field of a Definition's text. Text is what
+// follows the label as written, its links as [[...]], without the entries of
+// a list that belongs to the field, which Items holds, and Links the
+// Definitions and Packages the whole field links, in its entries too.
 type DocField struct {
 	Label string    `json:"label"`
-	Name  string    `json:"name"`
 	Text  string    `json:"text"`
 	Links []string  `json:"links"`
 	Items []DocItem `json:"items,omitempty"`
@@ -199,20 +197,12 @@ func docFields(d *spec.Definition) []DocField {
 	if err != nil {
 		return nil
 	}
-	// The body links the compiler resolved stand in the order the page has
-	// them, after the Kind's own.
-	var resolved []string
-	for _, l := range d.Links {
-		if !l.Kind {
-			resolved = append(resolved, l.Target)
-		}
-	}
-	raw := page.Links()
+	// A link is the compiler's, found by where it stands in the body.
 	linksIn := func(start, end int) []string {
 		out := []string{}
-		for i, l := range raw {
-			if l.Start >= start && l.Start < end && i < len(resolved) && resolved[i] != "" {
-				out = append(out, resolved[i])
+		for _, l := range d.Links {
+			if !l.Kind && l.Target != "" && l.Start >= start && l.Start < end {
+				out = append(out, l.Target)
 			}
 		}
 		return out
@@ -220,7 +210,7 @@ func docFields(d *spec.Definition) []DocField {
 	var out []DocField
 	for _, f := range page.Fields() {
 		text, items := page.FieldContent(f)
-		field := DocField{Label: f.Label, Name: f.Label, Text: text, Links: linksIn(f.Start, f.End)}
+		field := DocField{Label: f.Label, Text: text, Links: linksIn(f.Start, f.End)}
 		for _, item := range items {
 			field.Items = append(field.Items, DocItem{Text: item.Text, Links: linksIn(item.Start, item.End)})
 		}
