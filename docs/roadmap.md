@@ -8,7 +8,7 @@ The latest release, 0.33.1, carries the whole concept on Claude Code: the spec w
 
 ## Current steps
 
-The spec language and the standard Library `std` stay as they are in 0.33.1 until a series of changes on a real project has run, and change before that only for a defect a run shows; the skills and the tool still change on evidence.
+The freeze of the spec language and the standard Library `std` is lifted: `std` 2.2.0 states the business case of a project ([DEC-114](decisions.md#dec-114-std-states-the-business-case-views-are-computed-not-declared)). The skills and the tool change on evidence.
 
 | Step | Result | Done when |
 |---|---|---|

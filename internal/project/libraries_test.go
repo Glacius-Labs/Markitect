@@ -9,7 +9,7 @@ import (
 
 func TestStandardLibrariesCompile(t *testing.T) {
 	var src spec.Source
-	want := map[string][]string{"std": {"Action.md", "Alternative.md", "Assumption.md", "Attribute.md", "Component.md", "Concept.md", "Concern.md", "Condition.md", "Connector.md", "Consequence.md", "Constraint.md", "Decision.md", "Deployment.md", "Display.md", "Error.md", "Exclusion.md", "Expectation.md", "ExternalSystem.md", "Goal.md", "Interface.md", "Invariant.md", "Limit.md", "Message.md", "Need.md", "Offer.md", "Operation.md", "Outcome.md", "Page.md", "Project.md", "Provision.md", "Quality.md", "Reaction.md", "Refusal.md", "Requirement.md", "Result.md", "Route.md", "Rule.md", "Scenario.md", "Shape.md", "Stakeholder.md", "State.md", "Strategy.md", "Task.md", "Term.md", "Wish.md"}}
+	want := map[string][]string{"std": {"Action.md", "Alternative.md", "Assumption.md", "Attribute.md", "Benefit.md", "Component.md", "Concept.md", "Concern.md", "Condition.md", "Conflict.md", "Connector.md", "Consequence.md", "Constraint.md", "Decision.md", "Deployment.md", "Display.md", "Drawback.md", "Error.md", "Exclusion.md", "Expectation.md", "ExternalSystem.md", "Goal.md", "Interface.md", "Invariant.md", "Limit.md", "Message.md", "Need.md", "Offer.md", "Operation.md", "Outcome.md", "Page.md", "Practice.md", "Problem.md", "Project.md", "Provision.md", "Quality.md", "Reaction.md", "Refusal.md", "Requirement.md", "Result.md", "Route.md", "Rule.md", "Scenario.md", "Shape.md", "Stakeholder.md", "State.md", "Strategy.md", "Task.md", "Term.md", "Wish.md"}}
 	for _, name := range libraries.Names() {
 		files, ok := libraries.Files(name)
 		if !ok {
@@ -40,9 +40,9 @@ func TestStandardLibrariesCompile(t *testing.T) {
 // needs a new Library version and a new expected digest here.
 func TestStandardLibraryDigests(t *testing.T) {
 	want := map[string]string{
-		"std": "sha256:6c041f606dfb3b50bb302be17c566b268ef6f5ac9c7bba55709d7300c7f03f7d",
+		"std": "sha256:f2927a94aad4705adf42a802c3a9ad98358096139089fc19294b10970446532f",
 	}
-	if libraries.Version != "2.1.0" {
+	if libraries.Version != "2.2.0" {
 		t.Fatalf("version %s: update the pinned digests with the version", libraries.Version)
 	}
 	for _, name := range libraries.Names() {

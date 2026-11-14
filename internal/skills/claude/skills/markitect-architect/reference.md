@@ -6,7 +6,7 @@ A compact summary of the spec language, the standard Library and the tools.
 
 ```text
 .markitect/
-  manifest.yaml        Libraries and versions (std: 2.1.0)
+  manifest.yaml        Libraries and versions (std: 2.2.0)
   lock.yaml            Library digests, written by markitect tidy
   spec/                the spec; this folder is the Root Package
     project.md         the project Definition (std/Project), which opens the spec
@@ -45,7 +45,7 @@ Each top-level folder answers one question. A folder appears when the project ha
 
 | Folder | Question | What lies there |
 |---|---|---|
-| `purpose/` | Why does the system exist? | `goals/`, `stakeholders/` with their concerns and wishes, `exclusions/`. The project Definition `project.md` stands beside the folder, in Root. |
+| `purpose/` | Why does the system exist? | `stakeholders/`, each with `today/`, `concerns/`, `wishes/`, `benefits/` and `drawbacks/`; `problems/`, `goals/`, `conflicts/`, `alternatives/`, `exclusions/`. The project Definition `project.md` stands beside the folder, in Root. |
 | `context/` | What is given from outside? | `terms/`, `constraints/`, `assumptions/`, `external-systems/` |
 | `domain/` | What does the system do? | One Package per area, with `concepts/`, `operations/`, `reactions/` and `rules/`; `domain/rules/` for the Rules that hold across areas |
 | `interfaces/` | How is it reached? | One Package per site, API, command line or channel of messages, with its `pages/`, its Interfaces and their `routes/`, or its `messages/`, and the `shapes/`, `refusals/` and `limits/` that hold for all of them |
@@ -60,13 +60,16 @@ An area of the domain is a Package, and so is each site, API, command line or ch
 
 A Kind is a Definition with `kind: Kind`; its body says what a Definition of that Kind states and when it is verified. Every other Definition names its Kind by path. `markitect doc std/Operation` prints a Kind with what it declares.
 
-`std` is the one standard Library, with 45 Kinds. Required fields are in bold; a part's own fields stand after it.
+`std` is the one standard Library, with 50 Kinds. Required fields are in bold; a part's own fields stand after it.
 
 | Folder | Kind | A Definition states | Fields | Parts |
 |---|---|---|---|---|
 | `purpose/` | `std/Project` | what the system is and the problem it removes | | |
-| | `std/Goal` | a result the owner wants | **Result**, **Changes**, **Obstacle** | |
-| | `std/Stakeholder` | a group of people, by what they do | | `concerns/` Concern (Answered by), `wishes/` Wish |
+| | `std/Stakeholder` | a group of people, by what they do | | `today/` Practice (**Steps**, Problems), `concerns/` Concern (Answered by), `wishes/` Wish, `benefits/` Benefit (Instead of, Serves), `drawbacks/` Drawback (**Justified by**, Eased by) |
+| | `std/Problem` | one thing that goes wrong or costs today, and for whom | **Affects**, Cost | |
+| | `std/Goal` | a result the owner wants | **Result**, **Changes**, **Obstacle**, Removes | |
+| | `std/Conflict` | Concerns of different Stakeholders the system cannot all serve fully, and who gives way | **Between**, **Settled by** | |
+| | `std/Alternative` | another way to remove the Problems than building the system, and why not; also a part of a Decision | | |
 | | `std/Exclusion` | one thing the system does not do | | |
 | `context/` | `std/Term` | a thing of the world the system does not manage | Not | |
 | | `std/Constraint` | a restriction imposed from outside | Source, Applies to | Constraints in its folder |
@@ -89,8 +92,8 @@ A Kind is a Definition with `kind: Kind`; its body says what a Definition of tha
 | `scenarios/` | `std/Scenario` | one path a Stakeholder takes, as a check | **Actor**, **Steps** | `outcomes/` Outcome |
 | `administration/` | `std/Task` | one thing the person who runs the system does | **Actor**, **Steps**, **Satisfies** | `outcomes/` Outcome |
 
-- **No file realizes what is given or wanted:** a Project, Goal, Stakeholder, Concern, Wish, Exclusion, Term, Constraint, Assumption, External system, Expectation or Strategy. Their Kinds declare `realized: false`, so they have no registry row; a Goal or a Wish that nothing names in a **Satisfies** field is the auditor's finding.
-- **What is given links only what is given.** A Term links only Terms; a Constraint, an Assumption, an External system and an Expectation link only what lies under `context/`; a Goal links that, other Goals and Stakeholders (`link.target`).
+- **No file realizes what is given or wanted:** a Project, Stakeholder, Practice, Concern, Wish, Benefit, Drawback, Problem, Goal, Conflict, Alternative, Exclusion, Term, Constraint, Assumption, External system, Expectation or Strategy. Their Kinds declare `realized: false`, so they have no registry row; a Goal or a Wish that nothing names in a **Satisfies** field is the auditor's finding.
+- **What is given links only what is given.** A Term links only Terms; a Constraint, an Assumption, an External system and an Expectation link only what lies under `context/`; a Goal links that, other Goals, Stakeholders and Problems (`link.target`).
 - **What binds without a link:** a Rule, a Decision or a Constraint binds its Package and every Package below it. `markitect doc` prints, for each item, those that bind it, so nothing links one only because it holds.
 - **Telling Kinds apart:**
   - An Invariant holds for every instance of one Concept, in its `invariants/`; a Rule holds across Concepts or Operations, or for the work.
@@ -103,7 +106,7 @@ A Kind is a Definition with `kind: Kind`; its body says what a Definition of tha
 - **An API and a command line** are both a Package under `interfaces/` with an Interface and its Routes: a Route names the method and path, or the command and its arguments, in backticks.
 - `Package` is Core's own, written without a Library: the anchor of a Package says what it is responsible for and what it keeps to itself, not what it contains or depends on.
 
-A project writes its own Kinds as small files (`kind: Kind`) anywhere in its spec; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. The standard Library ships in the binary at one version, as in `std: 2.1.0`. After a manifest change run `markitect tidy`.
+A project writes its own Kinds as small files (`kind: Kind`) anywhere in its spec; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. The standard Library ships in the binary at one version, as in `std: 2.2.0`. After a manifest change run `markitect tidy`.
 
 ### What a Kind declares
 
@@ -208,8 +211,12 @@ What a description of a product covers, by folder, in the order in which a proje
 
 **`purpose/`**
 - What the system is, for whom, and the problem it removes today: `project.md`.
-- The results the owner wants: Goals in `purpose/goals/`.
+- How each Stakeholder works today, without the system, and what goes wrong or costs in it and for whom: Practices in `today/` of each Stakeholder's folder, and Problems in `purpose/problems/`.
 - Who uses the system or is affected by it, what matters to them and what they want to do with it: Stakeholders in `purpose/stakeholders/`, with their Concerns and Wishes.
+- The results the owner wants, and the Problems each removes: Goals in `purpose/goals/`, with their **Removes** field.
+- Where Concerns of different Stakeholders cannot all be served fully, who gives way and what settles it: Conflicts in `purpose/conflicts/`.
+- What each Stakeholder gains against today, and what they lose, must newly do or risk, with what justifies it: Benefits in `benefits/` and Drawbacks in `drawbacks/` of each Stakeholder's folder.
+- Other ways to remove the Problems than building the system, such as keeping the paper book or renting a service, and why they were not chosen: Alternatives in `purpose/alternatives/`.
 - What it leaves out, which keeps a first version small: Exclusions in `purpose/exclusions/`.
 
 **`context/`**

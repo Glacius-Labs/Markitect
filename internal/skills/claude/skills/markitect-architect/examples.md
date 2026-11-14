@@ -18,6 +18,7 @@ internal/email/{receipt.go, receipt_test.go}
   registry/interfaces/{desk.md, email.md}
   spec/
     project.md
+    purpose/problems/searching-the-loan-cards.md
     purpose/goals/know-who-holds-each-book.md
     purpose/stakeholders/staff/{staff, wishes/lend-a-book}.md
     purpose/exclusions/reservations.md
@@ -48,7 +49,7 @@ internal/email/{receipt.go, receipt_test.go}
 
 ```yaml
 libraries:
-  std: 2.1.0
+  std: 2.2.0
 ```
 
 ## Root: purpose, context, quality, architecture and the refusal codes
@@ -66,7 +67,22 @@ kind: std/Project
 A small service that lends the books of a neighborhood library to its registered members. Today the staff write each loan on a card filed by member, and nobody can say who holds a book without going through the cards.
 ```
 
-`spec/purpose/goals/know-who-holds-each-book.md` is a Goal: the result the owner wants, stated without how the system gets there. What serves it links it in a **Satisfies:** field; the Goal does not link what serves it.
+`spec/purpose/problems/searching-the-loan-cards.md` is a Problem: what goes wrong today, and for whom.
+
+```markdown
+---
+kind: std/Problem
+---
+# Searching the loan cards
+
+To find who holds a book that is missing from its shelf, the staff go through the loan cards of every member.
+
+**Affects:** [[purpose/stakeholders/staff]].
+
+**Cost:** Several searches a week, each a quarter of an hour or more.
+```
+
+`spec/purpose/goals/know-who-holds-each-book.md` is a Goal: the result the owner wants, stated without how the system gets there, and the Problem it removes. What serves it links it in a **Satisfies:** field; the Goal does not link what serves it.
 
 ```markdown
 ---
@@ -79,6 +95,8 @@ kind: std/Goal
 **Changes:** A book missing from its shelf is found without going through the loan cards.
 
 **Obstacle:** The loan cards are filed by member, not by book.
+
+**Removes:** [[purpose/problems/searching-the-loan-cards]].
 ```
 
 The staff are a Stakeholder with one Wish, a thing with a part:
@@ -490,7 +508,7 @@ Moving the book or the member up to Root would not make sense here, so invert th
 
 ## Registry pages and the ignore file
 
-A row names a thing with parts by its folder, which covers its parts. The project Definition, the Goal, the Stakeholder, the Exclusion and the Term have no row: their Kinds declare `realized: false`, since no file realizes them. Root's page lists the files nobody else claims, including shared files, and names no patterns.
+A row names a thing with parts by its folder, which covers its parts. The project Definition, the Problem, the Goal, the Stakeholder, the Exclusion and the Term have no row: their Kinds declare `realized: false`, since no file realizes them. Root's page lists the files nobody else claims, including shared files, and names no patterns.
 
 `registry.md`
 
@@ -582,7 +600,7 @@ LICENSE
 
 ```text
 $ markitect check
-ok: 31 Definitions in 5 Packages, 14 files accounted
+ok: 32 Definitions in 5 Packages, 14 files accounted
 ```
 
 `markitect vet` shows no warnings. After the limit in `within-the-loan-limit.md` changes from `3` to `5`, `markitect status` lists `domain/catalog/operations/borrow-book/borrow-book` and `domain/members/concepts/member/member`, each as one item with its parts and with the files the registry names for it, such as `internal/catalog/borrow.go` and `internal/members/member.go`. The member is listed because its Invariant changed, the Operation because its Condition `member-is-under-the-limit` links the Invariant.
