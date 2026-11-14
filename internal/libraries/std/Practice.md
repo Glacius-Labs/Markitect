@@ -9,7 +9,7 @@ parts:
 ---
 # Practice
 
-A Practice Definition states how one [[std/Stakeholder]] does one thing today, without the system. It is a part of the Stakeholder, under `today/` in the folder of its name, and links only what lies under `context/` and Stakeholders.
+A Practice Definition states how one [[std/Stakeholder]] does one thing today, without the system. It is a part of the Stakeholder, under `today/` in the folder of its name, and links only what lies under `context/`, Stakeholders and Problems.
 
 **Steps:** numbered, each one act, as it is done today. **Problems:** the [[std/Problem|Problems]] that arise in it.
 

@@ -8,7 +8,7 @@ The latest release, 0.33.1, carries the whole concept on Claude Code: the spec w
 
 ## Current steps
 
-The freeze of the spec language and the standard Library `std` is lifted: `std` 2.2.0 states the business case of a project ([DEC-114](decisions.md#dec-114-std-states-the-business-case-views-are-computed-not-declared)). The skills and the tool change on evidence.
+The spec language and the standard Library `std` change again on evidence, as the skills and the tool do. `std` 2.2.0 on Main adds the business case of a project ([DEC-115](decisions.md#dec-115-std-states-the-business-case-views-are-rendered-not-declared)); a project runs `markitect update` once to name it, and every Definition of a standard Kind is then to verify again once.
 
 | Step | Result | Done when |
 |---|---|---|

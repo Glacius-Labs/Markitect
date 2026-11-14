@@ -20,7 +20,8 @@ internal/email/{receipt.go, receipt_test.go}
     project.md
     purpose/problems/searching-the-loan-cards.md
     purpose/goals/know-who-holds-each-book.md
-    purpose/stakeholders/staff/{staff, wishes/lend-a-book}.md
+    purpose/stakeholders/staff/{staff, today/lend-on-a-card, wishes/lend-a-book}.md
+    purpose/stakeholders/staff/{benefits/find-a-missing-book, drawbacks/lend-at-a-screen}.md
     purpose/exclusions/reservations.md
     context/terms/isbn.md
     quality/performance-efficiency/{performance-efficiency, a-loan-within-a-second}.md
@@ -99,7 +100,7 @@ kind: std/Goal
 **Removes:** [[purpose/problems/searching-the-loan-cards]].
 ```
 
-The staff are a Stakeholder with one Wish, a thing with a part:
+The staff are a Stakeholder, a thing with parts: how they lend today, one Wish, what they gain and what they give.
 
 `spec/purpose/stakeholders/staff/staff.md`
 
@@ -121,6 +122,53 @@ kind: std/Wish
 # Lend a book
 
 Lend a book to a member while they wait at the desk.
+```
+
+`spec/purpose/stakeholders/staff/today/lend-on-a-card.md` is a Practice: how they lend today, without the system.
+
+```markdown
+---
+kind: std/Practice
+---
+# Lend on a card
+
+The staff lend a book by writing it on the member's loan card.
+
+**Steps:**
+
+1. The member hands the book over the desk.
+2. The staff find the member's loan card in the card box.
+3. The staff write the book's title and the date on the card.
+
+**Problems:** [[purpose/problems/searching-the-loan-cards]].
+```
+
+`spec/purpose/stakeholders/staff/benefits/find-a-missing-book.md` is a Benefit: what they gain against today.
+
+```markdown
+---
+kind: std/Benefit
+---
+# Find a missing book
+
+The staff see who holds a book that is missing from its shelf.
+
+**Instead of:** [[purpose/problems/searching-the-loan-cards]].
+```
+
+`spec/purpose/stakeholders/staff/drawbacks/lend-at-a-screen.md` is a Drawback: what they give, and why that is acceptable.
+
+```markdown
+---
+kind: std/Drawback
+---
+# Lend at a screen
+
+The staff learn to lend at a screen instead of on a card.
+
+**Justified by:** [[purpose/goals/know-who-holds-each-book]].
+
+**Eased by:** a loan at the screen takes no longer than writing the card.
 ```
 
 `spec/purpose/exclusions/reservations.md` rules a topic out that a reader could take as included.
@@ -600,7 +648,7 @@ LICENSE
 
 ```text
 $ markitect check
-ok: 32 Definitions in 5 Packages, 14 files accounted
+ok: 35 Definitions in 5 Packages, 14 files accounted
 ```
 
 `markitect vet` shows no warnings. After the limit in `within-the-loan-limit.md` changes from `3` to `5`, `markitect status` lists `domain/catalog/operations/borrow-book/borrow-book` and `domain/members/concepts/member/member`, each as one item with its parts and with the files the registry names for it, such as `internal/catalog/borrow.go` and `internal/members/member.go`. The member is listed because its Invariant changed, the Operation because its Condition `member-is-under-the-limit` links the Invariant.
