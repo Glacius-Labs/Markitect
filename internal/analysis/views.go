@@ -193,7 +193,7 @@ func docFields(d *spec.Definition) []DocField {
 	if len(d.Fields) == 0 {
 		return nil
 	}
-	page, err := spec.ParsePage(project.Normalize(d.Data))
+	page, err := spec.ParsePage(d.Data) // as the compiler parses it, so the offsets of its links hold
 	if err != nil {
 		return nil
 	}

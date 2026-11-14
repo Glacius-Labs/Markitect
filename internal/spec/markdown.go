@@ -244,6 +244,21 @@ type RawItem struct {
 	Start, End int
 }
 
+// closingFence returns the offset after the closing fence of a code block
+// whose content ends at stop, which goldmark gives no line; stop when the
+// next line is none.
+func (p Page) closingFence(stop int) int {
+	rest := p.Body[stop:]
+	line := rest
+	if i := bytes.IndexByte(rest, '\n'); i >= 0 {
+		line = rest[:i]
+	}
+	if t := bytes.TrimLeft(line, " "); bytes.HasPrefix(t, []byte("```")) || bytes.HasPrefix(t, []byte("~~~")) {
+		return stop + len(line)
+	}
+	return stop
+}
+
 // FieldContent returns what a field says besides its label, as written: the
 // text, and the entries of the numbered or bulleted lists at the top level
 // that stand in the field, in order. The entries are not part of the text.
@@ -266,6 +281,9 @@ func (p Page) FieldContent(f RawField) (string, []RawItem) {
 							start = s
 						}
 						end = max(end, lines.At(lines.Len()-1).Stop)
+						if _, fenced := c.(*ast.FencedCodeBlock); fenced {
+							end = max(end, p.closingFence(end))
+						}
 					}
 				}
 				return ast.WalkContinue, nil
@@ -276,11 +294,20 @@ func (p Page) FieldContent(f RawField) (string, []RawItem) {
 			if listStart < 0 {
 				listStart = start
 			}
+			// An entry reaches to where the next one's line starts, so that
+			// nothing a block does not report is cut from it.
+			if k := len(listItems); k > 0 {
+				listItems[k-1].End = max(listItems[k-1].End, bytes.LastIndexByte(p.Body[:start], '\n')+1)
+			}
 			listEnd = max(listEnd, end)
-			listItems = append(listItems, RawItem{Text: strings.TrimSpace(string(p.Body[start:end])), Start: start, End: end})
+			listItems = append(listItems, RawItem{Start: start, End: end})
 		}
 		if listStart < f.TextStart || listStart >= f.End {
 			continue
+		}
+		for i := range listItems {
+			listItems[i].End = min(listItems[i].End, f.End)
+			listItems[i].Text = strings.TrimSpace(string(p.Body[listItems[i].Start:listItems[i].End]))
 		}
 		items = append(items, listItems...)
 		// The range reaches from the start of the first entry's line to the

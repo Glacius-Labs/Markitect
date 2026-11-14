@@ -107,6 +107,29 @@ func TestDocFieldsBulletsAndEdges(t *testing.T) {
 	}
 }
 
+// A fenced code block in an entry stays whole, its closing fence too, in an
+// entry that another follows and in the last.
+func TestDocFieldsItemsKeepTheirCodeBlocks(t *testing.T) {
+	r := library(t)
+	r[m+"steps.md"] = def("Kind", "Steps", "Steps.")
+	r[m+"catalog/coded.md"] = def("steps", "Coded", "**Steps:**\n\n"+
+		"- first, [[loan-limit]]:\n\n  ```\n  code\n  ```\n"+
+		"- second\n\n  ~~~\n  more\n  ~~~\n\n"+
+		"**After:** done.")
+	q := loadRepo(t, r)
+	got := DocDefinitionOf(q, q.Spec.Definitions["catalog/coded"]).Fields
+	want := []DocField{
+		{Label: "Steps", Text: "", Links: []string{"loan-limit"}, Items: []DocItem{
+			{Text: "first, [[loan-limit]]:\n\n  ```\n  code\n  ```", Links: []string{"loan-limit"}},
+			{Text: "second\n\n  ~~~\n  more\n  ~~~", Links: []string{}},
+		}},
+		{Label: "After", Text: "done.", Links: []string{}},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("fields:\n%+v\nwant:\n%+v", got, want)
+	}
+}
+
 // A link stands where it is written: the same link twice in one field is
 // listed twice, and the links before the first field and in a field after it
 // are not taken for another's.
