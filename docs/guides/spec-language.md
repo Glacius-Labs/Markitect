@@ -79,11 +79,11 @@ Core offers two Definitions: `Kind` and `Package`. A Kind is a Definition whose 
 
 A Library is a folder of Kind Definitions, one `<Name>.md` file each at its top level (`library.file`, `library.not_a_kind`, `library.internal`); a Library's name follows the same rules as other names (`library.name`). A Library Definition may link only to Libraries the manifest names and to Core's `Kind` and `Package`. No Kind of a Library has a special meaning to Markitect.
 
-The standard Library `std` ships inside the binary at version 2.1.0. It holds the Kinds of a project's description, 45 files in [`internal/libraries/std`](../../internal/libraries/std/), sorted here by the top-level folder of a spec they are used in:
+The standard Library `std` ships inside the binary at version 2.2.0. It holds the Kinds of a project's description, 50 files in [`internal/libraries/std`](../../internal/libraries/std/), sorted here by the top-level folder of a spec they are used in:
 
 | Folder | What it answers | Kinds of `std` |
 |---|---|---|
-| `purpose/` | Why the system exists | Project, Goal, Stakeholder with Concern and Wish, Exclusion |
+| `purpose/` | Why the system exists | Project; Stakeholder with Practice, Concern, Wish, Benefit and Drawback; Problem; Goal; Conflict; Alternative; Exclusion |
 | `context/` | What is given from outside | Term, Constraint, Assumption, ExternalSystem with Expectation |
 | `domain/` | What the system does | Concept with Attribute, State and Invariant; Operation with Condition, Outcome and Result; Reaction; Rule |
 | `interfaces/` | How it is reached | Interface with Route; Page with Action, Display and Refusal; Message; Shape; Limit |
@@ -132,7 +132,7 @@ An Operation Definition states one thing a caller can do.
 ```yaml
 # .markitect/manifest.yaml
 libraries:
-  std: 2.1.0
+  std: 2.2.0
 ```
 
 The manifest names each Library with its version and nothing else (`manifest.syntax`, `manifest.missing`). A standard Library must have the version this binary ships (`library.version`), and no project folder may replace it (`library.reserved`). A version names one content: when a Kind of a standard Library changes, the version of the standard Libraries moves, and `markitect tidy` and `markitect update` name the new one in the manifest before they write the lock. Any other named Library must exist under `.markitect/libraries/` (`library.missing`), and every Library folder there must be named (`library.undeclared`).

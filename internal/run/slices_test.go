@@ -206,7 +206,7 @@ func TestStatusOfOneSlice(t *testing.T) {
 		t.Fatalf("a Package the spec does not have: %v", err)
 	}
 	// A spec with errors has no list to cut.
-	broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 2.1.0\n", project.SpecDir + "/x.md": "no front matter\n"})
+	broken := newPlainOf(t, map[string]string{project.ManifestFile: "libraries:\n  std: 2.2.0\n", project.SpecDir + "/x.md": "no front matter\n"})
 	st, err := broken.engine.Status(context.Background(), run.StatusRequest{Dir: broken.dir, Slice: []string{"nowhere"}})
 	if err != nil || len(st.SpecErrors) == 0 || len(st.Slices) != 0 {
 		t.Fatalf("a spec with errors: %v\n%s", err, st.Text())
