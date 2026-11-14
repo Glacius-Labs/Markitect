@@ -87,6 +87,7 @@ function world(spec) {
         }
         return Promise.resolve(out)
       }
+      if (prompt.includes("`markitect run slice`")) return Promise.resolve("round noted")
       if (prompt.includes("You do a Git step")) {
         if (spec.swing && prompt.includes(".Root\"")) {
           // Each Root record puts more back than the round before took away,
@@ -146,8 +147,11 @@ const build = { mode: "build", into: "main" }
   assert(!calls.some((c) => c.prompt.includes("Package e")))
   assert(builders(calls).every((c) => c.opts.isolation === "worktree" && c.opts.schema && c.opts.schema.required.includes("branch")))
   // Each strand: builder, then the merge, then its reviewer, then the record.
-  const order = calls.filter((c) => c.prompt).map((c) => (c.opts.agentType || (c.prompt.includes("Git steps") ? "merge" : c.prompt.includes("Git step") ? "record" : "status")).replace("markitect-", ""))
-  assert.deepStrictEqual(order.slice(0, 7), ["status", "builder", "builder", "merge", "reviewer", "reviewer", "record"], order.join(" "))
+  const order = calls.filter((c) => c.prompt).map((c) => (c.opts.agentType || (c.prompt.includes("`markitect run slice`") ? "round" : c.prompt.includes("Git steps") ? "merge" : c.prompt.includes("Git step") ? "record" : "status")).replace("markitect-", ""))
+  assert.deepStrictEqual(order.slice(0, 8), ["status", "round", "builder", "builder", "merge", "reviewer", "reviewer", "record"], order.join(" "))
+  // Each round tells the history that it starts and commits that line alone.
+  const starts = plain(calls).filter((c) => c.prompt.includes("`markitect run slice`"))
+  assert(starts.length === result.rounds && starts.every((c) => c.prompt.includes("`git add -- .markitect/history.jsonl`, then `git commit")), starts.length + " " + result.rounds)
   assert.deepStrictEqual(reviewers(calls).slice(0, 2).map((c) => c.prompt), ["Verify what markitect status lists in Package a.", "Verify what markitect status lists in Package d."])
   assert(reviewers(calls).every((c) => !c.opts.isolation))
   // No step is asked to reach into another folder with Git.

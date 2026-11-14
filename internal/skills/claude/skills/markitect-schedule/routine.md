@@ -14,7 +14,7 @@ Run `markitect status`. If it reports errors in the spec, do nothing but step 5.
 
 ## 3. The work
 
-Start one agent, by the routine, and wait for it:
+Run `markitect run start <the routine> --trigger routine` first, and `markitect run end <how it ended>` when the agent has ended, one of `done`, `no-progress`, `stopped` or `failed`. Start one agent, by the routine, and wait for it:
 
 - **review:** the `markitect-reviewer` agent with the message "Verify every Definition: markitect status --all." It verifies every Definition again, the safety net for what `markitect status` cannot see.
 - **bughunt:** the `markitect-builder` agent with the message "Hunt bugs."
