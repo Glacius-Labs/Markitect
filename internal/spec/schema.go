@@ -50,7 +50,39 @@ type FieldDecl struct {
 	// when the Kind does not say, and then any link may stand there.
 	Links   []string
 	Limited bool
+	// Type is the form of the field's value: TypeEnum, one of Values, or
+	// TypeMeasure, a number with a unit; "" for text of any form.
+	Type   string
+	Values []string
+	// Items is the form of each entry of the list the field holds; nil when
+	// the Kind does not say.
+	Items *ItemsDecl
+	// Unique says that no two Definitions of the Kind in one Package give
+	// the field the same value.
+	Unique bool
+	// Vet says that a value out of the declared form is a note of vet, not an
+	// error of check: a form added to a field that specs already use starts
+	// so, and the form of a new field is an error at once (DEC-117).
+	Vet bool
 }
+
+// The types a field's value may be declared to have.
+const (
+	TypeEnum    = "enum"
+	TypeMeasure = "measure"
+)
+
+// ItemsDecl is the form of each entry of a list field: a link to one of
+// Links, when Limited, and a code in backticks, when Code.
+type ItemsDecl struct {
+	Links   []string
+	Limited bool
+	Code    bool
+}
+
+// Formed says whether the field declares a form of its value, which check or
+// vet holds its value to.
+func (f *FieldDecl) Formed() bool { return f.Type != "" || f.Items != nil || f.Unique }
 
 // PartDecl is one folder of parts a Kind declares, with the Kinds of what
 // lies in it. Folder is a folder name, or DirectParts.
@@ -79,10 +111,25 @@ func (s *Schema) Part(folder string) *PartDecl {
 	return nil
 }
 
-// Field is one labelled field of a Definition's text as written.
+// Field is one labelled field of a Definition's text as written. Start and
+// End bound it in the text without front matter; Text is what follows the
+// label without the entries of a list that belongs to the field, which Items
+// holds.
 type Field struct {
-	Label string
-	Line  int
+	Label      string
+	Line       int
+	Start, End int
+	Text       string
+	Items      []FieldItem
+}
+
+// FieldItem is one entry of a numbered or bulleted list in a field, as
+// written without its marker, with where it lies in the text without front
+// matter.
+type FieldItem struct {
+	Text       string
+	Line       int
+	Start, End int
 }
 
 // schemaRef is one Kind a declaration names, to check once every Definition
@@ -206,9 +253,40 @@ func (c *compiler) parseSchema(file string, frontLine int, fields, parts, links,
 						if v.Tag != "!!null" {
 							decl.Links = kinds(v, "links")
 						}
+					case "type":
+						decl.Type = strings.TrimSpace(v.Value)
+						if v.Kind != yaml.ScalarNode || decl.Type != TypeEnum && decl.Type != TypeMeasure {
+							bad(v, "type is %s, one of the values the field names, or %s, a number with a unit", TypeEnum, TypeMeasure)
+							decl.Type = ""
+						}
+					case "values":
+						decl.Values = enumValues(v, bad)
+					case "items":
+						decl.Items = itemsDecl(v, bad, kinds)
+					case "unique", "vet":
+						flag, ok := yamlBool(v)
+						if !ok {
+							bad(v, "%s is true or false", k.Value)
+							continue
+						}
+						if k.Value == "unique" {
+							decl.Unique = flag
+						} else {
+							decl.Vet = flag
+						}
 					default:
-						bad(k, "a field declares only required and links, not %q", k.Value)
+						bad(k, "a field declares only required, links, type, values, items, unique and vet, not %q", k.Value)
 					}
+				}
+				switch {
+				case decl.Type == TypeEnum && len(decl.Values) == 0:
+					bad(value, "the field %q of type enum names its values, such as values: [sync, async]", decl.Name)
+				case decl.Type != TypeEnum && said["values"]:
+					bad(value, "the field %q names values, which only a field of type enum has", decl.Name)
+				case decl.Type != "" && decl.Items != nil:
+					bad(value, "the field %q holds a value of a type or a list of items, not both", decl.Name)
+				case decl.Vet && !decl.Formed():
+					bad(value, "the field %q says vet, which is for the form of its value, and declares no type, items or unique", decl.Name)
 				}
 			default:
 				bad(value, "the field %q is declared with nothing after it, or with {required: true, links: [std/Goal]}", decl.Name)
@@ -279,6 +357,13 @@ func (c *compiler) checkSchemas() {
 			c.diags.Add("part.kind", d.File, c.rawKind[id].line, "what lies %s of a %s is %s; this is a %s", partPlace(folder), whole.Kind, oneOf(decl.Kinds), d.Kind)
 		}
 	}
+	// The form of a field's value is an error here unless its Kind leaves it
+	// to vet, which notes it (DEC-117).
+	for _, p := range c.spec.ValueProblems() {
+		if !p.Vet {
+			c.diags.Add(p.Code, p.File, p.Line, "%s", p.Message)
+		}
+	}
 }
 
 func (c *compiler) checkFields(d *Definition, s *Schema) {
@@ -333,9 +418,9 @@ func (c *compiler) schemaOf(d *Definition) *Schema {
 	return nil
 }
 
-// declared returns what the Kind of a Definition declares, or nil: nil too
+// Declared returns what the Kind of a Definition declares, or nil: nil too
 // when the declaration has an error of its own, which holds no Definition.
-func (s *Spec) declared(d *Definition) *Schema {
+func (s *Spec) Declared(d *Definition) *Schema {
 	if k := s.Definitions[d.Kind]; k != nil && k.Schema != nil && !k.Schema.Broken {
 		return k.Schema
 	}
@@ -350,7 +435,7 @@ func (s *Spec) VerifiedLast(id string) bool {
 	if d == nil {
 		return false
 	}
-	schema := s.declared(d)
+	schema := s.Declared(d)
 	return schema != nil && (schema.Last || schema.Unrealized)
 }
 
@@ -362,7 +447,7 @@ func (s *Spec) Binding() map[string][]string {
 	out := map[string][]string{}
 	for id := range s.Units() {
 		d := s.Definitions[id]
-		if schema := s.declared(d); schema != nil && schema.Binds {
+		if schema := s.Declared(d); schema != nil && schema.Binds {
 			out[d.Package] = append(out[d.Package], id)
 		}
 	}
@@ -381,7 +466,7 @@ func (s *Spec) Bound(id string) bool {
 	if d == nil || !d.Own() || d.Kind == CoreKind {
 		return false
 	}
-	schema := s.declared(d)
+	schema := s.Declared(d)
 	return schema == nil || !schema.Unrealized
 }
 

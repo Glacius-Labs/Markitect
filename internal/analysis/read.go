@@ -162,7 +162,7 @@ func readEntries(sp *spec.Spec, ids []string) []ReadEntry {
 	out := []ReadEntry{}
 	for _, id := range readOrder(sp, ids) {
 		d := sp.Definitions[id]
-		e := ReadEntry{ID: id, Title: d.Title, Kind: d.Kind, Folder: spec.FolderOf(id), Whole: d.Whole, Text: body(d.Data), Shown: shown(sp, d.Data), Fields: docFields(d)}
+		e := ReadEntry{ID: id, Title: d.Title, Kind: d.Kind, Folder: spec.FolderOf(id), Whole: d.Whole, Text: body(d.Data), Shown: shown(sp, d.Data), Fields: docFields(sp, d)}
 		if _, thing := sp.Thing(e.Folder); thing && id == spec.AnchorOf(e.Folder) {
 			e.Folder = spec.FolderOf(e.Folder)
 		}

@@ -98,7 +98,8 @@ func (c Count) Risk() float64 {
 
 // Vet analyses the design of a loaded project like code: coupling, size, hubs
 // and, as notes, unlinked mentions, statements, placement, hotspots, change
-// coupling and risk.
+// coupling, risk, field values out of the form their Kind leaves to vet, and
+// what std's typed fields show across Definitions.
 func Vet(p *project.Project, h History) Report {
 	var r Report
 	sp := p.Spec
@@ -190,6 +191,8 @@ func Vet(p *project.Project, h History) Report {
 		}
 	}
 	changeCoupling(sp, h, &notes)
+	formNotes(sp, &notes)
+	stdNotes(sp, &notes)
 	r.Warnings = r.Warnings.Sorted()
 	for _, d := range notes {
 		r.Notes = append(r.Notes, Note{Diagnostic: d})

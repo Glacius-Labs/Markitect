@@ -9,7 +9,7 @@ import (
 
 func TestStandardLibrariesCompile(t *testing.T) {
 	var src spec.Source
-	want := map[string][]string{"std": {"Action.md", "Alternative.md", "Assumption.md", "Attribute.md", "Benefit.md", "Component.md", "Concept.md", "Concern.md", "Condition.md", "Conflict.md", "Connector.md", "Consequence.md", "Constraint.md", "Decision.md", "Deployment.md", "Display.md", "Drawback.md", "Error.md", "Exclusion.md", "Expectation.md", "ExternalSystem.md", "Goal.md", "Interface.md", "Invariant.md", "Limit.md", "Message.md", "Need.md", "Offer.md", "Operation.md", "Outcome.md", "Page.md", "Practice.md", "Problem.md", "Project.md", "Provision.md", "Quality.md", "Reaction.md", "Refusal.md", "Requirement.md", "Result.md", "Route.md", "Rule.md", "Scenario.md", "Shape.md", "Stakeholder.md", "State.md", "Strategy.md", "Task.md", "Term.md", "Wish.md"}}
+	want := map[string][]string{"std": {"Action.md", "Alternative.md", "Assumption.md", "Attribute.md", "Benefit.md", "Component.md", "Concept.md", "Concern.md", "Condition.md", "Conflict.md", "Connector.md", "Consequence.md", "Constraint.md", "Decision.md", "Deployment.md", "Display.md", "Drawback.md", "Error.md", "Exclusion.md", "Expectation.md", "ExternalSystem.md", "Goal.md", "Interface.md", "Invariant.md", "Limit.md", "Message.md", "Need.md", "Offer.md", "Operation.md", "Outcome.md", "Page.md", "Practice.md", "Problem.md", "Project.md", "Provision.md", "Quality.md", "Reaction.md", "Refusal.md", "Requirement.md", "Result.md", "Role.md", "Route.md", "Rule.md", "Scenario.md", "Shape.md", "Stakeholder.md", "State.md", "Strategy.md", "Task.md", "Term.md", "Wish.md"}}
 	for _, name := range libraries.Names() {
 		files, ok := libraries.Files(name)
 		if !ok {
@@ -40,9 +40,9 @@ func TestStandardLibrariesCompile(t *testing.T) {
 // needs a new Library version and a new expected digest here.
 func TestStandardLibraryDigests(t *testing.T) {
 	want := map[string]string{
-		"std": "sha256:be8383c7199ba3b618ed5f2d3012a83941116227ec6da12d64d1f09f3210f153",
+		"std": "sha256:3db24f94f6d3a7f9100fff36dc430062bbc49c686402a7b450e30f22659aa0e4",
 	}
-	if libraries.Version != "2.2.0" {
+	if libraries.Version != "2.3.0" {
 		t.Fatalf("version %s: update the pinned digests with the version", libraries.Version)
 	}
 	for _, name := range libraries.Names() {
