@@ -130,7 +130,9 @@ func TestTheReadingSkillsCommandsRunAndOnlyRead(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, pattern := range []string{"/^[^ ].*@[0-9a-f]{6}$/", "/^  with its /"} {
+	// The six classes are written out: mawk 1.3.4, still shipped by some Linux
+	// distributions, knows no {6}.
+	for _, pattern := range []string{"/^[^ ].*@" + strings.Repeat("[0-9a-f]", 6) + "$/", "/^  with its /"} {
 		if !strings.Contains(string(skill), pattern) {
 			t.Fatalf("the catch-up skill no longer takes its items by %s, which this test follows", pattern)
 		}
