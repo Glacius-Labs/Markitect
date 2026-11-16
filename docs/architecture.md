@@ -1,6 +1,6 @@
 # Architecture
 
-How the source is composed, where each responsibility lives and which contracts hold between the packages. Main builds the [concept](concept.md). The spec language and its commands check and analyse a project's spec; [the record](../internal/run/README.md) (`status`, `mark`) says what a driver's agents have to verify and records their verdicts; and the tool steers no work and uses no Git ([DEC-096](decisions.md#dec-096-the-tool-computes-and-checks-a-driver-acts), [DEC-097](decisions.md#dec-097-markitect-uses-no-git), [DEC-099](decisions.md#dec-099-a-record-of-what-was-verified)).
+How the source is composed, where each responsibility lives and which contracts hold between the packages. Main builds the [concept](concept/README.md). The spec language and its commands check and analyse a project's spec; [the record](../internal/run/README.md) (`status`, `mark`) says what a driver's agents have to verify and records their verdicts; and the tool steers no work and uses no Git ([DEC-096](decisions.md#dec-096-the-tool-computes-and-checks-a-driver-acts), [DEC-097](decisions.md#dec-097-markitect-uses-no-git), [DEC-099](decisions.md#dec-099-a-record-of-what-was-verified)).
 
 This page owns the package contracts and the repository layout. The [spec language guide](guides/spec-language.md) owns the language, the `.markitect/` layout and the commands; the [code map](development/code-map.md) lists every package with its owning document.
 
@@ -19,7 +19,7 @@ None of these commands starts an agent, and none needs credentials. The [command
 
 `status` and `mark` run `cmd/markitect → internal/bootstrap → CLI adapter → the record`. Bootstrap builds [the record](../internal/run/README.md) (`internal/run`) over the folder adapter, with the lock of each project's record in the user's cache folder; the record itself, `.markitect/review.sum`, lies in the project. `hook` runs `CLI adapter → the agents' rights`: the adapter reads the call, the environment and the plugin's files, and [`internal/guard`](../internal/guard/README.md) decides over their bytes. The driver, by default the owner's own Claude Code session through the skills of [DEC-100](decisions.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role), such as `/markitect-build` and `/markitect-review`, sequentially or through the shipped parallel workflow ([DEC-103](decisions.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)), starts the agents and makes every Git step: nothing in the tool starts or drives an agent, which calls `markitect` like any other tool. `config` reads and writes the harness configuration (`internal/harness`), from which `init` and `update` write the agents' front matter.
 
-The default driver needs Claude Code on the user's own login: its agents are subagents of the owner's session, with the user's rights, the builder in a worktree of its own and a reviewer alone in the owner's folder ([concept, §7](concept.md#7-how-sure-we-are)).
+The default driver needs Claude Code on the user's own login: its agents are subagents of the owner's session, with the user's rights, the builder in a worktree of its own and a reviewer alone in the owner's folder ([concept, §7](concept/how-sure-we-are.md)).
 
 ## Layers
 

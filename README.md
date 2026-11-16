@@ -71,7 +71,7 @@ In a project that already exists, `/markitect-architect` draws a first spec from
 
 The record, `.markitect/review.sum`, works like Go's test cache: a verdict holds until one of its inputs changes, so a later change puts back on the list only what it reaches. Every file of the project is listed with the Definitions it builds, or explicitly ignored.
 
-Other skills review, clean up, hunt bugs, audit the spec, set up routines and configure the agents, and three read the spec with you: a tour of it, what changed since you last looked, and an explanation of any part of it. No `markitect` command starts an agent or uses Git. The [concept](docs/concept.md) describes the skills and the four roles, and the [spec language guide](docs/guides/spec-language.md#commands) lists every command.
+Other skills review, clean up, hunt bugs, audit the spec, set up routines and configure the agents, and three read the spec with you: a tour of it, what changed since you last looked, and an explanation of any part of it. No `markitect` command starts an agent or uses Git. The [concept](docs/concept/README.md) describes the skills and the four roles, and the [spec language guide](docs/guides/spec-language.md#commands) lists every command.
 
 ## Example: one rule changes
 
@@ -122,7 +122,7 @@ Markitect is built, released and covered by tests. An earlier form of the build 
 | [Project workflow](docs/guides/project-workflow.md) | Using Markitect on a project, step by step, with troubleshooting |
 | [Spec language](docs/guides/spec-language.md) | Definitions, Kinds, links, the registry, every command and diagnostic |
 | [What makes a good spec](docs/guides/good-spec.md) | Designing a spec like code |
-| [Concept](docs/concept.md) | The one description of the product |
+| [Concept](docs/concept/README.md) | The one description of the product |
 | [Vision](docs/vision.md) | Why Markitect exists and what it leaves to people |
 | [Decisions](docs/decisions.md) | What holds today, and the open questions |
 | [Roadmap](docs/roadmap.md) | Where Main is and what comes next |
