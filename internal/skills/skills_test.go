@@ -2,6 +2,7 @@ package skills
 
 import (
 	"os/exec"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -78,4 +79,71 @@ func TestTheArchitectAgentNamesAnInstalledSkillFile(t *testing.T) {
 		return
 	}
 	t.Fatal("the harness has no architect agent")
+}
+
+// The skills that explain the spec to a person change nothing in the project and
+// start no agent (concept, §8): Claude may start them, and they allow without a
+// prompt only markitect's commands that read. Their last look at a project the
+// catch-up skill keeps in the user's own folder, outside the project.
+func TestTheReadingSkillsOnlyRead(t *testing.T) {
+	allowed := regexp.MustCompile(`^Bash\(markitect (status|doc|list|vet)( \*)?\)$`)
+	for _, name := range []string{"tour", "catchup", "explain"} {
+		path := ".claude/skills/markitect-" + name + "/SKILL.md"
+		var text string
+		for _, f := range Harness() {
+			if f.Path == path {
+				text = string(f.Data)
+			}
+		}
+		if text == "" {
+			t.Fatalf("the harness has no %s", path)
+		}
+		front, body, ok := strings.Cut(strings.TrimPrefix(text, "---\n"), "\n---\n")
+		if !ok || !strings.HasPrefix(text, "---\n") {
+			t.Fatalf("%s has no front matter", path)
+		}
+		front = "\n" + front + "\n"
+		if !strings.Contains(front, "\nname: markitect-"+name+"\n") || !strings.Contains(front, "\ndescription: ") {
+			t.Errorf("%s lacks its name or description", path)
+		}
+		if strings.Contains(front, "disable-model-invocation") {
+			t.Errorf("%s: Claude may start a skill that only reads", path)
+		}
+		_, tools, _ := strings.Cut(front, "\nallowed-tools: ")
+		tools, _, _ = strings.Cut(tools, "\n")
+		for _, tool := range strings.Split(tools, ", ") {
+			if !allowed.MatchString(tool) {
+				t.Errorf("%s allows %q without a prompt, which is no reading command of markitect", path, tool)
+			}
+		}
+		for _, starts := range []string{"Agent tool", "Workflow tool", "markitect-builder", "markitect-reviewer", "markitect-auditor", "markitect run", "markitect mark"} {
+			if strings.Contains(body, starts) {
+				t.Errorf("%s names %q, and a reading skill starts no agent and records nothing", path, starts)
+			}
+		}
+	}
+	for _, f := range Harness() {
+		if f.Path != ".claude/skills/markitect-catchup/SKILL.md" {
+			continue
+		}
+		text := strings.ReplaceAll(string(f.Data), "\r\n", "\n")
+		// Each shell block names the user's own folder S in its first line, since
+		// a shell keeps no variable from one command to the next, and removes
+		// only under ${S:?}, so that an unset S stops it instead of reaching /.
+		blocks := strings.Split(text, "```bash\n")[1:]
+		if len(blocks) == 0 {
+			t.Fatal("the catch-up skill has no shell block")
+		}
+		for _, b := range blocks {
+			b = b[:strings.Index(b, "```")]
+			if !strings.HasPrefix(b, `S="$HOME/.claude/markitect-seen/`) {
+				t.Errorf("a shell block of the catch-up skill does not start by naming the user's own folder:\n%s", b)
+			}
+		}
+		for _, rm := range strings.Split(text, "rm -rf ")[1:] {
+			if !strings.HasPrefix(rm, `"${S:?}/`) {
+				t.Errorf("the catch-up skill removes %.30q, outside ${S:?}", rm)
+			}
+		}
+	}
 }

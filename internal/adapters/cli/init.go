@@ -61,7 +61,7 @@ func (c CLI) init(_ context.Context, args []string) (int, error) {
 	if err := setup.InstallHarness(ws, cfg); err != nil {
 		return Misused, err
 	}
-	fmt.Fprintln(c.Stdout, "installed the harness in .claude/: the architect, build, review, cleanup, bughunt, audit, schedule and config skills, the builder, reviewer, architect and auditor agents, and the parallel workflow")
+	fmt.Fprintln(c.Stdout, "installed the harness in .claude/: the architect, build, review, cleanup, bughunt, audit, schedule, config, tour, catchup and explain skills, the builder, reviewer, architect and auditor agents, and the parallel workflow")
 	said, err := setup.EnsureSettings(ws)
 	c.say(said)
 	if err != nil {
