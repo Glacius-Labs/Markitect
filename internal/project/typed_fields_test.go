@@ -54,7 +54,7 @@ func TestTypedFieldsAreCheckedAtOnce(t *testing.T) {
 	r.files[d+"architecture/mail.md"] = "---\nkind: std/Connector\n---\n# Mail\n\nHow mail goes out.\n\n**Between:** [[architecture/web]].\n\n**Protocol:** SMTP.\n\n**Limits:** none.\n\n**Mode:** fire and forget.\n"
 	r.files[d+"operations/lend/outcomes/lent.md"] = "---\nkind: std/Outcome\n---\n# Lent\n\nThe copy is lent.\n\n**Leaves in:** [[concepts/copy]].\n"
 	p := load(t, r)
-	expect(t, p.Errors, "field.unique", `site/pages/loans gives the "Path" /, as site/pages/home does; two std/Pages of site give it apart`)
+	expect(t, p.Errors, "field.unique", `site/pages/loans gives the "Path" /, as site/pages/home does; two Definitions of std/Page in site have the same value, and each needs a different one`)
 	expect(t, p.Errors, "field.value", `"Mode" of a std/Connector is one of `+"`sync`, `async`")
 	expect(t, p.Errors, "field.target", `"Leaves in" of a std/Outcome links a std/State; concepts/copy/copy is a std/Concept`)
 }

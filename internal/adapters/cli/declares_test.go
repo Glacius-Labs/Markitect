@@ -35,6 +35,18 @@ func TestRenderDocShowsWhatAKindDeclares(t *testing.T) {
 			},
 		}, "\nDeclares the fields:\n  Who, required\n  Given\n  Serves, required, links std/Goal, std/Rule\n  Alone, links nothing\n" +
 			"\nDeclares the parts:\n  under conditions/: std/Condition\n  in the folder itself: std/Operation, std/Rule\n"},
+		// The form of a field's value.
+		{&analysis.DocDeclares{
+			Fields: []analysis.DocDeclaredField{
+				{Name: "Mode", Type: "enum", Values: []string{"sync", "async"}},
+				{Name: "Measure", Type: "measure", Vet: true},
+				{Name: "Checked", Items: &analysis.DocDeclaredItems{Links: []string{"std/Condition", "std/Rule"}, Code: true}, Vet: true},
+				{Name: "Steps", Items: &analysis.DocDeclaredItems{Code: true}},
+				{Name: "Path", Required: true, Unique: true},
+			},
+		}, "\nDeclares the fields:\n  Mode, one of sync, async\n  Measure, a measure, form noted by vet\n" +
+			"  Checked, each entry holds a link to std/Condition or std/Rule and a code, form noted by vet\n" +
+			"  Steps, each entry holds a code\n  Path, required, unique in its Package\n"},
 		{&analysis.DocDeclares{Fields: []analysis.DocDeclaredField{}, Parts: []analysis.DocDeclaredPart{}},
 			"\nDeclares the fields:\n  none\n\nDeclares the parts:\n  none\n"},
 		{&analysis.DocDeclares{Parts: []analysis.DocDeclaredPart{}}, "\nDeclares the parts:\n  none\n"},

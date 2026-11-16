@@ -98,6 +98,47 @@ func TestVetStdNotesWaitForTheSpecToUseTheFields(t *testing.T) {
 	}
 }
 
+// A code in backticks in a link's label is no refusal code: vet and doc read
+// the code after the link.
+func TestALinkLabelInBackticksIsNoCode(t *testing.T) {
+	r := typedSpec(t)
+	r[m+"catalog/operations/add/add.md"] = def("std/Operation", "Add", "Adds a book.\n\n"+
+		"**Who:** [[rules/roles/member]].\n\n"+
+		"**Checked in this order:**\n\n1. [[catalog/operations/add/conditions/isbn|`isbn`]] is owned: `book_unknown`.\n\n"+
+		"**Satisfies:** [[loan-limit]].")
+	r[m+"catalog/operations/add/conditions/isbn.md"] = def("std/Condition", "ISBN", "The ISBN names a book the library owns.")
+	var found bool
+	for _, n := range Vet(loadRepo(t, r), History{}).Notes {
+		if n.File != m+"catalog/operations/add/add.md" {
+			continue
+		}
+		switch n.Code {
+		case "vet.refusal_code":
+			found = true
+			if !strings.Contains(n.Message, "entry 1 refuses with `book_unknown`,") {
+				t.Errorf("refusal code: %v", n.Diagnostic)
+			}
+		case "vet.field_value":
+			t.Errorf("the entry holds its link and its code: %v", n.Diagnostic)
+		}
+	}
+	if !found {
+		t.Fatal("no note of the unstated code book_unknown")
+	}
+	q := loadRepo(t, r)
+	add := DocDefinitionOf(q, q.Spec.Definitions["catalog/operations/add/add"])
+	if items := add.Fields[1].Items; len(items) != 1 || items[0].Code != "book_unknown" {
+		t.Fatalf("entries = %+v", items)
+	}
+	data, err := json.Marshal(add)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), `"code":"book_unknown"`) || strings.Contains(string(data), `"code":"isbn"`) {
+		t.Fatalf("json of the entry: %s", data)
+	}
+}
+
 // doc gives the typed value of a field whose Kind declares a type, and the
 // code of each entry of a list whose Kind says each entry holds one.
 func TestDocGivesTypedValues(t *testing.T) {

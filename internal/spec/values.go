@@ -14,7 +14,9 @@ import (
 // type enum with its values, type measure, items for each entry of a list,
 // and unique. The value stays prose in the text; these read it.
 
-// enumValues reads the values of a field of type enum: a list of words.
+// enumValues reads the values of a field of type enum: a list of words. A
+// value holds none of the marks that end or wrap the word in the text, since
+// EnumValue could never read it.
 func enumValues(n *yaml.Node, bad func(*yaml.Node, string, ...any)) []string {
 	if n.Kind != yaml.SequenceNode || len(n.Content) == 0 {
 		bad(n, "values is a list of words, such as [sync, async]")
@@ -23,8 +25,12 @@ func enumValues(n *yaml.Node, bad func(*yaml.Node, string, ...any)) []string {
 	var out []string
 	for _, item := range n.Content {
 		v := strings.TrimSpace(item.Value)
-		if item.Kind != yaml.ScalarNode || v == "" || strings.ContainsAny(v, " `\t\n") || contains(out, v) {
+		switch {
+		case item.Kind != yaml.ScalarNode || v == "" || strings.ContainsAny(v, " \t\n") || contains(out, v):
 			bad(item, "each value is one word, named once, such as sync")
+			continue
+		case strings.ContainsAny(v, enumMarks):
+			bad(item, "the value %q holds a mark that ends or wraps a word in the text, so no text could give it; a value holds none of %s", v, enumMarksShown)
 			continue
 		}
 		out = append(out, v)
@@ -87,7 +93,14 @@ var (
 	// A text that says no measure is promised.
 	measureNone = regexp.MustCompile(`(?i)\b(none|not promised|nothing is promised|no measure|not measurable|cannot be measured|not provable)\b`)
 	codeSpan    = regexp.MustCompile("`([^`\n]+)`")
+	// A link as written, whose label may hold a code in backticks or a number
+	// that belongs to no value.
+	linkSpan = regexp.MustCompile(`\[\[[^\]\n]*\]\]`)
 )
+
+// withoutLinks blanks out the links of a text, so that a code or a number in
+// a link's label is not read as the value.
+func withoutLinks(text string) string { return linkSpan.ReplaceAllString(text, " ") }
 
 // measureOps are the comparisons a measure may state, written as a sign or in
 // words, longest first, with the sign each stands for.
@@ -98,15 +111,18 @@ var measureOps = []struct{ text, op string }{
 }
 
 // unitStop are words after a number that are no unit: the number counts what
-// follows them, or is one of several.
-var unitStop = map[string]bool{"of": true, "and": true, "or": true, "to": true, "in": true, "at": true, "on": true, "for": true, "by": true, "from": true, "the": true, "a": true, "an": true, "x": true}
+// follows them, is one of several, or is a name, as in "ISO 25010 only".
+var unitStop = map[string]bool{"of": true, "and": true, "or": true, "to": true, "in": true, "at": true, "on": true, "for": true, "by": true, "from": true, "the": true, "a": true, "an": true, "x": true, "only": true}
 
 // ParseMeasure reads a value of type measure: the first number in the text
-// that has a unit after it, the comparison before it and, in the compact form
-// `p95 < 300 ms`, what it is of. Backticks are ignored. It is false when the
-// text holds no number with a unit.
+// that has a unit after it and a comparison before it, or else the first that
+// has a unit after it, with, in the compact form `p95 < 300 ms`, what it is
+// of. So in "at `100` users, `p95 < 300 ms`" the measure is 300 ms and the
+// load stays text. Backticks and links are ignored. It is false when the text
+// holds no number with a unit.
 func ParseMeasure(text string) (Measure, bool) {
-	plain := strings.ReplaceAll(text, "`", "")
+	plain := strings.ReplaceAll(withoutLinks(text), "`", "")
+	var first *Measure
 	for _, m := range measureNumber.FindAllStringSubmatchIndex(plain, -1) {
 		unit := plain[m[6]:m[7]]
 		lower := strings.ToLower(unit)
@@ -143,7 +159,15 @@ func ParseMeasure(text string) (Measure, bool) {
 			}
 			break
 		}
-		return v, true
+		if v.Op != "" {
+			return v, true
+		}
+		if first == nil {
+			first = &v
+		}
+	}
+	if first != nil {
+		return *first, true
 	}
 	return Measure{}, false
 }
@@ -157,12 +181,14 @@ func isWordByte(b byte) bool {
 func SaysNoMeasure(text string) bool { return measureNone.MatchString(text) }
 
 // EnumValue reads a value of type enum: the first word of the text, in
-// backticks or plain, when it is one of the values, without regard to case.
+// backticks, emphasis, quotes or plain, when it is one of the values, without
+// regard to case.
 func EnumValue(text string, values []string) (string, bool) {
 	word := strings.TrimLeft(strings.ReplaceAll(text, "`", ""), " \t\n")
-	if i := strings.IndexFunc(word, func(r rune) bool { return strings.ContainsRune(" \t\n.,;:", r) }); i >= 0 {
+	if i := strings.IndexFunc(word, func(r rune) bool { return strings.ContainsRune(enumStop, r) }); i >= 0 {
 		word = word[:i]
 	}
+	word = strings.Trim(word, enumWrap)
 	for _, v := range values {
 		if strings.EqualFold(word, v) {
 			return v, true
@@ -171,18 +197,28 @@ func EnumValue(text string, values []string) (string, bool) {
 	return "", false
 }
 
-// Code returns the first code in backticks in a text, or "".
+// enumStop ends the first word of an enum's value, and enumWrap is what may
+// stand around it; neither is part of a value. enumMarks are those marks and
+// the backtick, which a declared value may not hold.
+const (
+	enumStop       = " \t\n.,;:!?"
+	enumWrap       = "*_\"'()"
+	enumMarks      = ".,;:!?" + enumWrap + "`"
+	enumMarksShown = ". , ; : ! ? * _ \" ' ( ) or a backtick"
+)
+
+// Code returns the first code in backticks in a text outside its links, or "".
 func Code(text string) string {
-	if m := codeSpan.FindStringSubmatch(text); m != nil {
+	if m := codeSpan.FindStringSubmatch(withoutLinks(text)); m != nil {
 		return strings.TrimSpace(m[1])
 	}
 	return ""
 }
 
-// Codes returns every code in backticks in a text.
+// Codes returns every code in backticks in a text outside its links.
 func Codes(text string) []string {
 	var out []string
-	for _, m := range codeSpan.FindAllStringSubmatch(text, -1) {
+	for _, m := range codeSpan.FindAllStringSubmatch(withoutLinks(text), -1) {
 		out = append(out, strings.TrimSpace(m[1]))
 	}
 	return out
@@ -292,7 +328,7 @@ func (s *Spec) ValueProblems() []ValueProblem {
 				k := key{d.Kind, f.Label, d.Package, v}
 				if other, ok := first[k]; ok {
 					out = append(out, ValueProblem{Code: "field.unique", File: d.File, Line: f.Line, Vet: decl.Vet,
-						Message: fmt.Sprintf("%s gives the %q %s, as %s does; two %ss of %s give it apart", id, f.Label, v, other, d.Kind, PackageName(d.Package))})
+						Message: fmt.Sprintf("%s gives the %q %s, as %s does; two Definitions of %s in %s have the same value, and each needs a different one", id, f.Label, v, other, d.Kind, PackageName(d.Package))})
 					continue
 				}
 				first[k] = id

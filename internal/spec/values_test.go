@@ -20,6 +20,12 @@ func TestParseMeasure(t *testing.T) {
 		"a request body of at most `64` KB.":                     {Number: 64, Unit: "KB", Op: "<="},
 		"meets WCAG `2.1` level `AA`":                            {Number: 2.1, Unit: "level"},
 		"a hover of 2 s":                                         {Number: 2, Unit: "s"},
+		// A number with a comparison counts before one without: the load
+		// stays text.
+		"At `100` users, `p95 < 300 ms`": {Number: 300, Unit: "ms", Op: "<", Of: "p95"},
+		"a 404 page within 2 s":          {Number: 2, Unit: "s", Op: "<="},
+		// Without a comparison the first number with a unit counts.
+		"a 404 page in 2 s": {Number: 404, Unit: "page"},
 	} {
 		got, ok := ParseMeasure(text)
 		if !ok || !reflect.DeepEqual(got, want) {
@@ -31,6 +37,7 @@ func TestParseMeasure(t *testing.T) {
 		"at `03:30` every night",
 		"the p95 of the answers",
 		"version 1.2.3",
+		"ISO 25010 only",
 		"",
 	} {
 		if got, ok := ParseMeasure(text); ok {
@@ -49,6 +56,10 @@ func TestEnumValue(t *testing.T) {
 		"async, the mail goes out later":      "async",
 		"Sync: the page waits for the answer": "sync",
 		"`async`":                             "async",
+		"**sync**, the page waits":            "sync",
+		"\"sync\"":                            "sync",
+		"Async!":                              "async",
+		"(async)":                             "async",
 	} {
 		if got, ok := EnumValue(text, values); !ok || got != want {
 			t.Errorf("EnumValue(%q) = %q, %v; want %q", text, got, ok, want)
@@ -67,6 +78,14 @@ func TestCodeReadsTheFirstCodeInBackticks(t *testing.T) {
 	}
 	if got := Codes("`a`, b and ` c `"); !reflect.DeepEqual(got, []string{"a", "c"}) {
 		t.Fatalf("Codes = %q", got)
+	}
+	// A code in a link's label is no code of the text.
+	owned := "[[catalog/conditions/isbn|`isbn`]] is owned: `book_unknown`."
+	if got := Code(owned); got != "book_unknown" {
+		t.Fatalf("Code of a text with a label in backticks = %q", got)
+	}
+	if got := Codes(owned); !reflect.DeepEqual(got, []string{"book_unknown"}) {
+		t.Fatalf("Codes of a text with a label in backticks = %q", got)
 	}
 }
 
@@ -113,7 +132,7 @@ func TestCompileAValueIsHeldToItsForm(t *testing.T) {
 	if d := expect(t, ds, "field.value", `entry 2 of "Steps" lacks a code in backticks`); d.Line != 16 {
 		t.Fatalf("where: %v", d)
 	}
-	if d := expect(t, ds, "field.unique", `site/start gives the "Path" /, as site/home does`); d.File != ".markitect/spec/site/start.md" {
+	if d := expect(t, ds, "field.unique", `site/start gives the "Path" /, as site/home does; two Definitions of form/Page in site have the same value, and each needs a different one`); d.File != ".markitect/spec/site/start.md" {
 		t.Fatalf("where: %v", d)
 	}
 	if len(ds) != 4 {
@@ -159,6 +178,8 @@ func TestCompileADeclarationOfAFormIsChecked(t *testing.T) {
 		"fields:\n  M: {type: enum, values: sync}\n":                                          "values is a list of words",
 		"fields:\n  M: {type: enum, values: [a, a]}\n":                                        "each value is one word, named once",
 		"fields:\n  M: {type: enum, values: [a b]}\n":                                         "each value is one word, named once",
+		"fields:\n  M: {type: enum, values: [v1.0, v2]}\n":                                    `the value "v1.0" holds a mark that ends or wraps a word in the text`,
+		"fields:\n  M: {type: enum, values: [read_only]}\n":                                   `the value "read_only" holds a mark`,
 		"fields:\n  M: {values: [a, b]}\n":                                                    `the field "M" names values, which only a field of type enum has`,
 		"fields:\n  M: {type: measure, items: {code: true}}\n":                                `the field "M" holds a value of a type or a list of items, not both`,
 		"fields:\n  M: {vet: true}\n":                                                         `the field "M" says vet, which is for the form of its value`,
