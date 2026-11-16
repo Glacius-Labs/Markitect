@@ -187,8 +187,8 @@ type DocField struct {
 
 // DocItem is one entry of a numbered or bulleted list in a field, as written
 // without its marker, with the Definitions and Packages it links. Code is its
-// first code in backticks, where the Kind declares that each entry of the
-// field holds one.
+// last code in backticks outside its links, where the Kind declares that each
+// entry of the field holds one.
 type DocItem struct {
 	Text  string   `json:"text"`
 	Links []string `json:"links"`
@@ -224,7 +224,7 @@ func docFields(sp *spec.Spec, d *spec.Definition) []DocField {
 		for _, item := range f.Items {
 			di := DocItem{Text: item.Text, Links: linksIn(item.Start, item.End)}
 			if code {
-				di.Code = spec.Code(item.Text)
+				di.Code = spec.EntryCode(item.Text)
 			}
 			field.Items = append(field.Items, di)
 		}

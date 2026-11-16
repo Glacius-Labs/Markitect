@@ -19,7 +19,7 @@ func TestParseMeasure(t *testing.T) {
 		"no more than 5 per minute":                              {Number: 5, Unit: "per minute", Op: "<="},
 		"a request body of at most `64` KB.":                     {Number: 64, Unit: "KB", Op: "<="},
 		"meets WCAG `2.1` level `AA`":                            {Number: 2.1, Unit: "level"},
-		"a hover of 2 s":                                         {Number: 2, Unit: "s"},
+		"hover 2 s":                                              {Number: 2, Unit: "s"},
 		// A number with a comparison counts before one without: the load
 		// stays text.
 		"At `100` users, `p95 < 300 ms`": {Number: 300, Unit: "ms", Op: "<", Of: "p95"},
@@ -60,6 +60,8 @@ func TestEnumValue(t *testing.T) {
 		"\"sync\"":                            "sync",
 		"Async!":                              "async",
 		"(async)":                             "async",
+		"sync—the caller waits":               "sync",
+		"async–later":                         "async",
 	} {
 		if got, ok := EnumValue(text, values); !ok || got != want {
 			t.Errorf("EnumValue(%q) = %q, %v; want %q", text, got, ok, want)
@@ -78,6 +80,14 @@ func TestCodeReadsTheFirstCodeInBackticks(t *testing.T) {
 	}
 	if got := Codes("`a`, b and ` c `"); !reflect.DeepEqual(got, []string{"a", "c"}) {
 		t.Fatalf("Codes = %q", got)
+	}
+	// The code of an entry is its last: what comes before it is the
+	// condition's own text.
+	if got := EntryCode("[[c/free]], at most `3` loans: `limit_reached`."); got != "limit_reached" {
+		t.Fatalf("EntryCode = %q", got)
+	}
+	if got := EntryCode("[[c/free|`free`]] only."); got != "" {
+		t.Fatalf("EntryCode of an entry with a code only in its link = %q", got)
 	}
 	// A code in a link's label is no code of the text.
 	owned := "[[catalog/conditions/isbn|`isbn`]] is owned: `book_unknown`."
@@ -124,10 +134,20 @@ func TestCompileAValueIsHeldToItsForm(t *testing.T) {
 		"other/other.md": anchor("Other"),
 		"other/home.md":  def("form/Page", "# Home of another site\n\n**Path:** `/`.\n"),
 	}
+	// A measure is read from the field's first paragraph, and a text that says
+	// none is promised before its first number holds none.
+	files["owners.md"] = def("form/Quality", "# Owners\n\n**Measure:** none is promised, since the 3 owners decide.\n")
+	files["later.md"] = def("form/Quality", "# Later\n\n**Budget:** small.\n\nVerified within 5 minutes of a change.\n")
 	sp, ds := formed(t, files)
 	expect(t, ds, "field.value", `"Mode" of a form/Connector is one of `+"`sync`, `async`"+`, in backticks or plain`)
-	if d := expect(t, ds, "field.value", `"Budget" of a form/Quality is a number with its unit`); d.File != ".markitect/spec/vague.md" {
-		t.Fatalf("where: %v", d)
+	var budget []string
+	for _, d := range ds {
+		if d.Code == "field.value" && strings.Contains(d.Message, `"Budget" of a form/Quality is a number with its unit`) {
+			budget = append(budget, d.File)
+		}
+	}
+	if want := []string{".markitect/spec/later.md", ".markitect/spec/vague.md"}; !reflect.DeepEqual(budget, want) {
+		t.Fatalf("Budget out of form in %v; want %v", budget, want)
 	}
 	if d := expect(t, ds, "field.value", `entry 2 of "Steps" lacks a code in backticks`); d.Line != 16 {
 		t.Fatalf("where: %v", d)
@@ -135,8 +155,8 @@ func TestCompileAValueIsHeldToItsForm(t *testing.T) {
 	if d := expect(t, ds, "field.unique", `site/start gives the "Path" /, as site/home does; two Definitions of form/Page in site have the same value, and each needs a different one`); d.File != ".markitect/spec/site/start.md" {
 		t.Fatalf("where: %v", d)
 	}
-	if len(ds) != 4 {
-		t.Fatalf("want four errors, none for what vet notes:\n%v", ds)
+	if len(ds) != 5 {
+		t.Fatalf("want five errors, none for what vet notes:\n%v", ds)
 	}
 	var noted []string
 	for _, p := range sp.ValueProblems() {
@@ -165,6 +185,12 @@ func TestCompileAValueIsHeldToItsForm(t *testing.T) {
 	if v := FieldValue(quality.Field("Measure"), sp.Definitions["vague"].Fields[0]); v != nil {
 		t.Fatalf("a value out of form has no typed value: %#v", v)
 	}
+	if v := FieldValue(quality.Field("Measure"), sp.Definitions["owners"].Fields[0]); v != nil {
+		t.Fatalf("a measure that says none is promised has no value: %#v", v)
+	}
+	if v := FieldValue(quality.Field("Budget"), sp.Definitions["later"].Fields[0]); v != nil {
+		t.Fatalf("a number after the first paragraph is no value: %#v", v)
+	}
 	if v := FieldValue(nil, sp.Definitions["api"].Fields[0]); v != nil {
 		t.Fatalf("a field without a declaration has no typed value: %#v", v)
 	}
@@ -180,6 +206,7 @@ func TestCompileADeclarationOfAFormIsChecked(t *testing.T) {
 		"fields:\n  M: {type: enum, values: [a b]}\n":                                         "each value is one word, named once",
 		"fields:\n  M: {type: enum, values: [v1.0, v2]}\n":                                    `the value "v1.0" holds a mark that ends or wraps a word in the text`,
 		"fields:\n  M: {type: enum, values: [read_only]}\n":                                   `the value "read_only" holds a mark`,
+		"fields:\n  M: {type: enum, values: [now—later]}\n":                                   `the value "now—later" holds a mark`,
 		"fields:\n  M: {values: [a, b]}\n":                                                    `the field "M" names values, which only a field of type enum has`,
 		"fields:\n  M: {type: measure, items: {code: true}}\n":                                `the field "M" holds a value of a type or a list of items, not both`,
 		"fields:\n  M: {vet: true}\n":                                                         `the field "M" says vet, which is for the form of its value`,

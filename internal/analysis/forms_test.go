@@ -85,56 +85,57 @@ func TestVetNotesFormsAndStdFields(t *testing.T) {
 	}
 }
 
-// A spec that has no Roles hears nothing of Who, and a Concept none of whose
-// States an Outcome names hears nothing of its States: a spec written before
-// these fields stays quiet.
+// A spec that has no Roles hears nothing of Who, a Concept none of whose
+// States an Outcome names hears nothing of its States, and a spec whose Rules
+// and Refusals state no code hears nothing of refusal codes: a spec written
+// before these fields stays quiet.
 func TestVetStdNotesWaitForTheSpecToUseTheFields(t *testing.T) {
 	r := typedSpec(t)
 	delete(r, m+"rules/roles/member.md")
 	r[m+"catalog/operations/give-back/give-back.md"] = strings.Replace(r[m+"catalog/operations/give-back/give-back.md"], "[[rules/roles/member]]", "`member`", 1)
 	r[m+"catalog/operations/lend/outcomes/lent.md"] = def("std/Outcome", "Lent", "The copy is lent.")
-	if got := notesOf(t, r, "vet.unreached_state", "vet.who_role"); len(got) != 0 {
-		t.Fatalf("notes on a spec without Roles and Leaves in: %v", got)
+	r[m+"rules/refusal-codes.md"] = def("std/Rule", "Refusal codes", "A refused call says why.")
+	if got := notesOf(t, r, "vet.unreached_state", "vet.who_role", "vet.refusal_code"); len(got) != 0 {
+		t.Fatalf("notes on a spec without Roles, Leaves in and stated codes: %v", got)
 	}
 }
 
-// A code in backticks in a link's label is no refusal code: vet and doc read
-// the code after the link.
-func TestALinkLabelInBackticksIsNoCode(t *testing.T) {
+// A code in backticks in a link's label is no refusal code, and an entry's
+// refusal code is its last: vet and doc read the code that ends the entry.
+func TestTheRefusalCodeOfAnEntry(t *testing.T) {
 	r := typedSpec(t)
 	r[m+"catalog/operations/add/add.md"] = def("std/Operation", "Add", "Adds a book.\n\n"+
 		"**Who:** [[rules/roles/member]].\n\n"+
-		"**Checked in this order:**\n\n1. [[catalog/operations/add/conditions/isbn|`isbn`]] is owned: `book_unknown`.\n\n"+
+		"**Checked in this order:**\n\n1. [[catalog/operations/add/conditions/isbn|`isbn`]] is owned: `book_unknown`.\n"+
+		"2. [[catalog/operations/add/conditions/isbn]], at most `3` loans: `limit_reached`.\n\n"+
 		"**Satisfies:** [[loan-limit]].")
 	r[m+"catalog/operations/add/conditions/isbn.md"] = def("std/Condition", "ISBN", "The ISBN names a book the library owns.")
-	var found bool
+	var refused []string
 	for _, n := range Vet(loadRepo(t, r), History{}).Notes {
 		if n.File != m+"catalog/operations/add/add.md" {
 			continue
 		}
 		switch n.Code {
 		case "vet.refusal_code":
-			found = true
-			if !strings.Contains(n.Message, "entry 1 refuses with `book_unknown`,") {
-				t.Errorf("refusal code: %v", n.Diagnostic)
-			}
+			refused = append(refused, n.Message[:strings.Index(n.Message, ",")])
 		case "vet.field_value":
 			t.Errorf("the entry holds its link and its code: %v", n.Diagnostic)
 		}
 	}
-	if !found {
-		t.Fatal("no note of the unstated code book_unknown")
+	if want := []string{"entry 1 refuses with `book_unknown`", "entry 2 refuses with `limit_reached`"}; !reflect.DeepEqual(refused, want) {
+		t.Fatalf("refusal codes noted: %q; want %q", refused, want)
 	}
 	q := loadRepo(t, r)
 	add := DocDefinitionOf(q, q.Spec.Definitions["catalog/operations/add/add"])
-	if items := add.Fields[1].Items; len(items) != 1 || items[0].Code != "book_unknown" {
+	if items := add.Fields[1].Items; len(items) != 2 || items[0].Code != "book_unknown" || items[1].Code != "limit_reached" {
 		t.Fatalf("entries = %+v", items)
 	}
 	data, err := json.Marshal(add)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(data), `"code":"book_unknown"`) || strings.Contains(string(data), `"code":"isbn"`) {
+	if !strings.Contains(string(data), `"code":"book_unknown"`) || !strings.Contains(string(data), `"code":"limit_reached"`) ||
+		strings.Contains(string(data), `"code":"isbn"`) || strings.Contains(string(data), `"code":"3"`) {
 		t.Fatalf("json of the entry: %s", data)
 	}
 }

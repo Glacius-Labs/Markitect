@@ -197,14 +197,16 @@ func EnumValue(text string, values []string) (string, bool) {
 	return "", false
 }
 
-// enumStop ends the first word of an enum's value, and enumWrap is what may
-// stand around it; neither is part of a value. enumMarks are those marks and
-// the backtick, which a declared value may not hold.
+// enumStop ends the first word of an enum's value, at a space or a mark, the
+// dashes among them, and enumWrap is what may stand around it; neither is part
+// of a value. enumMarks are those marks and the backtick, which a declared
+// value may not hold.
 const (
-	enumStop       = " \t\n.,;:!?"
+	enumPunct      = ".,;:!?—–"
+	enumStop       = " \t\n" + enumPunct
 	enumWrap       = "*_\"'()"
-	enumMarks      = ".,;:!?" + enumWrap + "`"
-	enumMarksShown = ". , ; : ! ? * _ \" ' ( ) or a backtick"
+	enumMarks      = enumPunct + enumWrap + "`"
+	enumMarksShown = ". , ; : ! ? — – * _ \" ' ( ) or a backtick"
 )
 
 // Code returns the first code in backticks in a text outside its links, or "".
@@ -213,6 +215,17 @@ func Code(text string) string {
 		return strings.TrimSpace(m[1])
 	}
 	return ""
+}
+
+// EntryCode returns the last code in backticks in an entry of a list outside
+// its links, or "": the code that answers the entry, as in "[[c/free]], at
+// most `3` loans: `limit_reached`".
+func EntryCode(text string) string {
+	codes := Codes(text)
+	if len(codes) == 0 {
+		return ""
+	}
+	return codes[len(codes)-1]
 }
 
 // Codes returns every code in backticks in a text outside its links.
@@ -255,11 +268,37 @@ func FieldValue(decl *FieldDecl, f Field) any {
 			return v
 		}
 	case TypeMeasure:
-		if v, ok := ParseMeasure(f.Text); ok {
+		if v, ok := fieldMeasure(f.Text); ok {
 			return v
 		}
 	}
 	return nil
+}
+
+// paragraphBreak is a blank line, which ends a field's first paragraph.
+var paragraphBreak = regexp.MustCompile(`\n[ \t]*\n`)
+
+// firstParagraph is a field's text up to its first blank line: the value. What
+// follows it says more and holds no value.
+func firstParagraph(text string) string {
+	text = strings.TrimSpace(text)
+	if loc := paragraphBreak.FindStringIndex(text); loc != nil {
+		return text[:loc[0]]
+	}
+	return text
+}
+
+// fieldMeasure reads the measure of a field of type measure from its first
+// paragraph. A text that says no measure is promised before its first number
+// holds none, as in "none is promised, since the 3 owners decide".
+func fieldMeasure(text string) (Measure, bool) {
+	p := firstParagraph(text)
+	if none := measureNone.FindStringIndex(p); none != nil {
+		if digit := strings.IndexAny(p, "0123456789"); digit < 0 || none[0] < digit {
+			return Measure{}, false
+		}
+	}
+	return ParseMeasure(p)
 }
 
 // ValueProblem is a field value out of the form its Kind declares. Vet says
@@ -302,8 +341,10 @@ func (s *Spec) ValueProblems() []ValueProblem {
 					add(f.Line, "%q of a %s is %s, in backticks or plain, as its first word", f.Label, d.Kind, enumChoice(decl.Values))
 				}
 			case TypeMeasure:
-				if _, ok := ParseMeasure(f.Text); !ok && !SaysNoMeasure(f.Text) {
-					add(f.Line, "%q of a %s is a number with its unit, such as `30 days` or `p95 < 300 ms`, or says that none is promised", f.Label, d.Kind)
+				if p := firstParagraph(f.Text); !SaysNoMeasure(p) {
+					if _, ok := fieldMeasure(p); !ok {
+						add(f.Line, "%q of a %s is a number with its unit, such as `30 days` or `p95 < 300 ms`, or says that none is promised", f.Label, d.Kind)
+					}
 				}
 			}
 			if it := decl.Items; it != nil {
@@ -312,7 +353,7 @@ func (s *Spec) ValueProblems() []ValueProblem {
 					if it.Limited && !s.entryLinks(d, f, entry, it.Links) {
 						lacks = append(lacks, "a link to "+oneOf(it.Links))
 					}
-					if it.Code && Code(entry.Text) == "" {
+					if it.Code && EntryCode(entry.Text) == "" {
 						lacks = append(lacks, "a code in backticks")
 					}
 					if len(lacks) > 0 {

@@ -30,7 +30,8 @@ func formNotes(sp *spec.Spec, notes *spec.Diagnostics) {
 }
 
 // stdNotes notes what std's typed fields show across Definitions: a refusal
-// code of an Operation that no Rule or Refusal states, a State of a Concept
+// code of an Operation that no Rule or Refusal states, in a spec whose Rules
+// or Refusals state a code some Operation refuses with, a State of a Concept
 // that no Outcome leaves in where its Concept's Outcomes say where they
 // leave, and a Who that links no Role in a spec that has Roles.
 func stdNotes(sp *spec.Spec, notes *spec.Diagnostics) {
@@ -59,6 +60,7 @@ func stdNotes(sp *spec.Spec, notes *spec.Diagnostics) {
 			}
 		}
 	}
+	listsRefusals := statesRefusals(sp, ids, stated)
 	for _, id := range ids {
 		d := sp.Definitions[id]
 		switch d.Kind {
@@ -66,8 +68,11 @@ func stdNotes(sp *spec.Spec, notes *spec.Diagnostics) {
 			for _, f := range d.Fields {
 				switch f.Label {
 				case fieldChecked:
+					if !listsRefusals {
+						continue // the spec lists no refusal codes yet
+					}
 					for i, entry := range f.Entries() {
-						if c := spec.Code(entry.Text); c != "" && !stated[c] {
+						if c := spec.EntryCode(entry.Text); c != "" && !stated[c] {
 							notes.Add("vet.refusal_code", d.File, entry.Line, "entry %d refuses with `%s`, which no Rule or Refusal of the spec states; add it where the spec lists its refusal codes, or use one it states", i+1, c)
 						}
 					}
@@ -83,6 +88,30 @@ func stdNotes(sp *spec.Spec, notes *spec.Diagnostics) {
 			}
 		}
 	}
+}
+
+// statesRefusals says whether a Rule or Refusal of the spec states a code that
+// an entry of some Operation's Checked in this order refuses with: only then
+// does the spec list its refusal codes, and a code missing there is worth a
+// note. Any text in backticks, such as `5` in a Rule, would open it too early.
+func statesRefusals(sp *spec.Spec, ids []string, stated map[string]bool) bool {
+	for _, id := range ids {
+		d := sp.Definitions[id]
+		if d.Kind != stdOperation {
+			continue
+		}
+		for _, f := range d.Fields {
+			if f.Label != fieldChecked {
+				continue
+			}
+			for _, entry := range f.Entries() {
+				if c := spec.EntryCode(entry.Text); c != "" && stated[c] {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 // linksKind says whether a field of a Definition links a Definition of a Kind.
