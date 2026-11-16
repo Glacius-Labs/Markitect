@@ -173,28 +173,33 @@ type DocDefinition struct {
 // follows the label as written, its links as [[...]], without the entries of
 // a list that belongs to the field, which Items holds, and Links the
 // Definitions and Packages the whole field links, in its entries too.
+//
+// Value is the typed value where the Kind declares a type for the field: the
+// value of an enum as a string, or a measure as a spec.Measure; left out for
+// a field without a type and for a value out of form.
 type DocField struct {
 	Label string    `json:"label"`
 	Text  string    `json:"text"`
 	Links []string  `json:"links"`
 	Items []DocItem `json:"items,omitempty"`
+	Value any       `json:"value,omitempty"`
 }
 
 // DocItem is one entry of a numbered or bulleted list in a field, as written
-// without its marker, with the Definitions and Packages it links.
+// without its marker, with the Definitions and Packages it links. Code is its
+// last code in backticks outside its links, where the Kind declares that each
+// entry of the field holds one.
 type DocItem struct {
 	Text  string   `json:"text"`
 	Links []string `json:"links"`
+	Code  string   `json:"code,omitempty"`
 }
 
 // docFields returns the labelled fields of a Definition's text, in order,
-// read as the compiler reads them to check them.
-func docFields(d *spec.Definition) []DocField {
+// read as the compiler reads them to check them, with the typed value where
+// its Kind declares the form.
+func docFields(sp *spec.Spec, d *spec.Definition) []DocField {
 	if len(d.Fields) == 0 {
-		return nil
-	}
-	page, err := spec.ParsePage(d.Data) // as the compiler parses it, so the offsets of its links hold
-	if err != nil {
 		return nil
 	}
 	// A link is the compiler's, found by where it stands in the body.
@@ -207,12 +212,21 @@ func docFields(d *spec.Definition) []DocField {
 		}
 		return out
 	}
+	schema := sp.Declared(d)
 	var out []DocField
-	for _, f := range page.Fields() {
-		text, items := page.FieldContent(f)
-		field := DocField{Label: f.Label, Text: text, Links: linksIn(f.Start, f.End)}
-		for _, item := range items {
-			field.Items = append(field.Items, DocItem{Text: item.Text, Links: linksIn(item.Start, item.End)})
+	for _, f := range d.Fields {
+		var decl *spec.FieldDecl
+		if schema != nil {
+			decl = schema.Field(f.Label)
+		}
+		field := DocField{Label: f.Label, Text: f.Text, Links: linksIn(f.Start, f.End), Value: spec.FieldValue(decl, f)}
+		code := decl != nil && decl.Items != nil && decl.Items.Code
+		for _, item := range f.Items {
+			di := DocItem{Text: item.Text, Links: linksIn(item.Start, item.End)}
+			if code {
+				di.Code = spec.EntryCode(item.Text)
+			}
+			field.Items = append(field.Items, di)
 		}
 		out = append(out, field)
 	}
@@ -238,10 +252,24 @@ type DocDeclares struct {
 
 // DocDeclaredField is one field a Kind declares. Links is null when a link
 // in the field may name anything.
+// Type, Values, Items, Unique and Vet are the form of its value, left out
+// where the Kind declares none.
 type DocDeclaredField struct {
-	Name     string   `json:"name"`
-	Required bool     `json:"required"`
-	Links    []string `json:"links"`
+	Name     string            `json:"name"`
+	Required bool              `json:"required"`
+	Links    []string          `json:"links"`
+	Type     string            `json:"type,omitempty"`
+	Values   []string          `json:"values,omitempty"`
+	Items    *DocDeclaredItems `json:"items,omitempty"`
+	Unique   bool              `json:"unique,omitempty"`
+	Vet      bool              `json:"vet,omitempty"`
+}
+
+// DocDeclaredItems is what each entry of a list field holds: a link to one of
+// Links, null when the Kind does not say, and a code in backticks when Code.
+type DocDeclaredItems struct {
+	Links []string `json:"links"`
+	Code  bool     `json:"code,omitempty"`
 }
 
 // DocDeclaredPart is one folder of parts a Kind declares; the folder "."
@@ -318,7 +346,7 @@ func DocDefinitionOf(p *project.Project, d *spec.Definition) DocDefinition {
 		dd.Package = ""
 	}
 	dd.Shown = shown(p.Spec, d.Data)
-	dd.Fields = docFields(d)
+	dd.Fields = docFields(p.Spec, d)
 	for _, id := range boundBy(p.Spec, p.Spec.Binding(), d) {
 		dd.BoundBy = append(dd.BoundBy, listDefinition(p.Spec.Definitions[id], false))
 	}
@@ -331,7 +359,13 @@ func DocDefinitionOf(p *project.Project, d *spec.Definition) DocDefinition {
 			dd.Declares.Fields = []DocDeclaredField{}
 		}
 		for _, f := range s.Fields {
-			declared := DocDeclaredField{Name: f.Name, Required: f.Required}
+			declared := DocDeclaredField{Name: f.Name, Required: f.Required, Type: f.Type, Values: f.Values, Unique: f.Unique, Vet: f.Vet}
+			if f.Items != nil {
+				declared.Items = &DocDeclaredItems{Code: f.Items.Code}
+				if f.Items.Limited {
+					declared.Items.Links = append([]string{}, f.Items.Links...)
+				}
+			}
 			if f.Limited {
 				declared.Links = append([]string{}, f.Links...)
 			}
@@ -356,7 +390,7 @@ func DocDefinitionOf(p *project.Project, d *spec.Definition) DocDefinition {
 		if id == spec.AnchorOf(spec.FolderOf(id)) {
 			group = spec.FolderOf(group) // a part with parts of its own: beside its siblings
 		}
-		dd.Parts = append(dd.Parts, DocPart{ID: id, Title: part.Title, Kind: part.Kind, Group: group, Of: of, Text: body(part.Data), Shown: shown(p.Spec, part.Data), Fields: docFields(part)})
+		dd.Parts = append(dd.Parts, DocPart{ID: id, Title: part.Title, Kind: part.Kind, Group: group, Of: of, Text: body(part.Data), Shown: shown(p.Spec, part.Data), Fields: docFields(p.Spec, part)})
 	}
 	shownHere := map[string]bool{d.ID: true}
 	for _, id := range p.Spec.Parts(d.ID) {

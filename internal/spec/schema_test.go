@@ -161,7 +161,7 @@ func TestCompileADeclarationIsChecked(t *testing.T) {
 	for front, want := range map[string]string{
 		"fields: [Who]\n":                     "fields is a mapping of field labels",
 		"fields:\n  Who: yes\n":               `the field "Who" is declared with nothing after it`,
-		"fields:\n  Who: {must: true}\n":      `a field declares only required and links, not "must"`,
+		"fields:\n  Who: {must: true}\n":      `a field declares only required, links, type, values, items, unique and vet, not "must"`,
 		"fields:\n  Who: {required: 1}\n":     "required is true or false",
 		"fields:\n  Who:\n  Who:\n":           `the field "Who" is declared twice`,
 		"parts:\n  a: k/K\n  a: k/K\n":        `the folder "a" is declared twice`,

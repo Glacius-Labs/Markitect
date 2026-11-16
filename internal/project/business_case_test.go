@@ -12,7 +12,7 @@ func businessCase(t *testing.T) memRepo {
 	}
 	staff := SpecDir + "/purpose/stakeholders/staff/"
 	return memRepo{files: map[string]string{
-		ManifestFile:            "libraries:\n  std: 2.2.0\n",
+		ManifestFile:            "libraries:\n  std: 2.3.0\n",
 		LockFile:                stdLock(t),
 		SpecDir + "/project.md": def("std/Project", "Library", "A lending library."),
 		staff + "staff.md":      def("std/Stakeholder", "Staff", "The people who lend the books."),

@@ -6,7 +6,7 @@ A compact summary of the spec language, the standard Library and the tools.
 
 ```text
 .markitect/
-  manifest.yaml        Libraries and versions (std: 2.2.0)
+  manifest.yaml        Libraries and versions (std: 2.3.0)
   lock.yaml            Library digests, written by markitect tidy
   spec/                the spec; this folder is the Root Package
     project.md         the project Definition (std/Project), which opens the spec
@@ -60,7 +60,7 @@ An area of the domain is a Package, and so is each site, API, command line or ch
 
 A Kind is a Definition with `kind: Kind`; its body says what a Definition of that Kind states and when it is verified. Every other Definition names its Kind by path. `markitect doc std/Operation` prints a Kind with what it declares.
 
-`std` is the one standard Library, with 50 Kinds. Required fields are in bold; a part's own fields stand after it.
+`std` is the one standard Library, with 51 Kinds. Required fields are in bold; a part's own fields stand after it.
 
 | Folder | Kind | A Definition states | Fields | Parts |
 |---|---|---|---|---|
@@ -76,21 +76,22 @@ A Kind is a Definition with `kind: Kind`; its body says what a Definition of tha
 | | `std/Assumption` | what the system takes for granted | **Ensured by**, **Therefore not built** | |
 | | `std/ExternalSystem` | a system ours talks to and does not build | **Uses**, **When it fails** | `expectations/` Expectation |
 | `domain/` | `std/Concept` | one thing the system manages, in one sentence | | `attributes/` Attribute, `states/` State, `invariants/` Invariant (Derived from), `conditions/` Condition |
-| | `std/Operation` | one thing a caller can do to a Concept or ask of it | **Who**, Given, Checked in this order, Returns, **Satisfies** | `conditions/` Condition, `outcomes/` Outcome, `results/` Result |
-| | `std/Reaction` | what the system does by itself | **When**, **Satisfies** | `outcomes/` Outcome |
-| | `std/Rule` | a property the owner chose that holds across Concepts or Operations, or for the work | Applies to, Derived from | Rules in its folder |
+| | `std/Operation` | one thing a caller can do to a Concept or ask of it | **Who** (the Roles), Given, Checked in this order (each entry its Condition and refusal code), Returns, **Satisfies** | `conditions/` Condition, `outcomes/` Outcome (Leaves in), `results/` Result |
+| | `std/Reaction` | what the system does by itself | **When**, **Satisfies** | `outcomes/` Outcome (Leaves in) |
+| | `std/Rule` | a property the owner chose that holds across Concepts or Operations, or for the work | Applies to, Derived from | Rules in its folder; Roles in the folder of the Rule that says who may call what |
+| | `std/Role` | one role a caller holds: who counts as it | **Granted by** | |
 | `interfaces/` | `std/Interface` | how behavior is offered to programs or at a command line | **For**, Follows | `routes/` Route (**Reaches**) |
-| | `std/Page` | one page of a site as its user meets it | **For**, **Shows**, All actions | `actions/` Action, `refusals/` Refusal, `displays/` Display |
+| | `std/Page` | one page of a site as its user meets it | **For** (the Roles), Path (unique in the site), **Shows**, All actions | `actions/` Action, `refusals/` Refusal, `displays/` Display |
 | | `std/Message` | one message the system sends to a person by itself, such as an e-mail | **To**, **Sent when**, **Holds** | |
 | | `std/Shape`, `std/Refusal`, `std/Limit` | how something is written, how a refusal reaches the user, a limit a caller may rely on | | |
-| `quality/` | `std/Quality` | how well the system must do something | Measure, Matters to | Qualities in its folder |
+| `quality/` | `std/Quality` | how well the system must do something | Measure (a number with its unit), Matters to | Qualities in its folder |
 | `architecture/` | `std/Strategy` | one fundamental way the design reaches what is asked | Satisfies, Carried out by | Strategies in its folder |
 | | `std/Decision` | a choice made and kept | Reason | `consequences/` Consequence, `alternatives/` Alternative |
 | | `std/Component` | what exists when the system runs | **Instances**, **Implemented by** | `offers/` Offer, `requirements/` Requirement, `needs/` Need, `rules/` Rule |
-| | `std/Connector` | how Components interact | **Between**, **Protocol**, **Limits** | `errors/` Error |
+| | `std/Connector` | how Components interact | **Between**, **Protocol**, **Limits**, Mode (`sync` or `async`) | `errors/` Error |
 | | `std/Deployment` | where the system runs | **Environment**, **Runs** | `provisions/` Provision |
-| `scenarios/` | `std/Scenario` | one path a Stakeholder takes, as a check | **Actor**, **Steps** | `outcomes/` Outcome |
-| `administration/` | `std/Task` | one thing the person who runs the system does | **Actor**, **Steps**, **Satisfies** | `outcomes/` Outcome |
+| `scenarios/` | `std/Scenario` | one path a Stakeholder takes, as a check | **Actor**, **Steps** | `outcomes/` Outcome (Leaves in) |
+| `administration/` | `std/Task` | one thing the person who runs the system does | **Actor**, **Steps**, Schedule, **Satisfies** | `outcomes/` Outcome (Leaves in) |
 
 - **No file realizes what is given or wanted:** a Project, Stakeholder, Practice, Concern, Wish, Benefit, Drawback, Problem, Goal, Conflict, Alternative, Exclusion, Term, Constraint, Assumption, External system, Expectation or Strategy. Their Kinds declare `realized: false`, so they have no registry row; a Goal or a Wish that nothing names in a **Satisfies** field is the auditor's finding.
 - **What is given links only what is given.** A Term links only Terms; a Constraint, an Assumption, an External system and an Expectation link only what lies under `context/`; a Goal links that, other Goals, Stakeholders and Problems (`link.target`).
@@ -100,13 +101,13 @@ A Kind is a Definition with `kind: Kind`; its body says what a Definition of tha
   - An Assumption is about people and the world; an Expectation is about one External system.
   - A Decision is a choice between alternatives, with its reason; its Consequences are what must follow from it; a Rule is a property that holds across the code or the domain and is checked there.
   - A Message goes to a person; a Connector joins Components, or a Component and an External system.
-  - **Who:** and **For:** name roles in backticks, which a Rule defines; **Actor:** links a Stakeholder.
+  - **Who:** and **For:** link the Roles, the parts of the Rule that says who may call what; never a Stakeholder, since `anyone` is none and one Stakeholder may hold several Roles. **Actor:** links a Stakeholder.
 - **Each field on a line of its own.** The Kinds name their fields inside sentences; a Definition starts each field on a line of its own, which is the form that compiles.
 - **A relation has one name:** **Satisfies:** what an Operation, Reaction, Task or Strategy exists for; **Derived from:** what a Rule or Invariant follows from; **Reaches:** the Operation of a Route; **Sent when:** what makes a Message due; **Answered by:** what answers a Concern; **Carried out by:** the Decisions and Rules of a Strategy; **Implemented by:** the Packages whose code runs in a Component. **Follows:** names another Package whose Shapes, Refusals and Limits hold for an Interface; its own Package binds it by place already.
 - **An API and a command line** are both a Package under `interfaces/` with an Interface and its Routes: a Route names the method and path, or the command and its arguments, in backticks.
 - `Package` is Core's own, written without a Library: the anchor of a Package says what it is responsible for and what it keeps to itself, not what it contains or depends on.
 
-A project writes its own Kinds as small files (`kind: Kind`) anywhere in its spec; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. The standard Library ships in the binary at one version, as in `std: 2.2.0`. After a manifest change run `markitect tidy`.
+A project writes its own Kinds as small files (`kind: Kind`) anywhere in its spec; a Kind several Packages use sits at Root. A Library is a folder of `<Name>.md` Kind files under `.markitect/libraries/<name>/`, named in the manifest. The standard Library ships in the binary at one version, as in `std: 2.3.0`. After a manifest change run `markitect tidy`.
 
 ### What a Kind declares
 
@@ -117,7 +118,7 @@ kind: Kind
 fields:
   Who: {required: true}
   Given:
-  Checked in this order: {links: std/Condition}
+  Checked in this order: {links: std/Condition, items: {links: std/Condition, code: true}, vet: true}
   Returns:
   Satisfies: {required: true, links: [std/Goal, std/Constraint, std/Rule, std/Quality, std/Wish]}
 parts:
@@ -127,6 +128,7 @@ parts:
 ```
 
 - `fields` names the fields a Definition may have, by label. `required: true` asks for the field (`field.missing`). `links` in a field names the Kinds a link in the field may name, `Package` for a Package (`field.target`); without it any link may stand there. A label the Kind does not declare (`field.unknown`) and a field that stands twice (`field.repeated`) are errors.
+- A field may declare the form of its value: `type: enum` with `values: [sync, async]`, its first word one of them; `type: measure`, a number with its unit, such as `30 days` or `p95 < 300 ms`; `items: {links: std/Condition, code: true}`, what each entry of its list holds; `unique: true`, no two Definitions of the Kind in one Package give it the same value. A value out of form is `field.value`, a repeated unique value `field.unique`. With `vet: true` either is a note of `vet` instead, `vet.field_value`: a form given to a field that specs already use starts so, and the form of a new field is an error at once.
 - `parts` names the folders a thing of the Kind has its parts in, each with the Kind, or the list of Kinds, of what lies there; `.` is the thing's own folder, as for a Rule whose parts are Rules. A part in another folder (`part.folder`) or of another Kind (`part.kind`) is an error.
 - `links` at the top names the Kinds any link of the Definition may name, in its own sentences and in every field that does not name its Kinds itself (`link.target`), as `std/Term` declares `links: std/Term`.
 - `realized: false` declares that no file realizes a Definition of the Kind: it is verified, needs no registry row and is never `definition.unused`.
@@ -231,14 +233,15 @@ What a description of a product covers, by folder, in the order in which a proje
 
 **`domain/`**, one Package per area
 - What it keeps: Concepts in `concepts/`, with their Attributes and values, States and Invariants.
-- Each thing a caller can do or ask, with who may, what is given, its Conditions in order with their refusal codes, its Outcomes and what it returns: Operations in `operations/`.
+- Each thing a caller can do or ask, with who may, linked to the Roles in **Who:**, what is given, its Conditions in order, each entry with its refusal code in backticks, its Outcomes, each with the State it leaves in under **Leaves in:** where it moves one, and what it returns: Operations in `operations/`.
 - What it does by itself, at a time or after something has happened: Reactions in `reactions/`.
-- What holds across Operations, such as roles and who counts as which, signing in and sessions, and how long data is kept: Rules in `rules/` of the area, or of `domain/` across areas, among them one Rule in `domain/rules/` that names the refusal codes every area uses.
+- What holds across Operations, such as signing in and sessions, and how long data is kept: Rules in `rules/` of the area, or of `domain/` across areas, among them one Rule in `domain/rules/` that names the refusal codes every area uses.
+- Who may call what: one Rule, such as `domain/rules/roles/roles.md`, with one Role for each role as its part, who counts as it and its **Granted by:**, how one gets it.
 
 **`interfaces/`**, one Package per site, API, command line or channel of messages
 - How each Operation is reached: an Interface with its Routes, or the Pages of a site with their Actions, Refusals and Displays, among them what a page shows when there is nothing to show.
 - Each message the system sends to a person, such as an e-mail: Messages in `messages/` of a Package such as `interfaces/email/`.
-- The addresses of a site that a user relies on, such as the link in an e-mail or a bookmark: in the **For:** field of the Page each opens, the path in backticks. Which pages open from a link or a bookmark, and their paths, are the architect's proposal, said to the owner as what the users do, such as opening the appointment from the confirmation e-mail.
+- The address of each Page: its **Path:**, in backticks, which no other Page of the site has; the addresses a user relies on, such as the link in an e-mail or a bookmark, among them. Which pages open from a link or a bookmark, and their paths, are the architect's proposal, said to the owner as what the users do, such as opening the appointment from the confirmation e-mail.
 - How a site looks: whether it must look like something that exists, such as a logo, colours or a present website, or may look plain, which the architect proposes where the owner's notes say nothing. What exists is a Constraint in `context/constraints/` that says where it is, with **Applies to:** the site; a look the project chooses is a Decision in the site's `decisions/`; otherwise one sentence in the site's anchor says that its looks are free. A spec that is silent here lets twenty different sites pass.
 - What holds for the whole site, API, command line or channel: Shapes, such as the language of pages and messages, Refusals and Limits, in the Package's `shapes/`, `refusals/` and `limits/`, and in those folders of `interfaces/` itself for what holds for every interface.
 
@@ -250,16 +253,16 @@ What a description of a product covers, by folder, in the order in which a proje
 - The solution strategy: Strategies in `architecture/strategy/`.
 - The technology, what the project depends on and the other choices it keeps, with their reasons and rejected alternatives: Decisions in `architecture/decisions/`. Propose something plain that fits, unless the owner has named a preference.
 - What holds across the code, one Rule with parts each in `architecture/rules/`: persistence and transactions, concurrency, security (threats, how secrets and passwords are kept, secure communication, an audit trail, the headers a site sends), faults, logging and monitoring, configuration, how stored data is brought to a newer form, build and release, layout, with how an area adds files of its own for what it plugs in, such as its routes or its tables, where it would otherwise change a file all areas share, and tests with the command that runs them, which the reviewer runs as evidence, and how a test sets the time of the running program, where a Reaction or a Scenario depends on time passing.
-- What runs, how its parts talk and where it runs: Components, Connectors and Deployments in `architecture/runtime/`. How a Component starts and stops, and what it does for its own upkeep, are Rules in its `rules/`. `architecture/runtime/` is a Package once it names what lies in the areas, since it then depends on them, and nothing in an area links into it; a Rule that an area relies on lies in `architecture/rules/`.
+- What runs, how its parts talk, whether the caller waits, a Connector's **Mode:** `sync` or `async`, and where it runs: Components, Connectors and Deployments in `architecture/runtime/`. How a Component starts and stops, and what it does for its own upkeep, are Rules in its `rules/`. `architecture/runtime/` is a Package once it names what lies in the areas, since it then depends on them, and nothing in an area links into it; a Rule that an area relies on lies in `architecture/rules/`.
 
 **`administration/`**
-- What the person who runs the system does to it, such as installing, deploying and rolling back, backing up and restoring, upgrading and finding a fault: Tasks in `administration/tasks/`.
+- What the person who runs the system does to it, such as installing, deploying and rolling back, backing up and restoring, upgrading and finding a fault: Tasks in `administration/tasks/`, with **Schedule:** when one is done on a schedule.
 
 ## Warnings and notes (`vet`)
 
 Warnings: `vet.coupling` (more than 5 dependencies), `vet.unstable_dependency` (depends on a less stable Package), `vet.definition_size` (over 1000 words), `vet.package_size` (over 25 Definitions, the parts of a thing not counted; Root only in a spec without Packages), `vet.hub` (a Definition other than a Kind, Root's included, whose change alone would put more than a fifth of the spec, and more than 10 Definitions, back on the list to verify through links; what it binds by its place is not counted), `vet.thin_package` (only its anchor and one child Package), `vet.no_paths` (once something is built: a Package other than Root claims no path pattern, so it owns no file).
 
-Notes: `vet.unlinked_mention` (the title or name of a Definition that is no part and that a file realizes, in the prose of a Definition whose thing does not link it; also where a link would close a Package cycle or add a Package dependency), `vet.statements` (over 20 list items and table rows), `vet.placement` (every Definition that links to it lies in one Package below it), `vet.hotspot` (how often its own text changed between verdicts, times what links to it, is above a tenth of the spec and 20), `vet.change_coupling` (its own text kept changing together with another's that it neither links nor is linked by), `vet.risk` (its last `ok` or `skip` rests on evidence for too few of the cases the reviewer counted, or it has too many cases to verify well).
+Notes: `vet.unlinked_mention` (the title or name of a Definition that is no part and that a file realizes, in the prose of a Definition whose thing does not link it; also where a link would close a Package cycle or add a Package dependency), `vet.statements` (over 20 list items and table rows), `vet.placement` (every Definition that links to it lies in one Package below it), `vet.hotspot` (how often its own text changed between verdicts, times what links to it, is above a tenth of the spec and 20), `vet.change_coupling` (its own text kept changing together with another's that it neither links nor is linked by), `vet.risk` (its last `ok` or `skip` rests on evidence for too few of the cases the reviewer counted, or it has too many cases to verify well), `vet.field_value` (a value out of the form its Kind leaves to `vet`, such as a Measure without a number and unit, or an entry of **Checked in this order** without its Condition or its code), `vet.refusal_code` (an Operation refuses with a code that no Rule or Refusal states), `vet.unreached_state` (a State that no Outcome leaves in, once Outcomes name States of its Concept), `vet.who_role` (a **Who** that links no Role, in a spec that has Roles).
 
 ## Error codes
 
@@ -268,7 +271,7 @@ Notes: `vet.unlinked_mention` (the title or name of a Definition that is no part
 | Project | `project.file` (a file under `.markitect/` has no place in the layout), `project.read` |
 | Definition and spec | `definition.front_matter`, `definition.title`, `spec.name`, `spec.file`, `spec.collision`, `spec.package`, `spec.reserved` |
 | Kind and Library | `kind.unresolved`, `kind.not_a_kind`, `kind.schema`, `library.name`, `library.file`, `library.not_a_kind`, `library.internal`, `library.version`, `library.reserved`, `library.missing`, `library.undeclared` |
-| Fields and parts | `field.unknown`, `field.missing`, `field.repeated`, `field.target`, `part.folder`, `part.kind` |
+| Fields and parts | `field.unknown`, `field.missing`, `field.repeated`, `field.target`, `field.value` (a value out of the form its Kind declares), `field.unique` (two Definitions of a Kind in one Package give a unique field the same value), `part.folder`, `part.kind` |
 | Manifest and lock | `manifest.syntax`, `manifest.missing`, `lock.mismatch`, `lock.missing`, `lock.syntax` |
 | Links and Packages | `link.unresolved`, `link.syntax`, `link.internal`, `link.target`, `link.downward`, `package.cycle` |
 | Registry and ignore | `file.unregistered`, `registry.front_matter`, `registry.page`, `registry.pattern`, `registry.duplicate_pattern`, `registry.ambiguous_owner`, `registry.wrong_owner`, `registry.duplicate_entry`, `registry.ignored_file`, `registry.git_ignored`, `registry.own_file`, `registry.table`, `registry.link`, `ignore.syntax` |
