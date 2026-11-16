@@ -26,6 +26,7 @@ Product code and tests that handle a project's `.markitect/` folder use fixtures
 | Topic | Page |
 |---|---|
 | Why Markitect exists | [Vision](docs/vision.md) |
+| What Markitect builds on: standards, literature and known practice | [Foundations](docs/foundations.md) |
 | The product as a whole | [Concept](docs/concept/README.md) |
 | Decisions in force and open questions | [Decisions](docs/decisions.md) |
 | The spec language, the `.markitect/` layout and the commands | [Spec language](docs/guides/spec-language.md) |
