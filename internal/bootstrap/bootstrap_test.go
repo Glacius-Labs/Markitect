@@ -604,9 +604,11 @@ func TestInitInstallsTheHarness(t *testing.T) {
 	if err := json.Unmarshal([]byte(read(t, r.Dir, ".claude/settings.json")), &settings); err != nil {
 		t.Fatal(err)
 	}
-	if pre := settings.Hooks["PreToolUse"]; len(pre) != 3 || pre[0].Matcher != "Bash|PowerShell" || len(pre[0].Hooks) != 2 ||
+	if pre := settings.Hooks["PreToolUse"]; len(pre) != 3 || pre[0].Matcher != "Bash|PowerShell" || len(pre[0].Hooks) != 4 ||
 		pre[0].Hooks[0].Command != projectHook || pre[0].Hooks[0].If != "Bash(markitect mark*)" ||
 		pre[0].Hooks[1].Command != projectHook || pre[0].Hooks[1].If != "PowerShell(markitect mark*)" || pre[0].Hooks[1].Shell != "bash" ||
+		pre[0].Hooks[2].Command != projectHook || pre[0].Hooks[2].If != "Bash(markitect inbox*)" ||
+		pre[0].Hooks[3].Command != projectHook || pre[0].Hooks[3].If != "PowerShell(markitect inbox*)" || pre[0].Hooks[3].Shell != "bash" ||
 		pre[1].Matcher != "Edit|Write|MultiEdit|NotebookEdit" || len(pre[1].Hooks) != 1 ||
 		pre[1].Hooks[0].Command != projectHook || pre[1].Hooks[0].If != "" ||
 		pre[2].Matcher != "Agent|Task|Workflow" || len(pre[2].Hooks) != 1 ||

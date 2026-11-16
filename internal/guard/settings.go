@@ -84,8 +84,9 @@ func guardedTools() []string {
 // guardHooks hold the rights of the four roles (DEC-100): only the reviewer
 // records verdicts, so that the agent that built does not verify its own work; a
 // subagent writes only what its role may; and the builder starts only the
-// reviewer. The first group runs only before a shell command that records, with
-// one handler for each shell tool, since a rule names one tool; the second runs
+// reviewer. The first group runs only before a shell command that records or
+// changes the inbox, with one handler for each shell tool and command, since a
+// rule names one tool; the second runs
 // before every tool that writes a file, the third before every tool that starts
 // an agent. Each runs in bash, as the plugin's do, since its command is a shell
 // command, also on Windows.
@@ -100,6 +101,9 @@ func guardHooks() []any {
 	var marks []any
 	for _, tool := range strings.Split(ShellTools, "|") {
 		marks = append(marks, hook(MarkRule(tool)))
+	}
+	for _, tool := range strings.Split(ShellTools, "|") {
+		marks = append(marks, hook(InboxRule(tool)))
 	}
 	return []any{
 		map[string]any{"matcher": ShellTools, "hooks": marks},

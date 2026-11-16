@@ -227,8 +227,8 @@ func (e *Engine) InboxAdd(_ context.Context, dir string, l InboxLine) (item Inbo
 		}
 	}
 	l.Type, l.Time, l.How, l.Why = InboxOpen, e.now(), "", ""
-	sum := sha256.Sum256([]byte(l.Time.Format(time.RFC3339Nano) + "\x00" + l.Source + "\x00" + l.Kind + "\x00" + l.Text))
-	l.ID = "i" + hex.EncodeToString(sum[:4])
+	sum := sha256.Sum256([]byte(l.Time.Format(time.RFC3339Nano) + "\x00" + l.Source + "\x00" + l.Kind + "\x00" + strings.Join(l.Place, "\x01") + "\x00" + l.Text))
+	l.ID = "i" + hex.EncodeToString(sum[:6])
 	if err := appendLine(root, project.InboxFile, l); err != nil {
 		return InboxLine{}, false, err
 	}

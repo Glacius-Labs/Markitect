@@ -468,8 +468,9 @@ func TestGuardHooksStartTheLauncherOnlyForTheirCalls(t *testing.T) {
 	}
 	cases := []struct{ others, guarded []string }{
 		{
-			others:  []string{shell("ls -la && git status"), shell("markitect status"), edit("markitect-builder", "/p/.markitect/spec/x.md")},
-			guarded: []string{shell("markitect mark fees/fee@0a1b2c ok -e src/fees.go"), shell("markitect.exe mark fees/fee@0a1b2c ok"), shell("cd . && MARKITECT  mark x@0a1b2c ok")},
+			others: []string{shell("ls -la && git status"), shell("markitect status"), edit("markitect-builder", "/p/.markitect/spec/x.md")},
+			guarded: []string{shell("markitect mark fees/fee@0a1b2c ok -e src/fees.go"), shell("markitect.exe mark fees/fee@0a1b2c ok"), shell("cd . && MARKITECT  mark x@0a1b2c ok"),
+				shell("markitect inbox close i0a1b2c3d4e5f --settled -m done"), shell("markitect.exe inbox --repo . close --answered -m ok i0a1b2c3d4e5f")},
 		},
 		{
 			others: []string{edit("", "/p/.markitect/spec/x.md"), edit("markitect-builder", "/p/src/fees.go"), edit("general-purpose", "/p/src/fees.go"), shell("markitect mark x@0a1b2c ok"),

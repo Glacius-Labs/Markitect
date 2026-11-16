@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"path"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -45,6 +46,11 @@ const ShellTools = "Bash|PowerShell"
 // shell tool that records a verdict. Claude Code starts the hook when a command
 // of the line begins with it, also after leading assignments.
 func MarkRule(tool string) string { return tool + "(markitect mark*)" }
+
+// InboxRule is the permission rule that starts the hook before a command of a
+// shell tool that changes the inbox, so that it can refuse a subagent closing
+// an item that only the owner may settle.
+func InboxRule(tool string) string { return tool + "(markitect inbox*)" }
 
 // EditTools are the tools that write files, and AgentTools the tools that start
 // agents, as the matchers of the hooks that hold the roles' rights. Claude Code
@@ -108,27 +114,50 @@ func (r rights) may(start string) bool {
 // markitect.cmd.
 var markCommand = regexp.MustCompile(`(?i)(^|[\s;&|("'/\\` + "`" + `])markitect(\.exe|\.cmd)?["']?\s+mark(\s|$)`)
 
-// inboxClose finds a call of markitect inbox close in a shell command, as
-// markCommand finds mark, with the ID of the item it closes.
-var inboxClose = regexp.MustCompile(`(?i)(^|[\s;&|("'/\\` + "`" + `])markitect(\.exe|\.cmd)?["']?\s+inbox\s+close\s+["']?(i[0-9a-f]+)`)
+// inboxCall finds a call of markitect inbox in a shell command, as markCommand
+// finds mark, with the rest of its command up to the next one.
+var inboxCall = regexp.MustCompile(`(?i)(^|[\s;&|("'/\\` + "`" + `])markitect(\.exe|\.cmd)?["']?\s+inbox(\s[^;&|\n]*|$)`)
+
+// itemID is the shape of an inbox item's ID.
+var itemID = regexp.MustCompile(`(?i)^i[0-9a-f]+$`)
 
 // InboxCloses returns the IDs of the inbox items a call of a subagent closes,
-// so that whoever holds the inbox can refuse one that only the owner may
-// settle. A call of the owner's session closes any.
-func InboxCloses(input []byte) []string {
+// with the folders the calls name with --repo, "." where one names none, so
+// that whoever holds the inbox can refuse one that only the owner may settle. A
+// call of the owner's session closes any. The flags of the command may stand
+// anywhere, so every word of a call that closes, in the shape of an ID, counts.
+func InboxCloses(input []byte) (ids, repos []string) {
 	var in struct {
 		AgentID   string         `json:"agent_id"`
 		ToolInput map[string]any `json:"tool_input"`
 	}
 	if json.Unmarshal(input, &in) != nil || in.AgentID == "" {
-		return nil
+		return nil, nil
 	}
 	command, _ := in.ToolInput["command"].(string)
-	var ids []string
-	for _, m := range inboxClose.FindAllStringSubmatch(command, -1) {
-		ids = append(ids, strings.ToLower(m[3]))
+	for _, m := range inboxCall.FindAllStringSubmatch(command, -1) {
+		words := strings.Fields(m[3])
+		for i := range words {
+			words[i] = strings.Trim(words[i], `"'`)
+		}
+		if !slices.Contains(words, "close") {
+			continue
+		}
+		repo := "."
+		for i, w := range words {
+			name, value, inline := strings.Cut(strings.TrimLeft(w, "-"), "=")
+			switch {
+			case itemID.MatchString(w):
+				ids = append(ids, strings.ToLower(w))
+			case strings.HasPrefix(w, "-") && name == "repo" && inline:
+				repo = value
+			case strings.HasPrefix(w, "-") && name == "repo" && i+1 < len(words):
+				repo = words[i+1]
+			}
+		}
+		repos = append(repos, repo)
 	}
-	return ids
+	return ids, repos
 }
 
 // Deny is what the hook prints to refuse a call, saying why.

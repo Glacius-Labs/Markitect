@@ -70,24 +70,37 @@ func TestInboxCommands(t *testing.T) {
 		}
 	}
 	// The hook lets a subagent close an item for an agent, and refuses one for
-	// the owner; the owner's session closes any.
-	hook := func(agentID, id string) string {
+	// the owner, with the flags anywhere and the project named by --repo; the
+	// owner's session closes any.
+	elsewhere := t.TempDir()
+	hook := func(cwd, agentID, command string) string {
 		t.Helper()
-		input, _ := json.Marshal(map[string]any{"cwd": r.Dir, "agent_id": agentID, "agent_type": "markitect-architect", "tool_name": "Bash", "tool_input": map[string]any{"command": "markitect inbox close " + id + " --settled -m done"}})
+		input, _ := json.Marshal(map[string]any{"cwd": cwd, "agent_id": agentID, "agent_type": "markitect-architect", "tool_name": "Bash", "tool_input": map[string]any{"command": command}})
 		var out, errOut bytes.Buffer
 		if code := newCLI(bytes.NewReader(input), &out, &errOut).Run(context.Background(), []string{"hook", "pretool"}); code != 0 {
 			t.Fatalf("hook exit %d: %s", code, errOut.String())
 		}
 		return out.String()
 	}
-	if out := hook("a1", link); out != "" {
+	if out := hook(r.Dir, "a1", "markitect inbox close "+link+" --settled -m done"); out != "" {
 		t.Fatalf("a subagent may not close an item for an agent: %s", out)
 	}
-	if out := hook("a1", question); !strings.Contains(out, "waits for the owner") {
-		t.Fatalf("a subagent may close an item for the owner: %s", out)
+	for _, c := range []struct{ cwd, command string }{
+		{r.Dir, "markitect inbox close " + question + " --settled -m done"},
+		{r.Dir, "markitect inbox close --answered -m 'done' " + question},
+		{r.Dir, "git add . && markitect.exe inbox --repo . close " + question + " --dropped -m done"},
+		{elsewhere, "markitect inbox --repo " + r.Dir + " close " + question + " --settled -m done"},
+		{elsewhere, "markitect inbox close --repo=" + r.Dir + " " + strings.ToUpper(question) + " --settled -m done"},
+	} {
+		if out := hook(c.cwd, "a1", c.command); !strings.Contains(out, "waits for the owner") {
+			t.Fatalf("%s: a subagent may close an item for the owner: %s", c.command, out)
+		}
 	}
-	if out := hook("", question); out != "" {
+	if out := hook(r.Dir, "", "markitect inbox close "+question+" --settled -m done"); out != "" {
 		t.Fatalf("the owner's session may not close an item: %s", out)
+	}
+	if out := hook(r.Dir, "a1", "markitect inbox add --source audit --kind gap --settle owner -m "+question); out != "" {
+		t.Fatalf("a subagent may not open an item that names another: %s", out)
 	}
 	if out := mustRun(t, r.Dir, "inbox", "close", link, "--settled", "-m", "linked from big"); out != "Closed "+link+": settled.\n" {
 		t.Fatalf("inbox close: %s", out)

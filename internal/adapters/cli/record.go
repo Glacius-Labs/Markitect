@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -210,23 +211,28 @@ func (c CLI) hook(ctx context.Context, args []string) (int, error) {
 }
 
 // ownersItems refuses a subagent's call that closes an inbox item only the
-// owner may settle, read from the inbox of the project the call came from;
-// nothing when it cannot tell.
+// owner may settle, read from the inbox of each project the call names, or of
+// the one it came from; nothing when it cannot tell.
 func (c CLI) ownersItems(ctx context.Context, input []byte) []byte {
-	ids := guard.InboxCloses(input)
+	ids, repos := guard.InboxCloses(input)
 	var in struct {
 		Cwd string `json:"cwd"`
 	}
 	if len(ids) == 0 || c.Record == nil || json.Unmarshal(input, &in) != nil || in.Cwd == "" {
 		return nil
 	}
-	b, err := c.Record.Inbox(ctx, in.Cwd)
-	if err != nil {
-		return nil
-	}
-	for _, id := range ids {
-		if it, ok := b.Item(id); ok && it.Closed == nil && it.Settle == run.SettleOwner {
-			return guard.Deny(fmt.Sprintf("%s waits for the owner, and only the owner's session closes it. Say in your report how it could be settled.", id))
+	for _, repo := range repos {
+		if !filepath.IsAbs(repo) {
+			repo = filepath.Join(in.Cwd, repo)
+		}
+		b, err := c.Record.Inbox(ctx, repo)
+		if err != nil {
+			continue
+		}
+		for _, id := range ids {
+			if it, ok := b.Item(id); ok && it.Closed == nil && it.Settle == run.SettleOwner {
+				return guard.Deny(fmt.Sprintf("%s waits for the owner, and only the owner's session closes it. Say in your report how it could be settled.", id))
+			}
 		}
 	}
 	return nil
