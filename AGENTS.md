@@ -5,7 +5,7 @@ With Markitect, people architect their project in Markdown ([DEC-101](docs/decis
 **Before you assess or change the product's direction,** read, in this order:
 
 1. The [vision](docs/vision.md): [Markitect in brief](docs/vision.md#markitect-in-brief), [Why Markitect exists](docs/vision.md#why-markitect-exists), [Founding intent](docs/vision.md#founding-intent) and [Common misreadings](docs/vision.md#common-misreadings).
-2. The [concept](docs/concept.md), the one description of the product, which Main builds.
+2. The [concept](docs/concept/README.md), the one description of the product, which Main builds.
 3. The [decisions](docs/decisions.md). Do not reopen one without new evidence.
 
 **For every task,** follow [CONTRIBUTING](CONTRIBUTING.md): a worktree and branch of your own from current `origin/main`, the page that owns the topic, code, tests and documentation changed together, the checks, one independent review, and a merge of the reviewed head.

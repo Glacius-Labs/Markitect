@@ -2,6 +2,7 @@ package project
 
 import (
 	"os"
+	"path/filepath"
 	"regexp"
 	"testing"
 
@@ -14,16 +15,20 @@ import (
 func TestPagesNameTheShippedLibraryVersion(t *testing.T) {
 	named := regexp.MustCompile(`\b(?:(?:std|rest|cli):? |at version )(\d+\.\d+\.\d+)`)
 	found := 0
-	for _, page := range []string{
+	concept, err := filepath.Glob("../../docs/concept/*.md")
+	if err != nil || len(concept) == 0 {
+		t.Fatalf("no concept pages found: %v", err)
+	}
+	pages := append([]string{
 		"../skills/claude/skills/markitect-architect/SKILL.md",
 		"../skills/claude/skills/markitect-architect/reference.md",
 		"../skills/claude/skills/markitect-architect/examples.md",
 		"../../plugin/skills/getting-started/SKILL.md",
 		"../../docs/guides/spec-language.md",
 		"../../docs/guides/project-workflow.md",
-		"../../docs/concept.md",
 		"../../README.md",
-	} {
+	}, concept...)
+	for _, page := range pages {
 		data, err := os.ReadFile(page)
 		if err != nil {
 			t.Fatal(err)

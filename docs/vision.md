@@ -1,6 +1,6 @@
 # Vision
 
-This page says why Markitect exists, where its trust comes from and what it leaves to people. The [concept](concept.md) describes the product, and the [decisions](decisions.md) list what holds. The vision authorizes no feature and claims no measured outcome.
+This page says why Markitect exists, where its trust comes from and what it leaves to people. The [concept](concept/README.md) describes the product, and the [decisions](decisions.md) list what holds. The vision authorizes no feature and claims no measured outcome.
 
 ## Markitect in brief
 
@@ -63,7 +63,7 @@ Trust and overview are rebuilt on the spec:
 
 **The problem.** A project built almost entirely with coding agents, documented in Markdown with rules, skills and agent instructions, drifted away from its code. It had explicit Core, Module and Product boundaries, and a specified working method, review policies and skills per module. Code, documentation and the agents' skills repeatedly contradicted one another; changes missed rules, every consistency run took hours and found more, and nobody could tell any more which rules existed, what was defined and what had entered the project silently.
 
-**The whole project, as good documentation would state it.** The spec covers the whole project: which modules and deployments exist, what a concept such as a book is and what can be done with it, the rules and the way of working. It states what callers rely on, such as data shapes and status codes, and leaves loops and data structures to the agents ([DEC-079](decisions.md#dec-079-the-spec-is-as-explicit-as-good-documentation)). The concept says [what belongs in it](concept.md#the-spec) and what happens where it leaves something open.
+**The whole project, as good documentation would state it.** The spec covers the whole project: which modules and deployments exist, what a concept such as a book is and what can be done with it, the rules and the way of working. It states what callers rely on, such as data shapes and status codes, and leaves loops and data structures to the agents ([DEC-079](decisions.md#dec-079-the-spec-is-as-explicit-as-good-documentation)). The concept says [what belongs in it](concept/what-markitect-is.md#the-spec) and what happens where it leaves something open.
 
 **One source, and why it is documentation.** A project is many artifacts that work together: code, tests, configuration and documentation. They drift apart. When two of them contradict each other, nothing says which is right, so the agent guesses or a person brings them back in step. Software solves this with a single source of truth and gives it up only where a system must scale across machines. A project's description never has to. Code could be that source: it compiles, it can be tested and it is exact. Code cannot state everything, though. A deployment or a way of working needs documentation, Dockerfiles and agent rules beside the code, and the detail of code makes it rigid. Documentation, kept as one source, can state everything. It lacks a compiler and tests, and it tends to say the same thing in many places.
 
@@ -96,7 +96,7 @@ Trust and overview are rebuilt on the spec:
 
 ## Where trust comes from
 
-Markitect does not try to make agents infallible. It changes the structure they work in ([DEC-002](decisions.md#dec-002-trust-is-measured-against-todays-practice)). Each mechanism below replaces something that today's practice leaves to chance; [the concept](concept.md#7-how-sure-we-are) says how firm each one is.
+Markitect does not try to make agents infallible. It changes the structure they work in ([DEC-002](decisions.md#dec-002-trust-is-measured-against-todays-practice)). Each mechanism below replaces something that today's practice leaves to chance; [the concept](concept/how-sure-we-are.md) says how firm each one is.
 
 | Markitect mechanism | What it replaces in today's practice |
 |---|---|
@@ -170,7 +170,7 @@ Check an assessment against this table before treating one of these as a finding
 | Markitect orchestrates or steers the agents. | It checks and analyses the spec, says what is to verify and records verdicts. Who starts which agent, when and how often belongs to the driver: the skills, the person's own session or the person ([DEC-096](decisions.md#dec-096-the-tool-computes-and-checks-a-driver-acts)). |
 | Markitect needs a token, a background session or a Git host, and it commits and lands work. | It runs natively, and the person's own Claude Code session starts the agents on its account login. It uses no Git: the session commits the work with the record and merges it, and nothing is pushed unless a routine the person set up lands by a push ([DEC-094](decisions.md#dec-094-the-users-own-session-runs-the-agents-natively), [DEC-097](decisions.md#dec-097-markitect-uses-no-git)). |
 | Packages are agents, one per area. | Packages are modules of the spec, not agents. A builder and a fresh reviewer work from a list computed from the spec; on a long list one of each may work per Package. |
-| An empty `markitect status` proves the project correct. | It means that the spec compiles and that every Definition was verified at its current inputs. That is complete for the declared links only, and a verdict is evidence a reviewer gave, not a proof ([concept, §7](concept.md#7-how-sure-we-are)). |
+| An empty `markitect status` proves the project correct. | It means that the spec compiles and that every Definition was verified at its current inputs. That is complete for the declared links only, and a verdict is evidence a reviewer gave, not a proof ([concept, §7](concept/how-sure-we-are.md)). |
 | Without compiler-grade guarantees the idea fails. | The compiler is a borrowed idea, and the trust bar is today's practice ([DEC-002](decisions.md#dec-002-trust-is-measured-against-todays-practice), [DEC-003](decisions.md#dec-003-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)). |
 | "More economical models" means weak models. | It means capable mid-tier models such as Sonnet, and Haiku only if it proves sufficient. |
 | The spec has to mirror the code, with one Definition per file. | Granularity is the author's choice; `vet` measures and warns. A file may realize several Definitions, and every file is listed or ignored ([DEC-079](decisions.md#dec-079-the-spec-is-as-explicit-as-good-documentation), [DEC-006](decisions.md#dec-006-every-file-is-accounted-for)). |

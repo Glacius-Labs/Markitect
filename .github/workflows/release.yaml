@@ -286,7 +286,7 @@ jobs:
           [[ "$(resolve_remote_tag_commit)" == "$SOURCE_SHA" ]] || { echo "current remote release tag no longer resolves to the workflow source commit" >&2; exit 1; }
 
           cat > "$RUNNER_TEMP/notes.md" <<EOF
-          Markitect $VERSION, built from [the concept](https://github.com/$GITHUB_REPOSITORY/blob/$TAG/docs/concept.md).
+          Markitect $VERSION, built from [the concept](https://github.com/$GITHUB_REPOSITORY/blob/$TAG/docs/concept/README.md).
 
           **Install**
 
