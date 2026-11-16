@@ -123,8 +123,27 @@ func TestTheReadingSkillsOnlyRead(t *testing.T) {
 		}
 	}
 	for _, f := range Harness() {
-		if f.Path == ".claude/skills/markitect-catchup/SKILL.md" && !strings.Contains(string(f.Data), `"$HOME/.claude/markitect-seen/`) {
-			t.Error("the catch-up skill does not keep the last look in the user's own folder")
+		if f.Path != ".claude/skills/markitect-catchup/SKILL.md" {
+			continue
+		}
+		text := strings.ReplaceAll(string(f.Data), "\r\n", "\n")
+		// Each shell block names the user's own folder S in its first line, since
+		// a shell keeps no variable from one command to the next, and removes
+		// only under ${S:?}, so that an unset S stops it instead of reaching /.
+		blocks := strings.Split(text, "```bash\n")[1:]
+		if len(blocks) == 0 {
+			t.Fatal("the catch-up skill has no shell block")
+		}
+		for _, b := range blocks {
+			b = b[:strings.Index(b, "```")]
+			if !strings.HasPrefix(b, `S="$HOME/.claude/markitect-seen/`) {
+				t.Errorf("a shell block of the catch-up skill does not start by naming the user's own folder:\n%s", b)
+			}
+		}
+		for _, rm := range strings.Split(text, "rm -rf ")[1:] {
+			if !strings.HasPrefix(rm, `"${S:?}/`) {
+				t.Errorf("the catch-up skill removes %.30q, outside ${S:?}", rm)
+			}
 		}
 	}
 }

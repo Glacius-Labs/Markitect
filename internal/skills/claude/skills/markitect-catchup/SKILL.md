@@ -34,7 +34,14 @@ Draw a picture where it shows a change better than words, such as the states of 
 
 ```bash
 S="$HOME/.claude/markitect-seen/$(pwd -P | tr -c 'A-Za-z0-9' '-')"
-rm -rf "${S:?}/old"; { [ ! -d "$S/last" ] || mv "$S/last" "$S/old"; } && if mv "$S/next" "$S/last"; then rm -rf "$S/old"; else mv "$S/old" "$S/last" 2>/dev/null; false; fi
+rm -rf "${S:?}/old"; { [ ! -d "$S/last" ] || mv "$S/last" "$S/old"; } && if mv "$S/next" "$S/last"; then rm -rf "${S:?}/old"; else mv "$S/old" "$S/last" 2>/dev/null; false; fi
 ```
 
-If they stop before, remove `$S/next` the same way, with `S` named first, so that the next catch-up still starts from their last look. When another skill offers it, save the state as it is now, as under **Start**, and move it to `last/` the same way. Two sessions catching up on the same project folder at once share `next/`.
+If they stop before, remove what was saved, so that the next catch-up still starts from their last look:
+
+```bash
+S="$HOME/.claude/markitect-seen/$(pwd -P | tr -c 'A-Za-z0-9' '-')"
+rm -rf "${S:?}/next"
+```
+
+When another skill offers it, save the state as it is now, as under **Start**, and move it to `last/` the same way. Two sessions catching up on the same project folder at once share `next/`.
