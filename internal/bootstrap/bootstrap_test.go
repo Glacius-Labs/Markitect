@@ -549,8 +549,9 @@ func TestInitInstallsTheHarness(t *testing.T) {
 	}
 	// The skills are plain prompts: they inject no command, so no exit code can
 	// abort them. Only the owner starts the work that changes code and the
-	// routines; Claude may start design, review and audit (DEC-100).
-	for skill, ownerOnly := range map[string]bool{"build": true, "cleanup": true, "bughunt": true, "schedule": true, "review": false, "audit": false} {
+	// routines; Claude may start design, review and audit (DEC-100), and the
+	// skills that explain the spec (concept, §8).
+	for skill, ownerOnly := range map[string]bool{"build": true, "cleanup": true, "bughunt": true, "schedule": true, "review": false, "audit": false, "tour": false, "catchup": false, "explain": false} {
 		text := read(t, r.Dir, ".claude/skills/markitect-"+skill+"/SKILL.md")
 		if !strings.Contains(text, "name: markitect-"+skill+"\n") || strings.Contains(text, "!`") {
 			t.Fatalf("the %s skill:\n%s", skill, text)

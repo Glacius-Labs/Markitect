@@ -8,7 +8,7 @@ The latest release, 0.33.1, carries the whole concept on Claude Code: the spec w
 
 ## Current steps
 
-The spec language and the standard Library `std` change again on evidence, as the skills and the tool do. `std` 2.2.0 on Main adds the business case of a project ([DEC-115](decisions.md#dec-115-std-states-the-business-case-views-are-rendered-not-declared)); a project runs `markitect update` once to name it, and every Definition of a standard Kind is then to verify again once. On Main, the architect designs a new project in one long session that walks every area with the owner and commits each as it is settled ([DEC-116](decisions.md#dec-116-the-first-design-walks-every-area-with-the-owner)).
+The spec language and the standard Library `std` change again on evidence, as the skills and the tool do. `std` 2.2.0 on Main adds the business case of a project ([DEC-115](decisions.md#dec-115-std-states-the-business-case-views-are-rendered-not-declared)); a project runs `markitect update` once to name it, and every Definition of a standard Kind is then to verify again once. On Main, the architect designs a new project in one long session that walks every area with the owner and commits each as it is settled ([DEC-116](decisions.md#dec-116-the-first-design-walks-every-area-with-the-owner)), and three skills read the spec with a person: a tour, a catch-up on what changed since they last looked, and an explanation of any part ([concept, §8](concept.md#8-other-skills), [OQ-016](decisions.md#open-questions)).
 
 | Step | Result | Done when |
 |---|---|---|
