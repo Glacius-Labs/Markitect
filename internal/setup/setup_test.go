@@ -131,17 +131,26 @@ func TestEnsureSettings(t *testing.T) {
 		setBase    = `set worktree.baseRef to "head" in .claude/settings.json, so that a builder's worktree starts from your branch`
 	)
 	old := `{"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "` + guard.HookCommand + `"}]}]}}`
+	// The guard of a markitect before the inbox runs only before markitect mark.
+	handler := func(rule string) string {
+		return `{"type": "command", "if": "` + rule + `", "command": "` + strings.ReplaceAll(guard.HookCommand, `"`, `\"`) + `"}`
+	}
+	markOnly := `{"hooks": {"PreToolUse": [{"matcher": "` + guard.ShellTools + `", "hooks": [` + handler(guard.MarkRule("Bash")) + `, ` + handler(guard.MarkRule("PowerShell")) + `]}, {"matcher": "` + guard.EditTools + `", "hooks": [` + handler("") + `]}, {"matcher": "` + guard.AgentTools + `", "hooks": [` + handler("") + `]}]}}`
+	if guard.HasGuard([]byte(markOnly)) {
+		t.Fatal("a guard before markitect mark alone covers the inbox")
+	}
 	for name, c := range map[string]struct {
 		before string
 		said   []string
 		has    []string
 		hooks  int
 	}{
-		"none":         {"", []string{addedHooks, setBase}, []string{`"baseRef": "head"`}, 6},
-		"kept":         {"{\n  \"permissions\": {\"allow\": [\"Bash(go test *)\"]},\n  \"cleanupPeriodDays\": 12345678901234567890\n}\n", []string{addedHooks, setBase}, []string{"Bash(go test *)", "12345678901234567890"}, 6},
-		"owner's base": {`{"worktree": {"baseRef": "fresh", "sparsePaths": ["src"]}}`, []string{addedHooks}, []string{`"baseRef": "fresh"`, "sparsePaths"}, 6},
-		"earlier hook": {old, []string{addedHooks, setBase}, nil, 6},
-		"a mention":    {`{"hooks": {"PostToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "markitect hook pretool"}]}]}}`, []string{addedHooks, setBase}, []string{"PostToolUse"}, 6},
+		"none":          {"", []string{addedHooks, setBase}, []string{`"baseRef": "head"`}, 6},
+		"kept":          {"{\n  \"permissions\": {\"allow\": [\"Bash(go test *)\"]},\n  \"cleanupPeriodDays\": 12345678901234567890\n}\n", []string{addedHooks, setBase}, []string{"Bash(go test *)", "12345678901234567890"}, 6},
+		"owner's base":  {`{"worktree": {"baseRef": "fresh", "sparsePaths": ["src"]}}`, []string{addedHooks}, []string{`"baseRef": "fresh"`, "sparsePaths"}, 6},
+		"earlier hook":  {old, []string{addedHooks, setBase}, nil, 6},
+		"no inbox rule": {markOnly, []string{addedHooks, setBase}, []string{"Bash(markitect inbox*)", "PowerShell(markitect inbox*)"}, 6},
+		"a mention":     {`{"hooks": {"PostToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "markitect hook pretool"}]}]}}`, []string{addedHooks, setBase}, []string{"PostToolUse"}, 6},
 		"hooks not a map": {`{"hooks": ["something"]}`, []string{
 			`left the hooks in .claude/settings.json as they are, because they are not an object; add the hooks by hand: "` + strings.ReplaceAll(guard.HookCommand, `"`, `\"`) + `" before Bash for Bash(markitect mark*) and Bash(markitect inbox*), before PowerShell for PowerShell(markitect mark*) and PowerShell(markitect inbox*), before Edit|Write|MultiEdit|NotebookEdit and before Agent|Task|Workflow`,
 			setBase,

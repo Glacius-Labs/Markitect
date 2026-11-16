@@ -91,6 +91,7 @@ func TestInboxCommands(t *testing.T) {
 		{r.Dir, "git add . && markitect.exe inbox --repo . close " + question + " --dropped -m done"},
 		{elsewhere, "markitect inbox --repo " + r.Dir + " close " + question + " --settled -m done"},
 		{elsewhere, "markitect inbox close --repo=" + r.Dir + " " + strings.ToUpper(question) + " --settled -m done"},
+		{r.Dir, "markitect inbox close --answered -m \"done; see the commit\" " + question},
 	} {
 		if out := hook(c.cwd, "a1", c.command); !strings.Contains(out, "waits for the owner") {
 			t.Fatalf("%s: a subagent may close an item for the owner: %s", c.command, out)

@@ -31,10 +31,11 @@ func readPreToolUse(data []byte) (preToolUse, bool) {
 }
 
 // HasGuard says whether settings run HookCommand before a command of every
-// shell tool that records a verdict, before every tool that writes a file and
-// before every tool that starts an agent; a mention elsewhere does not count. A
-// handler without a rule runs before every call of its tools, and so covers
-// them; one with another rule than the tool's MarkRule covers nothing.
+// shell tool that records a verdict or changes the inbox, before every tool that
+// writes a file and before every tool that starts an agent; a mention elsewhere
+// does not count. A handler without a rule runs before every call of its tools,
+// and so covers them; one with the tool's MarkRule or InboxRule covers that
+// command, and one with another rule covers nothing.
 func HasGuard(settings []byte) bool {
 	pre, ok := readPreToolUse(settings)
 	if !ok {
@@ -48,8 +49,13 @@ func HasGuard(settings []byte) bool {
 				continue
 			}
 			for _, t := range shells {
-				if matches(group.Matcher, t) && (h.If == "" || h.If == MarkRule(t)) {
-					covered[t] = true
+				if !matches(group.Matcher, t) {
+					continue
+				}
+				for _, rule := range []string{MarkRule(t), InboxRule(t)} {
+					if h.If == "" || h.If == rule {
+						covered[rule] = true
+					}
 				}
 			}
 			for _, t := range others {
@@ -59,7 +65,7 @@ func HasGuard(settings []byte) bool {
 			}
 		}
 	}
-	return len(covered) == len(shells)+len(others)
+	return len(covered) == 2*len(shells)+len(others)
 }
 
 // matches says whether a group's matcher names a tool: by its name in a list, or

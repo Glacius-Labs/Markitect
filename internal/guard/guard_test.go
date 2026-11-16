@@ -239,12 +239,15 @@ func TestHasGuard(t *testing.T) {
 		return `{"hooks": {"PreToolUse": [` + strings.Join(groups, ", ") + `]}}`
 	}
 	bash, powershell := guard.MarkRule("Bash"), guard.MarkRule("PowerShell")
-	shells, edits, agents := group(guard.ShellTools, bash, powershell), group(guard.EditTools, ""), group(guard.AgentTools, "")
+	bashInbox, powershellInbox := guard.InboxRule("Bash"), guard.InboxRule("PowerShell")
+	shells, edits, agents := group(guard.ShellTools, bash, powershell, bashInbox, powershellInbox), group(guard.EditTools, ""), group(guard.AgentTools, "")
 	for s, want := range map[string]bool{
 		settings(shells, edits, agents): true,
 		settings(group("", "")):         true,
 		settings(group("*", "")):        true,
-		settings(group("Bash", bash), group("PowerShell", powershell), edits, agents):                              true,
+		settings(group("Bash", bash, bashInbox), group("PowerShell", powershell, powershellInbox), edits, agents): true,
+		// Settings of an earlier markitect guard the record and not the inbox.
+		settings(group(guard.ShellTools, bash, powershell), edits, agents):                                         false,
 		settings(group("Bash|PowerShell", ""), group("Write|Edit|NotebookEdit|MultiEdit|Task|Agent|Workflow", "")): true,
 		// Before the Bash tool only, a verdict recorded through PowerShell gets past.
 		settings(group("Bash", bash), edits, agents):                 false,

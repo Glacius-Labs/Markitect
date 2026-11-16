@@ -135,11 +135,15 @@ func InboxCloses(input []byte) (ids, repos []string) {
 		return nil, nil
 	}
 	command, _ := in.ToolInput["command"].(string)
-	for _, m := range inboxCall.FindAllStringSubmatch(command, -1) {
-		words := strings.Fields(m[3])
+	unquote := func(s string) []string {
+		words := strings.Fields(s)
 		for i := range words {
 			words[i] = strings.Trim(words[i], `"'`)
 		}
+		return words
+	}
+	for _, m := range inboxCall.FindAllStringSubmatchIndex(command, -1) {
+		words := unquote(command[m[6]:m[7]])
 		if !slices.Contains(words, "close") {
 			continue
 		}
@@ -147,8 +151,6 @@ func InboxCloses(input []byte) (ids, repos []string) {
 		for i, w := range words {
 			name, value, inline := strings.Cut(strings.TrimLeft(w, "-"), "=")
 			switch {
-			case itemID.MatchString(w):
-				ids = append(ids, strings.ToLower(w))
 			case strings.HasPrefix(w, "-") && name == "repo" && inline:
 				repo = value
 			case strings.HasPrefix(w, "-") && name == "repo" && i+1 < len(words):
@@ -156,6 +158,13 @@ func InboxCloses(input []byte) (ids, repos []string) {
 			}
 		}
 		repos = append(repos, repo)
+		// A separator inside a quoted text ends the call early, so the IDs
+		// come from the rest of the command.
+		for _, w := range unquote(command[m[6]:]) {
+			if itemID.MatchString(w) && !slices.Contains(ids, strings.ToLower(w)) {
+				ids = append(ids, strings.ToLower(w))
+			}
+		}
 	}
 	return ids, repos
 }
