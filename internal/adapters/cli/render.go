@@ -262,6 +262,28 @@ func renderDocDefinition(d analysis.DocDefinition) string {
 				default:
 					line += ", links " + strings.Join(f.Links, ", ")
 				}
+				switch f.Type {
+				case spec.TypeEnum:
+					line += ", one of " + strings.Join(f.Values, ", ")
+				case spec.TypeMeasure:
+					line += ", a measure"
+				}
+				if it := f.Items; it != nil {
+					var holds []string
+					if it.Links != nil {
+						holds = append(holds, "a link to "+strings.Join(it.Links, " or "))
+					}
+					if it.Code {
+						holds = append(holds, "a code")
+					}
+					line += ", each entry holds " + strings.Join(holds, " and ")
+				}
+				if f.Unique {
+					line += ", unique in its Package"
+				}
+				if f.Vet {
+					line += ", form noted by vet"
+				}
 				fmt.Fprintf(&b, "  %s\n", line)
 			}
 			if len(s.Fields) == 0 {

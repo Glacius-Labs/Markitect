@@ -375,7 +375,12 @@ func (c *compiler) parseDefinition(id, file string, data []byte) *Definition {
 	c.raw[id] = page.Links()
 	c.fields[id] = page.Fields()
 	for _, f := range c.fields[id] {
-		d.Fields = append(d.Fields, Field{Label: f.Label, Line: f.Line})
+		text, raw := page.FieldContent(f)
+		field := Field{Label: f.Label, Line: f.Line, Start: f.Start, End: f.End, Text: text}
+		for _, item := range raw {
+			field.Items = append(field.Items, FieldItem{Text: item.Text, Line: page.Line(item.Start), Start: item.Start, End: item.End})
+		}
+		d.Fields = append(d.Fields, field)
 	}
 	return d
 }

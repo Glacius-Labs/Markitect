@@ -1,6 +1,6 @@
 # Example: a lending library
 
-A small Go service that lends the books of a neighborhood library to its members: the staff use it in a browser at the desk, and a member gets an e-mail for each book they borrow. It compiles as written, and the outputs shown are what the tools print. To stay short it states two Operations, borrowing a book and listing the loans, and leaves out much of what the [coverage list](reference.md#coverage) asks of a spec handed over: registering a member, returning a book, the members as Stakeholders, a Rule for the role `anyone`, a Constraint on the personal data it stores, the mail server as an External system, how long a loan is kept, how the site looks, most qualities, the technology, the Scenarios and how it is run. The spec has Root and four Packages: the areas `domain/members` and `domain/catalog`, the site `interfaces/desk` and the e-mails `interfaces/email`.
+A small Go service that lends the books of a neighborhood library to its members: the staff use it in a browser at the desk, and a member gets an e-mail for each book they borrow. It compiles as written, and the outputs shown are what the tools print. To stay short it states two Operations, borrowing a book and listing the loans, and leaves out much of what the [coverage list](reference.md#coverage) asks of a spec handed over: registering a member, returning a book, the members as Stakeholders, a Constraint on the personal data it stores, the mail server as an External system, how long a loan is kept, how the site looks, most qualities, the technology, the Scenarios and how it is run. The spec has Root and four Packages: the areas `domain/members` and `domain/catalog`, the site `interfaces/desk` and the e-mails `interfaces/email`.
 
 ## The repository
 
@@ -27,6 +27,7 @@ internal/email/{receipt.go, receipt_test.go}
     quality/performance-efficiency/{performance-efficiency, a-loan-within-a-second}.md
     architecture/rules/layout.md
     domain/rules/refusal-codes.md
+    domain/rules/roles/{roles, anyone}.md
     domain/members/
       members.md
       concepts/member/{member, attributes/member-id, attributes/email, invariants/within-the-loan-limit}.md
@@ -50,10 +51,10 @@ internal/email/{receipt.go, receipt_test.go}
 
 ```yaml
 libraries:
-  std: 2.2.0
+  std: 2.3.0
 ```
 
-## Root: purpose, context, quality, architecture and the refusal codes
+## Root: purpose, context, quality, architecture, the refusal codes and the roles
 
 Root holds what binds the whole project. Its top-level folders sort it by question and are no Packages here: `purpose/` says why the system exists, `context/` what is given from outside, `quality/` how well it must work, `architecture/` how it is built. `domain/` holds no anchor either, so its `rules/` belong to Root and hold what binds every area. A folder appears when the project has something to say there.
 
@@ -245,6 +246,30 @@ kind: std/Rule
 A refused call changes nothing and answers with one of the codes `member_unknown`, `book_unknown`, `book_unavailable` and `limit_reached`. No area refuses with another code.
 ```
 
+`spec/domain/rules/roles/roles.md` is the Rule that says who may call what. Its Roles are its parts, one for each role, and an Operation's **Who:** and a Page's **For:** link them.
+
+```markdown
+---
+kind: std/Rule
+---
+# Roles
+
+Who may call what is said with the Roles in this folder. The service has no sign-in, so it has one.
+```
+
+`spec/domain/rules/roles/anyone.md`
+
+```markdown
+---
+kind: std/Role
+---
+# Anyone
+
+Whoever uses the browser at the desk.
+
+**Granted by:** nothing: every caller holds it.
+```
+
 The project needs no Kind of its own. A project Kind earns its place when several Definitions share a form that no Library Kind gives.
 
 ## Package domain/members
@@ -348,7 +373,7 @@ kind: std/Attribute
 `isbn` is the book's [[context/terms/isbn|ISBN]], `13` digits without hyphens.
 ```
 
-Borrowing is an Operation with parts. `operations/borrow-book/borrow-book.md` says what it achieves and states the fields `markitect doc std/Operation` lists, each on a line of its own: who may call it, what is given, its Conditions in the order they are checked with the code that answers each, what it returns, and what it satisfies. Its Conditions and its Outcome are Definitions of their own, in the folders the Kind declares.
+Borrowing is an Operation with parts. `operations/borrow-book/borrow-book.md` says what it achieves and states the fields `markitect doc std/Operation` lists, each on a line of its own: who may call it, linked to its Roles, what is given, its Conditions in the order they are checked, each entry with the code that answers it in backticks, what it returns, and what it satisfies. Its Conditions and its Outcome are Definitions of their own, in the folders the Kind declares.
 
 `spec/domain/catalog/operations/borrow-book/borrow-book.md`
 
@@ -360,7 +385,7 @@ kind: std/Operation
 
 Lends a book to a member. The service has no sign-in, so any caller may.
 
-**Who:** `anyone`.
+**Who:** [[domain/rules/roles/anyone]].
 
 **Given:** `memberId`, a [[domain/members/concepts/member/attributes/member-id|member identity]], and the [[domain/catalog/concepts/book/attributes/isbn|`isbn`]] of a book.
 
@@ -451,7 +476,7 @@ kind: std/Operation
 
 Tells which member holds each book on loan.
 
-**Who:** `anyone`.
+**Who:** [[domain/rules/roles/anyone]].
 
 **Returns:** the [[domain/catalog/concepts/book/attributes/isbn|`isbn`]] of each book on loan, with the `memberId` of the member who holds it, a [[domain/members/concepts/member/attributes/member-id|member identity]].
 
@@ -483,7 +508,9 @@ kind: std/Page
 ---
 # Borrow
 
-**For:** `anyone`, at `/` in the browser at the desk.
+**For:** [[domain/rules/roles/anyone]], in the browser at the desk.
+
+**Path:** `/`.
 
 **Shows:** the books on loan with who holds each, as [[domain/catalog/operations/list-loans]] returns them, or that no book is on loan.
 ```
@@ -648,7 +675,7 @@ LICENSE
 
 ```text
 $ markitect check
-ok: 35 Definitions in 5 Packages, 14 files accounted
+ok: 37 Definitions in 5 Packages, 14 files accounted
 ```
 
 `markitect vet` shows no warnings. After the limit in `within-the-loan-limit.md` changes from `3` to `5`, `markitect status` lists `domain/catalog/operations/borrow-book/borrow-book` and `domain/members/concepts/member/member`, each as one item with its parts and with the files the registry names for it, such as `internal/catalog/borrow.go` and `internal/members/member.go`. The member is listed because its Invariant changed, the Operation because its Condition `member-is-under-the-limit` links the Invariant.
