@@ -17,7 +17,7 @@ const inboxUsage = `usage:
   markitect inbox add --source NAME --kind NAME --settle owner|agent -m "TEXT" [--ask "QUESTION OR CHANGE"] [--place PLACE]... [--repo DIR] [--json]
   markitect inbox close ID --settled|--answered|--dropped -m "WHY" [--repo DIR]`
 
-// inbox lists, opens and closes the items of the project's inbox (DEC-115):
+// inbox lists, opens and closes the items of the project's inbox (DEC-118):
 // what waits, for the owner or for an agent. It lists the open items, or with
 // --all every item; add opens one; close closes one. The tool checks an item's
 // shape; an item open already is not opened twice.

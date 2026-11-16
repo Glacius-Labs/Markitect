@@ -654,7 +654,7 @@ func TestChangedEvidenceIsToVerify(t *testing.T) {
 	has(t, p.status(false).Text(), "evidence:README.md (gone)")
 }
 
-// The inbox holds what waits (DEC-115): add opens an item of a checked shape,
+// The inbox holds what waits (DEC-118): add opens an item of a checked shape,
 // once; close closes an open one, saying how and why; status counts the open
 // items, those for the owner apart, as a note that leaves it clean and that a
 // list limited to a Package leaves out.

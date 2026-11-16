@@ -226,6 +226,9 @@ What a description of a product covers, by folder, in the order in which a proje
 - The systems it talks to, what it uses of them and what holds when one fails: External systems in `context/external-systems/`.
 - What it takes for granted, and who makes it true: Assumptions in `context/assumptions/`.
 
+**`scenarios/`**
+- The paths through several areas worth checking: Scenarios in `scenarios/`. They come here first as stories, each a Stakeholder's path with its people, times and what they see, its **Steps:** the Stakeholder's actions in plain words. They get their exact steps once the Operations and the interfaces exist: each step then names its Operation by a link, and `scenarios/scenarios.md`, of kind `Package`, is written first, since Root may not link down. A Scenario is verified by a test that runs what the project delivers, the built program started as the spec says, and walks it, so state each step so that it can be taken through the interface its Actor uses. A Scenario that depends on time passing needs the Rule of `architecture/rules/` on how a test sets the time.
+
 **`domain/`**, one Package per area
 - What it keeps: Concepts in `concepts/`, with their Attributes and values, States and Invariants.
 - Each thing a caller can do or ask, with who may, what is given, its Conditions in order with their refusal codes, its Outcomes and what it returns: Operations in `operations/`.
@@ -248,9 +251,6 @@ What a description of a product covers, by folder, in the order in which a proje
 - The technology, what the project depends on and the other choices it keeps, with their reasons and rejected alternatives: Decisions in `architecture/decisions/`. Propose something plain that fits, unless the owner has named a preference.
 - What holds across the code, one Rule with parts each in `architecture/rules/`: persistence and transactions, concurrency, security (threats, how secrets and passwords are kept, secure communication, an audit trail, the headers a site sends), faults, logging and monitoring, configuration, how stored data is brought to a newer form, build and release, layout, with how an area adds files of its own for what it plugs in, such as its routes or its tables, where it would otherwise change a file all areas share, and tests with the command that runs them, which the reviewer runs as evidence, and how a test sets the time of the running program, where a Reaction or a Scenario depends on time passing.
 - What runs, how its parts talk and where it runs: Components, Connectors and Deployments in `architecture/runtime/`. How a Component starts and stops, and what it does for its own upkeep, are Rules in its `rules/`. `architecture/runtime/` is a Package once it names what lies in the areas, since it then depends on them, and nothing in an area links into it; a Rule that an area relies on lies in `architecture/rules/`.
-
-**`scenarios/`**
-- The paths through several areas worth checking: Scenarios in `scenarios/`. A Scenario is verified by a test that runs what the project delivers, the built program started as the spec says, and walks it, so state each step so that it can be taken through the interface its Actor uses. A Scenario that depends on time passing needs the Rule of `architecture/rules/` on how a test sets the time.
 
 **`administration/`**
 - What the person who runs the system does to it, such as installing, deploying and rolling back, backing up and restoring, upgrading and finding a fault: Tasks in `administration/tasks/`.

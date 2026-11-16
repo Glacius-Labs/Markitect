@@ -40,7 +40,7 @@ const (
 	// model and effort, the strategies and the custom workflows. It is the
 	// owner's, and no agent changes it.
 	HarnessFile = Dir + "/" + harness.FileName
-	// InboxFile holds what waits (DEC-115): one line opens an item, a later
+	// InboxFile holds what waits (DEC-118): one line opens an item, a later
 	// line closes it, and the tool's commands alone write it.
 	InboxFile = Dir + "/inbox.jsonl"
 )

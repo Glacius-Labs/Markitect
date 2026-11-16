@@ -67,7 +67,7 @@ type Status struct {
 	// Unreadable are the lines of the record markitect cannot read.
 	Unreadable []int
 	// Inbox counts the open items of the inbox and those only the owner may
-	// settle (DEC-115). They are a note: they do not count, and a list limited
+	// settle (DEC-118). They are a note: they do not count, and a list limited
 	// to a Package or a slice leaves them out.
 	Inbox InboxCounts
 	// Definitions counts the Definitions of the spec, and Units what is

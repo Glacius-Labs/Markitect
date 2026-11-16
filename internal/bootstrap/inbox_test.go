@@ -10,7 +10,7 @@ import (
 	runs "github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-// The inbox through the command line (DEC-115): add opens an item once, the
+// The inbox through the command line (DEC-118): add opens an item once, the
 // list and status --json count the open ones, those for the owner apart, and
 // close closes one; the hook lets a subagent close only an item an agent may
 // settle; an audit's end counts what it opened, by kind.

@@ -19,11 +19,11 @@ func TestDocShowsFieldsAndWhatAKindDeclares(t *testing.T) {
 	p := loadRepo(t, r)
 
 	second := DocDefinitionOf(p, p.Spec.Definitions["steps/second"])
-	if want := []DocField{{Label: "After", Links: []string{"steps/first", "loan-limit"}}}; !reflect.DeepEqual(second.Fields, want) || second.Declares != nil {
+	if want := []DocField{{Label: "After", Text: "[[steps/first]] and [[loan-limit]].", Links: []string{"steps/first", "loan-limit"}}}; !reflect.DeepEqual(second.Fields, want) || second.Declares != nil {
 		t.Fatalf("fields of second = %+v, declares %+v", second.Fields, second.Declares)
 	}
 	first := DocDefinitionOf(p, p.Spec.Definitions["steps/first"])
-	if want := []DocField{{Label: "After", Links: []string{"loan-limit"}}, {Label: "Note", Links: []string{}}}; !reflect.DeepEqual(first.Fields, want) {
+	if want := []DocField{{Label: "After", Text: "[[loan-limit]].", Links: []string{"loan-limit"}}, {Label: "Note", Text: "none.", Links: []string{}}}; !reflect.DeepEqual(first.Fields, want) {
 		t.Fatalf("fields of first = %+v", first.Fields)
 	}
 

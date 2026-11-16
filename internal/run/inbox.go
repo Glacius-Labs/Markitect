@@ -15,7 +15,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
-// The inbox is what waits (DEC-115): a question for the owner, a finding of an
+// The inbox is what waits (DEC-118): a question for the owner, a finding of an
 // audit, and later signals from outside. One line opens an item and a later
 // line closes it; nothing is rewritten, and an item's state comes from its
 // lines. The history is what happened; neither belongs in the spec.

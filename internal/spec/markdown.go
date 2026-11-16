@@ -178,8 +178,9 @@ func (p Page) LinksIn(root ast.Node) []RawLink {
 type RawField struct {
 	Label string
 	Line  int
-	// Start and End bound the field in the page's Body.
-	Start, End int
+	// Start and End bound the field in the page's Body; TextStart is where
+	// what follows the label begins.
+	Start, End, TextStart int
 }
 
 // Fields returns the labelled fields of the body, in order.
@@ -210,7 +211,7 @@ func (p Page) Fields() []RawField {
 					if len(fields) > 0 {
 						fields[len(fields)-1].End = start
 					}
-					fields = append(fields, RawField{Label: label, Line: p.Line(start), Start: start, End: len(p.Body)})
+					fields = append(fields, RawField{Label: label, Line: p.Line(start), Start: start, End: len(p.Body), TextStart: p.labelEnd(strong, start)})
 				}
 			}
 			t, isText := c.(*ast.Text)
@@ -218,6 +219,118 @@ func (p Page) Fields() []RawField {
 		}
 	}
 	return fields
+}
+
+// labelEnd returns the body offset just after the bold label that opens at
+// start, its closing delimiter included.
+func (p Page) labelEnd(strong ast.Node, start int) int {
+	stop := start + 2
+	_ = ast.Walk(strong, func(c ast.Node, entering bool) (ast.WalkStatus, error) {
+		if t, ok := c.(*ast.Text); ok && entering {
+			stop = max(stop, t.Segment.Stop)
+		}
+		return ast.WalkContinue, nil
+	})
+	if i := bytes.Index(p.Body[stop:], p.Body[start:start+2]); i >= 0 {
+		return stop + i + 2
+	}
+	return stop
+}
+
+// RawItem is one entry of a list as written: its text without the marker,
+// and where it lies in the page's Body.
+type RawItem struct {
+	Text       string
+	Start, End int
+}
+
+// closingFence returns the offset after the closing fence of a code block
+// whose content ends at stop, which goldmark gives no line; stop when the
+// next line is none.
+func (p Page) closingFence(stop int) int {
+	rest := p.Body[stop:]
+	line := rest
+	if i := bytes.IndexByte(rest, '\n'); i >= 0 {
+		line = rest[:i]
+	}
+	if t := bytes.TrimLeft(line, " "); bytes.HasPrefix(t, []byte("```")) || bytes.HasPrefix(t, []byte("~~~")) {
+		return stop + len(line)
+	}
+	return stop
+}
+
+// FieldContent returns what a field says besides its label, as written: the
+// text, and the entries of the numbered or bulleted lists at the top level
+// that stand in the field, in order. The entries are not part of the text.
+func (p Page) FieldContent(f RawField) (string, []RawItem) {
+	var items []RawItem
+	var cut [][2]int // the lists' byte ranges in the field
+	for n := p.Root.FirstChild(); n != nil; n = n.NextSibling() {
+		list, ok := n.(*ast.List)
+		if !ok {
+			continue
+		}
+		listStart, listEnd := -1, 0
+		var listItems []RawItem
+		for li := list.FirstChild(); li != nil; li = li.NextSibling() {
+			start, end := -1, 0
+			_ = ast.Walk(li, func(c ast.Node, entering bool) (ast.WalkStatus, error) {
+				if entering && c.Type() == ast.TypeBlock {
+					if lines := c.Lines(); lines.Len() > 0 {
+						if s := lines.At(0).Start; start < 0 || s < start {
+							start = s
+						}
+						end = max(end, lines.At(lines.Len()-1).Stop)
+						if _, fenced := c.(*ast.FencedCodeBlock); fenced {
+							end = max(end, p.closingFence(end))
+						}
+					}
+				}
+				return ast.WalkContinue, nil
+			})
+			if start < 0 {
+				continue
+			}
+			if listStart < 0 {
+				listStart = start
+			}
+			// An entry reaches to where the next one's line starts, so that
+			// nothing a block does not report is cut from it.
+			if k := len(listItems); k > 0 {
+				listItems[k-1].End = max(listItems[k-1].End, bytes.LastIndexByte(p.Body[:start], '\n')+1)
+			}
+			listEnd = max(listEnd, end)
+			listItems = append(listItems, RawItem{Start: start, End: end})
+		}
+		if listStart < f.TextStart || listStart >= f.End {
+			continue
+		}
+		for i := range listItems {
+			listItems[i].End = min(listItems[i].End, f.End)
+			listItems[i].Text = strings.TrimSpace(string(p.Body[listItems[i].Start:listItems[i].End]))
+		}
+		items = append(items, listItems...)
+		// The range reaches from the start of the first entry's line to the
+		// end of the last one's.
+		listStart = bytes.LastIndexByte(p.Body[:listStart], '\n') + 1
+		if i := bytes.IndexByte(p.Body[listEnd:], '\n'); i >= 0 {
+			listEnd += i
+		} else {
+			listEnd = len(p.Body)
+		}
+		cut = append(cut, [2]int{max(listStart, f.TextStart), min(listEnd, f.End)})
+	}
+	// What the lists leave is the text; the parts on either side of a list
+	// are paragraphs of their own.
+	var pieces []string
+	at := f.TextStart
+	for _, c := range append(cut, [2]int{f.End, f.End}) {
+		if piece := strings.TrimSpace(string(p.Body[at:c[0]])); piece != "" {
+			pieces = append(pieces, piece)
+		}
+		at = c[1]
+	}
+	return strings.Join(pieces, "\n\n"), items
 }
 
 func opensBold(two []byte) bool { return string(two) == "**" || string(two) == "__" }

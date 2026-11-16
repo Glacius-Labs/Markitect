@@ -169,11 +169,54 @@ type DocDefinition struct {
 	Record     *DocRecord   `json:"record,omitempty"`
 }
 
-// DocField is one labelled field of a Definition's text with the Definitions
-// and Packages it links.
+// DocField is one labelled field of a Definition's text. Text is what
+// follows the label as written, its links as [[...]], without the entries of
+// a list that belongs to the field, which Items holds, and Links the
+// Definitions and Packages the whole field links, in its entries too.
 type DocField struct {
-	Label string   `json:"label"`
+	Label string    `json:"label"`
+	Text  string    `json:"text"`
+	Links []string  `json:"links"`
+	Items []DocItem `json:"items,omitempty"`
+}
+
+// DocItem is one entry of a numbered or bulleted list in a field, as written
+// without its marker, with the Definitions and Packages it links.
+type DocItem struct {
+	Text  string   `json:"text"`
 	Links []string `json:"links"`
+}
+
+// docFields returns the labelled fields of a Definition's text, in order,
+// read as the compiler reads them to check them.
+func docFields(d *spec.Definition) []DocField {
+	if len(d.Fields) == 0 {
+		return nil
+	}
+	page, err := spec.ParsePage(d.Data) // as the compiler parses it, so the offsets of its links hold
+	if err != nil {
+		return nil
+	}
+	// A link is the compiler's, found by where it stands in the body.
+	linksIn := func(start, end int) []string {
+		out := []string{}
+		for _, l := range d.Links {
+			if !l.Kind && l.Target != "" && l.Start >= start && l.Start < end {
+				out = append(out, l.Target)
+			}
+		}
+		return out
+	}
+	var out []DocField
+	for _, f := range page.Fields() {
+		text, items := page.FieldContent(f)
+		field := DocField{Label: f.Label, Text: text, Links: linksIn(f.Start, f.End)}
+		for _, item := range items {
+			field.Items = append(field.Items, DocItem{Text: item.Text, Links: linksIn(item.Start, item.End)})
+		}
+		out = append(out, field)
+	}
+	return out
 }
 
 // DocDeclares is what a Kind declares. Fields or Parts is null when the Kind
@@ -221,6 +264,8 @@ type DocPart struct {
 	Of    string `json:"of,omitempty"`
 	Text  string `json:"text"`
 	Shown string `json:"-"`
+	// Fields are the labelled fields of its text, as a Definition has them.
+	Fields []DocField `json:"fields,omitempty"`
 }
 
 // DocPackage is one Package as doc shows it.
@@ -273,15 +318,7 @@ func DocDefinitionOf(p *project.Project, d *spec.Definition) DocDefinition {
 		dd.Package = ""
 	}
 	dd.Shown = shown(p.Spec, d.Data)
-	for _, f := range d.Fields {
-		field := DocField{Label: f.Label, Links: []string{}}
-		for _, l := range d.Links {
-			if l.Field == f.Label && !l.Kind && l.Target != "" {
-				field.Links = append(field.Links, l.Target)
-			}
-		}
-		dd.Fields = append(dd.Fields, field)
-	}
+	dd.Fields = docFields(d)
 	for _, id := range boundBy(p.Spec, p.Spec.Binding(), d) {
 		dd.BoundBy = append(dd.BoundBy, listDefinition(p.Spec.Definitions[id], false))
 	}
@@ -319,7 +356,7 @@ func DocDefinitionOf(p *project.Project, d *spec.Definition) DocDefinition {
 		if id == spec.AnchorOf(spec.FolderOf(id)) {
 			group = spec.FolderOf(group) // a part with parts of its own: beside its siblings
 		}
-		dd.Parts = append(dd.Parts, DocPart{ID: id, Title: part.Title, Kind: part.Kind, Group: group, Of: of, Text: body(part.Data), Shown: shown(p.Spec, part.Data)})
+		dd.Parts = append(dd.Parts, DocPart{ID: id, Title: part.Title, Kind: part.Kind, Group: group, Of: of, Text: body(part.Data), Shown: shown(p.Spec, part.Data), Fields: docFields(part)})
 	}
 	shownHere := map[string]bool{d.ID: true}
 	for _, id := range p.Spec.Parts(d.ID) {

@@ -124,7 +124,7 @@ The counts keep Definitions gone from the spec; `vet` reads only those of the sp
 
 ## The inbox
 
-`.markitect/inbox.jsonl` holds what waits ([DEC-115](../../docs/decisions.md#dec-115-one-inbox-for-everything-that-waits)), committed with the project and merged with `merge=union`. Each line is one JSON object with `time`, `type` and `id`:
+`.markitect/inbox.jsonl` holds what waits ([DEC-118](../../docs/decisions.md#dec-118-one-inbox-for-everything-that-waits)), committed with the project and merged with `merge=union`. Each line is one JSON object with `time`, `type` and `id`:
 
 - `open` opens an item: `source` and `kind`, free names in lower case; `place`, the Definitions or paths it concerns, sorted, or none; `text`, what is wrong or open; `ask`, the question or the proposed change; and `settle`, `owner` or `agent`.
 - `close` closes it: `how`, `settled`, `answered` or `dropped`, and `why`.
