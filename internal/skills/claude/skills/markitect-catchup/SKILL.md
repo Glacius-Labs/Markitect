@@ -1,20 +1,21 @@
 ---
 name: markitect-catchup
-description: Tell a person what changed in a project's spec since they last looked - for every changed item what is now true, how it was before, and why where that is recorded - without assuming they remember the old spec. Their last look is kept outside the project, in their own profile. It changes nothing in the project. Use when the user asks what changed, what is new, or to catch up on the spec or the project.
+description: Tell a person what changed in a project's spec since they last looked - for every changed item what is now true and how it was before, while why it changed is not recorded yet - without assuming they remember the old spec. Their last look is kept outside the project, in their own profile. It changes nothing in the project. Use when the user asks what changed, what is new, or to catch up on the spec or the project.
 allowed-tools: Bash(markitect list), Bash(markitect list *), Bash(markitect doc *), Bash(markitect status), Bash(markitect status *)
 ---
 Tell the user what changed in the spec since they last looked, from what `markitect` prints and their own copy of the spec. Change no file of the project.
 
-**Their last look** is personal, so it lies outside the project, in a folder of their own per project folder. Run each block below as one command at the project's root in the Bash tool: its first line names that folder `S`, since a shell keeps no variable from one command to the next. `$S/last/` holds what `markitect status --all` printed then, as `status.txt`, a copy of `.markitect/spec/` as `spec/`, and `questions.md`, empty when the project had none. Commands on these copies may ask the user for permission.
+**Their last look** is personal, so it lies outside the project, in a folder of their own per project folder, named after its path: a project moved, or opened in another worktree, starts without a last look. Run each block below as one command at the project's root in the Bash tool: its first line names that folder `S`, since a shell keeps no variable from one command to the next. `$S/last/` holds what `markitect status --all` printed then, as `status.txt`, a copy of `.markitect/spec/` as `spec/`, and `questions.md`, empty when the project had none. Commands on these copies may ask the user for permission.
 
 **Start** by saving the state the user is about to see as `$S/next/`, and what changed since `last/` as `$S/next/changes.txt`:
 
 ```bash
 S="$HOME/.claude/markitect-seen/$(pwd -P | tr -c 'A-Za-z0-9' '-')"
 rm -rf "${S:?}/next" && mkdir -p "$S/next" && cp -R .markitect/spec "$S/next/spec"
-markitect status --all > "$S/next/status.txt"; cp .markitect/questions.md "$S/next/" 2>/dev/null || : > "$S/next/questions.md"
+markitect status --all > "$S/next/status.txt"; [ $? -le 1 ] || { echo "markitect status could not run: stop here"; exit 1; }
+cp .markitect/questions.md "$S/next/" 2>/dev/null || : > "$S/next/questions.md"
 items() { awk '/^[^ ].*@[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/ { if (k != "") print k; k = $0; s = 0; next } /^  with its / { next } /^  / && k != "" && !s { k = k " | " substr($0, 3); s = 1 } END { if (k != "") print k }' "$1/status.txt" | sort; }
-[ -d "$S/last" ] && { diff <(items "$S/last") <(items "$S/next"); diff -rq --strip-trailing-cr "$S/last/spec" "$S/next/spec"; diff --strip-trailing-cr "$S/last/questions.md" "$S/next/questions.md"; } > "$S/next/changes.txt"
+[ -d "$S/last" ] && { diff <(items "$S/last") <(items "$S/next"); diff -rq --strip-trailing-cr "$S/last/spec" "$S/next/spec"; diff --strip-trailing-cr "$S/last/questions.md" "$S/next/questions.md"; } > "$S/next/changes.txt"; true
 ```
 
 If `$S/last/` does not exist, there is nothing to compare: say so, offer the markitect-tour skill, and offer to remember this state as seen.
@@ -30,7 +31,7 @@ If `$S/last/` does not exist, there is nothing to compare: say so, offer the mar
 
 Draw a picture where it shows a change better than words, such as the states of a Concept before and after; draw only what the two versions of the spec state. End by checking what you told against `changes.txt` and naming each line of it you did not cover, or say that none was left.
 
-**Remember it as seen** only when the user says they have seen it, and not while `next/status.txt` reports errors in the spec, or the next catch-up would count every item as new:
+**Remember it as seen** only when the user says they have seen it, and not while `next/status.txt` reports errors in the spec or lists no item, or the next catch-up would count every item as new:
 
 ```bash
 S="$HOME/.claude/markitect-seen/$(pwd -P | tr -c 'A-Za-z0-9' '-')"
