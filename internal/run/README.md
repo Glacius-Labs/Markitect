@@ -4,7 +4,7 @@
 
 | Package | Role |
 | --- | --- |
-| `internal/run` | The record: the inputs of each Definition, `.markitect/review.sum`, the history `.markitect/history.jsonl`, `status` and `mark`. [The hook](../guard/README.md#the-hook) that keeps agents from writing them is `internal/guard`'s. |
+| `internal/run` | The record: the inputs of each Definition, `.markitect/review.sum`, the history `.markitect/history.jsonl`, the inbox `.markitect/inbox.jsonl`, `status` and `mark`. [The hook](../guard/README.md#the-hook) that keeps agents from writing them is `internal/guard`'s. |
 | `internal/adapters/folder` | The walk of the project folder and its `.gitignore` files, for the record and the command line ([below](#the-folder)). |
 | `internal/bootstrap` | Builds the engine for the command line, with the lock of each project's record in the user's cache folder. |
 
@@ -75,7 +75,7 @@ The record is a record, not a proof: a line written by hand shows in the diff, a
 - the errors in the realization: a file neither listed nor ignored, a stale registry row, an unused Definition;
 - the lines of the record it cannot read, each as a diagnostic `.markitect/review.sum:LINE: record.unreadable: …`.
 
-Each item is printed as `DEFINITION@FINGERPRINT`, which the reviewer copies into `mark`, and names where to look: the Definition's file, its row files and the evidence of its last line. When every item is a `spec-problem` recorded at the inputs as they are, and nothing else is left, one more line says that only spec-problems are left, and the JSON has `for_the_owner`: they wait for the owner, and no builder settles them. A Definition recorded `skip` is a note. So is one line that says that the architect's questions for the owner wait in `.markitect/questions.md`, while that file exists; a list limited to a Package leaves it out. A spec with errors gives no list: there is none until it compiles. `--all` lists every Definition, to verify everything again.
+Each item is printed as `DEFINITION@FINGERPRINT`, which the reviewer copies into `mark`, and names where to look: the Definition's file, its row files and the evidence of its last line. When every item is a `spec-problem` recorded at the inputs as they are, and nothing else is left, one more line says that only spec-problems are left, and the JSON has `for_the_owner`: they wait for the owner, and no builder settles them. A Definition recorded `skip` is a note. So is one line that counts the open items of the inbox, those for the owner apart, and the JSON has them as `inbox`; a list limited to a Package or a slice leaves it out. [The inbox](#the-inbox) has its lines. A spec with errors gives no list: there is none until it compiles. `--all` lists every Definition, to verify everything again.
 
 `--package P` limits the list to the items whose Definition belongs to the Package of that name, `Root` for the one at the top, and not to a Package below it. A Definition in a folder that is no Package belongs to the nearest Package above it, and a Definition that is gone to the nearest Package above its path that exists. A strand of a [parallel run](../../docs/concept.md#10-drivers) asks for its part this way. The errors in the realization and the lines of the record it cannot read belong to no Package, so it leaves them out and says how many there are. It then exits 0 when nothing is to verify in that Package, whatever the others hold. A Package the spec does not have is a usage error.
 
@@ -121,6 +121,15 @@ Reading it, `ParseHistory` orders the events by time, keeping the file's order a
 - **Co-changes:** a revision counts one with each Definition pending beside it that has a verdict in the history before, so that its own verdict will be a revision too; in a project whose record is older than its history, a Definition's first verdict in the history counts with nothing. Each change counts once with each partner: a pending change that counted with a Definition counts with it no more, however often that one is revised before its verdict, and a verdict counts with none its change counted with already. A round of more than 30 Definitions counts nothing (code-maat's largest change set): no verdict counts while more than 30 are pending beside it, the revision included, nor the first verdict after that, which names what is left of the round, and what it names counts with nothing until its own verdict, a Definition that changed beside the round included. What changes after the round counts again. A Definition's verdict ends its pending change.
 
 The counts keep Definitions gone from the spec; `vet` reads only those of the spec as it is, for `vet.hotspot` and `vet.change_coupling` ([DEC-102](../../docs/decisions.md#dec-102-what-vet-measures)).
+
+## The inbox
+
+`.markitect/inbox.jsonl` holds what waits ([DEC-118](../../docs/decisions.md#dec-118-one-inbox-for-everything-that-waits)), committed with the project and merged with `merge=union`. Each line is one JSON object with `time`, `type` and `id`:
+
+- `open` opens an item: `source` and `kind`, free names in lower case; `place`, the Definitions or paths it concerns, sorted, or none; `text`, what is wrong or open; `ask`, the question or the proposed change; and `settle`, `owner` or `agent`.
+- `close` closes it: `how`, `settled`, `answered` or `dropped`, and `why`.
+
+`ParseInbox` reads the lines in time order, a line that both sides of a merge hold once, and skips a line it cannot read. A close counts for its item wherever it was opened, and of several closes the first counts. `inbox add` checks the shape, gives the item an id from its time, source, kind and text, and opens nothing when an open item has the same kind, place and text. `inbox close` refuses an item that is unknown or closed already. Both append under the lock of the record, with one write. An audit's `run-end` event counts, by kind, the items the audit opened since its `run-start`, as `found`.
 
 ## The agents and skills
 

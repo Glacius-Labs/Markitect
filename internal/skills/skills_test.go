@@ -86,7 +86,7 @@ func TestTheArchitectAgentNamesAnInstalledSkillFile(t *testing.T) {
 // prompt only markitect's commands that read. Their last look at a project the
 // catch-up skill keeps in the user's own folder, outside the project.
 func TestTheReadingSkillsOnlyRead(t *testing.T) {
-	allowed := regexp.MustCompile(`^Bash\(markitect (status|doc|list|vet)( \*)?\)$`)
+	allowed := regexp.MustCompile(`^Bash\(markitect ((status|doc|list|vet)( \*)?|inbox( --all)?)\)$`)
 	for _, name := range []string{"tour", "catchup", "explain"} {
 		path := ".claude/skills/markitect-" + name + "/SKILL.md"
 		var text string

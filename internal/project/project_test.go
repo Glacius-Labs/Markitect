@@ -105,13 +105,17 @@ func TestLoadNormalizesCRLF(t *testing.T) {
 	}
 }
 
-// The architect's questions for the owner have a place in the layout, and
-// nothing compiles them.
-func TestLoadQuestionsFile(t *testing.T) {
+// The inbox has a place in the layout. What waited in a questions file before
+// waits in the inbox: such a file is an error that says where its points go.
+func TestLoadInboxAndNoQuestionsFile(t *testing.T) {
 	r := valid(t)
-	r.files[QuestionsFile] = "# Questions\n\n1. [[no/such]] Is a member a person or a household?\n"
+	r.files[InboxFile] = "not even json\n"
 	if p := load(t, r); len(p.Errors) != 0 {
-		t.Fatalf("the questions file is refused:\n%v", p.Errors)
+		t.Fatalf("the inbox is refused:\n%v", p.Errors)
+	}
+	r.files[Dir+"/questions.md"] = "# Questions\n\n1. Is a member a person or a household?\n"
+	if p := load(t, r); len(p.Errors) != 1 || p.Errors[0].Code != "project.file" || !strings.Contains(p.Errors[0].Message, "inbox add") {
+		t.Fatalf("a questions file: %v", p.Errors)
 	}
 }
 

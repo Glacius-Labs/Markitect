@@ -26,7 +26,7 @@ func EnsureSettings(f Folder) ([]string, error) {
 	settings := map[string]any{}
 	var marks []string
 	for _, tool := range strings.Split(guard.ShellTools, "|") {
-		marks = append(marks, fmt.Sprintf("before %s for %s", tool, guard.MarkRule(tool)))
+		marks = append(marks, fmt.Sprintf("before %s for %s and %s", tool, guard.MarkRule(tool), guard.InboxRule(tool)))
 	}
 	addHooks := fmt.Sprintf("add the hooks by hand: %q %s, before %s and before %s", guard.HookCommand, strings.Join(marks, ", "), guard.EditTools, guard.AgentTools)
 	setBase := fmt.Sprintf("set worktree.baseRef to %q by hand", worktreeBase)

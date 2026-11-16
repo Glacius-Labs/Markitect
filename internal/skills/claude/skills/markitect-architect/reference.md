@@ -19,7 +19,7 @@ A compact summary of the spec language, the standard Library and the tools.
   registry.md          Root's registry page
   registry/<package path>.md
   ignore               files that belong to no Package, if any
-  questions.md         the questions that wait for the owner, if any; the owner's session keeps it
+  inbox.jsonl          what waits for the owner or an agent; markitect inbox lists it
   libraries/<name>/    Libraries that do not ship with markitect
 ```
 
@@ -204,7 +204,8 @@ All take `--repo DIR`; `check`, `vet`, `list`, `doc`, `status` and `mark` take `
 | `doc --read [FOLDER]` | Every Definition at or below a folder as one text to read, the whole spec without a folder: what the owner reads, or you answer from, when you go through the spec together. |
 | `doc --read FOLDER --bound` | The same text, after a list of the Operations and Reactions whose own Package is the folder's, with what binds the folder from outside it before it and what outside it the folder links after it, each once: everything an auditor of one Package reads. |
 | `list [--deps] [--packages] [--kinds]` | The Packages and their Definitions; `--packages` prints the Packages alone, and with `--deps` each dependency on one line with the number of links behind it, which is how to read the structure of a large spec; `--deps` adds each Package's coupling, abstractness and distance from the main sequence, what it depends on and the links behind each dependency. `--kinds`, alone, prints every Kind the spec can use with how many Definitions it has of it and in which top-level folders, then the Kinds it has none of: what the spec describes so far. |
-| `status [--all] [--package P]` | What is to verify, item by item: each item whose text, Kinds, links, files or evidence changed since a reviewer last verified it, or that has no record yet, with what changed and where to look. Needs a project that compiles. One line says when only spec-problems are left, and a last one when `.markitect/questions.md` exists. |
+| `status [--all] [--package P]` | What is to verify, item by item: each item whose text, Kinds, links, files or evidence changed since a reviewer last verified it, or that has no record yet, with what changed and where to look. Needs a project that compiles. One line says when only spec-problems are left, and a last one counts the open items of the inbox, those for the owner apart. |
+| `inbox [--all]`, `inbox add`, `inbox close ID` | What waits: the open items, each for the owner or for an agent, with its kind, source, place, text and question. `add --source architect --kind KIND --settle owner\|agent -m TEXT [--ask Q] [--place P]...` opens one, once; `close ID --settled\|--answered\|--dropped -m WHY` closes one. |
 | `vet [--strict]` | Warnings about the spec's design, as `file:line: code: message`, and one line that counts its notes; `--strict` lists the notes too. Exit 1 only with `--strict` and a warning; notes never change it. |
 
 ## Coverage

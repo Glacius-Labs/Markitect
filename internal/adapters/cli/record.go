@@ -2,15 +2,16 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/guard"
-	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
@@ -59,10 +60,6 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 			skipped = []run.Item{}
 		}
 		unreadable := append([]int{}, st.Unreadable...)
-		questions := ""
-		if st.Questions {
-			questions = project.QuestionsFile
-		}
 		packages := append([]run.PackageItems{}, st.Packages...)
 		plan := append([]run.Slice{}, st.Slices...)
 		binding := append([]run.Binding{}, st.Binding...)
@@ -84,8 +81,8 @@ func (c CLI) status(ctx context.Context, args []string) (int, error) {
 			Diagnostics       []diagnostic       `json:"diagnostics"`
 			Skipped           []run.Item         `json:"skipped"`
 			Unreadable        []int              `json:"unreadable_lines"`
-			Questions         string             `json:"questions,omitempty"`
-		}{newEnvelope("status"), st.Clean(), st.ForTheOwner(), st.Package, st.Slice, st.ItemsElsewhere + st.ErrorsElsewhere + st.UnreadableElsewhere, st.Definitions, st.Units, len(st.SpecErrors), len(st.Errors), packages, plan, items, binding, append(append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), diagnostics(severityError, st.RecordErrors())...), skipped, unreadable, questions}); err != nil {
+			Inbox             run.InboxCounts    `json:"inbox"`
+		}{newEnvelope("status"), st.Clean(), st.ForTheOwner(), st.Package, st.Slice, st.ItemsElsewhere + st.ErrorsElsewhere + st.UnreadableElsewhere, st.Definitions, st.Units, len(st.SpecErrors), len(st.Errors), packages, plan, items, binding, append(append(diagnostics(severityError, st.SpecErrors), diagnostics(severityError, st.Errors)...), diagnostics(severityError, st.RecordErrors())...), skipped, unreadable, st.Inbox}); err != nil {
 			return Misused, err
 		}
 	} else if slices {
@@ -202,11 +199,43 @@ func (c CLI) hook(ctx context.Context, args []string) (int, error) {
 	if err != nil {
 		return OK, nil
 	}
-	if out := guard.Guard(input); len(out) > 0 {
+	out := guard.Guard(input)
+	if len(out) == 0 {
+		out = c.ownersItems(ctx, input)
+	}
+	if len(out) > 0 {
 		c.Stdout.Write(out)
 		c.refused(ctx, input, out)
 	}
 	return OK, nil
+}
+
+// ownersItems refuses a subagent's call that closes an inbox item only the
+// owner may settle, read from the inbox of each project the call names, or of
+// the one it came from; nothing when it cannot tell.
+func (c CLI) ownersItems(ctx context.Context, input []byte) []byte {
+	ids, repos := guard.InboxCloses(input)
+	var in struct {
+		Cwd string `json:"cwd"`
+	}
+	if len(ids) == 0 || c.Record == nil || json.Unmarshal(input, &in) != nil || in.Cwd == "" {
+		return nil
+	}
+	for _, repo := range repos {
+		if !filepath.IsAbs(repo) {
+			repo = filepath.Join(in.Cwd, repo)
+		}
+		b, err := c.Record.Inbox(ctx, repo)
+		if err != nil {
+			continue
+		}
+		for _, id := range ids {
+			if it, ok := b.Item(id); ok && it.Closed == nil && it.Settle == run.SettleOwner {
+				return guard.Deny(fmt.Sprintf("%s waits for the owner, and only the owner's session closes it. Say in your report how it could be settled.", id))
+			}
+		}
+	}
+	return nil
 }
 
 // repoArg is the folder a command line names with --repo, or the current folder.

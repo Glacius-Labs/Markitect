@@ -94,10 +94,8 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 			`C:\p\.markitect\registry\members\loans.md`,
 		},
 		"record": {"/p/.markitect/review.sum", `C:\p\.MARKITECT\review.sum`, "/p/.markitect/history.jsonl", `C:\p\.Markitect\History.jsonl`},
+		"inbox":  {"/p/.markitect/inbox.jsonl", `C:\p\.Markitect\Inbox.jsonl`},
 		"setup":  {"/p/.markitect/.gitattributes", `C:\p\.Markitect\.gitattributes`},
-		// The questions for the owner are the owner's session's: no subagent
-		// writes them, the architect included.
-		"questions": {"/p/.markitect/questions.md", `C:\p\.Markitect\Questions.md`},
 		"harness": {
 			"/p/.claude/settings.json",
 			`C:\p\.claude\settings.local.json`,
@@ -162,11 +160,11 @@ func TestGuardHoldsEachRolesRightToWrite(t *testing.T) {
 	}
 	has(t, call("a1", guard.BuilderAgent, "Edit", "file_path", "/p/.markitect/spec/fee.md"), "the registry pages")
 	has(t, call("a1", guard.BuilderAgent, "Edit", "file_path", "/p/.markitect/review.sum"), "markitect mark")
-	has(t, call("a1", guard.ReviewerAgent, "Write", "file_path", "/p/.markitect/history.jsonl"), "markitect mark")
+	has(t, call("a1", guard.ReviewerAgent, "Write", "file_path", "/p/.markitect/history.jsonl"), "mark, run and the hook")
 	has(t, call("a1", guard.BuilderAgent, "Edit", "file_path", "/p/.claude/settings.json"), "steers the agents")
 	has(t, call("a1", guard.ArchitectAgent, "Edit", "file_path", "/p/.markitect/.gitattributes"), "init and update")
 	has(t, call("a1", guard.ArchitectAgent, "Write", "file_path", "/p/.markitect/harness.yaml"), "steers the agents")
-	has(t, call("a1", guard.ArchitectAgent, "Write", "file_path", "/p/.markitect/questions.md"), "into your report")
+	has(t, call("a1", guard.ArchitectAgent, "Write", "file_path", "/p/.markitect/inbox.jsonl"), "inbox add and markitect inbox close")
 	has(t, call("a1", guard.ArchitectAgent, "Edit", "file_path", "/p/src/fees.go"), "the builder writes")
 	has(t, call("a1", guard.AuditorAgent, "Edit", "file_path", "/p/src/fees.go"), "changes no file")
 	has(t, call("a1", guard.BuilderAgent, "NotebookEdit", "notebook_path", "/p/.markitect/x.ipynb"), `"permissionDecision":"deny"`)
@@ -241,12 +239,15 @@ func TestHasGuard(t *testing.T) {
 		return `{"hooks": {"PreToolUse": [` + strings.Join(groups, ", ") + `]}}`
 	}
 	bash, powershell := guard.MarkRule("Bash"), guard.MarkRule("PowerShell")
-	shells, edits, agents := group(guard.ShellTools, bash, powershell), group(guard.EditTools, ""), group(guard.AgentTools, "")
+	bashInbox, powershellInbox := guard.InboxRule("Bash"), guard.InboxRule("PowerShell")
+	shells, edits, agents := group(guard.ShellTools, bash, powershell, bashInbox, powershellInbox), group(guard.EditTools, ""), group(guard.AgentTools, "")
 	for s, want := range map[string]bool{
 		settings(shells, edits, agents): true,
 		settings(group("", "")):         true,
 		settings(group("*", "")):        true,
-		settings(group("Bash", bash), group("PowerShell", powershell), edits, agents):                              true,
+		settings(group("Bash", bash, bashInbox), group("PowerShell", powershell, powershellInbox), edits, agents): true,
+		// Settings of an earlier markitect guard the record and not the inbox.
+		settings(group(guard.ShellTools, bash, powershell), edits, agents):                                         false,
 		settings(group("Bash|PowerShell", ""), group("Write|Edit|NotebookEdit|MultiEdit|Task|Agent|Workflow", "")): true,
 		// Before the Bash tool only, a verdict recorded through PowerShell gets past.
 		settings(group("Bash", bash), edits, agents):                 false,

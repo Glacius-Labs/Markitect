@@ -72,7 +72,7 @@ func TestTheReadingSkillsCommandsRunAndOnlyRead(t *testing.T) {
 		t.Fatal("the example has no Package with Definitions")
 	}
 
-	reads := map[string]bool{"status": true, "doc": true, "list": true, "vet": true}
+	reads := map[string]bool{"status": true, "doc": true, "list": true, "vet": true, "inbox": true}
 	for _, skill := range readingSkills {
 		text, err := os.ReadFile("../skills/claude/skills/markitect-" + skill + "/SKILL.md")
 		if err != nil {
@@ -85,7 +85,7 @@ func TestTheReadingSkillsCommandsRunAndOnlyRead(t *testing.T) {
 		for _, m := range commands {
 			line := strings.NewReplacer("FOLDER", folder, "TARGET", definition, "DEFINITION", definition).Replace(m[1])
 			args := strings.Fields(line)
-			if !reads[args[0]] {
+			if !reads[args[0]] || args[0] == "inbox" && len(args) > 1 && (args[1] == "add" || args[1] == "close") {
 				t.Errorf("the %s skill names markitect %s, which does not only read", skill, args[0])
 				continue
 			}

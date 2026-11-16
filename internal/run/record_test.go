@@ -654,28 +654,107 @@ func TestChangedEvidenceIsToVerify(t *testing.T) {
 	has(t, p.status(false).Text(), "evidence:README.md (gone)")
 }
 
-// The architect's questions for the owner are a note: status says where they
-// wait while the file exists, they leave it clean, they are no input of any
-// Definition, and a list limited to a Package leaves them out.
-func TestQuestionsAreANote(t *testing.T) {
+// The inbox holds what waits (DEC-118): add opens an item of a checked shape,
+// once; close closes an open one, saying how and why; status counts the open
+// items, those for the owner apart, as a note that leaves it clean and that a
+// list limited to a Package leaves out.
+func TestInbox(t *testing.T) {
 	p := newPlain(t)
 	p.verifyAll()
-	if st := p.status(false); st.Questions || strings.Contains(st.Text(), "questions") {
-		t.Fatalf("questions without a file:\n%s", st.Text())
+	ctx := context.Background()
+	if st := p.status(false); st.Inbox.Open != 0 || strings.Contains(st.Text(), "inbox") {
+		t.Fatalf("an inbox without a file:\n%s", st.Text())
 	}
-	p.write(project.QuestionsFile, "# Questions\n\n1. Is a member a person or a household?\n")
+	add := func(l run.InboxLine) (run.InboxLine, bool) {
+		t.Helper()
+		item, opened, err := p.engine.InboxAdd(ctx, p.dir, l)
+		if err != nil {
+			t.Fatalf("add %+v: %v", l, err)
+		}
+		return item, opened
+	}
+	q, opened := add(run.InboxLine{Source: "architect", Kind: "question", Settle: run.SettleOwner, Text: "Is a member a person  or a household?", Place: []string{"members/member", " members/member"}})
+	if !opened || !strings.HasPrefix(q.ID, "i") || q.Text != "Is a member a person or a household?" || fmt.Sprint(q.Place) != "[members/member]" || q.Type != run.InboxOpen {
+		t.Fatalf("opened: %+v", q)
+	}
+	if again, opened := add(run.InboxLine{Source: "audit", Kind: "question", Settle: run.SettleOwner, Text: "Is a member a person or a household?", Place: []string{"members/member"}}); opened || again.ID != q.ID {
+		t.Fatalf("an item open already was opened again: %+v", again)
+	}
+	link, _ := add(run.InboxLine{Source: "audit", Kind: "missing-link", Settle: run.SettleAgent, Text: "loan names the loan limit without a link.", Ask: "Link [[loan-limit]] from members/loans/loan.", Place: []string{"members/loans/loan"}})
+	add(run.InboxLine{Source: "monitoring", Kind: "signal", Settle: run.SettleOwner, Text: "Logins fail at night."})
 	st := p.status(false)
-	if !st.Questions || !st.Clean() || len(st.Items) != 0 {
-		t.Fatalf("%s", st.Text())
+	if st.Inbox != (run.InboxCounts{Open: 3, ForOwner: 2}) || !st.Clean() {
+		t.Fatalf("%+v\n%s", st.Inbox, st.Text())
 	}
-	has(t, st.Text(), "Nothing to verify", "\nThe architect's questions for the owner wait in .markitect/questions.md.\n")
-	in, err := p.engine.Status(context.Background(), run.StatusRequest{Dir: p.dir, Package: "members"})
-	if err != nil || in.Questions || strings.Contains(in.Text(), "questions") {
+	has(t, st.Text(), "Nothing to verify", "\nThe inbox holds 3 open items, 2 for the owner; markitect inbox lists them.\n")
+	if in, err := p.engine.Status(ctx, run.StatusRequest{Dir: p.dir, Package: "members"}); err != nil || in.Inbox.Open != 0 || strings.Contains(in.Text(), "inbox") {
 		t.Fatalf("%v\n%s", err, in.Text())
 	}
-	p.remove(project.QuestionsFile)
-	if st := p.status(false); st.Questions {
-		t.Fatalf("%s", st.Text())
+	// A shape the inbox does not take is refused before anything is read.
+	for _, l := range []run.InboxLine{
+		{Source: "Audit", Kind: "gap", Settle: run.SettleOwner, Text: "x"},
+		{Source: "audit", Kind: "a gap", Settle: run.SettleOwner, Text: "x"},
+		{Source: "audit", Kind: "gap", Settle: "anyone", Text: "x"},
+		{Source: "audit", Kind: "gap", Settle: run.SettleOwner, Text: "  "},
+	} {
+		if _, _, err := p.engine.InboxAdd(ctx, p.dir, l); !errors.Is(err, run.ErrUsage) {
+			t.Fatalf("%+v: %v", l, err)
+		}
+	}
+	for _, c := range [][2]string{{"closed", "why"}, {"settled", " "}} {
+		if _, err := p.engine.InboxClose(ctx, p.dir, link.ID, c[0], c[1]); !errors.Is(err, run.ErrUsage) {
+			t.Fatalf("close %v: %v", c, err)
+		}
+	}
+	// Close settles an open item once; a closed or unknown one is refused.
+	if refusal, err := p.engine.InboxClose(ctx, p.dir, link.ID, "settled", "linked in members/loans/loan"); err != nil || refusal != "" {
+		t.Fatalf("close: %v %s", err, refusal)
+	}
+	if refusal, err := p.engine.InboxClose(ctx, p.dir, link.ID, "dropped", "again"); err != nil || !strings.Contains(refusal, "closed already: settled, linked in members/loans/loan") {
+		t.Fatalf("close twice: %v %s", err, refusal)
+	}
+	if refusal, err := p.engine.InboxClose(ctx, p.dir, "i00000000", "dropped", "none"); err != nil || !strings.Contains(refusal, "no item i00000000") {
+		t.Fatalf("close an unknown item: %v %s", err, refusal)
+	}
+	b, err := p.engine.Inbox(ctx, p.dir)
+	if err != nil || len(b.Items) != 3 || len(b.Open()) != 2 || b.Counts() != (run.InboxCounts{Open: 2, ForOwner: 2}) {
+		t.Fatalf("%v %+v", err, b)
+	}
+	if it, _ := b.Item(link.ID); it.Closed == nil || it.Closed.How != "settled" {
+		t.Fatalf("the closed item: %+v", it)
+	}
+}
+
+// After a merge the inbox holds the lines of both sides, one after the other,
+// and a line both hold maybe twice: an item's state comes from its lines in
+// time order, a close counts wherever its item was opened, and of two closes
+// the first counts.
+func TestInboxAfterAMerge(t *testing.T) {
+	at := func(s int) string { return time.Date(2026, 11, 15, 8, 0, s, 0, time.UTC).Format(time.RFC3339) }
+	open := func(s int, id, settle string) string {
+		return fmt.Sprintf(`{"time":%q,"type":"open","id":%q,"source":"audit","kind":"gap","text":"t %s","settle":%q}`, at(s), id, id, settle)
+	}
+	closing := func(s int, id, how string) string {
+		return fmt.Sprintf(`{"time":%q,"type":"close","id":%q,"how":%q,"why":"w"}`, at(s), id, how)
+	}
+	base := open(1, "ia", "owner")
+	ours := []string{closing(5, "ib", "settled"), closing(6, "ia", "answered")}
+	theirs := []string{open(2, "ib", "agent"), closing(3, "ia", "dropped"), open(4, "ic", "owner")}
+	data := strings.Join(append(append(append([]string{base}, ours...), theirs...), base, "broken"), "\n")
+	b := run.ParseInbox([]byte(data))
+	var got []string
+	for _, it := range b.Items {
+		how := "open"
+		if it.Closed != nil {
+			how = it.Closed.How
+		}
+		got = append(got, it.ID+":"+how)
+	}
+	if s := strings.Join(got, " "); s != "ia:dropped ib:settled ic:open" {
+		t.Fatalf("items: %s", s)
+	}
+	if c := b.Counts(); c != (run.InboxCounts{Open: 1, ForOwner: 1}) {
+		t.Fatalf("counts: %+v", c)
 	}
 }
 

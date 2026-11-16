@@ -1,7 +1,7 @@
 ---
 name: markitect-tour
 description: Walk a person through a project's spec, chapter by chapter in the order a spec is designed - why the system exists and its business case, how each Stakeholder uses it, its domain, its views, and how it runs - for someone new to the project, or the owner after a long break. The reader may ask questions at any point. It changes nothing. Use when the user asks for a tour, an overview or an introduction to the spec or the project, or to be walked through it.
-allowed-tools: Bash(markitect list), Bash(markitect list *), Bash(markitect doc *), Bash(markitect status), Bash(markitect status *), Bash(markitect vet), Bash(markitect vet *)
+allowed-tools: Bash(markitect list), Bash(markitect list *), Bash(markitect doc *), Bash(markitect status), Bash(markitect status *), Bash(markitect vet), Bash(markitect vet *), Bash(markitect inbox)
 ---
 Lead the user through the spec in `.markitect/spec/`, from what `markitect` prints. Change no file of the project. If the user names a chapter or an area to start with, start there.
 
@@ -20,4 +20,4 @@ A chapter whose folders the spec does not have is a gap: say so in one line and 
 
 **Pictures.** Draw one where it says more than words: the Stakeholders and External systems around the system, a Scenario as a storyboard of what the Actor does and sees, the states of a Concept with the Operations that move it, the Components and Connectors at runtime, the Packages with their dependencies. Draw only what Definitions state, name each element as the spec names it, and say below it which Definitions it shows. Use what the session can show, such as a Mermaid diagram in the answer or a page.
 
-**The end.** Say how the project stands, from `markitect status`: what is not verified yet, the spec-problems that wait for the owner, and the questions in `.markitect/questions.md`. Name each top-level folder and each Definition of `markitect list --json` that no chapter covered, or say that none was left. Then offer to remember this state as seen, as the markitect-catchup skill does in `.claude/skills/markitect-catchup/SKILL.md`, so that the next catch-up starts here.
+**The end.** Say how the project stands, from `markitect status`: what is not verified yet, the spec-problems that wait for the owner, and what waits in the inbox, as `markitect inbox` lists it. Name each top-level folder and each Definition of `markitect list --json` that no chapter covered, or say that none was left. Then offer to remember this state as seen, as the markitect-catchup skill does in `.claude/skills/markitect-catchup/SKILL.md`, so that the next catch-up starts here.

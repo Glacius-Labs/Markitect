@@ -80,6 +80,8 @@ type Event struct {
 	Outcome string     `json:"outcome,omitempty"`
 	Rounds  *int       `json:"rounds,omitempty"`
 	Counts  *RunCounts `json:"counts,omitempty"`
+	// Found counts, by kind, the inbox items an audit opened, at its end.
+	Found map[string]int `json:"found,omitempty"`
 	// A refusal: the agent whose call it was, empty for the owner's session,
 	// the tool, what the call named, and why it was refused.
 	Agent  string `json:"agent,omitempty"`
@@ -256,7 +258,13 @@ func (h History) Changes() Changes {
 // write that appends: the history is never rewritten. mark calls it under the
 // lock of the record.
 func appendHistory(root string, e Event) error {
-	line, err := marshal(e)
+	return appendLine(root, project.HistoryFile, e)
+}
+
+// appendLine adds a value as the last line of a file of a project's own
+// folder that is only appended to, with one write that appends.
+func appendLine(root, name string, v any) error {
+	line, err := marshal(v)
 	if err != nil {
 		return err
 	}
@@ -264,7 +272,7 @@ func appendHistory(root string, e Event) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
-	f, err := os.OpenFile(filepath.Join(root, filepath.FromSlash(project.HistoryFile)), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o644)
+	f, err := os.OpenFile(filepath.Join(root, filepath.FromSlash(name)), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o644)
 	if err != nil {
 		return err
 	}
@@ -281,6 +289,34 @@ func appendHistory(root string, e Event) error {
 		return err
 	}
 	return f.Sync()
+}
+
+// OpenRun returns the last run that started and has not ended.
+func (h History) OpenRun() (Event, bool) {
+	var open *Event
+	for i, e := range h.Events {
+		switch e.Type {
+		case EventRunStart:
+			open = &h.Events[i]
+		case EventRunEnd:
+			open = nil
+		}
+	}
+	if open == nil {
+		return Event{}, false
+	}
+	return *open, true
+}
+
+// Found counts, by kind, the items a source opened since a time.
+func (b Inbox) Found(source string, since time.Time) map[string]int {
+	out := map[string]int{}
+	for _, it := range b.Items {
+		if it.Source == source && !it.Time.Before(since) {
+			out[it.Kind]++
+		}
+	}
+	return out
 }
 
 // Append adds an event to the history of the project that holds dir, under

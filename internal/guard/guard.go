@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"path"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -46,6 +47,11 @@ const ShellTools = "Bash|PowerShell"
 // of the line begins with it, also after leading assignments.
 func MarkRule(tool string) string { return tool + "(markitect mark*)" }
 
+// InboxRule is the permission rule that starts the hook before a command of a
+// shell tool that changes the inbox, so that it can refuse a subagent closing
+// an item that only the owner may settle.
+func InboxRule(tool string) string { return tool + "(markitect inbox*)" }
+
 // EditTools are the tools that write files, and AgentTools the tools that start
 // agents, as the matchers of the hooks that hold the roles' rights. Claude Code
 // named its agent tool Task before it named it Agent; its Workflow tool runs a
@@ -57,10 +63,9 @@ const (
 )
 
 // rights are what a subagent of a role may do. A file is code when it lies
-// outside Markitect's folder, a registry page, the record or the history, or
-// else the spec. Nobody writes the record or the history by an edit:
-// markitect mark writes them. And no
-// subagent writes the questions for the owner, which the owner's session keeps.
+// outside Markitect's folder, a registry page, the record, the history or the
+// inbox, or else the spec. Nobody writes the record, the history or the inbox
+// by an edit: markitect's commands write them.
 type rights struct {
 	code, spec, registry, mark bool
 	// starts are the agents it may start; any when all.
@@ -109,6 +114,64 @@ func (r rights) may(start string) bool {
 // markitect.cmd.
 var markCommand = regexp.MustCompile(`(?i)(^|[\s;&|("'/\\` + "`" + `])markitect(\.exe|\.cmd)?["']?\s+mark(\s|$)`)
 
+// inboxCall finds a call of markitect inbox in a shell command, as markCommand
+// finds mark, with the rest of its command up to the next one.
+var inboxCall = regexp.MustCompile(`(?i)(^|[\s;&|("'/\\` + "`" + `])markitect(\.exe|\.cmd)?["']?\s+inbox(\s[^;&|\n]*|$)`)
+
+// itemID is the shape of an inbox item's ID.
+var itemID = regexp.MustCompile(`(?i)^i[0-9a-f]+$`)
+
+// InboxCloses returns the IDs of the inbox items a call of a subagent closes,
+// with the folders the calls name with --repo, "." where one names none, so
+// that whoever holds the inbox can refuse one that only the owner may settle. A
+// call of the owner's session closes any. The flags of the command may stand
+// anywhere, so every word of a call that closes, in the shape of an ID, counts.
+func InboxCloses(input []byte) (ids, repos []string) {
+	var in struct {
+		AgentID   string         `json:"agent_id"`
+		ToolInput map[string]any `json:"tool_input"`
+	}
+	if json.Unmarshal(input, &in) != nil || in.AgentID == "" {
+		return nil, nil
+	}
+	command, _ := in.ToolInput["command"].(string)
+	unquote := func(s string) []string {
+		words := strings.Fields(s)
+		for i := range words {
+			words[i] = strings.Trim(words[i], `"'`)
+		}
+		return words
+	}
+	for _, m := range inboxCall.FindAllStringSubmatchIndex(command, -1) {
+		words := unquote(command[m[6]:m[7]])
+		if !slices.Contains(words, "close") {
+			continue
+		}
+		repo := "."
+		for i, w := range words {
+			name, value, inline := strings.Cut(strings.TrimLeft(w, "-"), "=")
+			switch {
+			case strings.HasPrefix(w, "-") && name == "repo" && inline:
+				repo = value
+			case strings.HasPrefix(w, "-") && name == "repo" && i+1 < len(words):
+				repo = words[i+1]
+			}
+		}
+		repos = append(repos, repo)
+		// A separator inside a quoted text ends the call early, so the IDs
+		// come from the rest of the command.
+		for _, w := range unquote(command[m[6]:]) {
+			if itemID.MatchString(w) && !slices.Contains(ids, strings.ToLower(w)) {
+				ids = append(ids, strings.ToLower(w))
+			}
+		}
+	}
+	return ids, repos
+}
+
+// Deny is what the hook prints to refuse a call, saying why.
+func Deny(why string) []byte { return deny(why) }
+
 // Guard is the project's hook before a tool call. It holds the rights of the
 // four roles (DEC-100), and guards the record and the spec, not the process:
 //
@@ -117,8 +180,8 @@ var markCommand = regexp.MustCompile(`(?i)(^|[\s;&|("'/\\` + "`" + `])markitect(
 //   - a subagent writes only what its role may: the builder and any other
 //     subagent code and the registry pages, the architect the spec and the
 //     registry pages, the reviewer and the auditor nothing, and nobody the
-//     record, which mark writes, the questions for the owner, which the
-//     owner's session keeps, or the files that steer the agents;
+//     record, the history or the inbox, which markitect's commands write, or
+//     the files that steer the agents;
 //   - the builder starts only the reviewer, the other roles start no agent, no
 //     subagent starts the builder or the architect, and none runs a workflow.
 //
@@ -197,8 +260,10 @@ func writeRefusal(agent string, r rights, file string) string {
 		return fmt.Sprintf("%s is written only by markitect mark, which the %s agent runs.", file, ReviewerAgent)
 	case setupFile:
 		return fmt.Sprintf("%s is written only by markitect init and update; no agent changes it.", file)
-	case questionsFile:
-		return fmt.Sprintf("%s holds the questions for the owner, and the owner's session keeps it: no agent writes it. A question for the owner you put into your report.", file)
+	case historyFile:
+		return fmt.Sprintf("%s is written only by markitect itself: mark, run and the hook; no agent edits it.", file)
+	case inboxFile:
+		return fmt.Sprintf("%s is written only by markitect inbox add and markitect inbox close; open or close an item with them.", file)
 	case harnessFile:
 		return fmt.Sprintf("%s steers the agents: Claude Code's settings, hooks and rules, Markitect's skills, agents, workflows and harness configuration and the project's instruction files are the owner's, and no agent changes them. Say what should change.", file)
 	case registryPage:
@@ -231,15 +296,14 @@ const (
 	recordFile
 	setupFile
 	harnessFile
-	questionsFile
+	historyFile
+	inboxFile
 )
 
 // kindOf says what kind of file a path names, whatever folder it starts from:
-// one in Markitect's folder of a project is a registry page, the record or the
-// history, the
-// record's Git attributes, which init writes, the questions for the owner, which
-// the owner's session keeps, or the spec; one that steers the agents is the
-// harness; any other is code.
+// one in Markitect's folder of a project is a registry page, the record, the
+// history, the inbox, the Git attributes, which init writes, or the spec; one
+// that steers the agents is the harness; any other is code.
 func kindOf(file string) int {
 	segments := strings.Split(path.Clean(strings.ReplaceAll(file, `\`, "/")), "/")
 	for i, s := range segments {
@@ -249,14 +313,16 @@ func kindOf(file string) int {
 		lower := strings.ToLower(strings.Join(segments[i:], "/"))
 		registry := strings.ToLower(project.RegistryDir) + "/"
 		switch {
-		case lower == strings.ToLower(project.ReviewFile), lower == strings.ToLower(project.HistoryFile):
+		case lower == strings.ToLower(project.ReviewFile):
 			return recordFile
+		case lower == strings.ToLower(project.HistoryFile):
+			return historyFile
+		case lower == strings.ToLower(project.InboxFile):
+			return inboxFile
 		case lower == strings.ToLower(project.AttributesFile):
 			return setupFile
 		case lower == strings.ToLower(project.HarnessFile):
 			return harnessFile
-		case lower == strings.ToLower(project.QuestionsFile):
-			return questionsFile
 		case lower == strings.ToLower(project.RootPage), strings.HasPrefix(lower, registry) && strings.HasSuffix(lower, ".md"):
 			return registryPage
 		}

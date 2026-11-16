@@ -544,7 +544,7 @@ func TestInitInstallsTheHarness(t *testing.T) {
 		t.Fatalf("init: %s", out)
 	}
 	noRepository(t, r.Dir)
-	if got := read(t, r.Dir, ".markitect/.gitattributes"); got != "review.sum merge=union\nhistory.jsonl merge=union\n" {
+	if got := read(t, r.Dir, ".markitect/.gitattributes"); got != "review.sum merge=union\nhistory.jsonl merge=union\ninbox.jsonl merge=union\n" {
 		t.Fatalf(".markitect/.gitattributes: %q", got)
 	}
 	// The skills are plain prompts: they inject no command, so no exit code can
@@ -605,9 +605,11 @@ func TestInitInstallsTheHarness(t *testing.T) {
 	if err := json.Unmarshal([]byte(read(t, r.Dir, ".claude/settings.json")), &settings); err != nil {
 		t.Fatal(err)
 	}
-	if pre := settings.Hooks["PreToolUse"]; len(pre) != 3 || pre[0].Matcher != "Bash|PowerShell" || len(pre[0].Hooks) != 2 ||
+	if pre := settings.Hooks["PreToolUse"]; len(pre) != 3 || pre[0].Matcher != "Bash|PowerShell" || len(pre[0].Hooks) != 4 ||
 		pre[0].Hooks[0].Command != projectHook || pre[0].Hooks[0].If != "Bash(markitect mark*)" ||
 		pre[0].Hooks[1].Command != projectHook || pre[0].Hooks[1].If != "PowerShell(markitect mark*)" || pre[0].Hooks[1].Shell != "bash" ||
+		pre[0].Hooks[2].Command != projectHook || pre[0].Hooks[2].If != "Bash(markitect inbox*)" ||
+		pre[0].Hooks[3].Command != projectHook || pre[0].Hooks[3].If != "PowerShell(markitect inbox*)" || pre[0].Hooks[3].Shell != "bash" ||
 		pre[1].Matcher != "Edit|Write|MultiEdit|NotebookEdit" || len(pre[1].Hooks) != 1 ||
 		pre[1].Hooks[0].Command != projectHook || pre[1].Hooks[0].If != "" ||
 		pre[2].Matcher != "Agent|Task|Workflow" || len(pre[2].Hooks) != 1 ||
@@ -782,18 +784,6 @@ func TestStatusAndMarkThroughTheCommandLine(t *testing.T) {
 	}
 	if code, out, _ := run(t, r.Dir, "status", "--package", "Root", "--json"); code != 1 || json.Unmarshal([]byte(out), &limited) != nil || limited.Package != "Root" || limited.Clean || len(limited.Items) != 1 {
 		t.Fatalf("status --package Root --json: %d\n%s", code, out)
-	}
-	// The questions for the owner are a note of the whole list: --json names
-	// their file, and a list limited to a Package leaves it out.
-	r.Write(".markitect/questions.md", "# Questions\n\n1. Is a member a person or a household?\n")
-	if code, out, _ := run(t, r.Dir, "status", "--json"); code != 1 || !strings.Contains(out, `"questions": ".markitect/questions.md"`) {
-		t.Fatalf("status --json with questions: %d\n%s", code, out)
-	}
-	if code, out, _ := run(t, r.Dir, "status", "--package", "Root", "--json"); code != 1 || strings.Contains(out, `"questions"`) {
-		t.Fatalf("status --package Root --json with questions: %d\n%s", code, out)
-	}
-	if err := os.Remove(filepath.Join(r.Dir, ".markitect", "questions.md")); err != nil {
-		t.Fatal(err)
 	}
 	if code, _, errOut := run(t, r.Dir, "status", "--package", "nowhere"); code != 2 || !strings.Contains(errOut, `no Package "nowhere"`) {
 		t.Fatalf("status --package nowhere: %d %s", code, errOut)

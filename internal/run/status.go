@@ -66,10 +66,10 @@ type Status struct {
 	Skipped []Item
 	// Unreadable are the lines of the record markitect cannot read.
 	Unreadable []int
-	// Questions says that the architect's questions for the owner wait in
-	// project.QuestionsFile (DEC-100). They are a note: they do not count, and a
-	// list limited to a Package leaves them out, since they belong to none.
-	Questions bool
+	// Inbox counts the open items of the inbox and those only the owner may
+	// settle (DEC-118). They are a note: they do not count, and a list limited
+	// to a Package or a slice leaves them out.
+	Inbox InboxCounts
 	// Definitions counts the Definitions of the spec, and Units what is
 	// verified as one: a thing with its parts is one unit.
 	Definitions int
@@ -211,7 +211,9 @@ func (e *Engine) Status(_ context.Context, req StatusRequest) (Status, error) {
 	case req.Package != "":
 		st, err = st.only(req.Package)
 	default:
-		st.Questions = f.set[project.QuestionsFile]
+		if b, e := readInbox(f.root); e == nil {
+			st.Inbox = b.Counts()
+		}
 	}
 	if err != nil {
 		return st, err
@@ -567,11 +569,11 @@ func (s Status) Text() string {
 	if s.ForTheOwner() {
 		fmt.Fprintf(&b, "\nOnly spec-problems are left%s: they wait for the owner, and no builder settles them.\n", s.inPackage())
 	}
-	if s.Questions {
+	if n := s.Inbox.Open; n > 0 {
 		if b.Len() > 0 {
 			b.WriteString("\n")
 		}
-		fmt.Fprintf(&b, "The architect's questions for the owner wait in %s.\n", project.QuestionsFile)
+		fmt.Fprintf(&b, "The inbox holds %d open %s, %d for the owner; markitect inbox lists them.\n", n, plural(n, "item", "items"), s.Inbox.ForOwner)
 	}
 	if len(s.Slice) > 0 {
 		var parts []string
