@@ -29,6 +29,7 @@ DEFAULT_DOCUMENTS = (
     "SUPPORT.md",
     "SECURITY.md",
     "docs/vision.md",
+    "docs/foundations.md",
     "docs/concept/README.md",
     "docs/concept/what-markitect-is.md",
     "docs/concept/tools.md",
