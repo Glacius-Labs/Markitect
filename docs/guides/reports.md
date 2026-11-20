@@ -77,6 +77,7 @@ The settings are `.markitect/settings.md`, of the settings type. Every section i
 | Cadence | A line `JOB: TEXT` per job, the text read by the runners |
 | Write table | Lines `ROLE: PATTERN`, ROLE one of the roles, `job` or `owner`, each pattern written like a line of a `.gitignore` file, which narrow what the role may write ([narrowing](rights.md#the-write-table)). The tool checks that each parses: it names something, every `[` is closed, every class such as `[:digit:]` is one Git knows, and it does not end in a lone backslash |
 | CI | The files of the CI definition, a [control file](rights.md#the-write-table): a pattern per line, written like a line of a `.gitignore` file, checked as the write table's are. Without the section it is `.github/workflows/` |
+| Tests | One command line that runs the project's tests and its counter-checks, such as `go test ./...`. A runner runs it in the project folder for the [landing rule](rights.md#the-landing-check), and the reviewer runs it as evidence; it passes when it exits 0. Without the section a runner has nothing to run, and lands nothing |
 
 The roles are `architect`, `builder`, `reviewer`, `counter-checker`, `sampler`, `reader`, `triage` and `intake`. A role or a job named twice in one section is an error.
 
@@ -102,6 +103,19 @@ tests/counter-checks
 ```
 
 Once the settings name a counter-check folder, [`mark`](project-reference.md#mark) takes a counter-check, `--check PATH`, only from inside it.
+
+`markitect-next settings` prints the settings, so that a runner or an agent reads them without reading Markdown: the models, the counter-check folder, the tests command, the cadence, the write table and the CI definition, each `(none)` when the settings name nothing, after what `check` finds in the settings file. It exits 1 while `check` finds errors there, and says `no settings` without the file. With `--json` it prints `present`, whether the file is there, `errors`, with `file`, `line`, `code` and `message`, `models` and `cadence`, objects by role and by job, `counter_checks` and `tests`, empty when not named, `write_table`, with `role` and `pattern`, and `ci`. A value that is not of its form is left out.
+
+```text
+Models:
+  builder: sonnet
+  reviewer: sonnet
+Counter-checks: tests/counter-checks
+Tests: go test ./...
+Cadence: (none)
+Write table: (none)
+CI: .github/workflows/
+```
 
 ## Control samples
 

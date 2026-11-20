@@ -98,6 +98,8 @@ The first five are required, since the job that writes a report knows them. Rati
 | *Counter-checks* | The folder of the counter-checks |
 | *Cadence* | How often each job runs |
 | *Write table* | What each role may write, narrower than the table the tool ships |
+| *Tests* | The one command line that runs the project's tests and counter-checks |
+| *CI* | The files of the CI definition |
 
 **The sample type.** The result of a control sample is a document of this type in `.markitect/samples/` ([trust](../concept/trust.md#control-samples)).
 

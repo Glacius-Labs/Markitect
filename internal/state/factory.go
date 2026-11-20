@@ -107,6 +107,9 @@ type Settings struct {
 	// CI are the patterns of the CI definition, a control file; DefaultCI
 	// when the settings have no CI section.
 	CI []string
+	// Tests is the one command line that runs the project's tests and
+	// counter-checks, "" when the settings name none.
+	Tests string
 }
 
 // DefaultCI is the CI definition when the settings name none.
@@ -657,6 +660,13 @@ func (f *Factory) readSettings(p *Project, d *lang.Document) *Settings {
 			}
 			s.WriteTable = append(s.WriteTable, WriteRule{m[1], pattern})
 		}
+	}
+	vs, _ = values(d, "Tests")
+	if len(vs) > 1 {
+		bad(vs[1], "tests: one command, on one line")
+	}
+	if len(vs) > 0 {
+		s.Tests = vs[0].Text
 	}
 	if vs, has := values(d, "CI"); has {
 		s.CI = nil

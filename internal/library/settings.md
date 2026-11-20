@@ -14,5 +14,8 @@ How often each job runs: a line `JOB: TEXT` per job, the text read by the runner
 ## Write table (optional)
 What each role may write, narrower than the table the tool ships: lines `ROLE: PATTERN`, each pattern written like a line of a `.gitignore` file, the role one of the roles above, `job` or `owner`.
 
+## Tests (optional)
+The one command line that runs the project's tests and its counter-checks, which the runners run in the project folder and the reviewer runs as evidence; it passes when it exits 0.
+
 ## CI (optional)
 The files of the CI definition, a control file only the owner writes: a pattern per line, written like a line of a `.gitignore` file. Without this section it is `.github/workflows/`.

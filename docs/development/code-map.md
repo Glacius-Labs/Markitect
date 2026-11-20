@@ -165,7 +165,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `cmd/markitect-next` | Command markitect-next is the rebuilt Markitect tool while it grows beside markitect: init, check, show, table, new, move, apply, topic, questions, status, mark, compare, figures and version. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
+| `cmd/markitect-next` | Command markitect-next is the rebuilt Markitect tool while it grows beside markitect: init, check, show, table, new, move, apply, topic, questions, status, mark, compare, figures, settings and version. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
 
 ## Maintenance
 

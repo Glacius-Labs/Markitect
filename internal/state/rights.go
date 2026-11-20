@@ -640,8 +640,10 @@ type Added struct {
 
 // Landing compares status on a branch with status on its target, both with
 // their waiting entries, by document and kind: the entries the branch adds
-// keep it from landing. A document waiting on the owner with no change its
-// reports do not excuse is no entry.
+// keep it from landing. An entry whose document has a fail on the branch and
+// none on the target counts as added too, so that what a reviewer failed
+// never lands. A document waiting on the owner with no change its reports
+// do not excuse is no entry.
 func Landing(branch, target *Status) []Added {
 	keys := func(s *Status) []Added {
 		var out []Added
@@ -661,13 +663,25 @@ func Landing(branch, target *Status) []Added {
 		}
 		return out
 	}
+	failed := func(a Added) bool {
+		for _, c := range a.Changes {
+			if strings.HasPrefix(c, "fail: ") {
+				return true
+			}
+		}
+		return false
+	}
 	shown := map[string]bool{}
+	failedOnTarget := map[string]bool{}
 	for _, a := range keys(target) {
 		shown[a.Kind+"\x00"+a.Doc] = true
+		if failed(a) {
+			failedOnTarget[a.Doc] = true
+		}
 	}
 	var out []Added
 	for _, a := range keys(branch) {
-		if !shown[a.Kind+"\x00"+a.Doc] {
+		if !shown[a.Kind+"\x00"+a.Doc] || failed(a) && !failedOnTarget[a.Doc] {
 			out = append(out, a)
 		}
 	}

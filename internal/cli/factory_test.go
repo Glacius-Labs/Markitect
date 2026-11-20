@@ -276,3 +276,38 @@ func TestCompareReports(t *testing.T) {
 		t.Error(code, out)
 	}
 }
+
+func TestSettingsCommand(t *testing.T) {
+	dir := initialized(t)
+	write(t, dir, ".markitect/settings.md", state.DefaultSettings+"\n## Tests\ngo test ./...\n\n## Write table\nbuilder: src/\n")
+	code, out, _ := run("settings", "-C", dir)
+	want := "Models:\n  architect: opus\n  builder: sonnet\n  counter-checker: sonnet\n  intake: sonnet\n  reader: sonnet\n  reviewer: sonnet\n  sampler: sonnet\n  triage: sonnet\n" +
+		"Counter-checks: tests/counter-checks\nTests: go test ./...\nCadence: (none)\nWrite table:\n  builder: src/\nCI: .github/workflows/\n"
+	if code != ExitOK || out != want {
+		t.Errorf("got %d\n%s\nwant\n%s", code, out, want)
+	}
+	code, out, _ = run("settings", "-C", dir, "--json")
+	var doc settingsDocument
+	if err := json.Unmarshal([]byte(out), &doc); err != nil || code != ExitOK {
+		t.Fatalf("%d %v\n%s", code, err, out)
+	}
+	if doc.Kind != "settings" || !doc.Present || doc.Tests != "go test ./..." || doc.CounterChecks != "tests/counter-checks" ||
+		doc.Models["reviewer"] != "sonnet" || len(doc.WriteTable) != 1 || doc.WriteTable[0].Role != "builder" || len(doc.Errors) != 0 {
+		t.Errorf("%+v", doc)
+	}
+	// Errors in the settings are printed, and the command exits 1.
+	write(t, dir, ".markitect/settings.md", "# Settings\n\n## Tests\ngo test\nnpm test\n")
+	code, out, _ = run("settings", "-C", dir)
+	if code != ExitFound || !strings.HasPrefix(out, ".markitect/settings.md:5: settings.form: tests: one command, on one line\n") || !strings.Contains(out, "Tests: go test\n") {
+		t.Errorf("got %d\n%s", code, out)
+	}
+	// Without the file there are no settings, and the CI definition is the default.
+	if err := os.Remove(filepath.Join(dir, ".markitect", "settings.md")); err != nil {
+		t.Fatal(err)
+	}
+	code, out, _ = run("settings", "-C", dir, "--json")
+	doc = settingsDocument{}
+	if err := json.Unmarshal([]byte(out), &doc); err != nil || code != ExitOK || doc.Present || doc.Tests != "" || len(doc.Models) != 0 || strings.Join(doc.CI, " ") != ".github/workflows/" {
+		t.Errorf("%d %v %+v", code, err, doc)
+	}
+}
