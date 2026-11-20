@@ -2,7 +2,7 @@
 name: markitect-review
 description: The review job of a Markitect project - a spot check in which a fresh reviewer confirms a few confirmed documents again at random, or all of them on request, so that a verdict that contradicts the old one shows. Use when the user or a runner asks for a spot check or a full review.
 ---
-Run the review job in the [frame of a job](../../jobs.md). The job is `review`. It changes no artifact and no spec; it binds verdicts and writes reports.
+Run the review job in the frame of a job, `${CLAUDE_PLUGIN_ROOT}/jobs.md`. The job is `review`. It changes no artifact and no spec; it binds verdicts and writes reports.
 
 1. **Choose.** `markitect-next table` lists every document with its verdict. Take a few documents whose verdict is `ok`, at random, or every document with a row when the user asks for a full review.
 2. **Fingerprints.** For each, `markitect-next show DOCUMENT` prints `DOCUMENT@FINGERPRINT` on its first line, and its artifacts and counter-checks.

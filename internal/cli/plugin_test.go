@@ -27,6 +27,9 @@ var (
 	// relativeLink is the target of a Markdown link, which must lead to a
 	// file when it is relative.
 	relativeLink = regexp.MustCompile(`\]\(([^)\s]+)\)`)
+	// rootPath is a file of the plugin as Claude Code substitutes its root
+	// in a skill.
+	rootPath = regexp.MustCompile(`\$\{CLAUDE_PLUGIN_ROOT\}/([^\s` + "`" + `]+)`)
 	// invocation is the tool's name with what follows it in a piece of code,
 	// up to a shell separator.
 	invocation = regexp.MustCompile(`(?:^|[\s(])markitect-next((?:[ \t][^;|&>)\n]*)?)`)
@@ -210,7 +213,8 @@ func words(line string) []string {
 // the tool parses it, with a command the tool has and only the flags of that
 // command; every word after the tool's name is a command; and every skill or
 // agent named with the plugin's scope exists, and so does every file a
-// relative link leads to. So a skill cannot drift from
+// relative link or path below the plugin's root leads to. So a skill cannot
+// drift from
 // the command line it drives.
 func TestPluginNamesOnlyWhatExists(t *testing.T) {
 	skills, agents, all := pluginFiles(t)
@@ -240,6 +244,11 @@ func TestPluginNamesOnlyWhatExists(t *testing.T) {
 			}
 			if _, err := os.Stat(filepath.Join(filepath.Dir(path), target)); err != nil {
 				t.Errorf("%s: the link to %s leads nowhere", path, m[1])
+			}
+		}
+		for _, m := range rootPath.FindAllStringSubmatch(text, -1) {
+			if _, err := os.Stat(filepath.Join(pluginDir, m[1])); err != nil {
+				t.Errorf("%s: the plugin has no file %s", path, m[1])
 			}
 		}
 		for _, m := range pluginName.FindAllStringSubmatch(text, -1) {

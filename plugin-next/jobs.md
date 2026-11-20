@@ -37,6 +37,8 @@ complete
 
 For each block, write `.markitect/reports/NAME.md`: NAME from the title in lowercase words joined by hyphens, and not yet taken; the title, then `## Source` with `job JOB ROLE, DAY`, the job, the agent's role and today as `YYYY-MM-DD`, then the block's sections as they are. A report of the job itself, such as a step the write table denied, names the role of the step it concerns. Then run `markitect-next check`, correct the form of what the job wrote until it finds nothing there, and commit the reports as a step of the role `job`, checked with `markitect-next status --step job --before BEFORE --target TARGETDIR`. Write no Rating, Actions or Closing: they are triage's.
 
+**Reports on the spec.** An open report whose violated property is not `none` and whose place is a document of the spec makes that document wait, and until triage escalates it, it keeps the branch from landing. So when the job wrote such reports, run the `markitect-next:markitect-triage` skill on the job's branch before the next step that builds and before landing. It sets the switch of each on this branch: an escalated report waits on the owner and lands, and the others are answered here before the branch lands.
+
 ## Landing
 
 At the end, move the target checkout to the target's last commit, then:

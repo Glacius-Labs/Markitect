@@ -6,7 +6,7 @@ The spec is the project's statement of what should hold: an ordinary folder of M
 
 ## In a conversation with the owner
 
-What a conversation changes lands on a branch of its own with the role `owner`. Lay out the before-state as the [frame of a job](../../jobs.md) does, and check the branch with `markitect-next status --step owner --before BEFORE` before you hand it on: the owner may change everything but verdicts. A spec change lands with its realization, so the branch goes to the `markitect-next:markitect-build` skill, not straight to the target.
+What a conversation changes lands on a branch of its own with the role `owner`. Lay out the before-state as the frame of a job, `${CLAUDE_PLUGIN_ROOT}/jobs.md`, does, and check the branch with `markitect-next status --step owner --before BEFORE` before you hand it on: the owner may change everything but verdicts. A spec change lands with its realization, so the branch goes to the `markitect-next:markitect-build` skill, not straight to the target.
 
 **The first design.** In a folder without `.markitect/`, run `markitect-next init`, then `markitect-next apply software`, or `markitect-next apply company` for a business. `markitect-next check` then lists each empty section: the work to do. Walk the areas of the template with the owner in its order, depth first, finishing an area with everything below it before the next: for a software project purpose, context, domain, interfaces, quality, architecture. Put the questions of `markitect-next questions` that bear on each area. For each area:
 
@@ -25,7 +25,7 @@ The conversation ends with the spec on its branch and the build job starting on 
 
 ## As a job
 
-The architect job runs in the [frame of a job](../../jobs.md). The job is `architect`, on the branch the report's Actions name. Start `markitect-next:architect` with its task and the report or idea:
+The architect job runs in the frame of a job, `${CLAUDE_PLUGIN_ROOT}/jobs.md`. The job is `architect`, on the branch the report's Actions name. Start `markitect-next:architect` with its task and the report or idea:
 
 - **a report switched to architect,** whose answer follows from what was decided;
 - **a back-fill** of a report "past the spec" that fills a gap, with the diff and the commits it names;

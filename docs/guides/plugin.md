@@ -10,7 +10,7 @@ The plugin is the folder [`plugin-next/`](../../plugin-next/), named `markitect-
 |---|---|
 | `agents/ROLE.md` | One agent per role of the tool: its task and its answer form, with `name`, `description`, `tools` and `model` |
 | `skills/NAME/SKILL.md` | One skill per job and per reading entry, and `getting-started` |
-| `jobs.md` | The frame every job skill runs in: the job's branch and folder, the steps, the reports and the landing |
+| `jobs.md` | The frame every job skill runs in, which the skills name as `${CLAUDE_PLUGIN_ROOT}/jobs.md`: the job's branch and folder, the steps, the reports and the landing |
 
 Claude Code names them with the plugin's scope: the agent `markitect-next:builder`, the skill `markitect-next:markitect-build`.
 
@@ -31,7 +31,7 @@ Claude Code names them with the plugin's scope: the agent `markitect-next:builde
 | `markitect-briefing` | The briefing, a reading entry | None | Nothing |
 | `markitect-explain` | Explain, a reading entry | None | Nothing |
 
-A job runs as [`jobs.md`](../../plugin-next/jobs.md) says. The session works on a branch of the job's own, in a worktree outside the project folder, since a worktree inside it would be a file the project does not explain. Before each step it commits and lays out the before-state, a detached worktree at that commit; it starts the role's agent with the model `markitect-next settings --json` names for it; after the step it runs `markitect-next status --step ROLE --before BEFORE --target TARGETDIR` and commits. At the end it lands the branch by a merge when `markitect-next status --target TARGETDIR` exits 0, the `tests` command of the settings exits 0 and every step check passed. The session holds every loop, the three rounds without a shorter list of the build job included; no agent starts another.
+A job runs as [`jobs.md`](../../plugin-next/jobs.md) says. The session works on a branch of the job's own, in a worktree outside the project folder, since a worktree inside it would be a file the project does not explain. Before each step it commits and lays out the before-state, a detached worktree at that commit; it starts the role's agent with the model `markitect-next settings --json` names for it; after the step it runs `markitect-next status --step ROLE --before BEFORE --target TARGETDIR` and commits. At the end it lands the branch by a merge when `markitect-next status --target TARGETDIR` exits 0, the `tests` command of the settings exits 0 and every step check passed. An open report on a document of the spec keeps the branch from landing until triage escalates it ([waiting on a report](reports.md#waiting-on-a-report)), so a job that writes one runs triage on its own branch before it builds on and before it lands. The session holds every loop, the three rounds without a shorter list of the build job included; no agent starts another.
 
 **The last look** of the briefing lies in the reader's profile, `~/.markitect/next/last-look/ID/`, ID the project folder's real path with every character but letters and digits replaced by `-`: `seen/`, an export of the commit last seen, which `compare` reads as a project, `seen-commit`, and `next/` with `next-commit` while a briefing is shown. The 0.34.0 tool uses no path below `~/.markitect/next/`.
 
@@ -67,4 +67,4 @@ In a session the runner is Claude itself ([where the check is a fact](../concept
 
 ## The check of the plugin
 
-A test of the command line, `internal/cli/plugin_test.go`, reads every skill, every agent, `jobs.md` and this page. Every command line of `markitect-next` in their code must parse as the tool parses it, with a command the tool has and only that command's flags; every word after `markitect-next` must be a command; every skill or agent named with the plugin's scope must exist, and every relative link must lead to a file. It checks the front matter of each file, and that the plugin has an agent for each role of the tool and no other.
+A test of the command line, `internal/cli/plugin_test.go`, reads every skill, every agent, `jobs.md` and this page. Every command line of `markitect-next` in their code must parse as the tool parses it, with a command the tool has and only that command's flags; every word after `markitect-next` must be a command; every skill or agent named with the plugin's scope must exist, and every relative link and every path below `${CLAUDE_PLUGIN_ROOT}` must lead to a file. It checks the front matter of each file, and that the plugin has an agent for each role of the tool and no other.
