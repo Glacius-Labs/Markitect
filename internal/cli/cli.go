@@ -115,18 +115,8 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		return ExitFailed
 	}
 	o, err := parse(args[1:])
-	switch {
-	case err != nil:
-	case len(o.positional) < c.min || len(o.positional) > c.max:
-		err = fmt.Errorf("wrong number of arguments\n\n%s", usage)
-	case o.specSet && name != "init":
-		err = errors.New("--spec is a flag of init")
-	case o.statusFlags && name != "status":
-		err = errors.New("--step, --before and --target are flags of status")
-	case o.step != "" && o.before == "" || o.before != "" && o.step == "":
-		err = errors.New("--step and --before go together")
-	case o.markFlags && name != "mark":
-		err = errors.New("--file, --check, -e and -m are flags of mark")
+	if err == nil {
+		err = validate(name, c, o)
 	}
 	code := ExitFailed
 	if err == nil {
@@ -149,6 +139,26 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		}
 	}
 	return code
+}
+
+// validate checks the parsed arguments against the command: the number of
+// positional arguments, and that each flag given is one of the command's.
+func validate(name string, c command, o options) error {
+	switch {
+	case len(o.positional) < c.min || len(o.positional) > c.max:
+		return fmt.Errorf("wrong number of arguments\n\n%s", usage)
+	case o.specSet && name != "init":
+		return errors.New("--spec is a flag of init")
+	case o.all && name != "topic" && name != "figures":
+		return errors.New("--all is a flag of topic and figures")
+	case o.statusFlags && name != "status":
+		return errors.New("--step, --before and --target are flags of status")
+	case o.step != "" && o.before == "" || o.before != "" && o.step == "":
+		return errors.New("--step and --before go together")
+	case o.markFlags && name != "mark":
+		return errors.New("--file, --check, -e and -m are flags of mark")
+	}
+	return nil
 }
 
 // options are a command's flags and positional arguments. Flags may stand
