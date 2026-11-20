@@ -46,7 +46,20 @@ type Document struct {
 	// StrayTypeLines are the other lines of text that start with "Type:".
 	StrayTypeLines []int
 	Sections       []Section
-	Links          []Link
+	// Links are the links to .md paths outside type lines.
+	Links []Link
+	// Refs are all destinations of links to .md paths, type lines, footnotes
+	// and link reference definitions included, with their place in Source.
+	Refs []Ref
+	// Paths are all relative destinations, of links to any file, images,
+	// link reference definitions and HTML href and src values, with their
+	// place in Source.
+	Paths []Ref
+	// UnplacedHTML are lines of HTML that name an href or src whose value
+	// could not be read.
+	UnplacedHTML []int
+	// Source is the document's bytes as read.
+	Source []byte
 }
 
 // Section is a level-2 heading at the top level of a document and the blocks
@@ -57,6 +70,9 @@ type Section struct {
 	// HasText is whether a block under the heading shows something other than
 	// white space and HTML comments.
 	HasText bool
+	// First is the first line of text under the heading that shows something,
+	// as plain text.
+	First string
 }
 
 // Link is a link from a document to a .md path.
@@ -129,19 +145,19 @@ const typePrefix = "Type:"
 // extensions. A leading byte order mark is dropped, invalid UTF-8 is replaced,
 // and lines end with LF, CRLF or CR.
 func Parse(docPath string, src []byte) *Document {
-	s := string(bytes.TrimPrefix(src, []byte("\xef\xbb\xbf")))
-	s = strings.ToValidUTF8(s, string(utf8.RuneError))
-	s = strings.ReplaceAll(strings.ReplaceAll(s, "\r\n", "\n"), "\r", "\n")
-	source := []byte(s)
-	p := &parser{doc: &Document{Path: docPath}, source: source, starts: lineStarts(source)}
-	p.read(markdown.Parser().Parse(text.NewReader(source)))
+	source, orig := normalize(src)
+	p := &parser{doc: &Document{Path: docPath, Source: src}, source: source, orig: orig, starts: lineStarts(source)}
+	root := markdown.Parser().Parse(text.NewReader(source))
+	p.read(root)
+	p.refs(root)
 	return p.doc
 }
 
 type parser struct {
 	doc       *Document
-	source    []byte
-	starts    []int // the offset of each line
+	source    []byte // the normalized text
+	orig      []int  // the offset in Document.Source of each offset of source
+	starts    []int  // the offset of each line
 	typeLines map[int]bool
 }
 
@@ -218,8 +234,30 @@ func (p *parser) read(root ast.Node) {
 			}
 		} else if sec >= 0 && p.hasText(n) {
 			d.Sections[sec].HasText = true
+			if d.Sections[sec].First == "" {
+				d.Sections[sec].First = p.firstLine(n)
+			}
 		}
 		p.links(n, section)
+	}
+}
+
+// withoutComments drops the HTML comments of s and keeps its line breaks; an
+// unclosed comment runs to the end.
+func withoutComments(s string) string {
+	var b strings.Builder
+	for {
+		before, rest, ok := strings.Cut(s, "<!--")
+		b.WriteString(before)
+		if !ok {
+			return b.String()
+		}
+		comment, after, closed := strings.Cut(rest, "-->")
+		b.WriteString(strings.Repeat("\n", strings.Count(comment, "\n")))
+		if !closed {
+			return b.String()
+		}
+		s = after
 	}
 }
 
@@ -342,11 +380,22 @@ func soleLink(s string) (string, bool) {
 // localPath returns the path of a link destination that names a .md file;
 // ok is false for a web address, mailto:, a bare #section or any other file.
 func localPath(dest string) (string, bool) {
-	raw, _, _ := strings.Cut(dest, "#")
+	raw := cutFragment(dest)
 	if hasScheme(raw) || !strings.HasSuffix(strings.ToLower(decode(raw)), ".md") {
 		return "", false
 	}
 	return raw, true
+}
+
+// cutFragment returns a destination without its #section. A # that belongs
+// to a numeric character reference, &#46;, is no section.
+func cutFragment(dest string) string {
+	for i := 0; i < len(dest); i++ {
+		if dest[i] == '#' && (i == 0 || dest[i-1] != '&') {
+			return dest[:i]
+		}
+	}
+	return dest
 }
 
 // hasScheme reports whether s starts with a URI scheme and a colon.

@@ -1,6 +1,7 @@
 // Package cli is the command line of the rebuilt tool, markitect-next: it
-// parses the arguments, reads the spec folder they name and prints what the
-// language finds, as text or as JSON.
+// parses the arguments, reads the spec folder they name, prints what the
+// language finds, as text or as JSON, and applies the changes of the commands
+// that write.
 package cli
 
 import (
@@ -9,9 +10,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"strings"
 
+	"github.com/Glacius-Labs/Markitect/internal/edit"
 	"github.com/Glacius-Labs/Markitect/internal/lang"
 )
 
@@ -26,14 +29,35 @@ const (
 	ExitFailed = 2 // the command could not run
 )
 
-const usage = `usage: markitect-next COMMAND ARGUMENTS
+const usage = `usage: markitect-next COMMAND SPECFOLDER ARGUMENTS [--json]
 
-  markitect-next check SPECFOLDER [--json]   check the spec in SPECFOLDER
+  check SPECFOLDER                     check the spec
+  show SPECFOLDER DOCUMENT             a document with its type, sections and links
+  table SPECFOLDER TYPE                every document of a type as a Markdown table
+  new SPECFOLDER TYPE PATH [TITLE]     create a document of a type
+  move SPECFOLDER OLD NEW              move a document and rewrite the links to it
+  apply SPECFOLDER TEMPLATE [TARGET]   copy a template of the library into the spec
 
-Diagnostics read path:line: code: message, with the path below the spec
-folder. --json prints one document with format_version and kind. Exit codes:
-0 when all is well, 1 when the command found something, 2 when it could not run.
+A DOCUMENT, TYPE or PATH is a path below the spec folder, with or without .md.
+Diagnostics read path:line: code: message. --json prints one document with
+format_version and kind. Exit codes: 0 when all is well, 1 when the command
+found something, 2 when it could not run.
 `
+
+// A command takes its positional arguments, between min and max of them.
+type command struct {
+	min, max int
+	run      func(o options, stdout io.Writer) (int, error)
+}
+
+var commands = map[string]command{
+	"check": {1, 1, check},
+	"show":  {2, 2, show},
+	"table": {2, 2, table},
+	"new":   {3, 4, newDocument},
+	"move":  {3, 3, move},
+	"apply": {2, 3, apply},
+}
 
 // Run runs the command line args, without the program name, and returns the
 // exit code.
@@ -42,19 +66,36 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprint(stderr, usage)
 		return ExitFailed
 	}
-	switch args[0] {
+	name := args[0]
+	switch name {
 	case "help", "-h", "-help", "--help":
 		fmt.Fprint(stdout, usage)
 		return ExitOK
-	case "check":
-		code, err := check(args[1:], stdout)
-		if err != nil {
-			fmt.Fprintf(stderr, "markitect-next check: %v\n", err)
-		}
-		return code
 	}
-	fmt.Fprintf(stderr, "markitect-next: unknown command %q\n\n%s", args[0], usage)
-	return ExitFailed
+	c, ok := commands[name]
+	if !ok {
+		fmt.Fprintf(stderr, "markitect-next: unknown command %q\n\n%s", name, usage)
+		return ExitFailed
+	}
+	o, err := parse(args[1:])
+	if err == nil && (len(o.positional) < c.min || len(o.positional) > c.max) {
+		err = fmt.Errorf("wrong number of arguments\n\n%s", usage)
+	}
+	code := ExitFailed
+	if err == nil {
+		code, err = c.run(o, stdout)
+	}
+	if err != nil {
+		var r *edit.Refusal
+		if errors.As(err, &r) {
+			for _, p := range r.Problems {
+				fmt.Fprintf(stderr, "markitect-next %s: %s\n", name, p)
+			}
+		} else {
+			fmt.Fprintf(stderr, "markitect-next %s: %v\n", name, err)
+		}
+	}
+	return code
 }
 
 // options are a command's flags and positional arguments. Flags may stand
@@ -82,25 +123,34 @@ func parse(args []string) (options, error) {
 	return o, nil
 }
 
-func check(args []string, stdout io.Writer) (int, error) {
-	o, err := parse(args)
-	if err != nil {
-		return ExitFailed, err
-	}
-	if len(o.positional) != 1 {
-		return ExitFailed, errors.New("takes one spec folder: markitect-next check SPECFOLDER [--json]")
-	}
-	folder := o.positional[0]
+// load reads the spec in a folder that must exist.
+func load(folder string) (*lang.Spec, fs.FS, error) {
 	if info, err := os.Stat(folder); err != nil || !info.IsDir() {
-		return ExitFailed, fmt.Errorf("not a folder: %s", folder)
+		return nil, nil, fmt.Errorf("not a folder: %s", folder)
 	}
-	spec, err := lang.Load(os.DirFS(folder))
+	fsys := os.DirFS(folder)
+	spec, err := lang.Load(fsys)
+	return spec, fsys, err
+}
+
+// document finds a document named on the command line.
+func document(spec *lang.Spec, arg string) (*lang.Document, error) {
+	if p, ok := edit.DocumentPath(arg); ok {
+		if d, ok := spec.Document(p); ok {
+			return d, nil
+		}
+	}
+	return nil, fmt.Errorf("unknown path: %s", arg)
+}
+
+func check(o options, stdout io.Writer) (int, error) {
+	spec, _, err := load(o.positional[0])
 	if err != nil {
 		return ExitFailed, err
 	}
 	found := lang.Check(spec)
 	if o.json {
-		doc := checkDocument{FormatVersion: FormatVersion, Kind: "check", Documents: len(spec.Documents), Diagnostics: []diagnostic{}}
+		doc := checkDocument{header: newHeader("check"), Documents: len(spec.Documents), Diagnostics: []diagnostic{}}
 		for _, d := range found {
 			doc.Diagnostics = append(doc.Diagnostics, diagnostic{File: d.Path, Line: d.Line, Code: d.Code, Message: d.Message})
 		}
@@ -123,12 +173,19 @@ func check(args []string, stdout io.Writer) (int, error) {
 	return ExitOK, nil
 }
 
+// header starts every JSON document.
+type header struct {
+	FormatVersion int    `json:"format_version"`
+	Kind          string `json:"kind"`
+}
+
+func newHeader(kind string) header { return header{FormatVersion: FormatVersion, Kind: kind} }
+
 // checkDocument is the JSON document of check.
 type checkDocument struct {
-	FormatVersion int          `json:"format_version"`
-	Kind          string       `json:"kind"`
-	Documents     int          `json:"documents"`
-	Diagnostics   []diagnostic `json:"diagnostics"`
+	header
+	Documents   int          `json:"documents"`
+	Diagnostics []diagnostic `json:"diagnostics"`
 }
 
 // diagnostic is one diagnostic in a JSON document; file is the path below the
@@ -138,6 +195,20 @@ type diagnostic struct {
 	Line    int    `json:"line"`
 	Code    string `json:"code"`
 	Message string `json:"message"`
+}
+
+// output prints a JSON document with --json and the text otherwise.
+func output(o options, stdout io.Writer, doc any, text string) (int, error) {
+	if o.json {
+		if err := printJSON(stdout, doc); err != nil {
+			return ExitFailed, err
+		}
+		return ExitOK, nil
+	}
+	if _, err := io.WriteString(stdout, text); err != nil {
+		return ExitFailed, err
+	}
+	return ExitOK, nil
 }
 
 // printJSON prints a document, indented, without escaping <, > and &.

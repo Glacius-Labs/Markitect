@@ -89,8 +89,8 @@ func TestUsage(t *testing.T) {
 	}{
 		{nil, "usage:"},
 		{[]string{"frobnicate"}, "unknown command"},
-		{[]string{"check"}, "takes one spec folder"},
-		{[]string{"check", dir, dir}, "takes one spec folder"},
+		{[]string{"check"}, "wrong number of arguments"},
+		{[]string{"check", dir, dir}, "wrong number of arguments"},
 		{[]string{"check", dir, "--strict"}, "unknown flag --strict"},
 		{[]string{"check", filepath.Join(dir, "missing")}, "not a folder"},
 		{[]string{"check", file}, "not a folder"},
@@ -101,7 +101,7 @@ func TestUsage(t *testing.T) {
 		}
 	}
 	for _, help := range []string{"help", "-h", "--help"} {
-		if code, out, _ := run(help); code != ExitOK || !strings.Contains(out, "markitect-next check SPECFOLDER") {
+		if code, out, _ := run(help); code != ExitOK || !strings.Contains(out, "check SPECFOLDER") {
 			t.Errorf("%s: %d %q", help, code, out)
 		}
 	}
