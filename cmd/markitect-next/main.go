@@ -1,5 +1,6 @@
 // Command markitect-next is the rebuilt Markitect tool while it grows beside
-// markitect: check. It delegates everything to internal/cli.
+// markitect: check, show, table, new, move and apply. It delegates everything
+// to internal/cli.
 package main
 
 import (

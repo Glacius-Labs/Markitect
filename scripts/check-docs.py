@@ -49,6 +49,7 @@ DEFAULT_DOCUMENTS = (
     "docs/architecture.md",
     "docs/guides/spec-language.md",
     "docs/guides/language-reference.md",
+    "docs/guides/library.md",
     "docs/guides/good-spec.md",
     "docs/guides/project-workflow.md",
     "internal/run/README.md",

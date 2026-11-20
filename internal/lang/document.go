@@ -46,7 +46,13 @@ type Document struct {
 	// StrayTypeLines are the other lines of text that start with "Type:".
 	StrayTypeLines []int
 	Sections       []Section
-	Links          []Link
+	// Links are the links to .md paths outside type lines.
+	Links []Link
+	// Refs are all destinations of links to .md paths, type lines, footnotes
+	// and link reference definitions included, with their place in Source.
+	Refs []Ref
+	// Source is the document's bytes as read.
+	Source []byte
 }
 
 // Section is a level-2 heading at the top level of a document and the blocks
@@ -57,6 +63,9 @@ type Section struct {
 	// HasText is whether a block under the heading shows something other than
 	// white space and HTML comments.
 	HasText bool
+	// First is the first line under the heading that shows something, without
+	// surrounding white space, as written.
+	First string
 }
 
 // Link is a link from a document to a .md path.
@@ -129,19 +138,19 @@ const typePrefix = "Type:"
 // extensions. A leading byte order mark is dropped, invalid UTF-8 is replaced,
 // and lines end with LF, CRLF or CR.
 func Parse(docPath string, src []byte) *Document {
-	s := string(bytes.TrimPrefix(src, []byte("\xef\xbb\xbf")))
-	s = strings.ToValidUTF8(s, string(utf8.RuneError))
-	s = strings.ReplaceAll(strings.ReplaceAll(s, "\r\n", "\n"), "\r", "\n")
-	source := []byte(s)
-	p := &parser{doc: &Document{Path: docPath}, source: source, starts: lineStarts(source)}
-	p.read(markdown.Parser().Parse(text.NewReader(source)))
+	source, orig := normalize(src)
+	p := &parser{doc: &Document{Path: docPath, Source: src}, source: source, orig: orig, starts: lineStarts(source)}
+	root := markdown.Parser().Parse(text.NewReader(source))
+	p.read(root)
+	p.refs(root)
 	return p.doc
 }
 
 type parser struct {
 	doc       *Document
-	source    []byte
-	starts    []int // the offset of each line
+	source    []byte // the normalized text
+	orig      []int  // the offset in Document.Source of each offset of source
+	starts    []int  // the offset of each line
 	typeLines map[int]bool
 }
 
@@ -199,6 +208,7 @@ func (p *parser) read(root ast.Node) {
 	})
 	section := ""
 	sec := -1
+	var bodies [][2]int // the first and last line under each section's heading
 	for n := root.FirstChild(); n != nil; n = n.NextSibling() {
 		if !isBlock(n) {
 			p.links(n, "")
@@ -206,6 +216,9 @@ func (p *parser) read(root ast.Node) {
 		}
 		if h, ok := n.(*ast.Heading); ok && h.Level <= 2 {
 			line := p.line(h.Pos())
+			if sec >= 0 && bodies[sec][1] == 0 {
+				bodies[sec][1] = line - 1
+			}
 			if h.Level == 1 {
 				if n != first && d.SecondTitleLine == 0 {
 					d.SecondTitleLine = line
@@ -215,12 +228,72 @@ func (p *parser) read(root ast.Node) {
 				section = p.headingText(h)
 				d.Sections = append(d.Sections, Section{Heading: section, Line: line})
 				sec = len(d.Sections) - 1
+				bodies = append(bodies, [2]int{p.headingEnd(h) + 1, 0})
 			}
 		} else if sec >= 0 && p.hasText(n) {
 			d.Sections[sec].HasText = true
 		}
 		p.links(n, section)
 	}
+	for i, b := range bodies {
+		if !d.Sections[i].HasText {
+			continue
+		}
+		if b[1] == 0 {
+			b[1] = len(p.starts)
+		}
+		var body []string
+		for l := b[0]; l <= b[1]; l++ {
+			body = append(body, p.lineAt(l))
+		}
+		for _, line := range strings.Split(withoutComments(strings.Join(body, "\n")), "\n") {
+			if line = strings.TrimSpace(line); line != "" {
+				d.Sections[i].First = line
+				break
+			}
+		}
+	}
+}
+
+// withoutComments drops the HTML comments of s and keeps its line breaks; an
+// unclosed comment runs to the end.
+func withoutComments(s string) string {
+	var b strings.Builder
+	for {
+		before, rest, ok := strings.Cut(s, "<!--")
+		b.WriteString(before)
+		if !ok {
+			return b.String()
+		}
+		comment, after, closed := strings.Cut(rest, "-->")
+		b.WriteString(strings.Repeat("\n", strings.Count(comment, "\n")))
+		if !closed {
+			return b.String()
+		}
+		s = after
+	}
+}
+
+// lineAt returns the text of a line without its line break.
+func (p *parser) lineAt(line int) string {
+	if line < 1 || line > len(p.starts) {
+		return ""
+	}
+	end := len(p.source)
+	if line < len(p.starts) {
+		end = p.starts[line]
+	}
+	return strings.TrimSuffix(string(p.source[p.starts[line-1]:end]), "\n")
+}
+
+// headingEnd returns the last line of a heading: its own for a heading with
+// #, the underline for an underlined one.
+func (p *parser) headingEnd(h *ast.Heading) int {
+	line := p.line(h.Pos())
+	if strings.HasPrefix(strings.TrimLeft(p.lineAt(line), " "), "#") || h.Lines().Len() == 0 {
+		return line
+	}
+	return p.line(h.Lines().At(h.Lines().Len()-1).Start) + 1
 }
 
 // isBlock reports whether a top-level node is a block of the text: link

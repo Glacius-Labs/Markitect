@@ -3,6 +3,7 @@ package lang
 import (
 	"os"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -416,4 +417,40 @@ func TestParse(t *testing.T) {
 	if len(d.Sections) != 1 || d.Sections[0].Line != 5 || !d.Sections[0].HasText {
 		t.Errorf("sections %+v", d.Sections)
 	}
+}
+
+func TestRefs(t *testing.T) {
+	src := "\xef\xbb\xbf# [Home](index.md)\r\n\r\nType: [Loan](types/loan.md#due)\r\n\r\n" +
+		"See [a](<open loans.md>) and [b][def], ![img](pic.md).\r\n\r\n" +
+		"-\t[tabbed](tab.md)\r\n\r\n> [quoted](quote.md \"t\")\r\n\r\nNote[^1].\r\n\r\n" +
+		"[def]: ref.md\r\n[^1]: [foot](foot.md)\r\n\r\n" +
+		"| Shelf | Lent |\r\n|---|---|\r\n| [cell](cell.md) | yes |\r\n\r\n" +
+		"- item\r\n  continued with [lazy](lazy.md)\r\n"
+	d := Parse("lending/loan-1.md", []byte(src))
+	var got []string
+	for _, r := range d.Refs {
+		if r.Start < 0 {
+			got = append(got, r.Dest+" unplaced")
+			continue
+		}
+		if s := src[r.Start:r.End]; s != r.Dest {
+			t.Errorf("%s stands as %q", r.Dest, s)
+		}
+		got = append(got, r.Dest+" "+r.Target+" "+strings.Repeat("<", map[bool]int{true: 1}[r.Angle]))
+	}
+	sort.Strings(got)
+	expect(t, got,
+		"cell.md lending/cell.md ", "foot.md lending/foot.md ", "index.md lending/index.md ", "lazy.md lending/lazy.md ",
+		"open loans.md lending/open loans.md <", "quote.md lending/quote.md ", "ref.md lending/ref.md ",
+		"tab.md lending/tab.md ", "types/loan.md#due lending/types/loan.md ")
+}
+
+func TestSectionFirstLine(t *testing.T) {
+	d := Parse("a.md", []byte("# A\n\n## One\n<!-- later -->\n\n  First *line* [x](x.md)\nsecond\n\nTwo\n---\n\n## Three\n"+
+		"## Four\n<!--\nfill in\nthe due date\n-->\n## Five\n[r]: x.md\n## Six\n<!-- a --> after <!--\nb -->\n"))
+	var got []string
+	for _, s := range d.Sections {
+		got = append(got, s.Heading+"="+s.First)
+	}
+	expect(t, got, "One=First *line* [x](x.md)", "Two=", "Three=", "Four=", "Five=", "Six=after")
 }
