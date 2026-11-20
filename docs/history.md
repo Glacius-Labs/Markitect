@@ -11,8 +11,9 @@ Each earlier concept has an archive branch at the last Main commit where it was 
 | `archive/concept-1.0` | 24 to 28 October 2026 | A hierarchy of agents per Package over a spec in typed YAML, each change run in isolated environments |
 | `archive/concept-2.0` | 28 October to 4 November 2026 | The spec as typed Markdown; one run per change with a maker and a checker per Package; a desktop app |
 | `archive/concept-3.0` | 4 to 6 November 2026 | One implementer and one reviewer per change in an isolated environment, and a gate in the tool |
+| `archive/concept-4.0` | 6 to 20 November 2026 | Typed Definitions in Packages with a registry, a record of verdicts, and agents started by the owner's own session with their rights held by a hook |
 
-The current concept has been on Main since 6 November 2026.
+The current concept has been on Main since 20 November 2026.
 
 ## Everything else
 
