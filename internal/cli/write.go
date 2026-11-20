@@ -78,7 +78,7 @@ func move(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	if blocked := blockers(w, problems); len(blocked) > 0 {
+	if blocked := blockers(w, &state.Factory{}, problems); len(blocked) > 0 {
 		r := &edit.Refusal{}
 		for _, d := range blocked {
 			r.Problems = append(r.Problems, d.String())

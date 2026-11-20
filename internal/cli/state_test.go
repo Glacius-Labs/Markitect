@@ -25,16 +25,16 @@ func TestMain(m *testing.M) {
 // lending is a small lending system: a spec of two operations of a type and
 // a role, the code that realizes them and a test.
 var lending = map[string]string{
-	"docs/spec/types/operation.md": "# Operation\n\nSomething a member does.\n\n## Rule\nWhat holds.\n",
-	"docs/spec/lending/borrow.md":  "# Borrow\n\nType: [Operation](../types/operation.md)\n\n## Rule\nA [member](../roles/member.md) borrows at most five books.\n",
-	"docs/spec/lending/return.md":  "# Return\n\nType: [Operation](../types/operation.md)\n\n## Rule\nA book comes back within three weeks.\n",
-	"docs/spec/roles/member.md":    "# Member\n\nA card holder.\n",
-	"src/loans.go":                 "package lending\n\nfunc Borrow() {}\n",
-	"src/returns.go":               "package lending\n\nfunc Return() {}\n",
-	"src/member.go":                "package lending\n\ntype Member struct{}\n",
-	"tests/loans_test.go":          "package lending\n\nfunc TestBorrow() {}\n",
-	".gitignore":                   "bin/\n",
-	".markitect/ignore":            ".gitignore\nnotes.txt\n",
+	"docs/spec/types/operation.md":       "# Operation\n\nSomething a member does.\n\n## Rule\nWhat holds.\n",
+	"docs/spec/lending/borrow.md":        "# Borrow\n\nType: [Operation](../types/operation.md)\n\n## Rule\nA [member](../roles/member.md) borrows at most five books.\n",
+	"docs/spec/lending/return.md":        "# Return\n\nType: [Operation](../types/operation.md)\n\n## Rule\nA book comes back within three weeks.\n",
+	"docs/spec/roles/member.md":          "# Member\n\nA card holder.\n",
+	"src/loans.go":                       "package lending\n\nfunc Borrow() {}\n",
+	"src/returns.go":                     "package lending\n\nfunc Return() {}\n",
+	"src/member.go":                      "package lending\n\ntype Member struct{}\n",
+	"tests/counter-checks/loans_test.go": "package lending\n\nfunc TestBorrow() {}\n",
+	".gitignore":                         "bin/\n",
+	".markitect/ignore":                  ".gitignore\nnotes.txt\n",
 }
 
 // project writes a project of files, set up by init, and returns its folder.
@@ -174,7 +174,7 @@ func marked(t *testing.T) string {
 func markedWith(t *testing.T, files map[string]string) string {
 	t.Helper()
 	dir := project(t, files)
-	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--check", "tests/loans_test.go", "-e", "tests/loans_test.go:3 (TestBorrow)")
+	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--check", "tests/counter-checks/loans_test.go", "-e", "tests/counter-checks/loans_test.go:3 (TestBorrow)")
 	verdict(t, dir, "lending/return.md", "ok", "--file", "src/returns.go", "-e", "src/returns.go:3")
 	verdict(t, dir, "roles/member.md", "ok", "--file", "src/member.go", "-e", "src/member.go")
 	verdict(t, dir, "types/operation.md", "ok", "-e", "docs/spec/types/operation.md")
@@ -191,7 +191,7 @@ func TestNewDocumentsAreChangedUntilMarked(t *testing.T) {
 	same(t, "the new project", l.summary(), []string{
 		"changed lending/borrow.md: no row", "changed lending/return.md: no row",
 		"changed roles/member.md: no row", "changed types/operation.md: no row",
-		"unexplained src/loans.go", "unexplained src/member.go", "unexplained src/returns.go", "unexplained tests/loans_test.go"})
+		"unexplained src/loans.go", "unexplained src/member.go", "unexplained src/returns.go", "unexplained tests/counter-checks/loans_test.go"})
 	if l.code != ExitFound {
 		t.Errorf("exit %d", l.code)
 	}
@@ -201,7 +201,7 @@ func TestNewDocumentsAreChangedUntilMarked(t *testing.T) {
 	}
 	code, out, _ := run("status", "-C", dir)
 	if code != ExitFound || !strings.Contains(out, "changed: lending/borrow.md@"+e.Fingerprint+": no row\n  look at: docs/spec/lending/borrow.md\n") ||
-		!strings.HasSuffix(out, "unexplained: tests/loans_test.go\n4 changed, 0 suspect, 4 unexplained\n") {
+		!strings.HasSuffix(out, "unexplained: tests/counter-checks/loans_test.go\n4 changed, 0 suspect, 4 unexplained\n") {
 		t.Error(code, out)
 	}
 	dir = marked(t)
@@ -224,10 +224,10 @@ func TestNewDocumentsAreChangedUntilMarked(t *testing.T) {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	same(t, "the inputs of borrow", keys, []string{"check:tests/loans_test.go", "evidence:tests/loans_test.go", "file:src/loans.go",
+	same(t, "the inputs of borrow", keys, []string{"check:tests/counter-checks/loans_test.go", "evidence:tests/counter-checks/loans_test.go", "file:src/loans.go",
 		"link:roles/member.md", "self", "type:types/operation.md"})
 	if !strings.HasPrefix(lines[0], `{"doc":"lending/borrow.md","verdict":"ok","source":"mark","inputs":{`) ||
-		!strings.HasSuffix(lines[0], `,"evidence":["tests/loans_test.go:3"],"reason":""}`) {
+		!strings.HasSuffix(lines[0], `,"evidence":["tests/counter-checks/loans_test.go:3"],"reason":""}`) {
 		t.Error(lines[0])
 	}
 }
@@ -266,11 +266,11 @@ func TestChangedArtifactsAndEvidence(t *testing.T) {
 	same(t, "after the code changed", statusOf(t, dir).summary(), []string{
 		"changed lending/borrow.md: file:src/loans.go", "changed lending/return.md: file:src/returns.go (gone), evidence:src/returns.go (gone)"})
 	dir = marked(t)
-	write(t, dir, "tests/loans_test.go", "package lending\n\nfunc TestBorrow() { t.Skip() }\n")
+	write(t, dir, "tests/counter-checks/loans_test.go", "package lending\n\nfunc TestBorrow() { t.Skip() }\n")
 	l := statusOf(t, dir)
-	same(t, "after the test changed", l.summary(), []string{"changed lending/borrow.md: check:tests/loans_test.go, evidence:tests/loans_test.go"})
+	same(t, "after the test changed", l.summary(), []string{"changed lending/borrow.md: check:tests/counter-checks/loans_test.go, evidence:tests/counter-checks/loans_test.go"})
 	e, _ := l.entry("lending/borrow.md")
-	same(t, "where to look", e.LookAt, []string{"docs/spec/lending/borrow.md", "src/loans.go", "tests/loans_test.go", "tests/loans_test.go:3"})
+	same(t, "where to look", e.LookAt, []string{"docs/spec/lending/borrow.md", "src/loans.go", "tests/counter-checks/loans_test.go", "tests/counter-checks/loans_test.go:3"})
 }
 
 // Scenario 5: a new file is unexplained until a mark maps it; ignored files
@@ -281,13 +281,13 @@ func TestNewFilesAreUnexplainedUntilMapped(t *testing.T) {
 	write(t, dir, "bin/lending.exe", "binary")
 	write(t, dir, "notes.txt", "to do")
 	same(t, "after a new file", statusOf(t, dir).summary(), []string{"unexplained src/fines.go"})
-	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--file", "src/fines.go", "--check", "tests/loans_test.go", "-e", "tests/loans_test.go")
+	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--file", "src/fines.go", "--check", "tests/counter-checks/loans_test.go", "-e", "tests/counter-checks/loans_test.go")
 	if l := statusOf(t, dir); l.code != ExitOK || len(l.summary()) != 0 {
 		t.Errorf("%d %v", l.code, l.summary())
 	}
 	// The named artifacts replace the earlier list.
 	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "-e", "src/loans.go")
-	same(t, "after a mark with fewer artifacts", statusOf(t, dir).summary(), []string{"unexplained src/fines.go", "unexplained tests/loans_test.go"})
+	same(t, "after a mark with fewer artifacts", statusOf(t, dir).summary(), []string{"unexplained src/fines.go", "unexplained tests/counter-checks/loans_test.go"})
 }
 
 // Scenario 6: a deleted document with a row is gone, its files unexplained,
@@ -319,12 +319,12 @@ func TestFailStaysListed(t *testing.T) {
 	dir := marked(t)
 	verdict(t, dir, "lending/borrow.md", "fail", "--file", "src/loans.go", "-m", "lends a sixth\nbook")
 	l := statusOf(t, dir)
-	same(t, "after fail", l.summary(), []string{"changed lending/borrow.md: fail: lends a sixth book", "unexplained tests/loans_test.go"})
+	same(t, "after fail", l.summary(), []string{"changed lending/borrow.md: fail: lends a sixth book", "unexplained tests/counter-checks/loans_test.go"})
 	if code, out, _ := run("show", "-C", dir, "lending/borrow"); code != ExitOK ||
 		!strings.HasSuffix(out, "Verdict: fail\nArtifacts:\n  src/loans.go\nCounter-checks: (none)\nEvidence: (none)\nReason: lends a sixth book\n") {
 		t.Error(out)
 	}
-	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--check", "tests/loans_test.go", "-e", "tests/loans_test.go:3-4")
+	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--check", "tests/counter-checks/loans_test.go", "-e", "tests/counter-checks/loans_test.go:3-4")
 	if l := statusOf(t, dir); l.code != ExitOK {
 		t.Error(l.summary())
 	}
@@ -387,7 +387,7 @@ func TestErrorsGiveNoList(t *testing.T) {
 	fp := fingerprint(t, dir, "roles/member.md")
 	write(t, dir, "docs/spec/lending/borrow.md", "# Borrow\n\nSee [the fines](fines.md).\n")
 	code, out, _ := run("status", "-C", dir)
-	if code != ExitFound || out != "lending/borrow.md:3: link.unresolved: no document at \"fines.md\"\nno list while the spec or the state has errors\n" {
+	if code != ExitFound || out != "lending/borrow.md:3: link.unresolved: no document at \"fines.md\"\nno list while check finds errors or the state has errors\n" {
 		t.Error(code, out)
 	}
 	if code, _, errOut := run("mark", "-C", dir, "roles/member.md@"+fp, "ok", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "link.unresolved") {
@@ -492,7 +492,7 @@ func TestStateAsATable(t *testing.T) {
 	if err := json.Unmarshal([]byte(out), &doc); err != nil {
 		t.Fatal(err)
 	}
-	if doc["verdict"] != "ok" || len(doc["artifacts"].([]any)) != 1 || len(doc["counter_checks"].([]any)) != 1 || doc["evidence"].([]any)[0] != "tests/loans_test.go:3" {
+	if doc["verdict"] != "ok" || len(doc["artifacts"].([]any)) != 1 || len(doc["counter_checks"].([]any)) != 1 || doc["evidence"].([]any)[0] != "tests/counter-checks/loans_test.go:3" {
 		t.Error(out)
 	}
 }
@@ -573,8 +573,8 @@ func TestParallelMarksLoseNoRow(t *testing.T) {
 // Evidence alone maps no file.
 func TestEvidenceMapsNothing(t *testing.T) {
 	dir := marked(t)
-	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "-e", "tests/loans_test.go")
-	same(t, "after evidence without --check", statusOf(t, dir).summary(), []string{"unexplained tests/loans_test.go"})
+	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "-e", "tests/counter-checks/loans_test.go")
+	same(t, "after evidence without --check", statusOf(t, dir).summary(), []string{"unexplained tests/counter-checks/loans_test.go"})
 }
 
 // Of several rows of which none matches, the closest names the change.
@@ -582,7 +582,7 @@ func TestClosestRowNamesTheChange(t *testing.T) {
 	dir := marked(t)
 	older := read(t, dir, ".markitect/state.jsonl")
 	write(t, dir, "src/loans.go", "package lending\n\nfunc Borrow() { lend() }\n")
-	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--check", "tests/loans_test.go", "-e", "tests/loans_test.go")
+	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--check", "tests/counter-checks/loans_test.go", "-e", "tests/counter-checks/loans_test.go")
 	write(t, dir, ".markitect/state.jsonl", older+read(t, dir, ".markitect/state.jsonl"))
 	write(t, dir, "docs/spec/lending/borrow.md", read(t, dir, "docs/spec/lending/borrow.md")+"\nOne more rule.\n")
 	same(t, "with two rows, none matching", statusOf(t, dir).summary(), []string{
@@ -610,7 +610,7 @@ func TestSpecFolderBehindALink(t *testing.T) {
 	same(t, "the project behind a link", statusOf(t, dir).summary(), []string{
 		"changed lending/borrow.md: no row", "changed lending/return.md: no row",
 		"changed roles/member.md: no row", "changed types/operation.md: no row",
-		"unexplained src/loans.go", "unexplained src/member.go", "unexplained src/returns.go", "unexplained tests/loans_test.go"})
+		"unexplained src/loans.go", "unexplained src/member.go", "unexplained src/returns.go", "unexplained tests/counter-checks/loans_test.go"})
 	fp := fingerprint(t, dir, "roles/member.md")
 	if code, _, errOut := run("mark", "-C", dir, "roles/member.md@"+fp, "ok", "--file", "handbook/spec/roles/member.md", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "lies in the spec folder") {
 		t.Error(code, errOut)
@@ -627,7 +627,7 @@ func TestFilesOfTheSpecFolderThatAreNoDocuments(t *testing.T) {
 	same(t, "after a script and a linked diagram", statusOf(t, dir).summary(), []string{
 		"changed lending/borrow.md: self, asset:lending/flow.png (new)", "suspect roles/member.md: link:lending/borrow.md",
 		"unexplained docs/spec/run.sh"})
-	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--check", "tests/loans_test.go", "-e", "tests/loans_test.go")
+	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--check", "tests/counter-checks/loans_test.go", "-e", "tests/counter-checks/loans_test.go")
 	verdict(t, dir, "roles/member.md", "ok", "--file", "src/member.go", "-e", "src/member.go")
 	same(t, "after the marks", statusOf(t, dir).summary(), []string{"unexplained docs/spec/run.sh"})
 	write(t, dir, "docs/spec/run.sh", "echo return\n")
@@ -663,7 +663,7 @@ func TestShowGivesTheFingerprint(t *testing.T) {
 func TestMergedOkAndFailConflict(t *testing.T) {
 	dir := marked(t)
 	ours := read(t, dir, ".markitect/state.jsonl")
-	verdict(t, dir, "lending/borrow.md", "fail", "--file", "src/loans.go", "--check", "tests/loans_test.go", "-m", "lends a sixth book")
+	verdict(t, dir, "lending/borrow.md", "fail", "--file", "src/loans.go", "--check", "tests/counter-checks/loans_test.go", "-m", "lends a sixth book")
 	write(t, dir, ".markitect/state.jsonl", ours+read(t, dir, ".markitect/state.jsonl"))
 	same(t, "after the merge", statusOf(t, dir).summary(), []string{"changed lending/borrow.md: conflict: fail, ok"})
 	if _, out, _ := run("show", "-C", dir, "lending/borrow"); !strings.Contains(out, "\nVerdict: fail (rows conflict)\n") {

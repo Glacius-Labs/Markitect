@@ -14,6 +14,7 @@ type Snapshot struct {
 	Project *Project
 	Status  *Status
 	History []Event
+	Reports []*Report
 }
 
 // Comparison is what differs between two projects, each list sorted by
@@ -39,6 +40,26 @@ type Comparison struct {
 	// Unexplained are the files unexplained in the newer project that were
 	// not in the older one.
 	Unexplained []string
+	// Reports are the reports that are new, closed, changed or gone, by
+	// name.
+	Reports []ReportChange
+}
+
+// The kinds of a report's change.
+const (
+	ReportNew     = "new"
+	ReportClosed  = "closed"
+	ReportChanged = "changed"
+	ReportGone    = "gone"
+)
+
+// ReportChange is a report that differs between two projects: new, closed,
+// which was open in the older project, changed otherwise, or gone. Diff is
+// the diff of its text for a closed or changed report.
+type ReportChange struct {
+	Name, Kind, Diff string
+	// Closing is the first line of its closing, for a closed report.
+	Closing string
 }
 
 // MovedDoc is a document the history moved, and the diff of its text.
@@ -69,7 +90,7 @@ type VerdictChange struct {
 
 // Differs says whether the comparison found anything.
 func (c *Comparison) Differs() bool {
-	return len(c.New)+len(c.Gone)+len(c.Moved)+len(c.Rewritten)+len(c.Changed)+len(c.Suspect)+len(c.Verdicts)+len(c.Unexplained) > 0
+	return len(c.New)+len(c.Gone)+len(c.Moved)+len(c.Rewritten)+len(c.Changed)+len(c.Suspect)+len(c.Verdicts)+len(c.Unexplained)+len(c.Reports) > 0
 }
 
 // Compare compares an older project with a newer one. replayed holds, by
@@ -242,6 +263,7 @@ func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 			c.Unexplained = append(c.Unexplained, u)
 		}
 	}
+	c.Reports = compareReports(older.Reports, newer.Reports)
 	sort.Strings(c.New)
 	sort.Strings(c.Gone)
 	sort.Strings(c.Rewritten)
@@ -250,6 +272,42 @@ func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 	sort.Slice(c.Suspect, func(i, j int) bool { return c.Suspect[i].Doc < c.Suspect[j].Doc })
 	sort.Slice(c.Verdicts, func(i, j int) bool { return c.Verdicts[i].Doc < c.Verdicts[j].Doc })
 	return c
+}
+
+// compareReports names the reports that are new, closed, changed or gone,
+// by name.
+func compareReports(older, newer []*Report) []ReportChange {
+	was := map[string]*Report{}
+	for _, r := range older {
+		was[r.Name] = r
+	}
+	is := map[string]bool{}
+	var out []ReportChange
+	for _, r := range newer {
+		is[r.Name] = true
+		o, ok := was[r.Name]
+		switch {
+		case !ok:
+			out = append(out, ReportChange{Name: r.Name, Kind: ReportNew})
+		case Hash(o.Doc.Source) == Hash(r.Doc.Source):
+		default:
+			ch := ReportChange{Name: r.Name, Kind: ReportChanged, Diff: Diff(o.Path, r.Path, o.Doc.Source, r.Doc.Source)}
+			if o.Open() && r.Closed {
+				ch.Kind = ReportClosed
+				if vs, _ := values(r.Doc, "Closing"); len(vs) > 0 {
+					ch.Closing = vs[0].Text
+				}
+			}
+			out = append(out, ch)
+		}
+	}
+	for _, r := range older {
+		if !is[r.Name] {
+			out = append(out, ReportChange{Name: r.Name, Kind: ReportGone})
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	return out
 }
 
 // assets are a document's linked files of the spec folder with their

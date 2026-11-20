@@ -106,7 +106,7 @@ func TestCompare(t *testing.T) {
 	}
 	// A project against itself, or its CRLF copy, differs in nothing.
 	code, out, _ = run("compare", older, copyTree(t, older, true))
-	if code != ExitOK || strings.Count(out, "(none)") != 8 {
+	if code != ExitOK || strings.Count(out, "(none)") != 9 {
 		t.Error(code, out)
 	}
 	if code, _, errOut := run("compare", t.TempDir()); code != ExitFailed || !strings.Contains(errOut, "holds no .markitect/version") {
@@ -122,7 +122,7 @@ func TestFiguresOfTheLendingProject(t *testing.T) {
 	if code != ExitOK || !strings.HasPrefix(out, "# Figures from the history\n\n3 changes from 7 verdicts; moves left out, since they are mechanical: 1\n") ||
 		!strings.Contains(out, "\n### wide-change (3)\n\nreference: median 2, range 2–4 documents per change\n4 documents changed together at 2026-11-20T09:00:01Z") ||
 		!strings.Contains(out, "\n### hotspot (3)\n\nreference: changes per document: median 1; documents linking to one: median 0.5\nlending/return.md: changed 2 times × linked from 1 document = 2\n") ||
-		!strings.HasSuffix(out, "\n### weakening\n\nnot computed: a strong statement gathering conditions shows only in its old and new text, which an agent reads from Git; the history holds hashes\n") {
+		!strings.Contains(out, "\n### weakening\n\nnot computed: a strong statement gathering conditions shows only in its old and new text, which an agent reads from Git; the history holds hashes\n\n# Figures of the factory\n") {
 		t.Error(code, out)
 	}
 	_, again, _ := run("figures", "-C", copyTree(t, newer, true))

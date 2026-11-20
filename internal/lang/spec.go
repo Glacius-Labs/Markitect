@@ -78,6 +78,41 @@ const (
 	CodeLinkUnresolved = "link.unresolved"
 )
 
+// CheckAgainst checks a document against a type it does not name, such as a
+// type the tool owns: its title, and the sections the type requires, which
+// must be there and hold text, as Check does. by names the type in the
+// messages.
+func CheckAgainst(d, t *Document, by string) []Diagnostic {
+	return append(checkTitle(d), checkSections(d, t, max(d.TitleLine, d.ContentLine, 1), by)...)
+}
+
+// checkTitle checks that the document starts with one level-1 title.
+func checkTitle(d *Document) []Diagnostic {
+	switch {
+	case d.TitleLine == 0:
+		return []Diagnostic{{Path: d.Path, Line: max(d.ContentLine, 1), Code: CodeTitle, Message: "missing level-1 title"}}
+	case d.SecondTitleLine != 0:
+		return []Diagnostic{{Path: d.Path, Line: d.SecondTitleLine, Code: CodeTitle, Message: "second level-1 heading"}}
+	}
+	return nil
+}
+
+// checkSections checks the sections the type t declares: a required one
+// missing is reported at line, and one the document has must hold text.
+func checkSections(d, t *Document, line int, by string) []Diagnostic {
+	var out []Diagnostic
+	for _, want := range t.Declared() {
+		sec, has := d.Section(want.Name)
+		switch {
+		case !has && !want.Optional:
+			out = append(out, Diagnostic{Path: d.Path, Line: line, Code: CodeSectionMissing, Message: fmt.Sprintf("missing section \"%s\" required by %s", want.Name, by)})
+		case has && !sec.HasText:
+			out = append(out, Diagnostic{Path: d.Path, Line: sec.Line, Code: CodeSectionEmpty, Message: fmt.Sprintf("empty section \"%s\"", want.Name)})
+		}
+	}
+	return out
+}
+
 // Diagnostic is one finding of Check, at a line of a document.
 type Diagnostic struct {
 	Path    string
@@ -100,12 +135,7 @@ func Check(s *Spec) []Diagnostic {
 		add := func(line int, code, format string, args ...any) {
 			out = append(out, Diagnostic{Path: d.Path, Line: line, Code: code, Message: fmt.Sprintf(format, args...)})
 		}
-		switch {
-		case d.TitleLine == 0:
-			add(max(d.ContentLine, 1), CodeTitle, "missing level-1 title")
-		case d.SecondTitleLine != 0:
-			add(d.SecondTitleLine, CodeTitle, "second level-1 heading")
-		}
+		out = append(out, checkTitle(d)...)
 		switch {
 		case d.TypeLine != 0 && !d.HasType():
 			add(d.TypeLine, CodeTypeLine, "type line must be exactly one link to a document")
@@ -115,15 +145,7 @@ func Check(s *Spec) []Diagnostic {
 				add(d.TypeLine, CodeTypeUnresolved, "no document at \"%s\"", d.TypeRaw)
 				break
 			}
-			for _, want := range t.Declared() {
-				sec, has := d.Section(want.Name)
-				switch {
-				case !has && !want.Optional:
-					add(d.TypeLine, CodeSectionMissing, "missing section \"%s\" required by %s", want.Name, t.Path)
-				case has && !sec.HasText:
-					add(sec.Line, CodeSectionEmpty, "empty section \"%s\"", want.Name)
-				}
-			}
+			out = append(out, checkSections(d, t, d.TypeLine, t.Path)...)
 		}
 		for _, line := range d.StrayTypeLines {
 			add(line, CodeTypeLine, "a type line stands only on the first line after the title")

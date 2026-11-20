@@ -16,6 +16,7 @@ func TestInitFiles(t *testing.T) {
 		".markitect/spec":           "docs/spec\n",
 		".markitect/.gitattributes": "state.jsonl merge=union\nhistory.jsonl merge=union\n",
 		".markitect/ignore":         "",
+		".markitect/settings.md":    DefaultSettings,
 	}
 	if len(got) != len(want) {
 		t.Fatalf("got %v", got)

@@ -10,6 +10,7 @@ package lang
 import (
 	"bytes"
 	"path"
+	"regexp"
 	"sort"
 	"strings"
 	"unicode"
@@ -75,6 +76,35 @@ type Section struct {
 	// First is the first line of text under the heading that shows something,
 	// as plain text.
 	First string
+	// Raw are the lines under the heading as written, up to the next level-1
+	// or level-2 heading, with their line numbers.
+	Raw []SourceLine
+}
+
+// SourceLine is one line of a document as written, without its line end.
+type SourceLine struct {
+	Line int
+	Text string
+}
+
+// Values returns the lines of the section as written, without HTML comments,
+// surrounding white space and blank lines: the lines a value form is read
+// from, so that no Markdown markup is lost.
+func (s Section) Values() []SourceLine {
+	var b strings.Builder
+	for i, l := range s.Raw {
+		if i > 0 {
+			b.WriteByte('\n')
+		}
+		b.WriteString(l.Text)
+	}
+	var out []SourceLine
+	for i, text := range strings.Split(withoutComments(b.String()), "\n") {
+		if text = strings.TrimSpace(text); text != "" && i < len(s.Raw) {
+			out = append(out, SourceLine{Line: s.Raw[i].Line, Text: text})
+		}
+	}
+	return out
 }
 
 // Link is a link from a document to a .md path.
@@ -242,6 +272,51 @@ func (p *parser) read(root ast.Node) {
 		}
 		p.links(n, section)
 		p.texts(n, section)
+	}
+	p.raw(root)
+}
+
+// setextUnderline is the underline of a heading written as text over = or -.
+var setextUnderline = regexp.MustCompile(`^ {0,3}(=+|-+)[ \t]*$`)
+
+// raw gives each section the lines under its heading as written, up to the
+// next level-1 or level-2 heading at the top level.
+func (p *parser) raw(root ast.Node) {
+	lines := strings.Split(string(p.source), "\n")
+	if len(lines) > 0 && lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
+	}
+	type bound struct{ start, end int } // the first line of a heading and its last
+	var heads []bound
+	var levels []int
+	for n := root.FirstChild(); n != nil; n = n.NextSibling() {
+		h, ok := n.(*ast.Heading)
+		if !ok || h.Level > 2 {
+			continue
+		}
+		start := p.line(h.Pos())
+		end := start
+		if k := h.Lines().Len(); k > 0 {
+			end = p.line(h.Lines().At(k - 1).Start)
+			if end < len(lines) && setextUnderline.MatchString(lines[end]) {
+				end++
+			}
+		}
+		heads, levels = append(heads, bound{start, end}), append(levels, h.Level)
+	}
+	sec := 0
+	for i, b := range heads {
+		if levels[i] != 2 {
+			continue
+		}
+		stop := len(lines)
+		if i+1 < len(heads) {
+			stop = heads[i+1].start - 1
+		}
+		for l := b.end + 1; l <= stop; l++ {
+			p.doc.Sections[sec].Raw = append(p.doc.Sections[sec].Raw, SourceLine{Line: l, Text: lines[l-1]})
+		}
+		sec++
 	}
 }
 

@@ -32,7 +32,8 @@ const usage = `usage: markitect-next COMMAND ARGUMENTS [-C PROJECT] [--json]
 
   init [--spec PATH]          set up a project: .markitect/ and the spec folder,
                               by default docs/spec
-  check                       check the spec
+  check                       check the spec, the reports, the results of
+                              control samples and the settings
   show DOCUMENT               a document with its type, sections, links and row
   table [TYPE]                every document of a type as a Markdown table, or
                               every document with its verdict and artifacts
@@ -42,13 +43,16 @@ const usage = `usage: markitect-next COMMAND ARGUMENTS [-C PROJECT] [--json]
   topic [TOPIC] [--all]       the signals of the spec, or everything about a
                               document, a type or a folder
   questions                   the questions of the packages the spec has
-  status                      what is changed, suspect or unexplained
+  status                      what is changed, suspect, unexplained or waiting
+                              on a report
   mark DOCUMENT@FINGERPRINT VERDICT [--file PATH]... [--check PATH]...
        [-e EVIDENCE]... [-m REASON]
                               bind ok, fail or skip to the state status showed
   compare OLD [NEW]           what is new, gone, moved, changed or suspect in NEW,
-                              by default this project, against the project OLD
-  figures [--all]             the change signals computed from the history
+                              by default this project, against the project OLD,
+                              and its reports that are new, closed or changed
+  figures [--all]             the change signals computed from the history, and
+                              the figures of the reports and control samples
   version                     the tool's version, and whether the project pins it
 
 The project is the nearest folder, from the working directory upward, that
@@ -224,9 +228,14 @@ func check(o options, stdout io.Writer) (int, error) {
 		return ExitFailed, err
 	}
 	spec := w.Spec
-	found := lang.Check(spec)
+	f, err := factoryOf(w)
+	if err != nil {
+		return ExitFailed, err
+	}
+	found := append(lang.Check(spec), f.Diagnostics...)
 	if o.json {
-		doc := checkDocument{header: newHeader("check"), Documents: len(spec.Documents), Diagnostics: []diagnostic{}}
+		doc := checkDocument{header: newHeader("check"), Documents: len(spec.Documents), Reports: len(f.Reports), Samples: len(f.Samples),
+			Settings: f.Settings != nil, Diagnostics: []diagnostic{}}
 		for _, d := range found {
 			doc.Diagnostics = append(doc.Diagnostics, diagnostic{File: d.Path, Line: d.Line, Code: d.Code, Message: d.Message})
 		}
@@ -238,7 +247,11 @@ func check(o options, stdout io.Writer) (int, error) {
 		for _, d := range found {
 			b.WriteString(d.String() + "\n")
 		}
-		fmt.Fprintf(&b, "%s in %s\n", plural(len(found), "error"), plural(len(spec.Documents), "document"))
+		fmt.Fprintf(&b, "%s in %s", plural(len(found), "error"), plural(len(spec.Documents), "document"))
+		if len(f.Reports)+len(f.Samples) > 0 {
+			fmt.Fprintf(&b, ", %s and %s", plural(len(f.Reports), "report"), plural(len(f.Samples), "sample"))
+		}
+		b.WriteString("\n")
 		if _, err := io.WriteString(stdout, b.String()); err != nil {
 			return ExitFailed, err
 		}
@@ -257,15 +270,21 @@ type header struct {
 
 func newHeader(kind string) header { return header{FormatVersion: FormatVersion, Kind: kind} }
 
-// checkDocument is the JSON document of check.
+// checkDocument is the JSON document of check: the number of documents of
+// the spec, of reports and of results of control samples, whether the
+// project has settings, and the diagnostics.
 type checkDocument struct {
 	header
 	Documents   int          `json:"documents"`
+	Reports     int          `json:"reports"`
+	Samples     int          `json:"samples"`
+	Settings    bool         `json:"settings"`
 	Diagnostics []diagnostic `json:"diagnostics"`
 }
 
 // diagnostic is one diagnostic in a JSON document; file is the path below the
-// spec folder.
+// spec folder for a document of the spec, and below the project folder for
+// any other file.
 type diagnostic struct {
 	File    string `json:"file"`
 	Line    int    `json:"line"`

@@ -83,7 +83,7 @@ func TestCheckJSON(t *testing.T) {
 			t.Fatalf("%v: %s", err, out)
 		}
 		want := map[string]any{
-			"format_version": float64(1), "kind": "check", "documents": float64(2),
+			"format_version": float64(1), "kind": "check", "documents": float64(2), "reports": float64(0), "samples": float64(0), "settings": true,
 			"diagnostics": []any{map[string]any{"file": "sub/b.md", "line": float64(3), "code": "link.unresolved", "message": `no document at "../ghost.md"`}},
 		}
 		if code != ExitFound || !reflect.DeepEqual(doc, want) {
