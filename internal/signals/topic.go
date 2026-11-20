@@ -65,23 +65,15 @@ func (a *Analysis) Topic(name string) (*Topic, bool) {
 	for _, d := range t.Docs {
 		own[d] = true
 	}
-	// A link to the README of a folder that holds a topic document counts as
-	// a link to the topic.
+	// A link to the README of a folder below the spec root that holds a topic
+	// document counts as a link to the topic; the root's README does not.
 	about := map[string]bool{}
 	for _, d := range t.Docs {
 		about[d] = true
-		for dir := path.Dir(d); ; dir = path.Dir(dir) {
-			readme := "README.md"
-			if dir != "." {
-				readme = dir + "/README.md"
-			}
-			if readme != d {
-				if _, ok := a.Spec.Document(readme); ok && !own[readme] {
-					about[readme] = true
-				}
-			}
-			if dir == "." {
-				break
+		for dir := path.Dir(d); dir != "."; dir = path.Dir(dir) {
+			readme := dir + "/README.md"
+			if _, ok := a.Spec.Document(readme); ok && readme != d && !own[readme] {
+				about[readme] = true
 			}
 		}
 	}

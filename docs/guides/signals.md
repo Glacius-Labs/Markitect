@@ -43,7 +43,7 @@ Each signal is a list sorted strongest first; equal ones stand in path and line 
 | Complexity of a statement | `complexity` | Every statement with its words, beside the project's median and maximum and the reference of its document's type, its terms, the documents it links to, and its conditions | Most words, then conditions, then terms |
 | Size | `size` | Every document with a type: its statements, beside the median, range and number of documents of the same type and the type's reference | Highest ratio to the median of its type |
 | Text before the first section | `text-before-sections` | Every document with a type that has statements before its first section, after the type line, with their number | Most statements |
-| Recurring link group | `link-group` | The same three or more link targets under the same section heading, compared without regard to case, in two or more documents. Only the largest group with the same documents is listed | Most documents, then most links |
+| Recurring link group | `link-group` | The same three or more link targets under the same section heading, compared without regard to case, in two or more documents. The groups are the intersections of the sections' targets, of any number of documents, so a group shared by many is found even where each pair shares more. Only the largest group with the same documents is listed | Most documents, then most links |
 | Scattered rules | `scattered-rules` | Every document that conditional or restricting statements of other documents refer to, with those documents. A statement is restricting when it holds one of the strong words only, never, must not, no one, nobody or none, or "not" followed by "alone" within three words | Most other documents |
 | Mention without a link | `unlinked-mention` | Every pair of a document and another document whose title stands in its statements while it has no link to it anywhere, the type line included | Most mentions |
 
@@ -61,7 +61,7 @@ A topic is a document, a type, which is a document that another names in its typ
 4. **Mentioned without a link:** every statement of another document that names it while that document has no link to it.
 5. **Signals:** every finding that concerns a document of the topic.
 
-A link to the README of a folder that holds a topic document counts as a link to the topic, so a rule that applies to a folder, and every folder above it, shows for each document in it.
+A link to the README of a folder that holds a topic document counts as a link to the topic, so a rule that applies to a folder, and every folder above it, shows for each document in it. Only READMEs of folders below the spec root count this way: a link to the root's `README.md` concerns that document alone.
 
 ## Reference values
 

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 	"testing/fstest"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/lang"
 )
@@ -248,4 +249,63 @@ func TestTypeSectionsAreGuidance(t *testing.T) {
 	}
 	eq(t, got, []string{"shelves/novels.md: By the window.", "types/shelf.md: A shelf holds books of one kind."})
 	eq(t, len(a.Findings[Weak]), 0)
+}
+
+func TestLinkGroupSharedByAllButNoPair(t *testing.T) {
+	doc := func(title string, targets ...string) string {
+		var links []string
+		for _, x := range targets {
+			links = append(links, "["+x+"]("+x+".md)")
+		}
+		return "# " + title + "\n\n## Rules\n" + strings.Join(links, ", ") + ".\n"
+	}
+	files := map[string]string{
+		"a.md": doc("A", "t1", "t2", "t3", "t4", "t5"),
+		"b.md": doc("B", "t1", "t2", "t3", "t4", "t6"),
+		"c.md": doc("C", "t1", "t2", "t3", "t5", "t6"),
+	}
+	got := findings(Analyze(spec(t, files), nil), LinkGroup)
+	eq(t, got[0], `a.md:3: link-group: section "Rules" links the same 3 documents in 3 documents: a.md, b.md, c.md (links: t1.md, t2.md, t3.md)`)
+	eq(t, len(got), 4)
+	for i := 0; i < 10; i++ {
+		eq(t, findings(Analyze(spec(t, files), nil), LinkGroup), got)
+	}
+}
+
+func TestLinkGroupsDense(t *testing.T) {
+	files := map[string]string{}
+	roles := []string{"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11"}
+	seed := uint32(7)
+	for i := 0; i < 1000; i++ {
+		var links []string
+		for _, r := range roles {
+			seed = seed*1664525 + 1013904223
+			if seed>>29 < 5 { // about 5 of 8 roles: 6 to 9 of 12 on average
+				links = append(links, "["+r+"](roles/"+r+".md)")
+			}
+		}
+		files["tasks/t"+strconv.Itoa(i)+".md"] = "# T" + strconv.Itoa(i) + "\n\n## Performed by\n" + strings.Join(links, ", ") + "\n"
+	}
+	start := time.Now()
+	a := Analyze(spec(t, files), nil)
+	t.Logf("%d link groups in %v", len(a.Findings[LinkGroup]), time.Since(start))
+	if len(a.Findings[LinkGroup]) == 0 {
+		t.Error("no groups")
+	}
+}
+
+func TestRootReadmeDoesNotSpread(t *testing.T) {
+	files := map[string]string{
+		"README.md":        "# Library\n",
+		"places/README.md": "# Places\n",
+		"places/east.md":   "# East Branch\n",
+		"rules/a.md":       "# A\n\nEvery visitor follows [the house rules](../README.md).\n",
+		"rules/b.md":       "# B\n\nEvery visitor may use [the places](../places/README.md).\n",
+	}
+	topic, _ := Analyze(spec(t, files), nil).Topic("places/east")
+	var linked []string
+	for _, st := range topic.LinkedFrom {
+		linked = append(linked, st.Doc)
+	}
+	eq(t, linked, []string{"rules/b.md"})
 }

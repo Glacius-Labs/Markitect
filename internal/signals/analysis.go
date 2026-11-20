@@ -259,83 +259,6 @@ func (a *Analysis) textBeforeSections() {
 	}
 }
 
-func (a *Analysis) linkGroups() {
-	type place struct {
-		doc     string
-		line    int
-		targets map[string]bool
-	}
-	bySection := map[string][]place{}
-	for _, d := range a.Spec.Documents {
-		for _, s := range d.Sections {
-			targets := map[string]bool{}
-			for _, l := range d.Links {
-				if l.Section == s.Heading {
-					targets[l.Target] = true
-				}
-			}
-			if len(targets) >= 3 {
-				key := strings.ToLower(s.Heading)
-				bySection[key] = append(bySection[key], place{d.Path, s.Line, targets})
-			}
-		}
-	}
-	for _, places := range bySection {
-		type group struct {
-			targets []string
-			docs    []place
-		}
-		groups := map[string]*group{}
-		for i := range places {
-			for j := i + 1; j < len(places); j++ {
-				var common []string
-				for t := range places[i].targets {
-					if places[j].targets[t] {
-						common = append(common, t)
-					}
-				}
-				if len(common) < 3 {
-					continue
-				}
-				sort.Strings(common)
-				key := strings.Join(common, "\n")
-				if groups[key] == nil {
-					g := &group{targets: common}
-					for _, p := range places {
-						all := true
-						for _, t := range common {
-							all = all && p.targets[t]
-						}
-						if all {
-							g.docs = append(g.docs, p)
-						}
-					}
-					groups[key] = g
-				}
-			}
-		}
-		for key, g := range groups {
-			maximal := true
-			for other, h := range groups {
-				if other != key && len(h.docs) == len(g.docs) && len(h.targets) > len(g.targets) && subset(g.targets, h.targets) {
-					maximal = false
-				}
-			}
-			if !maximal {
-				continue
-			}
-			var docs []string
-			for _, p := range g.docs {
-				docs = append(docs, p.doc)
-			}
-			heading := sectionHeading(a.Spec, g.docs[0].doc, g.docs[0].line)
-			a.add(Finding{Signal: LinkGroup, Path: g.docs[0].doc, Line: g.docs[0].line, Docs: append(append([]string(nil), docs...), g.targets...),
-				rank:   float64(len(docs)) + float64(len(g.targets))/100,
-				Detail: fmt.Sprintf("section %q links the same %d documents in %s: %s (links: %s)", heading, len(g.targets), plural(len(docs), "document"), strings.Join(docs, ", "), strings.Join(g.targets, ", "))})
-		}
-	}
-}
-
 func sectionHeading(spec *lang.Spec, doc string, line int) string {
 	d, _ := spec.Document(doc)
 	for _, s := range d.Sections {
@@ -344,15 +267,6 @@ func sectionHeading(spec *lang.Spec, doc string, line int) string {
 		}
 	}
 	return ""
-}
-
-func subset(small, big []string) bool {
-	for _, s := range small {
-		if !contains(big, s) {
-			return false
-		}
-	}
-	return true
 }
 
 func (a *Analysis) scatteredRules() {
