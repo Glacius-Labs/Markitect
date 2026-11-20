@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestMain(m *testing.M) {
@@ -125,25 +126,30 @@ func same(t *testing.T, what string, got, want []string) {
 	}
 }
 
-// fingerprint is the fingerprint status gives a document now, listed or not.
+// fingerprint is a document's fingerprint now, from status for a document
+// on the list and from show for any other.
 func fingerprint(t *testing.T, dir, doc string) string {
 	t.Helper()
 	if e, kind := statusOf(t, dir).entry(doc); kind != "" {
 		return e.Fingerprint
 	}
-	w, err := load(options{dir: dir})
-	if err != nil {
-		t.Fatal(err)
+	code, out, errOut := run("show", "-C", dir, doc, "--json")
+	var shown struct {
+		Fingerprint string `json:"fingerprint"`
 	}
-	s, _, err := evaluate(w)
-	if err != nil {
-		t.Fatal(err)
+	if err := json.Unmarshal([]byte(out), &shown); err != nil || code != ExitOK || len(shown.Fingerprint) != 8 {
+		t.Fatalf("show %s: %d %s %s", doc, code, out, errOut)
 	}
-	fp, _, err := s.Fingerprint(doc)
-	if err != nil {
-		t.Fatal(err)
+	return shown.Fingerprint
+}
+
+// withoutFingerprint drops the fingerprint from the first line of show.
+func withoutFingerprint(out string) string {
+	first, rest, _ := strings.Cut(out, "\n")
+	if i := strings.LastIndex(first, "@"); i >= 0 && len(first)-i == 9 {
+		first = first[:i]
 	}
-	return fp
+	return first + "\n" + rest
 }
 
 // verdict binds a verdict at the fingerprint status gives now and expects
@@ -601,5 +607,126 @@ func TestSpecFolderBehindALink(t *testing.T) {
 	fp := fingerprint(t, dir, "roles/member.md")
 	if code, _, errOut := run("mark", "-C", dir, "roles/member.md@"+fp, "ok", "--file", "handbook/spec/roles/member.md", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "lies in the spec folder") {
 		t.Error(code, errOut)
+	}
+}
+
+// Files of the spec folder that are no documents: linked ones are inputs of
+// the documents that link them, the others are unexplained.
+func TestFilesOfTheSpecFolderThatAreNoDocuments(t *testing.T) {
+	dir := marked(t)
+	write(t, dir, "docs/spec/run.sh", "echo lend\n")
+	write(t, dir, "docs/spec/lending/flow.png", "\x89PNG one")
+	write(t, dir, "docs/spec/lending/borrow.md", read(t, dir, "docs/spec/lending/borrow.md")+"\n![The flow](flow.png)\n")
+	same(t, "after a script and a linked diagram", statusOf(t, dir).summary(), []string{
+		"changed lending/borrow.md: self, asset:lending/flow.png (new)", "suspect roles/member.md: link:lending/borrow.md",
+		"unexplained docs/spec/run.sh"})
+	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--check", "tests/loans_test.go", "-e", "tests/loans_test.go")
+	verdict(t, dir, "roles/member.md", "ok", "--file", "src/member.go", "-e", "src/member.go")
+	same(t, "after the marks", statusOf(t, dir).summary(), []string{"unexplained docs/spec/run.sh"})
+	write(t, dir, "docs/spec/run.sh", "echo return\n")
+	write(t, dir, "docs/spec/lending/flow.png", "\x89PNG two")
+	same(t, "after both changed", statusOf(t, dir).summary(), []string{
+		"changed lending/borrow.md: asset:lending/flow.png", "unexplained docs/spec/run.sh"})
+	if code, _, errOut := run("mark", "-C", dir, "lending/borrow.md@"+fingerprint(t, dir, "lending/borrow.md"), "ok", "--file", "docs/spec/run.sh", "-e", "src/loans.go"); code != ExitFound || !strings.Contains(errOut, "lies in the spec folder") {
+		t.Error(code, errOut)
+	}
+	if err := os.Remove(filepath.Join(dir, "docs", "spec", "lending", "flow.png")); err != nil {
+		t.Fatal(err)
+	}
+	same(t, "after the diagram went", statusOf(t, dir).summary(), []string{
+		"changed lending/borrow.md: asset:lending/flow.png (gone)", "unexplained docs/spec/run.sh"})
+}
+
+// show gives every document's fingerprint, so an ok can become a fail.
+func TestShowGivesTheFingerprint(t *testing.T) {
+	dir := marked(t)
+	code, out, _ := run("show", "-C", dir, "lending/return")
+	first, _, _ := strings.Cut(out, "\n")
+	fp, ok := strings.CutPrefix(first, "lending/return.md@")
+	if code != ExitOK || !ok || len(fp) != 8 {
+		t.Fatal(code, out)
+	}
+	if code, _, errOut := run("mark", "-C", dir, "lending/return.md@"+fp, "fail", "--file", "src/returns.go", "-m", "late books are lent again"); code != ExitOK {
+		t.Fatal(errOut)
+	}
+	same(t, "after ok became fail", statusOf(t, dir).summary(), []string{"changed lending/return.md: fail: late books are lent again"})
+}
+
+// A union merge of an ok and a fail at the same state is a conflict.
+func TestMergedOkAndFailConflict(t *testing.T) {
+	dir := marked(t)
+	ours := read(t, dir, ".markitect/state.jsonl")
+	verdict(t, dir, "lending/borrow.md", "fail", "--file", "src/loans.go", "--check", "tests/loans_test.go", "-m", "lends a sixth book")
+	write(t, dir, ".markitect/state.jsonl", ours+read(t, dir, ".markitect/state.jsonl"))
+	same(t, "after the merge", statusOf(t, dir).summary(), []string{"changed lending/borrow.md: conflict: fail, ok"})
+	if _, out, _ := run("show", "-C", dir, "lending/borrow"); !strings.Contains(out, "\nVerdict: fail (rows conflict)\n") {
+		t.Error(out)
+	}
+}
+
+func TestLockIsSharedThroughALink(t *testing.T) {
+	saved := lockWait
+	lockWait = 200 * time.Millisecond
+	t.Cleanup(func() { lockWait = saved })
+	dir := t.TempDir()
+	real := filepath.Join(dir, "real")
+	if err := os.Mkdir(real, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	link(t, real, filepath.Join(dir, "other"))
+	held, err := lockProject(real)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := lockProject(filepath.Join(dir, "other")); err == nil || !strings.Contains(err.Error(), "holds the lock") {
+		t.Errorf("a second path took the lock: %v", err)
+	}
+	held.release()
+	again, err := lockProject(filepath.Join(dir, "other"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	again.release()
+}
+
+func TestStaleLocks(t *testing.T) {
+	saved := lockWait
+	lockWait = 200 * time.Millisecond
+	t.Cleanup(func() { lockWait = saved })
+	dir := t.TempDir()
+	l, err := lockProject(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A live process ID in a lock older than its lifetime: the ID may have
+	// been reused, so the lock is taken over.
+	old := time.Now().Add(-lockLifetime - time.Minute)
+	if err := os.Chtimes(l.file, old, old); err != nil {
+		t.Fatal(err)
+	}
+	taker, err := lockProject(dir)
+	if err != nil {
+		t.Fatalf("an old lock was not taken over: %v", err)
+	}
+	if l.held() || !taker.held() {
+		t.Error("the takeover did not change hands")
+	}
+	// The former holder removes nothing that is no longer its own.
+	l.release()
+	if !taker.held() {
+		t.Error("a release removed another's lock")
+	}
+	// A fresh lock of a live process is waited for.
+	if _, err := lockProject(dir); err == nil {
+		t.Error("a held lock was taken")
+	}
+	// A lock moved aside by mistake is put back.
+	takeOver(taker.file, "what another taker saw")
+	if !taker.held() {
+		t.Error("a live lock moved aside was not put back")
+	}
+	taker.release()
+	if _, err := os.Stat(taker.file); !os.IsNotExist(err) {
+		t.Error("release left the lock")
 	}
 }

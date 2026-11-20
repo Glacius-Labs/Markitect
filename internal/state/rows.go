@@ -22,12 +22,13 @@ const (
 )
 
 // The kinds of input. A key is "self" or a kind and a path, such as
-// "link:roles/member.md"; type and link paths are below the spec folder,
-// the others below the project folder.
+// "link:roles/member.md"; type, link and asset paths are below the spec
+// folder, the others below the project folder.
 const (
 	InputSelf     = "self"
 	InputType     = "type:"
 	InputLink     = "link:"
+	InputAsset    = "asset:"
 	InputFile     = "file:"
 	InputCheck    = "check:"
 	InputEvidence = "evidence:"
@@ -157,7 +158,7 @@ func (r Row) problem() string {
 			continue
 		}
 		known := false
-		for _, kind := range []string{InputType, InputLink, InputFile, InputCheck, InputEvidence} {
+		for _, kind := range []string{InputType, InputLink, InputAsset, InputFile, InputCheck, InputEvidence} {
 			if p, ok := strings.CutPrefix(k, kind); ok {
 				known = true
 				if !cleanPath(p) {

@@ -135,6 +135,28 @@ type Project struct {
 	SpecAliases []string
 }
 
+// specFile is the path below the spec folder of a file of the walk that lies
+// in the spec folder or one of its aliases.
+func (p *Project) specFile(file string) (string, bool) {
+	for _, folder := range append([]string{p.SpecFolder}, p.SpecAliases...) {
+		if rest, ok := strings.CutPrefix(file, folder+"/"); ok {
+			return rest, true
+		}
+	}
+	return "", false
+}
+
+// isDocument says whether a file of the walk is a document of the spec, or
+// a link on the way to the spec folder: neither is unexplained, and both
+// count through the documents' own inputs.
+func (p *Project) isDocument(file string) bool {
+	if strings.HasPrefix(p.SpecFolder, file+"/") {
+		return true
+	}
+	_, ok := p.specFile(file)
+	return ok && lang.IsDocumentName(path.Base(file))
+}
+
 // InSpec says whether a file of the walk belongs to the spec folder: it lies
 // in it or in one of its aliases, or it is a link on the way to it.
 func (p *Project) InSpec(file string) bool {

@@ -50,6 +50,7 @@ const noRow = "Verdict: (no row)\nArtifacts: (none)\nCounter-checks: (none)\nEvi
 func TestShow(t *testing.T) {
 	dir := spec(t, branches)
 	code, out, _ := run("show", "-C", dir, `members\ada`)
+	out = withoutFingerprint(out)
 	want := "members/ada.md\nTitle: Ada Lovelace\nType: types/member.md\nSections:\n  Card\n  Branch\n" +
 		"Links to:\n  members/grace.md\n  places/central.md\nLinked from: (none)\n" + noRow
 	if code != ExitOK || out != want {

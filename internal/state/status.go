@@ -95,7 +95,9 @@ type Status struct {
 type docState struct {
 	doc     *lang.Document // nil for a document that is gone
 	path    string
-	current Inputs // self, type and links; nil when gone
+	current Inputs // self, type, links and assets; nil when gone
+	// missing are the assets it links that are gone.
+	missing map[string]bool
 	rows    []Row
 	// taken are the rows status takes: those that match the folder, or the
 	// closest one.
@@ -124,12 +126,33 @@ func (s *Status) Row(doc string) (Row, bool, bool) {
 // have no errors; a link to no document counts for nothing.
 func Evaluate(p *Project, f *Folder, rows []Row) (*Status, error) {
 	s := &Status{docs: map[string]*docState{}, folder: f, project: p}
-	inputs, err := currentInputs(p.Spec)
-	if err != nil {
-		return nil, err
+	inputs := currentInputs(p.Spec)
+	assets := map[string]string{}
+	for _, file := range f.Files {
+		if rel, ok := p.specFile(file); ok && !p.isDocument(file) {
+			assets[rel] = file
+		}
 	}
+	linked := map[string]bool{}
 	for _, d := range p.Spec.Documents {
-		s.docs[d.Path] = &docState{doc: d, path: d.Path, current: inputs[d.Path]}
+		ds := &docState{doc: d, path: d.Path, current: inputs[d.Path], missing: map[string]bool{}}
+		for _, r := range d.Paths {
+			if r.Target == "" || lang.IsDocumentName(path.Base(r.Target)) || !cleanPath(r.Target) {
+				continue
+			}
+			file, ok := assets[r.Target]
+			if !ok {
+				ds.missing[InputAsset+r.Target] = true
+				continue
+			}
+			h, err := f.hash(file)
+			if err != nil {
+				return nil, err
+			}
+			ds.current[InputAsset+r.Target] = h
+			linked[file] = true
+		}
+		s.docs[d.Path] = ds
 	}
 	sorted := append([]Row(nil), rows...)
 	sort.SliceStable(sorted, func(i, j int) bool { return string(sorted[i].line()) < string(sorted[j].line()) })
@@ -163,7 +186,7 @@ func Evaluate(p *Project, f *Folder, rows []Row) (*Status, error) {
 		}
 	}
 	for _, file := range f.Files {
-		if !mapped[file] && !p.InSpec(file) {
+		if !mapped[file] && !linked[file] && !p.isDocument(file) {
 			s.Unexplained = append(s.Unexplained, file)
 		}
 	}
@@ -194,7 +217,7 @@ func (s *Status) Fingerprints() error {
 
 // currentInputs computes self, type and links of every document: the
 // documents it links to and the documents that link to it, not itself.
-func currentInputs(spec *lang.Spec) (map[string]Inputs, error) {
+func currentInputs(spec *lang.Spec) map[string]Inputs {
 	self := map[string]string{}
 	for _, d := range spec.Documents {
 		self[d.Path] = Hash(d.Source)
@@ -216,7 +239,7 @@ func currentInputs(spec *lang.Spec) (map[string]Inputs, error) {
 			out[l.Target][InputLink+d.Path] = self[d.Path]
 		}
 	}
-	return out, nil
+	return out
 }
 
 // compare matches a row against the document as it is: whether every input
@@ -305,7 +328,7 @@ func (s *Status) judge(d *docState) error {
 	}
 	r := d.rows[best]
 	d.taken = []Row{r}
-	changes, changed, err := s.changes(r, d.current)
+	changes, changed, err := s.changes(r, d)
 	if err != nil {
 		return err
 	}
@@ -323,7 +346,8 @@ func (s *Status) judge(d *docState) error {
 // changes names what differs between a row and the document as it is, in
 // the order self, type, link, file, check, evidence, and whether any of it
 // makes the document changed rather than suspect.
-func (s *Status) changes(r Row, current Inputs) ([]string, bool, error) {
+func (s *Status) changes(r Row, d *docState) ([]string, bool, error) {
+	current := d.current
 	keys := map[string]bool{}
 	for k := range r.Inputs {
 		keys[k] = true
@@ -331,7 +355,7 @@ func (s *Status) changes(r Row, current Inputs) ([]string, bool, error) {
 	for k := range current {
 		keys[k] = true
 	}
-	order := []string{InputSelf, InputType, InputLink, InputFile, InputCheck, InputEvidence}
+	order := []string{InputSelf, InputType, InputLink, InputAsset, InputFile, InputCheck, InputEvidence}
 	rank := func(k string) int {
 		for i, kind := range order {
 			if k == kind || i > 0 && strings.HasPrefix(k, kind) {
@@ -359,10 +383,12 @@ func (s *Status) changes(r Row, current Inputs) ([]string, bool, error) {
 			return nil, false, err
 		}
 		_, has := current[k]
-		local := rank(k) <= 2
+		local := rank(k) <= 3
 		switch {
 		case local && !had:
 			out = append(out, k+" (new)")
+		case local && !has && d.missing[k]:
+			out = append(out, k+" (gone)")
 		case local && !has:
 			out = append(out, k+" (dropped)")
 		case now == was:
@@ -460,7 +486,7 @@ func (s *Status) filesDigest() (string, error) {
 	}
 	var b strings.Builder
 	for _, file := range s.folder.Files {
-		if s.project.InSpec(file) {
+		if s.project.isDocument(file) {
 			continue
 		}
 		h, err := s.folder.hash(file)

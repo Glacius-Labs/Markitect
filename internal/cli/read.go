@@ -12,8 +12,11 @@ import (
 // showDocument is the JSON document of show.
 type showDocument struct {
 	header
-	Path  string `json:"path"`
-	Title string `json:"title"`
+	Path string `json:"path"`
+	// Fingerprint is the document's fingerprint as status computes it, so
+	// that a mark can name any document.
+	Fingerprint string `json:"fingerprint"`
+	Title       string `json:"title"`
 	// Type is the path of the type, "" without one; TypeState is "none",
 	// "invalid" for a type line that is not one link, "missing" for a type
 	// that is no document, or "ok".
@@ -61,6 +64,9 @@ func show(o options, stdout io.Writer) (int, error) {
 	doc := showDocument{header: newHeader("show"), Path: d.Path, Title: d.Title, Type: d.TypePath,
 		Sections: []showSection{}, LinksTo: []showLink{}, LinkedFrom: []showLink{}, Documents: []string{},
 		Artifacts: []string{}, CounterChecks: []string{}, Evidence: []string{}}
+	if doc.Fingerprint, _, err = s.Fingerprint(d.Path); err != nil {
+		return ExitFailed, err
+	}
 	if row, conflict, ok := s.Row(d.Path); ok {
 		doc.Verdict, doc.Conflict, doc.Reason = row.Verdict, conflict, row.Reason
 		doc.Artifacts, doc.CounterChecks = append(doc.Artifacts, row.Files()...), append(doc.CounterChecks, row.Checks()...)
@@ -136,7 +142,7 @@ func showText(doc showDocument) string {
 	case "missing":
 		kind += " (missing)"
 	}
-	b.WriteString(doc.Path + "\nTitle: " + title + "\nType: " + kind + "\n")
+	b.WriteString(doc.Path + "@" + doc.Fingerprint + "\nTitle: " + title + "\nType: " + kind + "\n")
 	list := func(label string, items []string, always bool) {
 		if len(items) == 0 {
 			if always {

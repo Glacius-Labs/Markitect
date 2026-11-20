@@ -1,17 +1,12 @@
 package cli
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
-	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/edit"
@@ -158,11 +153,11 @@ func mark(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	release, err := lockProject(dir)
+	lock, err := lockProject(dir)
 	if err != nil {
 		return ExitFailed, err
 	}
-	defer release()
+	defer lock.release()
 	w, err := load(o)
 	if err != nil {
 		return ExitFailed, err
@@ -192,6 +187,9 @@ func mark(o options, stdout io.Writer) (int, error) {
 		}
 		return ExitFailed, err
 	}
+	if !lock.held() {
+		return ExitFailed, errors.New("another mark took over the lock of the state; nothing is written")
+	}
 	if err := writeAtomic(filepath.Join(dir, filepath.FromSlash(state.StateFile)), state.FormatState(rows)); err != nil {
 		return ExitFailed, err
 	}
@@ -209,83 +207,6 @@ func cutLast(s, sep string) (string, string, bool) {
 		return s, "", false
 	}
 	return s[:i], s[i+len(sep):], true
-}
-
-// cacheDir is the user's cache folder, where the locks lie; tests replace it.
-var cacheDir = os.UserCacheDir
-
-// lockWait bounds how long mark waits for another mark of the same project.
-const lockWait = time.Minute
-
-// lockLifetime is the longest a lock can be held; an older one is stale.
-const lockLifetime = 2 * time.Hour
-
-// lockProject takes the lock of a project folder: a file named after the
-// folder in markitect/locks/ of the user's cache folder, holding this
-// process's ID. A lock whose process is gone, or that is too old, is taken
-// over.
-func lockProject(dir string) (func(), error) {
-	cache, err := cacheDir()
-	if err != nil {
-		return nil, fmt.Errorf("no cache folder for the lock of the state: %w", err)
-	}
-	locks := filepath.Join(cache, "markitect", "locks")
-	if err := os.MkdirAll(locks, 0o755); err != nil {
-		return nil, err
-	}
-	abs, err := filepath.Abs(dir)
-	if err != nil {
-		return nil, err
-	}
-	sum := sha256.Sum256([]byte(strings.ToLower(filepath.Clean(abs))))
-	file := filepath.Join(locks, hex.EncodeToString(sum[:8])+".lock")
-	until := time.Now().Add(lockWait)
-	for {
-		f, err := os.OpenFile(file, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
-		if err == nil {
-			fmt.Fprintf(f, "%d\n", os.Getpid())
-			f.Close()
-			return func() { os.Remove(file) }, nil
-		}
-		if staleLock(file) {
-			os.Remove(file)
-			continue
-		}
-		if time.Now().After(until) {
-			return nil, fmt.Errorf("another mark holds the lock %s", file)
-		}
-		time.Sleep(50 * time.Millisecond)
-	}
-}
-
-// staleLock says a lock can no longer be held: it is too old, or its process
-// is gone.
-func staleLock(file string) bool {
-	info, err := os.Stat(file)
-	if err != nil {
-		return false
-	}
-	if time.Since(info.ModTime()) > lockLifetime {
-		return true
-	}
-	data, err := os.ReadFile(file)
-	if err != nil {
-		return false
-	}
-	pid, err := strconv.Atoi(strings.TrimSpace(string(data)))
-	if err != nil {
-		return time.Since(info.ModTime()) > 5*time.Second
-	}
-	p, err := os.FindProcess(pid)
-	if err != nil {
-		return true
-	}
-	defer p.Release()
-	if runtime.GOOS == "windows" {
-		// FindProcess opens the process, which fails once it is gone.
-		return false
-	}
-	return p.Signal(syscall.Signal(0)) != nil
 }
 
 // writeAtomic replaces a file in one step: a crash leaves the old one or the
