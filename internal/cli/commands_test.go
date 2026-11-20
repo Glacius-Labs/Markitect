@@ -44,21 +44,24 @@ func files(t *testing.T, project string) map[string]string {
 	return out
 }
 
+// noRow is how show ends for a document without a row in the state.
+const noRow = "Verdict: (no row)\nArtifacts: (none)\nCounter-checks: (none)\nEvidence: (none)\n"
+
 func TestShow(t *testing.T) {
 	dir := spec(t, branches)
 	code, out, _ := run("show", "-C", dir, `members\ada`)
 	want := "members/ada.md\nTitle: Ada Lovelace\nType: types/member.md\nSections:\n  Card\n  Branch\n" +
-		"Links to:\n  members/grace.md\n  places/central.md\nLinked from: (none)\n"
+		"Links to:\n  members/grace.md\n  places/central.md\nLinked from: (none)\n" + noRow
 	if code != ExitOK || out != want {
 		t.Errorf("got %d\n%s\nwant\n%s", code, out, want)
 	}
 	_, out, _ = run("show", "-C", dir, "places/central.md")
-	if !strings.HasSuffix(out, "Linked from:\n  members/ada.md (Branch)\n  members/grace.md (Branch)\n") {
+	if !strings.HasSuffix(out, "Linked from:\n  members/ada.md (Branch)\n  members/grace.md (Branch)\n"+noRow) {
 		t.Error(out)
 	}
 	_, out, _ = run("show", "-C", dir, "types/member")
 	if !strings.Contains(out, "Type: (none)\nSections:\n  Card\n  Branch\n  Notes (optional)\n") ||
-		!strings.HasSuffix(out, "Documents:\n  members/ada.md\n  members/grace.md\n") {
+		!strings.HasSuffix(out, "Documents:\n  members/ada.md\n  members/grace.md\n"+noRow) {
 		t.Error(out)
 	}
 	_, out, _ = run("show", "-C", dir, "members/grace", "--json")

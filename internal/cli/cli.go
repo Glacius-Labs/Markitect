@@ -14,6 +14,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/edit"
 	"github.com/Glacius-Labs/Markitect/internal/lang"
+	"github.com/Glacius-Labs/Markitect/internal/state"
 )
 
 // FormatVersion is the version of every JSON document the command prints. A
@@ -32,14 +33,19 @@ const usage = `usage: markitect-next COMMAND ARGUMENTS [-C PROJECT] [--json]
   init [--spec PATH]          set up a project: .markitect/ and the spec folder,
                               by default docs/spec
   check                       check the spec
-  show DOCUMENT               a document with its type, sections and links
-  table TYPE                  every document of a type as a Markdown table
+  show DOCUMENT               a document with its type, sections, links and row
+  table [TYPE]                every document of a type as a Markdown table, or
+                              every document with its verdict and artifacts
   new TYPE PATH [TITLE]       create a document of a type
   move OLD NEW                move a document and rewrite the links to it
   apply TEMPLATE [TARGET]     copy a template of the library into the spec
   topic [TOPIC] [--all]       the signals of the spec, or everything about a
                               document, a type or a folder
   questions                   the questions of the packages the spec has
+  status                      what is changed, suspect or unexplained
+  mark DOCUMENT@FINGERPRINT VERDICT [--file PATH]... [--check PATH]...
+       [-e EVIDENCE]... [-m REASON]
+                              bind ok, fail or skip to the state status showed
   version                     the tool's version, and whether the project pins it
 
 The project is the nearest folder, from the working directory upward, that
@@ -60,13 +66,15 @@ var commands = map[string]command{
 	"init":      {0, 0, initProject},
 	"check":     {0, 0, check},
 	"show":      {1, 1, show},
-	"table":     {1, 1, table},
+	"table":     {0, 1, table},
 	"new":       {2, 3, newDocument},
 	"move":      {2, 2, move},
 	"apply":     {1, 2, apply},
 	"topic":     {0, 1, topic},
 	"questions": {0, 0, questions},
 	"version":   {0, 0, version},
+	"status":    {0, 0, status},
+	"mark":      {2, 2, mark},
 }
 
 // Run runs the command line args, without the program name, and returns the
@@ -94,6 +102,8 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		err = fmt.Errorf("wrong number of arguments\n\n%s", usage)
 	case o.specSet && name != "init":
 		err = errors.New("--spec is a flag of init")
+	case o.markFlags && name != "mark":
+		err = errors.New("--file, --check, -e and -m are flags of mark")
 	}
 	code := ExitFailed
 	if err == nil {
@@ -101,11 +111,17 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	}
 	if err != nil {
 		var r *edit.Refusal
-		if errors.As(err, &r) {
+		var s *state.Refusal
+		switch {
+		case errors.As(err, &r):
 			for _, p := range r.Problems {
 				fmt.Fprintf(stderr, "markitect-next %s: %s\n", name, p)
 			}
-		} else {
+		case errors.As(err, &s):
+			for _, p := range s.Problems {
+				fmt.Fprintf(stderr, "markitect-next %s: %s\n", name, p)
+			}
+		default:
 			fmt.Fprintf(stderr, "markitect-next %s: %v\n", name, err)
 		}
 	}
@@ -120,9 +136,14 @@ type options struct {
 	// dir is the project folder -C names, "" without the flag.
 	dir string
 	// spec is the spec folder --spec names, specSet whether it was given.
-	spec       string
-	specSet    bool
-	positional []string
+	spec    string
+	specSet bool
+	// files, checks, evidence and reason are the flags of mark, markFlags
+	// whether any was given.
+	files, checks, evidence []string
+	reason                  string
+	reasonSet, markFlags    bool
+	positional              []string
 }
 
 func parse(args []string) (options, error) {
@@ -155,6 +176,21 @@ func parse(args []string) (options, error) {
 		case strings.HasPrefix(a, "--spec=") || strings.HasPrefix(a, "-spec="):
 			_, o.spec, _ = strings.Cut(a, "=")
 			o.specSet = true
+		case a == "--file" || a == "-file":
+			var v string
+			v, err = value(a)
+			o.files, o.markFlags = append(o.files, v), true
+		case a == "--check" || a == "-check":
+			var v string
+			v, err = value(a)
+			o.checks, o.markFlags = append(o.checks, v), true
+		case a == "-e" || a == "--evidence":
+			var v string
+			v, err = value(a)
+			o.evidence, o.markFlags = append(o.evidence, v), true
+		case a == "-m" || a == "--reason":
+			o.reason, err = value(a)
+			o.reasonSet, o.markFlags = true, true
 		case strings.HasPrefix(a, "-") && a != "-":
 			err = fmt.Errorf("unknown flag %s", a)
 		default:

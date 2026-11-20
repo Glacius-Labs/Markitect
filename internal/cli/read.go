@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/lang"
+	"github.com/Glacius-Labs/Markitect/internal/state"
 )
 
-// showDocument is the JSON document of show. Later steps add the document's
-// artifacts, counter-checks and verdict beside these fields.
+// showDocument is the JSON document of show.
 type showDocument struct {
 	header
 	Path  string `json:"path"`
@@ -24,6 +24,14 @@ type showDocument struct {
 	LinkedFrom []showLink    `json:"linked_from"`
 	// Documents are the documents whose type this document is.
 	Documents []string `json:"documents"`
+	// The row of the state status takes: Verdict is "" without one, and
+	// Conflict says that rows of it conflict.
+	Verdict       string   `json:"verdict"`
+	Conflict      bool     `json:"conflict,omitempty"`
+	Artifacts     []string `json:"artifacts"`
+	CounterChecks []string `json:"counter_checks"`
+	Evidence      []string `json:"evidence"`
+	Reason        string   `json:"reason"`
 }
 
 type showSection struct {
@@ -46,8 +54,18 @@ func show(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
+	s, _, err := evaluate(w)
+	if err != nil {
+		return ExitFailed, err
+	}
 	doc := showDocument{header: newHeader("show"), Path: d.Path, Title: d.Title, Type: d.TypePath,
-		Sections: []showSection{}, LinksTo: []showLink{}, LinkedFrom: []showLink{}, Documents: []string{}}
+		Sections: []showSection{}, LinksTo: []showLink{}, LinkedFrom: []showLink{}, Documents: []string{},
+		Artifacts: []string{}, CounterChecks: []string{}, Evidence: []string{}}
+	if row, conflict, ok := s.Row(d.Path); ok {
+		doc.Verdict, doc.Conflict, doc.Reason = row.Verdict, conflict, row.Reason
+		doc.Artifacts, doc.CounterChecks = append(doc.Artifacts, row.Files()...), append(doc.CounterChecks, row.Checks()...)
+		doc.Evidence = append(doc.Evidence, row.Evidence...)
+	}
 	switch _, ok := spec.Document(d.TypePath); {
 	case d.TypeLine == 0:
 		doc.TypeState = "none"
@@ -153,6 +171,20 @@ func showText(doc showDocument) string {
 	list("Links to:", to, true)
 	list("Linked from:", from, true)
 	list("Documents:", doc.Documents, false)
+	verdict := doc.Verdict
+	switch {
+	case verdict == "":
+		verdict = "(no row)"
+	case doc.Conflict:
+		verdict += " (rows conflict)"
+	}
+	b.WriteString("Verdict: " + verdict + "\n")
+	list("Artifacts:", doc.Artifacts, true)
+	list("Counter-checks:", doc.CounterChecks, true)
+	list("Evidence:", doc.Evidence, true)
+	if doc.Reason != "" {
+		b.WriteString("Reason: " + doc.Reason + "\n")
+	}
 	return b.String()
 }
 
@@ -176,6 +208,14 @@ func table(o options, stdout io.Writer) (int, error) {
 		return ExitFailed, err
 	}
 	spec := w.Spec
+	if len(o.positional) == 0 {
+		s, _, err := evaluate(w)
+		if err != nil {
+			return ExitFailed, err
+		}
+		doc := stateTable(spec, s)
+		return output(o, stdout, doc, stateTableText(doc))
+	}
 	t, err := document(spec, o.positional[0])
 	if err != nil {
 		return ExitFailed, err
@@ -223,6 +263,37 @@ func tableText(doc tableDocument) string {
 			cells = append(cells, strings.ReplaceAll(c, "|", `\|`))
 		}
 		line(cells)
+	}
+	return b.String()
+}
+
+// stateTable is every document of the spec with its verdict and artifacts:
+// the state as a table. The type is "" and the columns are Verdict and
+// Artifacts.
+func stateTable(spec *lang.Spec, s *state.Status) tableDocument {
+	doc := tableDocument{header: newHeader("table"), Columns: []string{"Verdict", "Artifacts"}, Rows: []tableRow{}}
+	for _, d := range spec.Documents {
+		verdict, artifacts := "", ""
+		if row, conflict, ok := s.Row(d.Path); ok {
+			verdict, artifacts = row.Verdict, strings.Join(row.Files(), ", ")
+			if conflict {
+				verdict += " (rows conflict)"
+			}
+		}
+		doc.Rows = append(doc.Rows, tableRow{Path: d.Path, Title: d.Title, Cells: []string{verdict, artifacts}})
+	}
+	return doc
+}
+
+func stateTableText(doc tableDocument) string {
+	var b strings.Builder
+	b.WriteString("| Document | Verdict | Artifacts |\n| --- | --- | --- |\n")
+	for _, r := range doc.Rows {
+		cells := []string{r.Path}
+		for _, c := range r.Cells {
+			cells = append(cells, strings.ReplaceAll(c, "|", `\|`))
+		}
+		b.WriteString("| " + strings.Join(cells, " | ") + " |\n")
 	}
 	return b.String()
 }
