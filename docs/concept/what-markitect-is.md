@@ -1,42 +1,59 @@
 # What Markitect is
 
-| Part | What it is | Changes with the provider? |
+**The spec is a typed, declarative specification language in Markdown** ([DEC-119](../decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)). It works like declarative programming, with an agent as the executor: it states what should hold, not how to get there, and agents make the project match it. It is a specification language as TLA+ and Alloy are, and nothing in it is executed. Its structure is formal and checked by the tool; its content is prose that an agent interprets. Because an agent can be wrong, every result is checked, and how well the checking works is measured ([§7](trust.md)).
+
+## Terraform is the image
+
+Terraform makes infrastructure match a configuration, keeps a state of what exists, and shows a plan of what would change. Markitect has the same three things, for the intent of a project ([DEC-124](../decisions.md#dec-124-a-state-maps-each-document-to-its-artifacts-and-status-is-the-plan)):
+
+| Terraform | Markitect | What it is |
 |---|---|---|
-| **Spec** | Typed documentation in Markdown, with the registry ([below](#the-spec)) | No |
-| **Tool** | One program, `markitect`. It holds every fact and every rule that can be checked without judgment: it checks the spec, says what is to verify and records what was verified. It starts no agent, steers no work and uses no Git ([DEC-096](../decisions.md#dec-096-the-tool-computes-and-checks-a-driver-acts), [DEC-097](../decisions.md#dec-097-markitect-uses-no-git)) | No |
-| **Harness** | The drivers: four agents in a 2×2 of rights, short skills named after their activity that have the owner's session start them, in sequence or through the shipped parallel workflow, routine prompts, a hook, the instruction files that `markitect init` writes, and the harness configuration ([§9](harness.md), [§10](drivers.md)) | Yes |
+| Configuration | The spec | What should hold, like an interface ([§4](what-goes-in-a-spec.md)) |
+| State | The state in `.markitect/` | Which artifacts realize which document, and their hashes at the last confirmation ([§6](the-state.md)) |
+| `validate` | `check` | Is the spec correct in itself? |
+| `plan` | `status` | What moved since the last confirmation? |
+| `apply` | The build job | A builder realizes, a reviewer confirms ([§8](the-factory.md)) |
+| Drift, imported or reverted | A change past the spec | Back-filled into the spec or reverted ([§9](reports-and-actions.md#a-change-past-the-spec)) |
+| The command line, pipeline definitions and the services that run them | The tool, the jobs and the runners | Computing, saying what each job does, and running it ([§11](the-tool.md), [§12](jobs-and-runners.md)) |
+| `required_version` | The version in the project | Every runner uses the same tool |
 
-**A record of what was verified.** For each item, a Definition with its parts ([DEC-111](../decisions.md#dec-111-a-thing-with-parts-is-built-and-verified-as-one)), the tool keeps the state at which a reviewer last verified it, as Go's test cache does for tests, and `markitect status` lists every item whose state changed since ([§3](tools.md#how-status-works), [§6](record.md)). The builder is told: make the project match the spec for what `status` lists, and have the reviewer verify and record each item. When nothing is left to verify, the spec is implemented. So:
+A compiler would be the other image. Terraform fits better, because the work is reconciling what should be with what is, not translating one into the other. For readers without a developer's background, `status` is a checklist, computed instead of remembered: a team that knows every step can still skip one.
 
-- nothing is held between commands outside the project, so compaction or a closed session loses nothing;
-- the tool imposes no order, reviewers can work in parallel, and any driver, a person included, can verify at any time and in any amount;
-- the prompt stays a task and an answer format ([DEC-051](../decisions.md#dec-051-agents-get-tasks-not-process)), and the agents hold it in their own files;
-- the hook guards only the record, the spec and what steers the agents.
+## The parts
 
-What is left to the agents is what needs judgment: how to build it, and whether the code meets the spec. What is left to the driver is who starts which agent, when, how often, and every Git step. There is no token and no background session: the owner's session starts the agents, and they call `markitect` like any other tool ([DEC-094](../decisions.md#dec-094-the-users-own-session-runs-the-agents-natively)).
+| Part | What it is | Tied to a provider? |
+|---|---|---|
+| **Spec** | A folder of Markdown documents in the project, by default `docs/spec/` ([§3](the-language.md)) | No |
+| **Tool** | One program, `markitect`. It checks the spec, computes the state and what is to verify, binds verdicts and computes the factory's figures. It starts no agent and uses no Git ([§11](the-tool.md)) | No |
+| **Jobs** | For each job, which roles run in which order, with which task and write area. They ship in the Claude Code plugin ([§12](jobs-and-runners.md)) | Yes |
+| **Runners** | Where a job runs: the user's own session, a scheduled task, a cloud task or CI. The user chooses ([§12](jobs-and-runners.md)) | Each runner is its own |
 
 ## Words
 
 | Word | Meaning |
 |---|---|
-| **Spec** | The one documentation of the project that has authority over its artifacts |
-| **Definition, Kind, Package** | One Markdown file of the spec, its type, and a module of the spec: a folder that holds its anchor, a Definition of kind `Package` |
-| **Registry** | One page per Package: the paths it owns and which Definitions each file realizes |
-| **Record** | `.markitect/review.sum`: for each item, a Definition with its parts, the verdict and the inputs at which it was verified |
-| **History** | `.markitect/history.jsonl`: the project's process data, one event per line, such as each verdict with what was pending beside it |
-| **Inbox** | `.markitect/inbox.jsonl`: what waits, for the owner or for an agent, one item per line, such as a question or an audit's finding |
-| **Owner** | The person who owns the project and its spec: decides intent, accepts every spec change and settles every `spec-problem` |
-| **Builder, reviewer, architect, auditor** | The four agents: the builder writes code, the reviewer judges it and records, the architect writes large parts of the spec for the owner's session, the auditor judges the spec |
-| **Driver** | Whatever starts the agents and makes the Git steps: by default the harness and the owner's session |
+| **Spec** | The one description of the project that has authority over its artifacts |
+| **Document, type** | One Markdown file of the spec, and a document whose sections are the template of other documents |
+| **Package, template** | A folder of types, such as `software`; and a folder of documents with empty sections, applied to start an area |
+| **Area** | A folder of the spec with a README of an area type, whose sections are its table of contents |
+| **Artifact** | Any file that comes from the spec: code, tests, configuration, a handbook |
+| **State** | One row per document in `.markitect/`: its artifacts, its counter-checks, its verdict and the hashes at its last confirmation |
+| **History** | The facts recorded at each confirmation and move, as hashes, in `.markitect/` |
+| **Report, action** | A signal that a change is needed, as a document in `.markitect/reports/`; and the branch that answers it |
+| **Conversation, job** | Work with the owner; and every other run, from a commit to a branch, with nobody asked |
+| **Runner** | Whatever starts a job and makes the Git steps |
+| **Owner** | The person who owns the project and its spec: decides intent and makes the new decisions that are not handed over |
+| **Architect, builder, reviewer** | The roles that write the spec, realize it, and confirm the realization |
+| **Reader, counter-checker, sampler** | The roles that read and question the spec, derive checks from it alone, and plant known deviations in a throwaway copy |
+| **Counter-check** | A test or a question with an expected answer, derived from the spec alone |
+| **Control sample, spot check** | A run that measures how much the reviewer finds; and a fresh check of confirmed documents at random |
+| **Landing rule** | The one rule that decides whether a job's branch lands |
+| **Write table, control files** | What each role may write; and the files that steer the jobs, read from the target branch |
 
-## The spec
+## Authority
 
-**What belongs in it.** What good documentation of the project would state: what a book is, how many a member may borrow, which interfaces exist, which technologies are used, which modules exist. What nobody cares about stays out, and agents decide it ([DEC-079](../decisions.md#dec-079-the-spec-is-as-explicit-as-good-documentation)). [What makes a good spec](../guides/good-spec.md) says how to cut it.
+Where an artifact differs from the spec, the artifact is wrong: code, tests, documentation, pipelines and configuration alike ([DEC-122](../decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)). A project rule found outside the spec, in configuration or agent instructions, belongs in it. The roles that build never change the spec, and the architect writes no code. Where the spec leaves open something someone will rely on, nothing is guessed: it becomes a report ([§9](reports-and-actions.md)).
 
-**How it is written.** The spec lives in `.markitect/spec/`. A Definition is one Markdown file whose front matter names its Kind; a Kind is itself a Definition; a folder is a namespace, and a Package is a folder that holds its anchor, a Definition of kind `Package` that says what the Package is, whose Definitions reach its whole subtree ([DEC-108](../decisions.md#dec-108-a-folder-is-a-namespace-a-package-is-declared-by-its-anchor)); a link `[[path]]` is a declared dependency, like an import; a cycle between Packages is a compile error; Libraries supply common Kinds, and `std` ships in the binary ([DEC-080](../decisions.md#dec-080-the-spec-is-typed-documentation-in-markdown)). A Definition states one thing; a thing with parts is a folder that holds the Definition of its own name and its parts, a link to the folder means that Definition, and `doc` shows it whole ([DEC-109](../decisions.md#dec-109-a-thing-with-parts-is-read-as-a-whole)). A Kind may declare the labelled fields of its Definitions, the form of a field's value where a check, a view or the reviewer depends on it, and the folders of their parts, and the compiler checks them, a form given to a field that specs already use first as a note of `vet` ([DEC-117](../decisions.md#dec-117-a-kind-declares-the-form-of-a-fields-value)); `std` holds the Kinds of a whole project's description, from its purpose to how it is kept running ([DEC-110](../decisions.md#dec-110-a-kind-declares-fields-and-parts-and-std-describes-a-whole-project)), its business case among them: how each Stakeholder works today, the Problems in it, what each gains and gives, the Conflicts between them and the Alternatives to building the system. `std` holds Kinds for things only: a view, such as a context diagram, is not declared but rendered from the Definitions, so each fact is stated once ([DEC-115](../decisions.md#dec-115-std-states-the-business-case-views-are-rendered-not-declared)). A link is never decorative: it states a relation that matters for change, and navigation belongs in documentation rendered from the spec. A record that others name gets an identity Definition of its own, and a Package publishes what is not `internal: true`, as code writes both ([DEC-104](../decisions.md#dec-104-a-link-is-never-decorative-identity-and-surface-are-written-as-code-writes-them)). The [spec language guide](../guides/spec-language.md) is the canonical description.
+## Removing Markitect leaves an ordinary repository
 
-**Authority.** Where an artifact differs from the spec, the artifact is wrong: code, tests, docs, pipelines and configuration alike. The agents that build never change the spec, and the owner accepts every spec change. A bad spec is never made to work during the build: its Definitions get `spec-problem`, and the owner changes the spec ([DEC-063](../decisions.md#dec-063-the-spec-is-the-authority-and-its-defects-go-to-the-owner)). That loop runs per change, not as one long phase up front, because some flaws show only once something is built.
-
-**The registry.** Every file has one owning Package, the most specific path pattern wins, and each file is listed with the Definitions it realizes, or is ignored. Shared files sit with the lowest common parent. The builder keeps every registry page current. When a Definition disappears, every file whose only basis it was goes, or gets a new basis ([DEC-006](../decisions.md#dec-006-every-file-is-accounted-for)).
-
-**Three starting situations.** A new project starts with the spec: `/markitect-architect` writes it with the owner, and `/markitect-build` builds it all, since nothing is verified yet, slice by slice where the list is long ([DEC-112](../decisions.md#dec-112-a-long-list-is-built-in-slices)). An ongoing project changes the spec and builds what `status` lists. An existing project without a spec gets a first spec that states what is as what should be, drawn with the owner from every artifact: code, tests, documentation, scripts, pipelines and configuration ([DEC-105](../decisions.md#dec-105-a-first-spec-of-an-existing-project-states-what-is-as-what-should-be)). It is finished when a build would change nothing: `/markitect-review --all` verifies every Definition against the project, the architect corrects the spec where it misread the project, and the two repeat until `status` lists only what waits for the owner. Those are the places where the project contradicts itself, which stay `fail` until the owner says which side holds, and behaviour the reviewer found that the spec leaves out, a `spec-problem` until the owner says whether it stays free; nothing is built before that. What looks like an accident the spec leaves unstated, and the architect asks the owner. The spec does not transcribe the project: the binding part is the contract callers rely on. Once the owner has accepted the spec, a confirmed defect stays a defect against it, and `/markitect-build` repairs it: rewriting intent to get an empty `status` would defeat adoption.
+Nothing of Markitect stands in an artifact or in the spec: no comment in code, no line in a handbook, no front matter. The spec is ordinary documentation, and everything else of Markitect lies in `.markitect/`. Deleting `.markitect/` and the plugin leaves a repository with its documentation, code and tests, the counter-checks included ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version)).

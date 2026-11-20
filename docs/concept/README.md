@@ -1,41 +1,41 @@
 # Concept
 
-**You architect the project in Markdown. Markitect's tool checks the spec and says what is left to verify, an ordinary agent started by your own session builds the project to the spec, and a fresh reviewer verifies each Definition and records it.**
+**You architect the project in a typed, declarative specification language in Markdown. Jobs realize it, check it and measure how well the checking works; the tool computes what is built and verified; and you are asked only for the decisions that are yours.**
 
 This page is the one description of the product, and the target that Main builds ([DEC-098](../decisions.md#dec-098-one-concept-describes-the-product)). The [decisions](../decisions.md) list what it rests on, the [roadmap](../roadmap.md) the next steps, and the [vision](../vision.md) why.
 
 ## The aim
 
-Make one clean and simple version work reliably on Sonnet ([DEC-009](../decisions.md#dec-009-how-markitect-is-judged)): the spec as it stands gets applied reliably, with no human babysitting, review or other slowing down, so that people concentrate on architecture, which agents can't do by themselves. Every choice below is judged by that.
+Make one clean and simple version that works reliably ([DEC-120](../decisions.md#dec-120-how-markitect-is-judged-and-when-it-is-proven)): the spec as it stands is realized and checked without anyone reading the work, so that people concentrate on architecture and on the decisions only they can make.
 
-**The problem.** When agents build a project, trust and overview no longer come with the work, and nothing in the project states what it should be; the [vision](../vision.md#why-markitect-exists) gives the reasoning. Markitect supplies that statement: one spec with authority, and every file accounted for in the registry ([§2](what-markitect-is.md#the-spec)). The spec is how a change is made, so it cannot be ignored while work goes through it. On it, Markitect answers four questions:
+**The problem.** When agents build a project, trust and overview no longer come with the work, and nothing in the project states what it should be; the [vision](../vision.md#why-markitect-exists) gives the reasoning. Markitect supplies that statement: one spec with authority, and every file of the project mapped to a document of it or ignored ([§2](what-markitect-is.md)). On it, Markitect answers four questions:
 
 | Question | Markitect's answer |
 |---|---|
-| Was something forgotten? | `status` lists what a change reaches, from the spec and the record, not from memory ([§3](tools.md#how-status-works)). Every Definition keeps a verdict at the inputs it was verified at, and a full review is `/markitect-review --all` |
-| Was it understood correctly? | A fresh reviewer verifies every Definition a change reaches ([§5](what-build-does.md)) and records its verdict ([§6](record.md)) |
-| Does the spec say what was meant? | Only the owner answers spec against intent, from walking every area of a new spec with the session as it is written, and from its hand-over: the Scenarios told as stories and a table of what the session decided beside what else would do ([§8](other-skills.md)). `vet` ([§4](is-the-spec-good.md)) and the audit support that. A reading view of the spec is an idea, not built |
-| How does the project stand, and how is it organized? | Follow the spec, not the code: `list`, `doc` and `vet` show its structure, and it moves only when the owner accepts a change ([§3](tools.md)). `/markitect-tour`, `/markitect-catchup` and `/markitect-explain` walk a person through it, tell them what changed since they last looked and explain a part of it ([§8](other-skills.md)) |
+| Was something forgotten? | `status` computes from the spec and the state what is changed, suspect or unexplained, not from anyone's memory ([§6](the-state.md)). Spot checks and rare full reviews check confirmed documents again ([§7](trust.md)) |
+| Was it understood correctly? | A fresh reviewer confirms each document a change reaches. Counter-checks, derived from the spec alone before anything is built, catch a misreading that builder and reviewer share, and control samples measure how much the reviewer finds ([§7](trust.md)) |
+| Does the spec say what was meant? | Only use shows it. Every finding names its place and the property it violates, "correct" among them ([§5](is-the-spec-good.md)), and a new decision goes to the owner as a choice between prepared proposals ([§9](reports-and-actions.md)). The spec itself is read and questioned regularly |
+| How does the project stand, and what changed since I last looked? | The tool shows and Claude explains, with a citation for each statement: the briefing, explanations from the spec, and a comparison of two states ([§10](overview.md)) |
 
 **The way of working:**
 
-1. A person architects the project in an ordinary Claude Code session, with the architect skill: the session asks, proposes and writes the spec, and hands a large draft to the architect agent. The person goes through it with the session, or reads the Markdown diff of a change, and the session commits it with the person's word.
-2. The person runs the build skill. Agents started by the person's own session apply the spec as it stands, in a worktree of their own, so the person can go on architecting. They ask nothing about the spec, and nobody has to watch.
-3. The spec stays as it was while they work: the hook keeps the agents that build out of it.
-4. When `markitect status` lists nothing, or only `spec-problem`s for the person, the session commits the work with the record of what was verified and brings it to the person's branch. The person reads the verdicts when they want to, and answers only when the spec has a problem.
-5. A bug hunt, a cleanup and a full review also run on a schedule, each on a branch of its own.
+1. The owner designs the project with an agent, in a conversation. The first design walks every area of the template; later the owner drops in ideas, or designs along when they want.
+2. Everything that calls for a change becomes a report: an idea, a bug report, a customer's wish, a log, a finding of a job. Triage sorts each one: a repair, a spec change that follows from what was decided, or a new decision for the owner.
+3. Every change is a job on a branch of its own. For what `status` lists, a counter-checker derives checks from the spec, a builder realizes, and a reviewer confirms. The branch lands by one rule when nothing gets worse, a spec change together with its realization.
+4. Routines keep the project in shape: spot checks, control samples, bug hunt, cleanup, improve, and reading the spec.
+5. The owner looks into the briefing: what to decide, what was decided for them, incidents, and how the factory runs.
 
 ## The other pages
 
 2. [What Markitect is](what-markitect-is.md)
-3. [The tools](tools.md)
-4. [Is the spec good?](is-the-spec-good.md)
-5. [What build does](what-build-does.md)
-6. [The record](record.md)
-7. [How sure we are](how-sure-we-are.md)
-8. [Other skills](other-skills.md)
-9. [The harness](harness.md)
-10. [Drivers](drivers.md)
-11. [Providers](providers.md)
-12. [Schedules and continuous work](schedules-and-continuous-work.md)
+3. [The language](the-language.md)
+4. [What goes in a spec](what-goes-in-a-spec.md)
+5. [Is the spec good?](is-the-spec-good.md)
+6. [The state](the-state.md)
+7. [Trust](trust.md)
+8. [The factory](the-factory.md)
+9. [Reports and actions](reports-and-actions.md)
+10. [Overview](overview.md)
+11. [The tool](the-tool.md)
+12. [Jobs and runners](jobs-and-runners.md)
 13. [What is shown and what is not](what-is-shown.md)
