@@ -60,19 +60,19 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/state` | Package state is a project of the rebuilt tool, over a file system rooted at the project folder: the layout of .markitect/, the project loaded with its spec, the files of the project without what its ignore files exclude, the hash of a file, the state: its rows, what status lists and the rows a mark or a move leaves, the history, the reports, the settings and the results of control samples with the forms of their values, the write table with the step check and the landing check, the comparison of two projects, the change signals of the history and the figures of the factory. | [docs/guides/project-reference.md](../guides/project-reference.md) |
+| `internal/state` | Package state is a Markitect project, over a file system rooted at the project folder: the layout of .markitect/, the project loaded with its spec, the files of the project without what its ignore files exclude, the hash of a file, the state: its rows, what status lists and the rows a mark or a move leaves, the history, the reports, the settings and the results of control samples with the forms of their values, the write table with the step check and the landing check, the comparison of two projects, the change signals of the history and the figures of the factory. | [docs/guides/project-reference.md](../guides/project-reference.md) |
 
 ## Command line
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/cli` | Package cli is the command line of the rebuilt tool, markitect-next: it parses the arguments, finds the project they work in, sets one up with init, reads its spec, prints what the language finds, as text or as JSON, and applies the changes of the commands that write. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
+| `internal/cli` | Package cli is the command line of markitect: it parses the arguments, finds the project they work in, sets one up with init, reads its spec, prints what the language finds, as text or as JSON, and applies the changes of the commands that write. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
 
 ## Entrypoint
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `cmd/markitect-next` | Command markitect-next is the rebuilt Markitect tool while it grows beside markitect: init, check, show, table, new, move, apply, topic, questions, status, mark, compare, figures, settings and version. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
+| `cmd/markitect` | Command markitect is the Markitect tool: init, check, show, table, new, move, apply, topic, questions, status, mark, compare, figures, reports, settings, version and licenses. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
 
 ## Maintenance
 

@@ -1,4 +1,4 @@
-// Package state is a project of the rebuilt tool, over a file system rooted
+// Package state is a Markitect project, over a file system rooted
 // at the project folder: the layout of .markitect/, the project loaded with
 // its spec, the files of the project without what its ignore files exclude,
 // the hash of a file, the state: its rows, what status lists and the rows a

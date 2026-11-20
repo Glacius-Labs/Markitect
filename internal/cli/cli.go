@@ -1,4 +1,4 @@
-// Package cli is the command line of the rebuilt tool, markitect-next: it
+// Package cli is the command line of markitect: it
 // parses the arguments, finds the project they work in, sets one up with
 // init, reads its spec, prints what the language finds, as text or as JSON,
 // and applies the changes of the commands that write.
@@ -28,7 +28,7 @@ const (
 	ExitFailed = 2 // the command could not run
 )
 
-const usage = `usage: markitect-next COMMAND ARGUMENTS [-C PROJECT] [--json]
+const usage = `usage: markitect COMMAND ARGUMENTS [-C PROJECT] [--json]
 
   init [--spec PATH]          set up a project: .markitect/ and the spec folder,
                               by default docs/spec
@@ -65,6 +65,8 @@ const usage = `usage: markitect-next COMMAND ARGUMENTS [-C PROJECT] [--json]
                               folder, the tests command, the cadence, the write
                               table and the CI definition
   version                     the tool's version, and whether the project pins it
+  licenses                    the license notices of the modules the tool is
+                              built from
 
 The project is the nearest folder, from the working directory upward, that
 holds .markitect/version, or the folder -C names. A DOCUMENT, TYPE or PATH is a path
@@ -91,6 +93,7 @@ var commands = map[string]command{
 	"topic":     {0, 1, topic},
 	"questions": {0, 0, questions},
 	"version":   {0, 0, version},
+	"licenses":  {0, 0, licenses},
 	"status":    {0, 0, status},
 	"mark":      {2, 2, mark},
 	"compare":   {1, 2, compare},
@@ -114,7 +117,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	}
 	c, ok := commands[name]
 	if !ok {
-		fmt.Fprintf(stderr, "markitect-next: unknown command %q\n\n%s", name, usage)
+		fmt.Fprintf(stderr, "markitect: unknown command %q\n\n%s", name, usage)
 		return ExitFailed
 	}
 	o, err := parse(args[1:])
@@ -131,14 +134,14 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		switch {
 		case errors.As(err, &r):
 			for _, p := range r.Problems {
-				fmt.Fprintf(stderr, "markitect-next %s: %s\n", name, p)
+				fmt.Fprintf(stderr, "markitect %s: %s\n", name, p)
 			}
 		case errors.As(err, &s):
 			for _, p := range s.Problems {
-				fmt.Fprintf(stderr, "markitect-next %s: %s\n", name, p)
+				fmt.Fprintf(stderr, "markitect %s: %s\n", name, p)
 			}
 		default:
-			fmt.Fprintf(stderr, "markitect-next %s: %v\n", name, err)
+			fmt.Fprintf(stderr, "markitect %s: %v\n", name, err)
 		}
 	}
 	return code

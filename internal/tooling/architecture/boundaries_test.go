@@ -79,7 +79,7 @@ func TestLayerDirections(t *testing.T) {
 		{"internal/cli", "internal/state", both},
 		{"internal/cli", "internal/signals", both},
 		{"internal/cli", "internal/buildinfo", both},
-		{"cmd/markitect-next", "internal/cli", both},
+		{"cmd/markitect", "internal/cli", both},
 
 		// The language and the library never import outward.
 		{"internal/lang", "internal/edit", none},
@@ -93,8 +93,8 @@ func TestLayerDirections(t *testing.T) {
 		{"internal/state", "internal/cli", none},
 		{"internal/state", "internal/buildinfo", none},
 		// The entrypoint stays thin.
-		{"cmd/markitect-next", "internal/state", none},
-		{"cmd/markitect-next", "internal/lang", none},
+		{"cmd/markitect", "internal/state", none},
+		{"cmd/markitect", "internal/lang", none},
 		// Maintenance stays apart from the product.
 		{"internal/tooling/architecture", "internal/lang", none},
 		{"tools/smoke", "internal/lang", none},

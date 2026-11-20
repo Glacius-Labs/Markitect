@@ -71,7 +71,7 @@ var Table = Rules{
 		{"internal/signals", "signals", "docs/guides/signals.md"},
 		{"internal/state", "state", "docs/guides/project-reference.md"},
 		{"internal/cli", "command-line", "docs/guides/language-reference.md#commands"},
-		{"cmd/markitect-next", "entrypoint", "docs/guides/language-reference.md#commands"},
+		{"cmd/markitect", "entrypoint", "docs/guides/language-reference.md#commands"},
 		{"internal/tooling/architecture", "maintenance", "docs/architecture.md#layers"},
 		{"internal/testkit", "test-support", "docs/architecture.md#layers"},
 		{"tools/smoke", "standalone", "docs/architecture.md#distribution"},

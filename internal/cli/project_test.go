@@ -193,7 +193,7 @@ func TestCommandsFindTheProjectUpward(t *testing.T) {
 func TestVersion(t *testing.T) {
 	dir := initialized(t)
 	code, out, _ := run("version", "-C", dir)
-	if code != ExitOK || out != "markitect-next "+buildinfo.Version()+"\nthe project pins "+buildinfo.Version()+"\n" {
+	if code != ExitOK || out != "markitect "+buildinfo.Build()+"\nthe project pins "+buildinfo.Version()+"\n" {
 		t.Error(code, out)
 	}
 	if err := os.WriteFile(filepath.Join(dir, ".markitect", "version"), []byte("0.1.0\r\n"), 0o644); err != nil {
@@ -207,11 +207,23 @@ func TestVersion(t *testing.T) {
 	if err := json.Unmarshal([]byte(out), &doc); err != nil {
 		t.Fatal(err)
 	}
-	if doc.Kind != "version" || doc.Version != buildinfo.Version() || doc.Pinned != "0.1.0" || doc.Matches {
+	if doc.Kind != "version" || doc.Version != buildinfo.Version() || doc.Build != buildinfo.Build() || doc.Pinned != "0.1.0" || doc.Matches {
 		t.Error(out)
 	}
 	if code, _, errOut := run("version", "-C", t.TempDir()); code != ExitFailed || !strings.Contains(errOut, "holds no .markitect/version") {
 		t.Error(code, errOut)
+	}
+}
+
+// The license notices print anywhere, inside a project or not.
+func TestLicenses(t *testing.T) {
+	if code, out, _ := run("licenses"); code != ExitOK || out != buildinfo.Notices || !strings.Contains(out, "goldmark") {
+		t.Error(code, out)
+	}
+	_, out, _ := run("licenses", "--json")
+	var doc licensesResult
+	if err := json.Unmarshal([]byte(out), &doc); err != nil || doc.Kind != "licenses" || doc.Notices != buildinfo.Notices {
+		t.Error(err, out)
 	}
 }
 
@@ -230,10 +242,10 @@ func TestOutsideAProject(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Chdir(inside)
-	if code, out, _ := run("version"); code != ExitOK || out != "markitect-next "+buildinfo.Version()+"\n" {
+	if code, out, _ := run("version"); code != ExitOK || out != "markitect "+buildinfo.Build()+"\n" {
 		t.Error(code, out)
 	}
-	if code, _, errOut := run("check"); code != ExitFailed || !strings.Contains(errOut, "upward holds .markitect/version; markitect-next init makes one") {
+	if code, _, errOut := run("check"); code != ExitFailed || !strings.Contains(errOut, "upward holds .markitect/version; markitect init makes one") {
 		t.Error(code, errOut)
 	}
 }

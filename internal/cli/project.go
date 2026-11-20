@@ -69,9 +69,9 @@ func projectFolder(o options) (dir string, found bool, err error) {
 // noProject says that no project was found, and how to make one.
 func noProject(o options, at string) error {
 	if o.dir != "" {
-		return fmt.Errorf("%s holds no %s; markitect-next init makes one", o.dir, state.VersionFile)
+		return fmt.Errorf("%s holds no %s; markitect init makes one", o.dir, state.VersionFile)
 	}
-	return fmt.Errorf("no folder from %s upward holds %s; markitect-next init makes one", at, state.VersionFile)
+	return fmt.Errorf("no folder from %s upward holds %s; markitect init makes one", at, state.VersionFile)
 }
 
 // mustProject is the project a command works in, or an error when there is
@@ -208,20 +208,23 @@ func initProject(o options, stdout io.Writer) (code int, err error) {
 	return output(o, stdout, initResult{newHeader("init"), buildinfo.Version(), spec, created}, text)
 }
 
-// versionResult is the JSON document of version. Pinned is the version the
+// versionResult is the JSON document of version. Build is the version with
+// the source revision, when the build knows it; Pinned is the version the
 // project pins, "" outside a project.
 type versionResult struct {
 	header
 	Version string `json:"version"`
+	Build   string `json:"build"`
 	Pinned  string `json:"pinned"`
 	Matches bool   `json:"matches"`
 }
 
-// version prints the tool's version and, in a project, the version it pins.
-// It exits 1 when the two differ.
+// version prints the tool's build, its version with the source revision,
+// and, in a project, the version it pins. It exits 1 when the version and the
+// pinned one differ.
 func version(o options, stdout io.Writer) (int, error) {
-	doc := versionResult{header: newHeader("version"), Version: buildinfo.Version()}
-	text := "markitect-next " + doc.Version + "\n"
+	doc := versionResult{header: newHeader("version"), Version: buildinfo.Version(), Build: buildinfo.Build()}
+	text := "markitect " + doc.Build + "\n"
 	dir, found, err := projectFolder(o)
 	switch {
 	case err != nil:
@@ -245,6 +248,17 @@ func version(o options, stdout io.Writer) (int, error) {
 		code = ExitFound
 	}
 	return code, err
+}
+
+// licensesResult is the JSON document of licenses.
+type licensesResult struct {
+	header
+	Notices string `json:"notices"`
+}
+
+// licenses prints the license notices of the modules the tool is built from.
+func licenses(o options, stdout io.Writer) (int, error) {
+	return output(o, stdout, licensesResult{newHeader("licenses"), buildinfo.Notices}, buildinfo.Notices)
 }
 
 // specFolderOf is the spec folder of the project at dir, which apply creates
