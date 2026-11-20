@@ -24,8 +24,10 @@ var branches = map[string]string{
 	"members/grace.md":  "# Grace Hopper\n\nType: [Member](../types/member.md)\n\n## card\nL-2\n\n## Branch\n[Main](../places/central.md)\n\n## Notes\n![photo](photo.png) on file, [missing](gone.md).\n",
 }
 
-func files(t *testing.T, dir string) map[string]string {
+// files returns the files of a project's spec folder, by their paths below it.
+func files(t *testing.T, project string) map[string]string {
 	t.Helper()
+	dir := specOf(project)
 	out := map[string]string{}
 	err := filepath.WalkDir(dir, func(p string, e fs.DirEntry, err error) error {
 		if err != nil || e.IsDir() {
@@ -44,22 +46,22 @@ func files(t *testing.T, dir string) map[string]string {
 
 func TestShow(t *testing.T) {
 	dir := spec(t, branches)
-	code, out, _ := run("show", dir, `members\ada`)
+	code, out, _ := run("show", "-C", dir, `members\ada`)
 	want := "members/ada.md\nTitle: Ada Lovelace\nType: types/member.md\nSections:\n  Card\n  Branch\n" +
 		"Links to:\n  members/grace.md\n  places/central.md\nLinked from: (none)\n"
 	if code != ExitOK || out != want {
 		t.Errorf("got %d\n%s\nwant\n%s", code, out, want)
 	}
-	_, out, _ = run("show", dir, "places/central.md")
+	_, out, _ = run("show", "-C", dir, "places/central.md")
 	if !strings.HasSuffix(out, "Linked from:\n  members/ada.md (Branch)\n  members/grace.md (Branch)\n") {
 		t.Error(out)
 	}
-	_, out, _ = run("show", dir, "types/member")
+	_, out, _ = run("show", "-C", dir, "types/member")
 	if !strings.Contains(out, "Type: (none)\nSections:\n  Card\n  Branch\n  Notes (optional)\n") ||
 		!strings.HasSuffix(out, "Documents:\n  members/ada.md\n  members/grace.md\n") {
 		t.Error(out)
 	}
-	_, out, _ = run("show", dir, "members/grace", "--json")
+	_, out, _ = run("show", "-C", dir, "members/grace", "--json")
 	var doc map[string]any
 	if err := json.Unmarshal([]byte(out), &doc); err != nil {
 		t.Fatal(err)
@@ -68,7 +70,7 @@ func TestShow(t *testing.T) {
 		t.Error(out)
 	}
 	for _, arg := range []string{"nobody", "../outside", "types"} {
-		if code, out, errOut := run("show", dir, arg); code != ExitFailed || out != "" || !strings.Contains(errOut, "unknown path") {
+		if code, out, errOut := run("show", "-C", dir, arg); code != ExitFailed || out != "" || !strings.Contains(errOut, "unknown path") {
 			t.Errorf("%s: %d %q %q", arg, code, out, errOut)
 		}
 	}
@@ -76,7 +78,7 @@ func TestShow(t *testing.T) {
 
 func TestTable(t *testing.T) {
 	dir := spec(t, branches)
-	code, out, _ := run("table", dir, "types/member")
+	code, out, _ := run("table", "-C", dir, "types/member")
 	want := "| Title | Card | Branch | Notes |\n| --- | --- | --- | --- |\n" +
 		"| Ada Lovelace | L-1 \\| gold | Central, see Grace. |  |\n" +
 		"| Grace Hopper | L-2 | Main | photo on file, missing. |\n"
@@ -87,7 +89,7 @@ func TestTable(t *testing.T) {
 
 func TestNewAndMove(t *testing.T) {
 	dir := spec(t, branches)
-	code, out, _ := run("new", dir, "types/member", "members/alan", "Alan Turing")
+	code, out, _ := run("new", "-C", dir, "types/member", "members/alan", "Alan Turing")
 	if code != ExitOK || out != "created members/alan.md\n" {
 		t.Fatal(code, out)
 	}
@@ -95,10 +97,10 @@ func TestNewAndMove(t *testing.T) {
 		t.Error(got)
 	}
 	before := files(t, dir)
-	if code, out, errOut := run("new", dir, "types/member", "members/ada"); code != ExitFailed || out != "" || !strings.Contains(errOut, "already exists") {
+	if code, out, errOut := run("new", "-C", dir, "types/member", "members/ada"); code != ExitFailed || out != "" || !strings.Contains(errOut, "already exists") {
 		t.Error(code, out, errOut)
 	}
-	code, out, _ = run("move", dir, "places/central", "places/main hall")
+	code, out, _ = run("move", "-C", dir, "places/central", "places/main hall")
 	if code != ExitOK || out != "moved places/central.md -> places/main hall.md\nchanged members/ada.md\nchanged members/grace.md\n" {
 		t.Fatal(code, out)
 	}
@@ -108,7 +110,7 @@ func TestNewAndMove(t *testing.T) {
 	}
 	moved := files(t, dir)
 	for _, args := range [][]string{{"places/main hall", "members/ada"}, {"nobody", "x"}, {"members/ada", "../out"}} {
-		if code, out, _ := run(append([]string{"move", dir}, args...)...); code != ExitFailed || out != "" {
+		if code, out, _ := run(append([]string{"move", "-C", dir}, args...)...); code != ExitFailed || out != "" {
 			t.Errorf("%v: %d %q", args, code, out)
 		}
 	}
@@ -152,15 +154,15 @@ func TestEveryTemplateApplies(t *testing.T) {
 	}
 	for _, tpl := range tpls {
 		for _, target := range []string{"", "areas/" + path.Base(tpl)} {
-			dir := filepath.Join(t.TempDir(), "new spec")
-			args := []string{"apply", dir, tpl}
+			dir := initialized(t)
+			args := []string{"apply", "-C", dir, tpl}
 			if target != "" {
 				args = append(args, target)
 			}
 			if code, out, errOut := run(args...); code != ExitOK {
 				t.Fatalf("%s at %q: %d %s %s", tpl, target, code, out, errOut)
 			}
-			s, err := lang.Load(os.DirFS(dir))
+			s, err := lang.Load(os.DirFS(specOf(dir)))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -179,8 +181,12 @@ func TestEveryTemplateApplies(t *testing.T) {
 }
 
 func TestApplyCommand(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), "spec")
-	code, out, _ := run("apply", dir, "software/domain")
+	// apply creates the spec folder when it is missing.
+	dir := initialized(t)
+	if err := os.Remove(specOf(dir)); err != nil {
+		t.Fatal(err)
+	}
+	code, out, _ := run("apply", "-C", dir, "software/domain")
 	if code != ExitOK || out != "copied README.md\ncopied packages/software/\ncopied packages/core/\n" {
 		t.Fatal(code, out)
 	}
@@ -188,18 +194,18 @@ func TestApplyCommand(t *testing.T) {
 		t.Error(line)
 	}
 	before := files(t, dir)
-	code, out, errOut := run("apply", dir, "software")
+	code, out, errOut := run("apply", "-C", dir, "software")
 	if code != ExitFailed || out != "" || !strings.Contains(errOut, "README.md: already exists") || !equalMaps(files(t, dir), before) {
 		t.Error(code, out, errOut)
 	}
 	// A package the spec has is kept, never overwritten or completed.
-	if err := os.WriteFile(filepath.Join(dir, "packages", "core", "role.md"), []byte("# Role\n\nOur own.\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(specOf(dir), "packages", "core", "role.md"), []byte("# Role\n\nOur own.\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Remove(filepath.Join(dir, "packages", "core", "term.md")); err != nil {
+	if err := os.Remove(filepath.Join(specOf(dir), "packages", "core", "term.md")); err != nil {
 		t.Fatal(err)
 	}
-	code, out, _ = run("apply", dir, "company", "orgs/main")
+	code, out, _ = run("apply", "-C", dir, "company", "orgs/main")
 	if code != ExitOK || strings.Contains(out, "packages/core/") || !strings.Contains(out, "copied packages/company/\n") {
 		t.Error(code, out)
 	}
@@ -211,7 +217,7 @@ func TestApplyCommand(t *testing.T) {
 		t.Error(after["orgs/main/team/README.md"])
 	}
 	for _, args := range [][]string{{"nothing"}, {".."}, {"software", "../up"}} {
-		if code, out, _ := run(append([]string{"apply", t.TempDir()}, args...)...); code != ExitFailed || out != "" {
+		if code, out, _ := run(append([]string{"apply", "-C", initialized(t)}, args...)...); code != ExitFailed || out != "" {
 			t.Errorf("%v: %d %q", args, code, out)
 		}
 	}
@@ -266,7 +272,7 @@ func unique(list []string) []string {
 
 func TestReadOnlyFileChangesNothing(t *testing.T) {
 	dir := spec(t, map[string]string{"a.md": "# A\n", "z.md": "# Z\n\nSee [a](a.md).\n"})
-	z := filepath.Join(dir, "z.md")
+	z := filepath.Join(specOf(dir), "z.md")
 	if err := os.Chmod(z, 0o444); err != nil {
 		t.Fatal(err)
 	}
@@ -276,7 +282,7 @@ func TestReadOnlyFileChangesNothing(t *testing.T) {
 		t.Skip("the file system lets this user write a read-only file")
 	}
 	before := files(t, dir)
-	code, out, errOut := run("move", dir, "a.md", "n.md")
+	code, out, errOut := run("move", "-C", dir, "a.md", "n.md")
 	if code != ExitFailed || out != "" || !strings.Contains(errOut, "z.md: cannot be written") || !equalMaps(files(t, dir), before) {
 		t.Error(code, out, errOut)
 	}
@@ -289,8 +295,10 @@ func TestFailureLeavesTheSpecAsItWas(t *testing.T) {
 		name string
 		args func(dir string) []string
 	}{
-		{"move", func(dir string) []string { return []string{"move", dir, "places/central", "elsewhere/deep/main hall"} }},
-		{"apply", func(dir string) []string { return []string{"apply", dir, "software", "areas/new"} }},
+		{"move", func(dir string) []string {
+			return []string{"move", "-C", dir, "places/central", "elsewhere/deep/main hall"}
+		}},
+		{"apply", func(dir string) []string { return []string{"apply", "-C", dir, "software", "areas/new"} }},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -319,8 +327,8 @@ func TestFailureLeavesTheSpecAsItWas(t *testing.T) {
 					t.Errorf("step %d changed the spec: %v", k, after)
 				}
 				var dirs []string
-				_ = filepath.WalkDir(dir, func(p string, e fs.DirEntry, err error) error {
-					if err == nil && e.IsDir() && p != dir {
+				_ = filepath.WalkDir(specOf(dir), func(p string, e fs.DirEntry, err error) error {
+					if err == nil && e.IsDir() && p != specOf(dir) {
 						dirs = append(dirs, p)
 					}
 					return err
@@ -335,7 +343,7 @@ func TestFailureLeavesTheSpecAsItWas(t *testing.T) {
 }
 
 func TestFailedUndoNamesWhatIsLeft(t *testing.T) {
-	args := func(dir string) []string { return []string{"move", dir, "places/central", "elsewhere/main hall"} }
+	args := func(dir string) []string { return []string{"move", "-C", dir, "places/central", "elsewhere/main hall"} }
 	steps := 0
 	fault = func(int) error { steps++; return nil }
 	run(args(spec(t, branches))...)
@@ -391,18 +399,18 @@ func TestCreateRefusesAFileThatAppeared(t *testing.T) {
 
 func TestTopicAndQuestions(t *testing.T) {
 	dir := spec(t, branches)
-	code, out, _ := run("topic", dir)
+	code, out, _ := run("topic", "-C", dir)
 	if code != ExitOK || !strings.HasPrefix(out, "# Signals of the spec\n") || !strings.Contains(out, "\n### weak (") || !strings.Contains(out, "\n### unlinked-mention (") {
 		t.Fatal(code, out)
 	}
-	code, out, _ = run("topic", dir, "places/central")
+	code, out, _ = run("topic", "-C", dir, "places/central")
 	for _, part := range []string{"# Topic: places/central.md (document)\n", "\n## Strong statements about it\n", "\n## Text\n\n# Central\n",
 		"\n## Linked from\n\nmembers/ada.md:10 (Branch): Central, see Grace.\n", "\n## Mentioned without a link\n", "\n## Signals\n"} {
 		if code != ExitOK || !strings.Contains(out, part) {
 			t.Errorf("missing %q in\n%s", part, out)
 		}
 	}
-	_, out, _ = run("topic", dir, "types/member", "--json")
+	_, out, _ = run("topic", "-C", dir, "types/member", "--json")
 	var doc map[string]any
 	if err := json.Unmarshal([]byte(out), &doc); err != nil {
 		t.Fatal(err)
@@ -410,20 +418,20 @@ func TestTopicAndQuestions(t *testing.T) {
 	if doc["kind"] != "topic" || doc["topic_kind"] != "type" || len(doc["typed_documents"].([]any)) != 2 {
 		t.Error(out)
 	}
-	if code, _, errOut := run("topic", dir, "nowhere"); code != ExitFailed || !strings.Contains(errOut, "unknown topic") {
+	if code, _, errOut := run("topic", "-C", dir, "nowhere"); code != ExitFailed || !strings.Contains(errOut, "unknown topic") {
 		t.Error(code, errOut)
 	}
-	code, out, _ = run("questions", dir)
+	code, out, _ = run("questions", "-C", dir)
 	if code != ExitOK || !strings.Contains(out, "no package of the library") {
 		t.Error(code, out)
 	}
-	applied := filepath.Join(t.TempDir(), "spec")
-	run("apply", applied, "software")
-	_, out, _ = run("questions", applied)
+	applied := initialized(t)
+	run("apply", "-C", applied, "software")
+	_, out, _ = run("questions", "-C", applied)
 	if !strings.HasPrefix(out, "## core\n\n1. ") || !strings.Contains(out, "\n## software\n\n1. Who may call each operation") {
 		t.Error(out)
 	}
-	if code, out, _ := run("topic", applied, "--json"); code != ExitOK || !strings.Contains(out, `"topic_kind": "spec"`) {
+	if code, out, _ := run("topic", "-C", applied, "--json"); code != ExitOK || !strings.Contains(out, `"topic_kind": "spec"`) {
 		t.Error(code, out)
 	}
 }

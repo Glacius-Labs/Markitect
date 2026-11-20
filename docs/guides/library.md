@@ -53,7 +53,7 @@ The area types follow the six areas of a software project ([what goes in a spec]
 
 ## Templates
 
-A template is a folder of documents that name their types by links into the packages and leave their sections empty. Every folder of a template is a template too, so `apply SPECFOLDER software/domain` applies the domain area alone.
+A template is a folder of documents that name their types by links into the packages and leave their sections empty. Every folder of a template is a template too, so `apply software/domain` applies the domain area alone.
 
 | Template | Documents |
 |---|---|
@@ -64,7 +64,7 @@ After `apply`, `check` reports nothing but `section.empty`: that list is the wor
 
 ## Apply
 
-`markitect-next apply SPECFOLDER TEMPLATE [TARGET]` copies the template's documents to `TARGET`, a folder below the spec, by default its root.
+`markitect-next apply TEMPLATE [TARGET]` copies the template's documents to `TARGET`, a folder below the spec, by default its root.
 
 - **Packages.** Every package a copied document links to, and every package those types link to in turn, is copied whole, byte for byte, to `packages/NAME/` in the spec, unless the spec has that folder already. A package the spec has is never overwritten, and never completed.
 - **Links.** Links of the copied documents into the library's packages are rewritten to the spec's copy. Links between the copied documents stay as they are.

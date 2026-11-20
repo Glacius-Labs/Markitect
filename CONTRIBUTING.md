@@ -33,6 +33,7 @@ Product code and tests that handle a project's `.markitect/` folder use fixtures
 | The spec language as the rebuilt tool implements it, and its commands | [Language reference](docs/guides/language-reference.md) |
 | The library built into the rebuilt tool: packages, templates and the report type | [Library](docs/guides/library.md) |
 | The signals, the topic view, reference values and question catalogs of the rebuilt tool | [Signals](docs/guides/signals.md) |
+| The project of the rebuilt tool: finding it, `init`, the `.markitect/` layout, the walk of its files and their hashes | [Project reference](docs/guides/project-reference.md) |
 | Designing a good spec | [What makes a good spec](docs/guides/good-spec.md) |
 | Using Markitect on a project | [Project workflow](docs/guides/project-workflow.md) |
 | Packages, layers and the repository layout | [Architecture](docs/architecture.md) and the generated [code map](docs/development/code-map.md) |

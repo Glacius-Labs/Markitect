@@ -31,7 +31,8 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `library` | The library built into the rebuilt tool: packages, templates and the report type. | nothing | 1 |
 | `editing` | The change sets of the rebuilt tool's commands that write a spec: new, move and apply, over supplied file systems. | `language` | 1 |
 | `signals` | The statements of a spec, its signals and the topic view of the rebuilt tool, over a parsed spec. | `language` | 1 |
-| `command-line` | The command line of the rebuilt tool: its arguments, the spec folder it reads and writes, and its text and JSON output. | `language`, `library`, `editing`, `signals` | 1 |
+| `state` | A project of the rebuilt tool over a supplied file system: the .markitect/ layout, the project loaded with its spec, the walk of its files with the ignore files, and file hashes. | `language` | 1 |
+| `command-line` | The command line of the rebuilt tool: its arguments, the project it works in, init and version, the spec folder it reads and writes, and its text and JSON output. | `build`, `language`, `library`, `editing`, `signals`, `state` | 1 |
 | `entrypoint` | markitect-next, the rebuilt tool beside markitect until it replaces it. | `command-line` | 1 |
 | `maintenance` | The import gate and the code map, separate from product execution. | nothing | 1 |
 | `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 1 |
@@ -148,17 +149,23 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|
 | `internal/signals` | Package signals finds where reading a spec pays off: it splits the prose of the documents into statements, finds the marker words in them, computes the eight signals of the spec itself and gathers the topic view of a document, a type or a folder. | [docs/guides/signals.md](../guides/signals.md) |
 
+## Project and state
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/state` | Package state is a project of the rebuilt tool, over a file system rooted at the project folder: the layout of .markitect/, the project loaded with its spec, the files of the project as Git would commit them, and the hash of a file. | [docs/guides/project-reference.md](../guides/project-reference.md) |
+
 ## Command line
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/cli` | Package cli is the command line of the rebuilt tool, markitect-next: it parses the arguments, reads the spec folder they name, prints what the language finds, as text or as JSON, and applies the changes of the commands that write. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
+| `internal/cli` | Package cli is the command line of the rebuilt tool, markitect-next: it parses the arguments, finds the project they work in, sets one up with init, reads its spec, prints what the language finds, as text or as JSON, and applies the changes of the commands that write. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
 
 ## Rebuilt tool entrypoint
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `cmd/markitect-next` | Command markitect-next is the rebuilt Markitect tool while it grows beside markitect: check, show, table, new, move and apply. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
+| `cmd/markitect-next` | Command markitect-next is the rebuilt Markitect tool while it grows beside markitect: init, check, show, table, new, move, apply, topic, questions and version. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
 
 ## Maintenance
 
