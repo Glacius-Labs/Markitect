@@ -70,7 +70,11 @@ func Diff(oldName, newName string, oldText, newText []byte) string {
 		}
 		fmt.Fprintf(&out, "@@ -%s +%s @@\n", hunkRange(oldStart, oldCount), hunkRange(newStart, newCount))
 		for _, op := range hunk {
-			out.WriteString(string(op.kind) + op.text + "\n")
+			text, last := strings.CutSuffix(op.text, noNewline)
+			out.WriteString(string(op.kind) + text + "\n")
+			if last {
+				out.WriteString("\\ No newline at end of file\n")
+			}
 		}
 		start = end
 	}
@@ -89,14 +93,22 @@ func hunkRange(start, count int) string {
 	return fmt.Sprintf("%d,%d", start, count)
 }
 
+// noNewline marks a last line without a line end, so that it differs from
+// the same line with one.
+const noNewline = "\x00no newline"
+
 func diffLines(text []byte) []string {
 	text = bytes.TrimPrefix(text, []byte("\xef\xbb\xbf"))
 	s := strings.ReplaceAll(string(text), "\r\n", "\n")
-	s = strings.TrimSuffix(s, "\n")
 	if s == "" {
 		return nil
 	}
-	return strings.Split(s, "\n")
+	ended := strings.HasSuffix(s, "\n")
+	lines := strings.Split(strings.TrimSuffix(s, "\n"), "\n")
+	if !ended {
+		lines[len(lines)-1] += noNewline
+	}
+	return lines
 }
 
 // lineOp is one line of the diff: kept (' '), removed ('-') or added ('+'),

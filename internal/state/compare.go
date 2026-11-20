@@ -152,12 +152,21 @@ func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 		if touched[d.Path] {
 			continue
 		}
-		if _, before := oldSpec.Document(d.Path); !before {
+		// A document moved without a change of its own is compared at the
+		// path it had.
+		from := d.Path
+		if f, ok := movedFrom[d.Path]; ok {
+			from = f
+		}
+		if _, before := oldSpec.Document(from); !before {
 			continue
 		}
 		because := map[string]bool{}
-		for _, near := range []map[string]map[string]string{oldNear, newNear} {
-			for other, kind := range near[d.Path] {
+		for _, near := range []struct {
+			links map[string]map[string]string
+			at    string
+		}{{oldNear, from}, {newNear, d.Path}} {
+			for other, kind := range near.links[near.at] {
 				if touched[other] {
 					because[kind+other] = true
 				}

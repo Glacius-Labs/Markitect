@@ -35,15 +35,15 @@ func TestFigures(t *testing.T) {
 		{Time: at(5 * time.Hour), Type: EventMove, From: "d.md", To: "e.md", Rewritten: []string{"e.md", "b.md"}},
 		// E and A, A back at its first text.
 		v(6*time.Hour, "e.md", h("e1"), Pending{"a.md", h("a1")}),
-		// A and C, far from the change before.
-		v(8*time.Hour, "c.md", h("c2"), Pending{"a.md", h("a1")}),
+		// A, at a third text, and C, far from the change before.
+		v(8*time.Hour, "c.md", h("c2"), Pending{"a.md", h("a3")}),
 	}
 	f := ComputeFigures(spec, events)
 	var changes []string
 	for _, c := range f.Changes {
 		changes = append(changes, strings.Join(c.Docs, "+"))
 	}
-	if strings.Join(changes, " ") != "a.md+b.md+c.md a.md+b.md e.md a.md+e.md a.md+c.md" || f.Verdicts != 8 || f.Moves != 1 || f.Changes[0].Events != 3 {
+	if strings.Join(changes, " ") != "a.md+b.md+c.md a.md+b.md e.md a.md+e.md a.md+c.md" || f.Verdicts != 8 || f.Moves != 1 || f.Changes[0].Events != 1 {
 		t.Fatalf("changes %v, %d verdicts, %d moves", changes, f.Verdicts, f.Moves)
 	}
 	top := func(signal string) string {
@@ -109,5 +109,51 @@ func TestDiff(t *testing.T) {
 	}
 	if got := Diff("a", "b", nil, []byte("one\n")); got != "--- a\n+++ b\n@@ -0,0 +1 @@\n+one\n" {
 		t.Error(got)
+	}
+}
+
+// A document waiting unchanged in several events counts once.
+func TestWaitingDocumentsCountOnce(t *testing.T) {
+	h := func(s string) string { return Hash([]byte(s)) }
+	t0 := time.Date(2026, 11, 20, 9, 0, 0, 0, time.UTC)
+	v := func(hours int, doc string) Event {
+		return Event{Time: t0.Add(time.Duration(hours) * time.Hour), Type: EventVerdict, Doc: doc, Verdict: "ok", Self: h(doc),
+			Changed: []Pending{{"p.md", h("p")}, {"q.md", h("q")}}}
+	}
+	f := ComputeFigures(lang.NewSpec(nil), []Event{v(0, "x.md"), v(2, "y.md"), v(4, "z.md")})
+	var changes []string
+	for _, c := range f.Changes {
+		changes = append(changes, strings.Join(c.Docs, "+"))
+	}
+	if strings.Join(changes, " ") != "p.md+q.md+x.md y.md z.md" {
+		t.Error(changes)
+	}
+}
+
+// A document recorded gone ends; a later one at its path is another, whose
+// first text is no return.
+func TestReusedPath(t *testing.T) {
+	h := func(s string) string { return Hash([]byte(s)) }
+	t0 := time.Date(2026, 11, 20, 9, 0, 0, 0, time.UTC)
+	at := func(hours int) time.Time { return t0.Add(time.Duration(hours) * time.Hour) }
+	events := []Event{
+		{Time: at(0), Type: EventVerdict, Doc: "a.md", Verdict: "ok", Self: h("one")},
+		{Time: at(2), Type: EventVerdict, Doc: "a.md", Verdict: "ok", Self: h("two")},
+		{Time: at(4), Type: EventVerdict, Doc: "a.md", Verdict: "ok"},
+		{Time: at(6), Type: EventVerdict, Doc: "a.md", Verdict: "ok", Self: h("one")},
+	}
+	f := ComputeFigures(lang.NewSpec(nil), events)
+	if len(f.Signals["back-and-forth"]) != 0 || len(f.Changes) != 3 {
+		t.Errorf("%+v %+v", f.Signals["back-and-forth"], f.Changes)
+	}
+}
+
+func TestDiffOfALineEnd(t *testing.T) {
+	got := Diff("a", "b", []byte("one\ntwo"), []byte("one\ntwo\n"))
+	if got != "--- a\n+++ b\n@@ -1,2 +1,2 @@\n one\n-two\n\\ No newline at end of file\n+two\n" {
+		t.Errorf("%q", got)
+	}
+	if got := Diff("a", "b", []byte("one\ntwo"), []byte("one\r\ntwo")); got != "" {
+		t.Errorf("%q", got)
 	}
 }

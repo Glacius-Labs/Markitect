@@ -207,3 +207,28 @@ func TestRewrittenAndChanged(t *testing.T) {
 	}
 	same(t, "rewritten", doc.Rewritten, []string{})
 }
+
+// A document moved without a change of its own is suspect when a document
+// it links changed, as status says.
+func TestMovedDocumentIsSuspect(t *testing.T) {
+	clock(t)
+	older := markedWith(t, withFlow())
+	newer := copyTree(t, older, false)
+	if code, _, errOut := run("move", "-C", newer, "lending/borrow.md", "loans/borrow.md"); code != ExitOK {
+		t.Fatal(errOut)
+	}
+	write(t, newer, "docs/spec/types/operation.md", read(t, newer, "docs/spec/types/operation.md")+"\nIt happens at the desk.\n")
+	code, out, _ := run("compare", older, newer, "--json")
+	var doc compareDocument
+	if err := json.Unmarshal([]byte(out), &doc); err != nil || code != ExitFound {
+		t.Fatal(code, out)
+	}
+	var suspects []string
+	for _, s := range doc.Suspect {
+		suspects = append(suspects, s.Doc+": "+strings.Join(s.Because, ", "))
+	}
+	same(t, "suspect", suspects, []string{"lending/return.md: type:types/operation.md", "loans/borrow.md: type:types/operation.md"})
+	if s := statusOf(t, newer).summary(); !strings.Contains(strings.Join(s, "\n"), "suspect loans/borrow.md: type:types/operation.md") {
+		t.Error(s)
+	}
+}

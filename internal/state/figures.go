@@ -50,9 +50,11 @@ type Figures struct {
 // spec as it is.
 //
 // A change is the document of a verdict event and the documents its changed
-// list names, each only when its text is not the one its own last verdict
-// saw: a document recorded fail, one whose artifact changed or one that is
-// gone counts in no change until its text changes. A verdict joins the change before it when it follows that
+// list names, each only when its text is not the last one the history
+// recorded for it in any event: a document waiting in the list, recorded
+// fail, with a changed artifact or gone counts in no change until its text
+// changes. A document recorded gone ends there; a later document at its
+// path, new or moved there, is another. A verdict joins the change before it when it follows that
 // change's last verdict within CloseTime and its documents are among those
 // of the change's first verdict, as when a reviewer confirms the documents
 // of one change one after the other. Move events are no changes: the history
@@ -79,8 +81,6 @@ func ComputeFigures(spec *lang.Spec, events []Event) *Figures {
 	}
 	var changes []*open
 	selves := map[int][]string{}
-	// verdictSelf is the self of each document's last verdict.
-	verdictSelf := map[int]string{}
 	addSelf := func(i int, h string) {
 		if h != "" && (len(selves[i]) == 0 || selves[i][len(selves[i])-1] != h) {
 			selves[i] = append(selves[i], h)
@@ -97,21 +97,29 @@ func ComputeFigures(spec *lang.Spec, events []Event) *Figures {
 		case EventVerdict:
 			f.Verdicts++
 			set := map[int]bool{}
-			// A document counts when its text is not the one its last
-			// verdict saw: a fail, an edited artifact or a gone document
-			// changed no text.
+			// A document counts when its text is not the last one the
+			// history recorded for it: a document waiting, recorded fail,
+			// with an edited artifact or gone changed no text. A document
+			// recorded gone ends; a later one at its path is another.
+			var ended []string
 			consider := func(doc, self string) {
+				if self == "" {
+					ended = append(ended, doc)
+					return
+				}
 				i := id(doc)
-				addSelf(i, self)
-				if last, seen := verdictSelf[i]; self != "" && (!seen || last != self) {
+				if seq := selves[i]; len(seq) == 0 || seq[len(seq)-1] != self {
 					set[i] = true
 				}
+				addSelf(i, self)
 			}
 			consider(e.Doc, e.Self)
 			for _, c := range e.Changed {
 				consider(c.Doc, c.Self)
 			}
-			verdictSelf[id(e.Doc)] = e.Self
+			for _, doc := range ended {
+				delete(ids, doc)
+			}
 			if len(set) == 0 {
 				continue
 			}
