@@ -1,25 +1,34 @@
 ---
 name: getting-started
-description: Use when someone mentions Markitect, wants to set it up, start a project with it or upgrade it, or asks about the markitect command or a .markitect folder. It says what Markitect is and how to begin.
+description: Use when someone mentions Markitect, wants to set it up or start a project with it, or asks about the tool markitect, or about a folder with .markitect/. It says what Markitect is and how to begin.
 ---
-
 # Markitect
 
-A Markitect project has one spec: the Markdown files in .markitect/spec/. The
-spec is the authority over the code, tests and documentation: where they differ,
-the spec is right. People architect the project with the markitect-architect
-skill, and the /markitect-build skill has a builder agent build it and a fresh
-reviewer verify each Definition; markitect status says what is left to verify.
+With Markitect, people architect their project in a typed specification language in Markdown. A folder with `.markitect/version` is a Markitect project: its spec is an ordinary folder of documentation, by default `docs/spec/`, and it is the authority over the code, the tests and the documentation. The tool `markitect` checks the spec, says what is changed, suspect or unexplained, and binds verdicts; it starts no agent and uses no Git. The jobs of this plugin realize the spec, check it and measure how well the checking works, each role as an agent of its own, and the owner is asked only for new decisions.
 
-`markitect` is a command on the path, so there is no need to look for it. `markitect help` lists what it does. If the shell says the command is not found, the binary is missing or its folder is not on the PATH. The Claude Code plugin brings it (`claude plugin marketplace add Glacius-Labs/Claude-Plugins`, then `claude plugin install markitect@glacius-labs`); or download the binary for the system from https://github.com/Glacius-Labs/Markitect/releases and put it on the PATH.
+## The tool
+
+`markitect` is a command on the PATH of Claude Code's shell while this plugin is on: its launcher downloads the release binary of the plugin's own version on first use and checks it against the checksums of that release. A development version of the plugin has no release binary: its launcher starts the next `markitect` on the PATH instead, a build from source, `go install github.com/Glacius-Labs/Markitect/cmd/markitect@COMMIT` with the commit of the plugin. `markitect help` lists the commands, and `markitect version` says whether the tool is the version the project pins.
 
 ## How to begin
 
-- **An empty folder, a new project or a project that already exists:** run `markitect init`, then use the `markitect-architect` skill. It starts the spec with the owner, or draws it from the project as it is.
-- **A folder that already has `.markitect/`:** it is set up, and `markitect check` says how it stands; the `markitect-architect` skill changes the spec.
+- **A folder without `.markitect/`:** `markitect init` writes `.markitect/` and the spec folder, and nothing else. Then the `markitect:markitect-architect` skill walks the first design with the owner, area by area.
+- **A project with a spec:** `markitect check` says whether the spec is sound, and `markitect status` what is to build or confirm.
+- **Settings:** `.markitect/settings.md` names the model per role and the counter-check folder. Add a `## Tests` section to it with the command that runs the tests and the counter-checks, since `init` writes none: without it, no job lands.
 
-`init` installs that skill into the project, so a session that was open before it does not have it yet. Read `.claude/skills/markitect-architect/SKILL.md` and follow it, or have the user run `/reload-skills`.
+## The skills
 
-## After an upgrade
-
-`markitect version` says whether this skill and the project's skills and agents match the binary. `markitect update` installs the newest release of the binary, then brings them in line; a binary the plugin brings is updated with the plugin (`claude plugin update markitect@glacius-labs`). It changes no spec file.
+| Skill | Does |
+|---|---|
+| `markitect:markitect-architect` | The conversation with the owner, and the architect job |
+| `markitect:markitect-build` | Builds what `status` lists: counter-checker, builder, reviewer |
+| `markitect:markitect-review` | A spot check of confirmed documents, or all of them |
+| `markitect:markitect-control-sample` | Planted deviations, checked blind |
+| `markitect:markitect-bughunt` | Looks beyond the list; findings become reports |
+| `markitect:markitect-cleanup` | Changes no behaviour |
+| `markitect:markitect-improve` | Changes behaviour only where the spec leaves it free |
+| `markitect:markitect-read` | Reads and questions the spec |
+| `markitect:markitect-triage` | Sorts, rates and switches new reports |
+| `markitect:markitect-intake` | Turns an outside signal into a report |
+| `markitect:markitect-briefing` | How the project stands, and what changed since the last look |
+| `markitect:markitect-explain` | Explains the spec, from the spec alone |

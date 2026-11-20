@@ -1,19 +1,14 @@
-// Command markitect is the Markitect command line: install, update, init, tidy,
-// check, vet, list, doc, status, mark, version and licenses. It delegates
-// everything to internal/bootstrap.
+// Command markitect is the Markitect tool: init, check, show, table, new,
+// move, apply, topic, questions, status, mark, compare, figures, reports,
+// settings, version and licenses. It delegates everything to internal/cli.
 package main
 
 import (
-	"context"
 	"os"
-	"os/signal"
-	"syscall"
 
-	"github.com/Glacius-Labs/Markitect/internal/bootstrap"
+	"github.com/Glacius-Labs/Markitect/internal/cli"
 )
 
 func main() {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-	os.Exit(bootstrap.Run(ctx, os.Args[1:], os.Stdout, os.Stderr))
+	os.Exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr))
 }

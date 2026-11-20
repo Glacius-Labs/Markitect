@@ -1,6 +1,6 @@
 # Language reference
 
-The exact rules of the spec language as the rebuilt tool implements them, and the commands of `markitect-next`, the rebuilt tool while it grows beside `markitect` ([roadmap](../roadmap.md#current-steps)). [The language](../concept/the-language.md) in the concept says what the language is for; this page says precisely what the tool reads and reports. The examples are a small lending library.
+The exact rules of the spec language as the tool implements them, and the commands of `markitect`. [The language](../concept/the-language.md) in the concept says what the language is for; this page says precisely what the tool reads and reports. The examples are a small lending library.
 
 ## Documents
 
@@ -80,26 +80,27 @@ A document reports each unresolved target once, at its first link: `[the archive
 
 ## Commands
 
-Every command but `init` and `version` works in a project and finds its spec through it: the folder `-C PROJECT` names, or the nearest folder from the working directory upward that holds `.markitect/version` ([project reference](project-reference.md#the-project)). A `DOCUMENT`, `TYPE`, `OLD`, `NEW` or `PATH` is a path below the spec folder, with or without `.md`, with `/` or `\` between folders; a path that leaves the spec folder, is absolute or starts with a scheme names no document. Flags may stand anywhere, `-json` is the same as `--json`, a flag belongs to the commands that name it, so `--all` is one of `topic` and `figures` only and `--open` one of `reports`, and `--` ends the flags, so that a name starting with `-` can follow. `markitect-next help`, `-h` or `--help` prints the usage. Output paths are below the spec folder, with `/`.
+Every command but `init`, `version` and `licenses` works in a project and finds its spec through it: the folder `-C PROJECT` names, or the nearest folder from the working directory upward that holds `.markitect/version` ([project reference](project-reference.md#the-project)). A `DOCUMENT`, `TYPE`, `OLD`, `NEW` or `PATH` is a path below the spec folder, with or without `.md`, with `/` or `\` between folders; a path that leaves the spec folder, is absolute or starts with a scheme names no document. Flags may stand anywhere, `-json` is the same as `--json`, a flag belongs to the commands that name it, so `--all` is one of `topic` and `figures` only and `--open` one of `reports`, and `--` ends the flags, so that a name starting with `-` can follow. `markitect help`, `-h` or `--help` prints the usage. Output paths are below the spec folder, with `/`.
 
 | Command | Does |
 |---|---|
-| `markitect-next init [--spec PATH]` | Sets up a project: `.markitect/` and the spec folder ([project reference](project-reference.md#init)) |
-| `markitect-next check` | Checks the spec by the rules above, and the [reports, settings and results of control samples](reports.md#what-check-reports) |
-| `markitect-next show DOCUMENT` | The document's title, its type, its sections (a type's with their `(optional)` marker), the documents it links to, the documents that link to it with the section each link stands in, for a type its documents, and its row in the state |
-| `markitect-next table [TYPE]` | Every document of the type as a Markdown table: the title, then one column per section of the type. Without a type, every document with its verdict and artifacts |
-| `markitect-next new TYPE PATH [TITLE]` | Creates a document of the type |
-| `markitect-next move OLD NEW` | Moves or renames a document, rewrites the links to it, carries its row in the state and records the move in the history ([project reference](project-reference.md#move-and-the-state)) |
-| `markitect-next apply TEMPLATE [TARGET]` | Copies a template of the [library](library.md) into the spec |
-| `markitect-next topic [TOPIC]` | The signals of the spec, or the topic view of a document, a type or a folder ([signals](signals.md)) |
-| `markitect-next questions` | The question catalogs of the library packages the spec has ([signals](signals.md#question-catalogs)) |
-| `markitect-next status` | What is changed, suspect, unexplained or waiting on a report ([project reference](project-reference.md#status)); with `--step ROLE --before DIR`, what a step wrote against the write table, and with `--target DIR`, whether the branch lands ([rights and landing](rights.md)) |
-| `markitect-next mark DOCUMENT@FINGERPRINT VERDICT` | Binds `ok`, `fail` or `skip`, with artifacts, counter-checks and evidence, to the state `status` showed ([project reference](project-reference.md#mark)) |
-| `markitect-next compare OLD [NEW]` | What is new, gone, moved, changed or suspect in NEW, by default this project, against OLD, with diffs, changed verdicts and the reports that are new, closed or changed ([project reference](project-reference.md#compare)) |
-| `markitect-next figures` | The signals of the spec's changes, from the history ([signals](signals.md#the-change-signals)), and the [figures of the factory](reports.md#the-figures-of-the-factory) |
-| `markitect-next reports [--open]` | The reports with the values of their sections, or only the open ones ([listing the reports](reports.md#listing-the-reports)) |
-| `markitect-next settings` | The settings: the model per role, the counter-check folder, the tests command, the cadence, the write table and the CI definition ([settings](reports.md#settings)) |
-| `markitect-next version` | The tool's version, and whether it is the one the project pins ([project reference](project-reference.md#version)) |
+| `markitect init [--spec PATH]` | Sets up a project: `.markitect/` and the spec folder ([project reference](project-reference.md#init)) |
+| `markitect check` | Checks the spec by the rules above, and the [reports, settings and results of control samples](reports.md#what-check-reports) |
+| `markitect show DOCUMENT` | The document's title, its type, its sections (a type's with their `(optional)` marker), the documents it links to, the documents that link to it with the section each link stands in, for a type its documents, and its row in the state |
+| `markitect table [TYPE]` | Every document of the type as a Markdown table: the title, then one column per section of the type. Without a type, every document with its verdict and artifacts |
+| `markitect new TYPE PATH [TITLE]` | Creates a document of the type |
+| `markitect move OLD NEW` | Moves or renames a document, rewrites the links to it, carries its row in the state and records the move in the history ([project reference](project-reference.md#move-and-the-state)) |
+| `markitect apply TEMPLATE [TARGET]` | Copies a template of the [library](library.md) into the spec |
+| `markitect topic [TOPIC]` | The signals of the spec, or the topic view of a document, a type or a folder ([signals](signals.md)) |
+| `markitect questions` | The question catalogs of the library packages the spec has ([signals](signals.md#question-catalogs)) |
+| `markitect status` | What is changed, suspect, unexplained or waiting on a report ([project reference](project-reference.md#status)); with `--step ROLE --before DIR`, what a step wrote against the write table, and with `--target DIR`, whether the branch lands ([rights and landing](rights.md)) |
+| `markitect mark DOCUMENT@FINGERPRINT VERDICT` | Binds `ok`, `fail` or `skip`, with artifacts, counter-checks and evidence, to the state `status` showed ([project reference](project-reference.md#mark)) |
+| `markitect compare OLD [NEW]` | What is new, gone, moved, changed or suspect in NEW, by default this project, against OLD, with diffs, changed verdicts and the reports that are new, closed or changed ([project reference](project-reference.md#compare)) |
+| `markitect figures` | The signals of the spec's changes, from the history ([signals](signals.md#the-change-signals)), and the [figures of the factory](reports.md#the-figures-of-the-factory) |
+| `markitect reports [--open]` | The reports with the values of their sections, or only the open ones ([listing the reports](reports.md#listing-the-reports)) |
+| `markitect settings` | The settings: the model per role, the counter-check folder, the tests command, the cadence, the write table and the CI definition ([settings](reports.md#settings)) |
+| `markitect version` | The tool's build, and whether its version is the one the project pins ([project reference](project-reference.md#version)) |
+| `markitect licenses` | The license notices of the modules the tool is built from |
 
 **Exit codes.** 0 when all is well, 1 when `check`, `status`, `compare`, `settings` or `reports` found something, `mark` refused, or `version` found a project that pins another version, and 2 when the command could not run: an unknown command or flag, a wrong number of arguments, no project, a `.markitect/` that cannot be read, a spec folder that does not exist (`apply` creates it), an unknown document, a file that cannot be read, or a refused `init`, `new`, `move` or `apply`. A command that does not succeed changes nothing, also when writing fails partway, unless undoing fails as well, which it reports ([below](#commands-that-write)).
 
@@ -139,6 +140,7 @@ With `--json`, every command prints one document that starts with `format_versio
 | `settings` | As [settings](reports.md#settings) says |
 | `reports` | As [listing the reports](reports.md#listing-the-reports) says |
 | `new` | `path` |
+| `licenses` | `notices` |
 | `move` | `from`, `to` and `changed` |
 | `apply` | `documents` and `packages` |
 | `topic`, `questions` | As [signals](signals.md#commands) says |

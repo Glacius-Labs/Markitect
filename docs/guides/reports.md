@@ -1,6 +1,6 @@
 # Reports, settings and control samples
 
-The files of fixed form that the rebuilt tool `markitect-next` reads beside the spec, the state and the history: the reports in `.markitect/reports/`, the settings in `.markitect/settings.md` and the results of control samples in `.markitect/samples/` ([DEC-128](../decisions.md#dec-128-reports-and-actions-hold-everything-that-needs-a-change), [DEC-132](../decisions.md#dec-132-markitect-is-a-tool-jobs-and-runners)). Each is a document of the language, of a type the tool owns ([library](library.md#the-types-the-tool-owns)), and holds values of fixed form that `check` checks and the tool reads: the waiting entries of `status`, the counter-check folder of `mark`, the figures of the factory and the reports of `compare`. [Reports and actions](../concept/reports-and-actions.md), [trust](../concept/trust.md) and [jobs and runners](../concept/jobs-and-runners.md#the-project) in the concept say what they are for; this page says precisely what the tool reads. The examples are a small lending library.
+The files of fixed form that the tool `markitect` reads beside the spec, the state and the history: the reports in `.markitect/reports/`, the settings in `.markitect/settings.md` and the results of control samples in `.markitect/samples/` ([DEC-128](../decisions.md#dec-128-reports-and-actions-hold-everything-that-needs-a-change), [DEC-132](../decisions.md#dec-132-markitect-is-a-tool-jobs-and-runners)). Each is a document of the language, of a type the tool owns ([library](library.md#the-types-the-tool-owns)), and holds values of fixed form that `check` checks and the tool reads: the waiting entries of `status`, the counter-check folder of `mark`, the figures of the factory and the reports of `compare`. [Reports and actions](../concept/reports-and-actions.md), [trust](../concept/trust.md) and [jobs and runners](../concept/jobs-and-runners.md#the-project) in the concept say what they are for; this page says precisely what the tool reads. The examples are a small lending library.
 
 ## Values
 
@@ -52,7 +52,7 @@ complete
 
 ## Listing the reports
 
-`markitect-next reports` lists every report, so that a job or a briefing reads them without reading Markdown, and `--open` only the open ones. For each it prints its name and whether it is open, closed or escalated, then its source with the day, its place, `(gone)` after a place that is gone, occurred or risk, its violated property, its rating, its branches, a line per proposal for the owner, and its closing, each `(none)` when the report does not hold it. A last line counts them. What `check` finds in the reports is printed first, and the command then exits 1; a value that is not of its form is left out.
+`markitect reports` lists every report, so that a job or a briefing reads them without reading Markdown, and `--open` only the open ones. For each it prints its name and whether it is open, closed or escalated, then its source with the day, its place, `(gone)` after a place that is gone, occurred or risk, its violated property, its rating, its branches, a line per proposal for the owner, and its closing, each `(none)` when the report does not hold it. A last line counts them. What `check` finds in the reports is printed first, and the command then exits 1; a value that is not of its form is left out.
 
 ```text
 late-fee: open, escalated
@@ -124,7 +124,7 @@ tests/counter-checks
 
 Once the settings name a counter-check folder, [`mark`](project-reference.md#mark) takes a counter-check, `--check PATH`, only from inside it.
 
-`markitect-next settings` prints the settings, so that a runner or an agent reads them without reading Markdown: the models, the counter-check folder, the tests command, the cadence, the write table and the CI definition, each `(none)` when the settings name nothing, after what `check` finds in the settings file. It exits 1 while `check` finds errors there, and says `no settings` without the file. With `--json` it prints `present`, whether the file is there, `errors`, with `file`, `line`, `code` and `message`, `models` and `cadence`, objects by role and by job, `counter_checks` and `tests`, empty when not named, `write_table`, with `role` and `pattern`, and `ci`. A value that is not of its form is left out.
+`markitect settings` prints the settings, so that a runner or an agent reads them without reading Markdown: the models, the counter-check folder, the tests command, the cadence, the write table and the CI definition, each `(none)` when the settings name nothing, after what `check` finds in the settings file. It exits 1 while `check` finds errors there, and says `no settings` without the file. With `--json` it prints `present`, whether the file is there, `errors`, with `file`, `line`, `code` and `message`, `models` and `cadence`, objects by role and by job, `counter_checks` and `tests`, empty when not named, `write_table`, with `role` and `pattern`, and `ci`. A value that is not of its form is left out.
 
 ```text
 Models:
@@ -184,7 +184,7 @@ branch sample-2026-11-19
 
 ## The figures of the factory
 
-`markitect-next figures` prints, after the [change signals](signals.md#the-change-signals), the figures of how the factory runs ([the tool](../concept/the-tool.md#the-figures)), each with the project's own reference beside it. They read no clock: the same files give the same figures anywhere. A value that is not of its form counts for nothing, and what `check` finds in the files is printed first as a note.
+`markitect figures` prints, after the [change signals](signals.md#the-change-signals), the figures of how the factory runs ([the tool](../concept/the-tool.md#the-figures)), each with the project's own reference beside it. They read no clock: the same files give the same figures anywhere. A value that is not of its form counts for nothing, and what `check` finds in the files is printed first as a note.
 
 | Figure | Name | Lists |
 |---|---|---|

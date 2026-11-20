@@ -3,15 +3,14 @@ name: Release
 # A release is a tag vX.Y.Z on a commit of main whose source version, and whose
 # plugin version, are X.Y.Z. The tag builds the binaries for six systems and
 # their checksums, publishes them as a GitHub release, and then checks the
-# published release the way a user reaches it: through the plugin's launcher and
-# through markitect update.
+# published release the way a user reaches it: through the plugin's launcher.
 #
 # A manual run is a dry run: it runs the gates and builds and checks every asset,
 # skips what belongs to a tag, and publishes no release.
 #
 # A version with a pre-release part (v0.16.0-rc.1) is published as a pre-release,
-# which GitHub never names as the latest release, so markitect update ignores it.
-# A published release that fails the final check is marked as a pre-release too.
+# which GitHub never names as the latest release. A published release that fails
+# the final check is marked as a pre-release too.
 on:
   push:
     tags:
@@ -62,7 +61,7 @@ jobs:
           set -euo pipefail
           # The first line of `markitect version` is "markitect 0.26.0-dev". Read all
           # of the output before taking its first line, as below.
-          reported="$(go run -buildvcs=false ./cmd/markitect version --repo "$RUNNER_TEMP")"
+          reported="$(go run -buildvcs=false ./cmd/markitect version)"
           reported="${reported%%$'\n'*}"
           read -r _ source_version _ <<< "$reported"
           source_version="${source_version%%+*}"
@@ -148,7 +147,7 @@ jobs:
             git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "release source commit is no longer contained in origin/main" >&2; exit 1; }
           fi
           # Read all of the output before taking its first line, as below.
-          source_line="$(go run -buildvcs=false ./cmd/markitect version --repo "$RUNNER_TEMP")"
+          source_line="$(go run -buildvcs=false ./cmd/markitect version)"
           source_line="${source_line%%$'\n'*}"
           read -r _ source_version _ <<< "$source_line"
           [[ "${source_version%%+*}" == "$VERSION" ]] || { echo "release source version changed" >&2; exit 1; }
@@ -156,8 +155,7 @@ jobs:
           out="$RUNNER_TEMP/markitect-release-$GITHUB_SHA"
           mkdir -p "$out"
 
-          # The names are the contract with markitect update and the plugin's launcher
-          # (internal/adapters/upgrade, plugin/bin/markitect).
+          # The names are the contract with the plugin's launcher (plugin/bin/markitect).
           ldflags="-s -w -X github.com/Glacius-Labs/Markitect/internal/buildinfo.version=$VERSION -X github.com/Glacius-Labs/Markitect/internal/buildinfo.injectedRevision=$SOURCE_SHA"
           names=()
           for platform in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
@@ -172,7 +170,7 @@ jobs:
           # The binary this runner can start must report the release it is.
           # Read all of the output before taking its first line: a pipe to head would
           # close early and kill the binary with SIGPIPE, which pipefail reports.
-          reported="$("$out/markitect-$TAG-linux-amd64" version --repo "$RUNNER_TEMP")"
+          reported="$(cd "$RUNNER_TEMP" && "$out/markitect-$TAG-linux-amd64" version)"
           reported="${reported%%$'\n'*}"
           [[ "$reported" == "markitect $VERSION+$SOURCE_SHA" ]] || { echo "the linux binary reports '$reported', not 'markitect $VERSION+$SOURCE_SHA'" >&2; exit 1; }
 
@@ -293,7 +291,7 @@ jobs:
           - With Claude Code: \`claude plugin marketplace add Glacius-Labs/Claude-Plugins\`, then \`claude plugin install markitect@glacius-labs\`. The plugin brings the \`markitect\` command and keeps it at its own version.
           - Without it: download the binary for your system, check it against \`markitect-$TAG-checksums.txt\`, and put it on your PATH as \`markitect\`.
 
-          **Update:** \`markitect update\` installs the newest release and brings the skills, agents and lock of your projects in line. A binary the plugin brought is updated with the plugin: \`claude plugin update markitect@glacius-labs\`.
+          **Update:** \`claude plugin update markitect@glacius-labs\`; the plugin then fetches the binary of its new version. A binary on your PATH is replaced by hand, the same way it was installed.
           EOF
           flags=()
           [[ "$VERSION" != *-* ]] || flags+=(--prerelease)
@@ -323,30 +321,14 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: go.mod
-
       - name: Start markitect through the plugin's launcher, which downloads the release
         shell: bash
         run: |
           set -euo pipefail
-          reported="$(CLAUDE_PLUGIN_DATA="$RUNNER_TEMP/plugin-data" sh plugin/bin/markitect version --repo "$RUNNER_TEMP")"
+          # The tool runs outside a project, in a folder that holds no .markitect/.
+          reported="$(cd "$RUNNER_TEMP" && CLAUDE_PLUGIN_DATA="$RUNNER_TEMP/plugin-data" sh "$GITHUB_WORKSPACE/plugin/bin/markitect" version)"
           reported="${reported%%$'\n'*}"
           [[ "$reported" == "markitect $VERSION+"* ]] || { echo "the launcher started '$reported', not markitect $VERSION" >&2; exit 1; }
-
-      - name: Ask markitect update for the newest release
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [[ "$VERSION" == *-* ]]; then
-            echo "$TAG is a pre-release, which is never the newest release; nothing to ask update"
-            exit 0
-          fi
-          report="$(go run ./cmd/markitect update --check --repo "$RUNNER_TEMP")"
-          echo "$report"
-          grep -qx "binary: up to date ($VERSION)" <<< "$report" || { echo "markitect update does not find $VERSION as the newest release" >&2; exit 1; }
 
       - name: Take a release that failed these checks out of the newest-release slot
         if: ${{ failure() }}
@@ -356,4 +338,4 @@ jobs:
         run: |
           set -euo pipefail
           gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --prerelease
-          echo "::error::the published release $TAG failed its checks and is now marked as a pre-release; markitect update no longer offers it"
+          echo "::error::the published release $TAG failed its checks and is now marked as a pre-release; GitHub no longer names it the latest release"

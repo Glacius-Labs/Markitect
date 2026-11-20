@@ -1,59 +1,42 @@
 # Architecture
 
-How the source is composed, where each responsibility lives and which contracts hold between the packages. Main builds the [concept](concept/README.md). The spec language and its commands check and analyse a project's spec; [the record](../internal/run/README.md) (`status`, `mark`) says what a driver's agents have to verify and records their verdicts; and the tool steers no work and uses no Git ([DEC-096](decisions.md#dec-096-the-tool-computes-and-checks-a-driver-acts), [DEC-097](decisions.md#dec-097-markitect-uses-no-git), [DEC-099](decisions.md#dec-099-a-record-of-what-was-verified)).
+How the source is composed, where each responsibility lives and which contracts hold between the packages. Main builds the [concept](concept/README.md). The tool checks and analyses a project's spec, computes from the state what is changed, suspect or unexplained, binds verdicts, and checks the steps and the landing of a job; it starts no agent, steers no work and uses no Git ([DEC-132](decisions.md#dec-132-markitect-is-a-tool-jobs-and-runners), [DEC-097](decisions.md#dec-097-markitect-uses-no-git)). The jobs are skills and agents of the [plugin](guides/plugin.md), run by a session or a runner.
 
-This page owns the package contracts and the repository layout. The [spec language guide](guides/spec-language.md) owns the language, the `.markitect/` layout and the commands; the [code map](development/code-map.md) lists every package with its owning document.
+This page owns the package contracts and the repository layout. The [language reference](guides/language-reference.md) owns the language and the commands, the [project reference](guides/project-reference.md) the project and its state; the [code map](development/code-map.md) lists every package with its owning document.
 
 ## Product flow
 
-`cmd/markitect → internal/bootstrap → CLI adapter → Project → analysis`.
+`cmd/markitect → internal/cli → internal/state, internal/signals, internal/edit, internal/library → internal/lang`.
 
-- `cmd/markitect` only calls `bootstrap.Run`. Bootstrap constructs the CLI with the folder adapter, the engine of the record and the releases `update` installs.
-- The CLI adapter (`internal/adapters/cli`) parses the arguments, opens the project folder through its own `Folders` port and renders Markdown or JSON. It calls Project to load and check the project, analysis for `list`, `doc` and `vet`, and setup for what `init`, `update`, `tidy` and `config` write into a project, and prints what setup did. It reads and writes the files in the user's home folder itself: the personal skill, the user's `harness.yaml` and Claude Code's own folder.
-- The folder adapter (`internal/adapters/folder`) implements that port without Git: the project folder is the nearest one with the manifest, and its files are what a walk finds without what its `.gitignore` files exclude, read as text.
-- Project (`internal/project`) reads one set of files through its `Repository` port, so the same load runs over any set of files, with the folder adapter's walk of the project folder as the one in use. It parses the manifest and lock, takes the standard Libraries from the binary and other Libraries from `.markitect/libraries/`, compiles the spec in `.markitect/spec/` and accounts for every file. A project with compile errors still loads as far as its files allow, so `list`, `doc` and `vet` can run over it.
-- Analysis (`internal/analysis`) answers questions about a loaded project: what it holds, who links to what, what depends on what, and the warnings of vet. It fills the views of `list` and `doc`, which the CLI adapter renders as Markdown or JSON; the adapter adds a Definition's record, since analysis does not read it.
-- Setup (`internal/setup`) is what Markitect writes into a project: the first files of a new one, the skills and the harness with its agents rendered from the harness configuration, the hooks of [the agents' rights](../internal/guard/README.md) and the worktree base in `.claude/settings.json`, `.markitect/.gitattributes`, the ignore line for Claude Code's worktrees and the lock ([what `init` writes](guides/project-workflow.md#1-set-up-the-project)). It writes through its own `Folder` port, which the folder adapter satisfies, prints nothing and returns what it did. A dry run of the same code tells `update --check` and `version` what is out of date.
+- `cmd/markitect` only calls `cli.Run` with the arguments and the output streams.
+- The command line (`internal/cli`) parses the arguments, finds the project, the nearest folder upward that holds `.markitect/version` or the one `-C` names, and prints text or JSON. It writes `.markitect/` and the spec folder for `init`, carries out the change sets of `new`, `move` and `apply` all or nothing, checking first, writing through temporary files and undoing every step when one fails, writes the state and the history for `mark` and `move` under a lock in the user's cache folder, and prints the version and the license notices from `internal/buildinfo`.
+- The project and its state (`internal/state`) load a project through the `os.DirFS` of its folder: the layout of `.markitect/`, the spec, the walk of the files without what the ignore files exclude, their hashes, the state with `status`, `mark` and `move`, the history, the reports, settings and control samples, the write table with the step and landing checks, `compare` and the figures. It reads and returns; the command line writes.
+- The signals (`internal/signals`) read a parsed spec: its statements, the eight signals and the topic view.
+- The change sets (`internal/edit`) compute what `new`, `move` and `apply` write, over supplied file systems.
+- The library (`internal/library`) is built into the binary: the packages of types, the templates, the types the tool owns, the reference values and the question catalogs.
+- The language (`internal/lang`) parses and checks the documents of the file system it is handed and writes nothing.
 
-None of these commands starts an agent, and none needs credentials. The [commands](guides/spec-language.md#commands) section gives their options and exit codes.
-
-`status` and `mark` run `cmd/markitect → internal/bootstrap → CLI adapter → the record`. Bootstrap builds [the record](../internal/run/README.md) (`internal/run`) over the folder adapter, with the lock of each project's record in the user's cache folder; the record itself, `.markitect/review.sum`, lies in the project. `hook` runs `CLI adapter → the agents' rights`: the adapter reads the call, the environment and the plugin's files, and [`internal/guard`](../internal/guard/README.md) decides over their bytes. The driver, by default the owner's own Claude Code session through the skills of [DEC-100](https://github.com/Glacius-Labs/Markitect/blob/da1cf1bc54cb0b3fc7cc58c8ab194e8bbaee18d8/docs/decisions.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role), such as `/markitect-build` and `/markitect-review`, sequentially or through the shipped parallel workflow ([DEC-103](https://github.com/Glacius-Labs/Markitect/blob/da1cf1bc54cb0b3fc7cc58c8ab194e8bbaee18d8/docs/decisions.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)), starts the agents and makes every Git step: nothing in the tool starts or drives an agent, which calls `markitect` like any other tool. `config` reads and writes the harness configuration (`internal/harness`), from which `init` and `update` write the agents' front matter.
-
-The rebuilt tool grows beside it as `markitect-next` ([roadmap](roadmap.md#current-steps)): `cmd/markitect-next → internal/cli → internal/edit → internal/lang`, with the [library](guides/library.md) in `internal/library`, the [signals](guides/signals.md) in `internal/signals` and the [project](guides/project-reference.md) in `internal/state`. The command line finds the project, `internal/state` loads it and its spec through the `os.DirFS` of the project folder, and the command line carries out the change set that `internal/edit` computes for `new`, `move` and `apply` all or nothing: it checks first, writes through temporary files and undoes every step when one fails. `internal/lang` parses and checks the documents of the file system it is handed, writes nothing and imports no package of the 0.34.0 tool, so that removing that tool is a pure deletion. The one package the two share is `internal/buildinfo`, whose version the release sets and which stays.
-
-The default driver needs Claude Code on the user's own login: its agents are subagents of the owner's session, with the user's rights, the builder in a worktree of its own and a reviewer alone in the owner's folder ([concept, §7](https://github.com/Glacius-Labs/Markitect/blob/da1cf1bc54cb0b3fc7cc58c8ab194e8bbaee18d8/docs/concept/how-sure-we-are.md)).
+None of the commands starts an agent or a process, uses the network or needs credentials. The [language reference](guides/language-reference.md#commands) gives their arguments and exit codes.
 
 ## Layers
 
-All Go packages use one root module. One rule table in [`internal/tooling/architecture/rules.go`](../internal/tooling/architecture/rules.go) gives every package a layer and its owning document, lists which layers each layer may import and names the few exceptions. The [import gate](#import-gate) enforces it, and the generated [code map](development/code-map.md) shows the table.
+All Go packages use one root module. One rule table in [`internal/tooling/architecture/rules.go`](../internal/tooling/architecture/rules.go) gives every package a layer and its owning document, lists which layers each layer may import and names the exceptions, of which there are none today. The [import gate](#import-gate) enforces it, and the generated [code map](development/code-map.md) shows the table.
 
 | Responsibility | Packages | Depends on |
 | --- | --- | --- |
-| Spec language: Definitions, Kinds, links, visibility, cycles, manifest and lock, over supplied bytes | `internal/spec` | No other Markitect package |
-| Files built into the binary: the standard Library `std`, and the harness for Claude Code: its skills, its agents, the routine's file and the parallel workflow | `internal/libraries`, `internal/skills` | No other Markitect package |
-| The harness configuration: `harness.yaml` at user and project level, resolved key by key, and the agents' front matter rendered from it | `internal/harness` | No other Markitect package |
-| Registry pages, ownership by path pattern, file accounting and stale realization | `internal/realization` | Spec language |
-| Loading and checking a project's `.markitect/` folder from one set of files | `internal/project` | Spec language, the built-in files, the harness configuration, realization; its own `Repository` port |
-| What a project holds and who links to what, the Package graph, the views of `list` and `doc`, vet | `internal/analysis` | Project and the packages below it |
-| The record: the inputs of each Definition, `review.sum`, the history `history.jsonl`, the inbox `inbox.jsonl`, `status` and `mark` | `internal/run` | Project and the packages below it |
-| The agents' rights: which role may write what and start whom, the hook that holds them and its entries in a project's settings | `internal/guard` | Project, for the layout of `.markitect/` |
-| What Markitect writes into a project: its first files, the skills and the harness, the hooks and worktree base in its settings, the Git attributes, the ignore line and the lock | `internal/setup` | Spec language, the built-in files, the harness configuration, Project and the agents' rights; its own `Folder` port |
-| Project-folder, command-line and update adapters; no adapter imports another | `internal/adapters/folder`, `internal/adapters/cli`, `internal/adapters/upgrade` | Their inward consumers and build data |
-| Composition | `internal/bootstrap` | The adapters and the record |
-| Entrypoints | `cmd/markitect` | Bootstrap |
-| The rebuilt tool's spec language over a supplied file system: documents, types, sections, links and `check` ([language reference](guides/language-reference.md)) | `internal/lang` | No other Markitect package |
-| The library built into the rebuilt tool: packages, templates and the types the tool owns, of reports, settings and control samples | `internal/library` | No other Markitect package |
-| The rebuilt tool's change sets of `new`, `move` and `apply` over supplied file systems: files to move and files to write | `internal/edit` | The rebuilt tool's spec language |
-| The rebuilt tool's statements, signals and topic view over a parsed spec ([signals](guides/signals.md)) | `internal/signals` | The rebuilt tool's spec language |
-| The rebuilt tool's project over a supplied file system: the `.markitect/` layout, the project loaded with its spec, the walk of its files, their hashes, the state with `status`, `mark` and `move`, the history, the reports, settings and control samples ([reports](guides/reports.md)), the write table with the step and landing checks ([rights](guides/rights.md)), `compare`, the change signals and the figures of the factory ([project reference](guides/project-reference.md)) | `internal/state` | The rebuilt tool's spec language, its library and its change sets |
-| The rebuilt tool's command line: arguments, the project it works in, `init` and `version`, the spec folder and the state it reads and writes, the lock of `mark`, and the output | `internal/cli` | The rebuilt tool's spec language, its library, its change sets, its signals, its project, and build data |
-| The rebuilt tool's entrypoint, `markitect-next`, beside `markitect` until step 4 of the [roadmap](roadmap.md#current-steps) replaces it | `cmd/markitect-next` | The rebuilt tool's command line |
 | Version and license notices | `internal/buildinfo` | No other Markitect package |
+| The spec language over a supplied file system: documents, types, sections, links and `check` ([language reference](guides/language-reference.md)) | `internal/lang` | No other Markitect package |
+| The library built into the tool: packages, templates and the types the tool owns, of reports, settings and control samples ([library](guides/library.md)) | `internal/library` | No other Markitect package |
+| The change sets of `new`, `move` and `apply` over supplied file systems: files to move and files to write | `internal/edit` | The language |
+| The statements, signals and topic view over a parsed spec ([signals](guides/signals.md)) | `internal/signals` | The language |
+| The project over a supplied file system: the `.markitect/` layout, the project loaded with its spec, the walk of its files, their hashes, the state with `status`, `mark` and `move`, the history, the reports, settings and control samples ([reports](guides/reports.md)), the write table with the step and landing checks ([rights](guides/rights.md)), `compare`, the change signals and the figures of the factory ([project reference](guides/project-reference.md)) | `internal/state` | The language, the library and the change sets |
+| The command line: arguments, the project it works in, `init`, `version` and `licenses`, the spec folder and the state it reads and writes, the lock of `mark`, and the output | `internal/cli` | Every layer above, and build data |
+| The entrypoint, `markitect` | `cmd/markitect` | The command line |
 | Maintenance: the import gate and the code map | `internal/tooling/architecture` | No other Markitect package; separate from product execution |
-| Test support, test files only | `internal/testkit` | No Markitect package |
+| Test support, test files only: temporary folders | `internal/testkit` | No Markitect package |
 | Standalone: the command smoke | `tools/smoke` | No Markitect package |
 
-The pure packages (`spec`, `realization`, `analysis`, `guard`) read no files and start no process; their callers hand them bytes. `spec` and `realization` return every error as a diagnostic with a code, which the [spec language guide](guides/spec-language.md) lists.
+The language, the library, the change sets, the signals and the project read no file of their own accord and start no process; their callers hand them file systems.
 
 ### Import gate
 
@@ -67,11 +50,11 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 ### Adding, changing or removing a package
 
-A new package root needs an actual consumer and a distinct responsibility. Land each contract with a caller and a concrete implementation, never as an interface-only wave. Add, move or remove the package's row in the rule table, give it a package doc comment and regenerate the code map. Keep one root module and reject nested modules. Delete obsolete source, commands and gates together ([DEC-032](decisions.md#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)). Producers own value types; consumers own ports.
+A new package root needs an actual consumer and a distinct responsibility. Land each contract with a caller and a concrete implementation, never as an interface-only wave. Add, move or remove the package's row in the rule table, give it a package doc comment and regenerate the code map. Keep one root module and reject nested modules. Delete obsolete source, commands and gates together ([DEC-139](decisions.md#dec-139-quality-simplicity-and-stability-over-effort-and-compatibility)). Producers own value types; consumers own ports.
 
 ## Distribution
 
-A release is a tag `vX.Y.Z` that the [release workflow](../.github/workflows/release.yaml) turns into a GitHub release: binaries for six systems, their checksums and a provenance file ([DEC-095](https://github.com/Glacius-Labs/Markitect/blob/da1cf1bc54cb0b3fc7cc58c8ab194e8bbaee18d8/docs/decisions.md#dec-095-releases-a-plugin-and-a-binary-that-updates-itself); [releasing](releasing.md)). Between releases Main's source declares a development version such as `0.0.0-dev` (`internal/buildinfo`, which also compares versions: `Newer`, `IsDev`); the retired versions `0.1.0` to `0.14.1` are never reused, and a release sets its own. `internal/adapters/upgrade` is the one package that uses the network: for `markitect update` it finds the newest tag, downloads the binary for the system, checks it against the release's checksums and replaces the running executable. The Claude Code plugin in `plugin/`, listed by the marketplace repository [Claude-Plugins](https://github.com/Glacius-Labs/Claude-Plugins) at the tag of a release, fetches the same binary through its launcher; a test has the launcher fetch the file names that the updater uses, and the workflow builds files under those names. `markitect version` adds the source revision: the VCS revision of a build in a checkout, marked `-modified` for a changed tree, or the commit in the module's pseudo-version for `go install github.com/Glacius-Labs/Markitect/cmd/markitect@main`. The command smoke, `tools/smoke`, builds `markitect` from the repository and drives its commands over a small project; it publishes nothing and starts no agent.
+A release is a tag `vX.Y.Z` that the [release workflow](../.github/workflows/release.yaml) turns into a GitHub release: binaries for six systems, their checksums and a provenance file ([releasing](releasing.md)). Between releases Main's source declares a development version such as `0.35.0-dev` (`internal/buildinfo`); the retired versions `0.1.0` to `0.14.1` are never reused, and a release sets its own. The tool itself uses no network. The Claude Code plugin in `plugin/`, listed by the marketplace repository [Claude-Plugins](https://github.com/Glacius-Labs/Claude-Plugins) at the tag of a release, fetches the binary of its own version through its launcher ([the plugin](guides/plugin.md#the-launcher)); the launcher's tests serve a release under the file names the workflow builds. `markitect version` adds the source revision: the VCS revision of a build in a checkout, marked `-modified` for a changed tree, the commit in the module's pseudo-version for `go install github.com/Glacius-Labs/Markitect/cmd/markitect@COMMIT`, or the commit the release workflow injects. The command smoke, `tools/smoke`, builds `markitect` from the repository and drives its commands over a small fresh project; it publishes nothing and starts no agent.
 
 ## Repository layout
 
@@ -79,10 +62,9 @@ One Go module at the root, with `cmd/` and `internal/` below it.
 
 | Path | Holds |
 |---|---|
-| `cmd/` | The Go entrypoints: `markitect`, the CLI that ships, and `markitect-next`, the rebuilt tool beside it |
-| `internal/` | The Go packages, including the standard Libraries (`internal/libraries`) and the skills and agents (`internal/skills`) that the binary embeds; the [code map](development/code-map.md) lists every package |
-| `plugin/` | The Claude Code plugin `markitect`, with its launcher, hooks and skill |
-| `plugin-next/` | The Claude Code plugin `markitect-next` of the rebuilt tool, with its skills and agents ([plugin](guides/plugin.md)) |
+| `cmd/` | The Go entrypoint `markitect` |
+| `internal/` | The Go packages, including the library (`internal/library`) that the binary embeds; the [code map](development/code-map.md) lists every package |
+| `plugin/` | The Claude Code plugin `markitect`, with its skills, agents, launcher and start hooks ([plugin](guides/plugin.md)) |
 | `tools/` | Independent tools that import no product code: the command smoke |
 | `scripts/` | Maintainer scripts: the documentation link check and the CI test and flake reports |
 | `docs/` | This documentation |

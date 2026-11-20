@@ -1,8 +1,9 @@
 // Command smoke builds markitect from the repository and drives its commands
-// over a small project with exact assertions. It checks the version, init,
-// check, tidy, doc, list, vet, status and mark, and the refusal of a spec that
-// does not compile. It starts no agent and needs no Git. The same checks run on
-// every operating system, so CI needs no shell-specific copies.
+// over a small fresh project with exact assertions. It checks the version,
+// init, apply, new, check, settings, status, mark, move, compare, reports and
+// figures, and the refusal of the commands that are gone. It starts no agent
+// and needs no Git. The same checks run on every operating system, so CI needs
+// no shell-specific copies.
 //
 //	go run ./tools/smoke [-repo DIR] [-work DIR]
 package main
@@ -74,7 +75,7 @@ func (s *smoke) checks() error {
 	for _, c := range []check{
 		{"build markitect from the repository", s.build},
 		{"markitect reports a build version", s.version},
-		{"spec commands over a small project, and refusals", s.specCommands},
+		{"the commands over a small fresh project, and refusals", s.projectCommands},
 	} {
 		start := time.Now()
 		if err := c.run(); err != nil {
@@ -112,7 +113,7 @@ func (s *smoke) run(dir string, env []string, name string, args ...string) (stri
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	if err := cmd.Run(); err != nil {
-		return stdout.String(), fmt.Errorf("%s %s: %v\nstdout: %s\nstderr: %s", filepath.Base(name), strings.Join(args, " "), err, tail(stdout.String()), tail(stderr.String()))
+		return stdout.String(), fmt.Errorf("%s %s: %w\nstdout: %s\nstderr: %s", filepath.Base(name), strings.Join(args, " "), err, tail(stdout.String()), tail(stderr.String()))
 	}
 	return stdout.String(), nil
 }
