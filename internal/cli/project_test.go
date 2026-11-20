@@ -208,23 +208,30 @@ func TestVersion(t *testing.T) {
 	if doc.Kind != "version" || doc.Version != buildinfo.Version() || doc.Pinned != "0.1.0" || doc.Matches {
 		t.Error(out)
 	}
-	if code, _, errOut := run("version", "-C", t.TempDir()); code != ExitFailed || !strings.Contains(errOut, "holds no .markitect/") {
+	if code, _, errOut := run("version", "-C", t.TempDir()); code != ExitFailed || !strings.Contains(errOut, "holds no .markitect/version") {
 		t.Error(code, errOut)
 	}
 }
 
-// TestOutsideAProject runs where no folder from the temporary folder upward
-// holds .markitect/, and is skipped elsewhere.
+// TestOutsideAProject runs below a .markitect/ folder without a version file,
+// as in a home folder that holds the reader's last look, which is no project.
 func TestOutsideAProject(t *testing.T) {
 	outside := t.TempDir()
-	if _, found := findProject(outside, isProject); found {
-		t.Skip("a folder above the temporary folder holds .markitect/")
+	if dir, found := findProject(outside, isProject); found {
+		t.Fatalf("%s, above the temporary folder, holds .markitect/version", dir)
 	}
-	t.Chdir(outside)
+	if err := os.MkdirAll(filepath.Join(outside, ".markitect", "last-look"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	inside := filepath.Join(outside, "work")
+	if err := os.Mkdir(inside, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(inside)
 	if code, out, _ := run("version"); code != ExitOK || out != "markitect-next "+buildinfo.Version()+"\n" {
 		t.Error(code, out)
 	}
-	if code, _, errOut := run("check"); code != ExitFailed || !strings.Contains(errOut, "upward holds .markitect/; markitect-next init makes one") {
+	if code, _, errOut := run("check"); code != ExitFailed || !strings.Contains(errOut, "upward holds .markitect/version; markitect-next init makes one") {
 		t.Error(code, errOut)
 	}
 }

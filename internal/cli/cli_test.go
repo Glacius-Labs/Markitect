@@ -114,7 +114,7 @@ func TestUsage(t *testing.T) {
 		{[]string{"init", "--spec"}, "flag --spec needs a value"},
 		{[]string{"check", "-C", filepath.Join(dir, "missing")}, "not a folder"},
 		{[]string{"check", "-C", file}, "not a folder"},
-		{[]string{"check", "-C", specOf(dir)}, "holds no .markitect/; markitect-next init makes one"},
+		{[]string{"check", "-C", specOf(dir)}, "holds no .markitect/version; markitect-next init makes one"},
 	} {
 		code, out, errOut := run(tc.args...)
 		if code != ExitFailed || out != "" || !strings.Contains(errOut, tc.want) {

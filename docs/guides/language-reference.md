@@ -80,7 +80,7 @@ A document reports each unresolved target once, at its first link: `[the archive
 
 ## Commands
 
-Every command but `init` and `version` works in a project and finds its spec through it: the folder `-C PROJECT` names, or the nearest folder from the working directory upward that holds `.markitect/` ([project reference](project-reference.md#the-project)). A `DOCUMENT`, `TYPE`, `OLD`, `NEW` or `PATH` is a path below the spec folder, with or without `.md`, with `/` or `\` between folders; a path that leaves the spec folder, is absolute or starts with a scheme names no document. Flags may stand anywhere, `-json` is the same as `--json`, and `--` ends the flags, so that a name starting with `-` can follow. `markitect-next help`, `-h` or `--help` prints the usage. Output paths are below the spec folder, with `/`.
+Every command but `init` and `version` works in a project and finds its spec through it: the folder `-C PROJECT` names, or the nearest folder from the working directory upward that holds `.markitect/version` ([project reference](project-reference.md#the-project)). A `DOCUMENT`, `TYPE`, `OLD`, `NEW` or `PATH` is a path below the spec folder, with or without `.md`, with `/` or `\` between folders; a path that leaves the spec folder, is absolute or starts with a scheme names no document. Flags may stand anywhere, `-json` is the same as `--json`, and `--` ends the flags, so that a name starting with `-` can follow. `markitect-next help`, `-h` or `--help` prints the usage. Output paths are below the spec folder, with `/`.
 
 | Command | Does |
 |---|---|

@@ -13,10 +13,11 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/state"
 )
 
-// isProject says whether dir holds .markitect/.
+// isProject says whether dir holds .markitect/version, so that a .markitect/
+// folder of another kind, such as the one in the home folder, is no project.
 func isProject(dir string) bool {
-	info, err := os.Stat(filepath.Join(dir, state.Dir))
-	return err == nil && info.IsDir()
+	info, err := os.Stat(filepath.Join(dir, filepath.FromSlash(state.VersionFile)))
+	return err == nil && info.Mode().IsRegular()
 }
 
 // findProject returns the nearest folder, start or above it, for which
@@ -68,9 +69,9 @@ func projectFolder(o options) (dir string, found bool, err error) {
 // noProject says that no project was found, and how to make one.
 func noProject(o options, at string) error {
 	if o.dir != "" {
-		return fmt.Errorf("%s holds no %s/; markitect-next init makes one", o.dir, state.Dir)
+		return fmt.Errorf("%s holds no %s; markitect-next init makes one", o.dir, state.VersionFile)
 	}
-	return fmt.Errorf("no folder from %s upward holds %s/; markitect-next init makes one", at, state.Dir)
+	return fmt.Errorf("no folder from %s upward holds %s; markitect-next init makes one", at, state.VersionFile)
 }
 
 // mustProject is the project a command works in, or an error when there is

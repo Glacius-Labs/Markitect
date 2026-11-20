@@ -4,7 +4,7 @@ How the rebuilt tool `markitect-next` finds and sets up a project, what lies in 
 
 ## The project
 
-A project is a folder that holds `.markitect/`. Every command but `init` and `version` works in one: the folder `-C PROJECT` names, which must hold `.markitect/`, or else the nearest folder, from the working directory upward, that holds it. Without one, a command exits 2 and says that `init` makes one. The tool uses no Git to find it, and a folder that holds `.markitect/` is a project wherever it lies.
+A project is a folder that holds `.markitect/version`. Every command but `init` and `version` works in one: the folder `-C PROJECT` names, which must hold `.markitect/version`, or else the nearest folder, from the working directory upward, that holds it. A `.markitect/` folder without a version file, such as `~/.markitect/` with a reader's last look, is no project and is passed over. Without a project, a command exits 2 and says that `init` makes one. The tool uses no Git to find it, and a folder that holds `.markitect/version` is a project wherever it lies.
 
 The tool reads a project through a file system rooted at its folder, the spec and `.markitect/` included, so that two projects, such as two states to compare, load the same way. It names a document by its path below the spec folder and any other file by its path below the project folder, with `/` on every system.
 

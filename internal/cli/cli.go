@@ -43,7 +43,7 @@ const usage = `usage: markitect-next COMMAND ARGUMENTS [-C PROJECT] [--json]
   version                     the tool's version, and whether the project pins it
 
 The project is the nearest folder, from the working directory upward, that
-holds .markitect/, or the folder -C names. A DOCUMENT, TYPE or PATH is a path
+holds .markitect/version, or the folder -C names. A DOCUMENT, TYPE or PATH is a path
 below the spec folder, with or without .md. Diagnostics read
 path:line: code: message. --json prints one document with format_version and
 kind. Exit codes: 0 when all is well, 1 when the command found something, 2
