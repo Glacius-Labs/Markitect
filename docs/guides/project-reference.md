@@ -1,6 +1,6 @@
 # Project reference
 
-How the rebuilt tool `markitect-next` finds and sets up a project, what lies in `.markitect/`, which files of the project it sees, how it hashes them, the state with `status`, `mark` and `move`, the history, and the comparison of two projects ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version), [DEC-097](../decisions.md#dec-097-markitect-uses-no-git)). [Reports, settings and control samples](reports.md) gives the files of fixed form beside them. [The project](../concept/jobs-and-runners.md#the-project) and [the state](../concept/the-state.md) in the concept say what they are for; this page says precisely what the tool does. [The language reference](language-reference.md) gives the commands that read and write the spec. The examples are a small lending library.
+How the tool `markitect` finds and sets up a project, what lies in `.markitect/`, which files of the project it sees, how it hashes them, the state with `status`, `mark` and `move`, the history, and the comparison of two projects ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version), [DEC-097](../decisions.md#dec-097-markitect-uses-no-git)). [Reports, settings and control samples](reports.md) gives the files of fixed form beside them. [The project](../concept/jobs-and-runners.md#the-project) and [the state](../concept/the-state.md) in the concept say what they are for; this page says precisely what the tool does. [The language reference](language-reference.md) gives the commands that read and write the spec. The examples are a small lending library.
 
 ## The project
 
@@ -27,7 +27,7 @@ The tool reads a project through a file system rooted at its folder, the spec an
 
 ## init
 
-`markitect-next init [--spec PATH]` sets up the folder `-C` names, or the working directory, as a project:
+`markitect init [--spec PATH]` sets up the folder `-C` names, or the working directory, as a project:
 
 - it writes `.markitect/` with `version`, the tool's own version, `spec`, by default `docs/spec`, `.gitattributes`, an empty `ignore` and `settings.md`, with the [settings `init` writes](reports.md#settings);
 - it creates the spec folder when it is missing, and keeps one that exists with every file in it.
@@ -36,7 +36,7 @@ It writes nothing else: no `AGENTS.md`, no `CLAUDE.md`, nothing in `.claude/` an
 
 ## version
 
-`markitect-next version` prints the tool's version, `markitect-next 0.35.0`. It needs no project. In the project `-C` names, or the nearest one upward, it adds the version the project pins, `the project pins 0.35.0`, or `the project pins 0.34.0, not this version` and exits 1 when the two differ. Outside a project it prints the tool's version alone and exits 0. With `--json`, it prints `version`, `pinned`, empty outside a project, and `matches`.
+`markitect version` prints the tool's build: its version, with the source revision when the build knows it, `markitect 0.35.0+COMMIT`; a release names the commit it was built from. It needs no project. In the project `-C` names, or the nearest one upward, it adds the version the project pins, `the project pins 0.35.0`, or `the project pins 0.34.0, not this version` and exits 1 when the two differ. Outside a project it prints the build alone and exits 0. With `--json`, it prints `version`, `build`, `pinned`, empty outside a project, and `matches`.
 
 ## The walk
 
@@ -116,7 +116,7 @@ Every hash is a file's hash as [hashing](#hashing) computes it, so a row written
 
 ## status
 
-With `--step` or `--target`, `status` checks a step against the write table or whether the branch lands instead ([rights and landing](rights.md)). Without them, `markitect-next status` is the plan: what moved since the last confirmation, from the folder, the state and the reports. It changes nothing. While [`check`](language-reference.md#what-check-reports) finds errors, in the spec or in [the reports, the settings and the results of control samples](reports.md#what-check-reports), or the state has a line it cannot read, it prints them and `no list while check finds errors or the state has errors`, gives no list and exits 1. Otherwise it lists:
+With `--step` or `--target`, `status` checks a step against the write table or whether the branch lands instead ([rights and landing](rights.md)). Without them, `markitect status` is the plan: what moved since the last confirmation, from the folder, the state and the reports. It changes nothing. While [`check`](language-reference.md#what-check-reports) finds errors, in the spec or in [the reports, the settings and the results of control samples](reports.md#what-check-reports), or the state has a line it cannot read, it prints them and `no list while check finds errors or the state has errors`, gives no list and exits 1. Otherwise it lists:
 
 | Entry | When |
 |---|---|
@@ -141,11 +141,11 @@ Each entry reads `DOCUMENT@FINGERPRINT: CHANGES`, in path order, and a waiting e
 
 ## mark
 
-`markitect-next mark DOCUMENT@FINGERPRINT VERDICT [--file PATH]... [--check PATH]... [-e EVIDENCE]... [-m REASON]` binds a verdict to the state `status` showed:
+`markitect mark DOCUMENT@FINGERPRINT VERDICT [--file PATH]... [--check PATH]... [-e EVIDENCE]... [-m REASON]` binds a verdict to the state `status` showed:
 
 ```text
-markitect-next mark lending/borrow.md@3f9a1c07 ok --file src/loans.go --check tests/counter-checks/loans_test.go -e "tests/counter-checks/loans_test.go:3 (TestBorrow)"
-markitect-next mark lending/return.md@5d0e9b11 fail --file src/returns.go -m "a book comes back after four weeks"
+markitect mark lending/borrow.md@3f9a1c07 ok --file src/loans.go --check tests/counter-checks/loans_test.go -e "tests/counter-checks/loans_test.go:3 (TestBorrow)"
+markitect mark lending/return.md@5d0e9b11 fail --file src/returns.go -m "a book comes back after four weeks"
 ```
 
 - **The verdict.** `ok` needs at least one piece of evidence; `fail` and `skip` need a reason with `-m`, kept on one line. A document gone from the spec takes only `ok`, without artifacts or evidence, which removes its row.
@@ -158,7 +158,7 @@ It writes under a lock: a file in `markitect/locks/` of the user's cache folder,
 
 ## move and the state
 
-`markitect-next move OLD NEW` ([language reference](language-reference.md#commands-that-write)) carries the state with the document, so that a move leaves `status` as it was. It takes the lock of `mark`, refuses while the spec has errors or the state a line it cannot read, and writes the moved and rewritten documents, the reports whose [place](reports.md#reports) it rewrote, the state and the history in one change set: when a step fails, every step done is undone, the state and the history included.
+`markitect move OLD NEW` ([language reference](language-reference.md#commands-that-write)) carries the state with the document, so that a move leaves `status` as it was. It takes the lock of `mark`, refuses while the spec has errors or the state a line it cannot read, and writes the moved and rewritten documents, the reports whose [place](reports.md#reports) it rewrote, the state and the history in one change set: when a step fails, every step done is undone, the state and the history included.
 
 - The moved document's rows take the new path, and every `type:` and `link:` input that names it names the new path.
 - For each document whose text `move` rewrote, the moved one included: a `self` that matched its text before the move takes the hash of its new text, and so does a `type:` or `link:` input of another row that matched it. One that did not match stays, so a document that was changed or suspect before the move is so after it.
@@ -189,7 +189,7 @@ The other inputs stay: an artifact, a counter-check or a file of the spec folder
 
 ## compare
 
-`markitect-next compare OLD [NEW]` compares two projects, each a folder that holds `.markitect/version` and its spec ([DEC-131](../decisions.md#dec-131-the-tool-shows-claude-explains)). NEW is by default the project the command works in. The tool uses no Git: the runner or a skill lays out OLD, as a Git worktree or an export of a commit, preferably outside the project, or in a folder the project ignores, since NEW's walk would otherwise list its files as unexplained. `compare` carries "since I last looked", the preview of an idea, its branch against the main branch, and the development of the project. It reads both projects as `status` does, with their reports, and changes nothing. It names, each list sorted by path:
+`markitect compare OLD [NEW]` compares two projects, each a folder that holds `.markitect/version` and its spec ([DEC-131](../decisions.md#dec-131-the-tool-shows-claude-explains)). NEW is by default the project the command works in. The tool uses no Git: the runner or a skill lays out OLD, as a Git worktree or an export of a commit, preferably outside the project, or in a folder the project ignores, since NEW's walk would otherwise list its files as unexplained. `compare` carries "since I last looked", the preview of an idea, its branch against the main branch, and the development of the project. It reads both projects as `status` does, with their reports, and changes nothing. It names, each list sorted by path:
 
 | Section | Lists |
 |---|---|

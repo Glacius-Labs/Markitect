@@ -1,6 +1,6 @@
 # Library
 
-The library built into the rebuilt tool `markitect-next`: the packages of types, the templates that `apply` copies into a spec, the types the tool owns, and per package its reference values and question catalog ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version)). It ships in the tool's version. A spec owns the copy `apply` makes and may change it. [The language reference](language-reference.md) gives the rules of the language and the commands. The reference values, `references/PACKAGE.md`, and the question catalogs, `questions/PACKAGE.md`, are read by the tool and never copied; [signals](signals.md) describes them.
+The library built into the tool `markitect`: the packages of types, the templates that `apply` copies into a spec, the types the tool owns, and per package its reference values and question catalog ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version)). It ships in the tool's version. A spec owns the copy `apply` makes and may change it. [The language reference](language-reference.md) gives the rules of the language and the commands. The reference values, `references/PACKAGE.md`, and the question catalogs, `questions/PACKAGE.md`, are read by the tool and never copied; [signals](signals.md) describes them.
 
 ## Packages
 
@@ -64,7 +64,7 @@ After `apply`, `check` reports nothing but `section.empty`: that list is the wor
 
 ## Apply
 
-`markitect-next apply TEMPLATE [TARGET]` copies the template's documents to `TARGET`, a folder below the spec, by default its root.
+`markitect apply TEMPLATE [TARGET]` copies the template's documents to `TARGET`, a folder below the spec, by default its root.
 
 - **Packages.** Every package a copied document links to, and every package those types link to in turn, is copied whole, byte for byte, to `packages/NAME/` in the spec, unless the spec has that folder already. A package the spec has is never overwritten, and never completed.
 - **Links.** Links of the copied documents into the library's packages are rewritten to the spec's copy. Links between the copied documents stay as they are.

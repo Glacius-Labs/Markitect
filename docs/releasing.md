@@ -9,9 +9,9 @@ A release is a tag `vX.Y.Z` on a commit of `main`. The [release workflow](../.gi
 1. It checks the tag, the source version (`markitect version`) and the plugin version, and runs the quality gates of [CI](../CONTRIBUTING.md#check-a-change).
 2. It builds `markitect-vX.Y.Z-OS-ARCH` for Linux, macOS and Windows on amd64 and arm64 (with `.exe` on Windows), writes `markitect-vX.Y.Z-checksums.txt` in the format of `sha256sum` and a provenance file, `markitect-vX.Y.Z-provenance.yaml`, and checks that the Linux binary reports the release.
 3. It publishes exactly those eight files as a GitHub release, after it has checked the files and the remote tag again. GitHub attaches the source of the tag. A version with a pre-release part, such as `v0.16.0-rc.1`, is published as a pre-release.
-4. It starts `markitect` through the plugin's launcher, which downloads the published binary, and asks `markitect update --check` for the newest release. A release that fails this final check is marked as a pre-release, so `markitect update` does not offer it.
+4. It starts `markitect` through the plugin's launcher, which downloads the published binary and checks it against the checksums, and checks that it reports the release. A release that fails this final check is marked as a pre-release, so GitHub no longer names it the latest release.
 
-The file names are a contract with `markitect update` ([`internal/adapters/upgrade`](../internal/adapters/upgrade/)) and the plugin's launcher ([`plugin/bin/markitect`](../plugin/bin/markitect)).
+The file names are a contract with the plugin's launcher ([`plugin/bin/markitect`](../plugin/bin/markitect)), whose tests in [`internal/cli/launcher_test.go`](../internal/cli/launcher_test.go) serve a release under those names ([the plugin](guides/plugin.md#the-launcher)).
 
 A manual run of the workflow is a dry run. It runs the gates, builds and checks every file, and compares the source version with the plugin version, but skips what belongs to a tag: the checks of the tag and of the ancestry of `main`, the publication and the check of the published release.
 
@@ -25,6 +25,6 @@ A manual run of the workflow is a dry run. It runs the gates, builds and checks 
 ## Rules
 
 - Never overwrite a tag or a file of a release, and never reuse a historical tag or a retired version. Release pages and downloads are retired only on the product owner's explicit instruction.
-- The binary is not signed. `markitect update` and the launcher check the download against the checksums of the same release, which guards against a damaged or swapped file, and the connection is HTTPS to GitHub. [Artifact attestations](https://docs.github.com/en/actions/concepts/security/artifact-attestations) would add that a binary was built by this workflow.
+- The binary is not signed. The launcher checks the download against the checksums of the same release, which guards against a damaged or swapped file, and the connection is HTTPS to GitHub. [Artifact attestations](https://docs.github.com/en/actions/concepts/security/artifact-attestations) would add that a binary was built by this workflow.
 - A public release needs a fresh version tag, a clean reviewed commit on `main`, passing gates, the six binaries, the checksums, the provenance, and the identity of the workflow, its run and its attempt. The workflow checks this on the tagged commit before it publishes.
 - CI keeps its artifacts for a limited time: Go test results for 14 days, to support the flake report, and the files of a release run for 30 days. Durable summaries and source references belong in Git; a temporary artifact URL is not a permanent record.

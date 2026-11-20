@@ -47,7 +47,6 @@ DEFAULT_DOCUMENTS = (
     "docs/roadmap.md",
     "docs/history.md",
     "docs/architecture.md",
-    "docs/guides/spec-language.md",
     "docs/guides/language-reference.md",
     "docs/guides/library.md",
     "docs/guides/signals.md",
@@ -55,10 +54,6 @@ DEFAULT_DOCUMENTS = (
     "docs/guides/reports.md",
     "docs/guides/rights.md",
     "docs/guides/plugin.md",
-    "docs/guides/good-spec.md",
-    "docs/guides/project-workflow.md",
-    "internal/run/README.md",
-    "internal/guard/README.md",
     "docs/releasing.md",
 )
 

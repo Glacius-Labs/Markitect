@@ -1,15 +1,15 @@
 # Signals and the topic view
 
-How the rebuilt tool `markitect-next` shows where reading a spec pays off: the statements it reads, the marker words, the eight signals of [the spec itself](../concept/is-the-spec-good.md#the-spec-itself), the topic view, the reference values and the question catalogs ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)). The tool judges nothing and has no thresholds: each signal is a list, strongest first, and the reader decides. [The language reference](language-reference.md) gives the rules of the language and the other commands; the [library](library.md) holds the reference values and the catalogs.
+How the tool `markitect` shows where reading a spec pays off: the statements it reads, the marker words, the eight signals of [the spec itself](../concept/is-the-spec-good.md#the-spec-itself), the topic view, the reference values and the question catalogs ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)). The tool judges nothing and has no thresholds: each signal is a list, strongest first, and the reader decides. [The language reference](language-reference.md) gives the rules of the language and the other commands; the [library](library.md) holds the reference values and the catalogs.
 
 ## Commands
 
 | Command | Does |
 |---|---|
-| `markitect-next topic` | The signals of the whole spec. The text shows the first ten findings of each signal; `--all` shows every one, and `--json` always does |
-| `markitect-next topic TOPIC` | The topic view of a document, a type or a folder, with every finding |
-| `markitect-next questions` | The question catalogs of the library packages the spec has in `packages/` |
-| `markitect-next figures` | The signals of the spec's changes, computed from the history ([below](#the-change-signals)) |
+| `markitect topic` | The signals of the whole spec. The text shows the first ten findings of each signal; `--all` shows every one, and `--json` always does |
+| `markitect topic TOPIC` | The topic view of a document, a type or a folder, with every finding |
+| `markitect questions` | The question catalogs of the library packages the spec has in `packages/` |
+| `markitect figures` | The signals of the spec's changes, computed from the history ([below](#the-change-signals)) |
 
 A finding reads `path:line: signal: detail`. With `--json`, `topic` prints `topic`, `topic_kind` (`spec`, `document`, `type` or `folder`), `documents`, `strong`, `linked_from` and `mentions` as lists of statements with `file`, `line`, `section` and `text`, and `signals`, each signal's list of findings with `file`, `line` and `detail`; for a type also `typed_documents`. `questions` prints `packages`, each with `package` and `questions`.
 
@@ -74,7 +74,7 @@ Each package has a catalog of competency questions in the library, `questions/PA
 
 ## The change signals
 
-`markitect-next figures` computes the signals of [the spec's changes](../concept/is-the-spec-good.md#its-changes) from the history ([project reference](project-reference.md#the-history)), against the spec as it is. Like the signals of the spec itself, each is a list sorted strongest first, with the project's own reference beside it, and no threshold; the text shows the first ten findings of each, `--all` every one. The [figures of the factory](reports.md#the-figures-of-the-factory), from the reports, the control samples and the history, follow them.
+`markitect figures` computes the signals of [the spec's changes](../concept/is-the-spec-good.md#its-changes) from the history ([project reference](project-reference.md#the-history)), against the spec as it is. Like the signals of the spec itself, each is a list sorted strongest first, with the project's own reference beside it, and no threshold; the text shows the first ten findings of each, `--all` every one. The [figures of the factory](reports.md#the-figures-of-the-factory), from the reports, the control samples and the history, follow them.
 
 **A change.** A verdict event's document, together with the documents its `changed` list names, is one change, each document only when its text changed: when its `self` in the event differs from the last `self` the history recorded for it in any event, or it has none yet. A document waiting in the `changed` lists of several verdicts, one recorded `fail`, one whose artifact changed and one gone from the spec count in no change while their text stays. A document recorded gone, without a `self`, ends there: a later document at its path, new or moved there, is another document of its own. A verdict joins the change before it when it follows that change's last verdict within an hour and its documents are among those of the change's first verdict: a reviewer confirming the documents of one change one after the other makes one change, not several. A verdict an hour or more later, or one that names a document the change did not have, starts a new change. The history follows a document through its moves to its current path. `move` events are no changes, and the documents a move rewrote count only when a verdict names them.
 

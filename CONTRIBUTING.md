@@ -17,7 +17,7 @@ Product code and tests that handle a project's `.markitect/` folder use fixtures
 |---|---|---|
 | Go package | `internal/<responsibility>/` | A row in the architecture rule table, a package doc comment, and the code map regenerated ([architecture](docs/architecture.md#adding-changing-or-removing-a-package)) |
 | Shipped command | `cmd/<name>/` | A row in the rule table |
-| File the binary embeds | Inside the embedding package, such as `internal/libraries/` | |
+| File the binary embeds | Inside the embedding package, such as `internal/library/` | |
 | Fixture of one package | `<package>/testdata/` | |
 | Check that must not import product code | `tools/` | A CI step |
 | Maintainer script | `scripts/` | Its tests beside it |
@@ -29,25 +29,19 @@ Product code and tests that handle a project's `.markitect/` folder use fixtures
 | What Markitect builds on: standards, literature and known practice | [Foundations](docs/foundations.md) |
 | The product as a whole | [Concept](docs/concept/README.md) |
 | Decisions in force and open questions | [Decisions](docs/decisions.md) |
-| The spec language, the `.markitect/` layout and the commands | [Spec language](docs/guides/spec-language.md) |
-| The spec language as the rebuilt tool implements it, and its commands | [Language reference](docs/guides/language-reference.md) |
-| The library built into the rebuilt tool: packages, templates and the types the tool owns | [Library](docs/guides/library.md) |
-| The signals, the topic view, reference values, question catalogs and change signals of the rebuilt tool | [Signals](docs/guides/signals.md) |
-| The project of the rebuilt tool: finding it, `init`, the `.markitect/` layout, the walk of its files, their hashes, the state with `status`, `mark` and `move`, the history and `compare` | [Project reference](docs/guides/project-reference.md) |
-| The reports, settings and results of control samples of the rebuilt tool: their value forms, what `check` finds in them, waiting entries and the figures of the factory | [Reports, settings and control samples](docs/guides/reports.md) |
-| The write table of the rebuilt tool, the step check and the landing check | [Rights and landing](docs/guides/rights.md) |
-| The plugin of the rebuilt tool: its skills and agents, the frame of a job, the answer form and how firm its checks are | [The plugin](docs/guides/plugin.md) |
-| Designing a good spec | [What makes a good spec](docs/guides/good-spec.md) |
-| Using Markitect on a project | [Project workflow](docs/guides/project-workflow.md) |
+| The spec language and the commands | [Language reference](docs/guides/language-reference.md) |
+| The library built into the tool: packages, templates and the types the tool owns | [Library](docs/guides/library.md) |
+| The signals, the topic view, reference values, question catalogs and change signals | [Signals](docs/guides/signals.md) |
+| The project: finding it, `init`, the `.markitect/` layout, the walk of its files, their hashes, the state with `status`, `mark` and `move`, the history and `compare` | [Project reference](docs/guides/project-reference.md) |
+| The reports, settings and results of control samples: their value forms, what `check` finds in them, waiting entries and the figures of the factory | [Reports, settings and control samples](docs/guides/reports.md) |
+| The write table, the step check and the landing check | [Rights and landing](docs/guides/rights.md) |
+| The plugin: its skills and agents, the frame of a job, the answer form, the launcher and how firm its checks are | [The plugin](docs/guides/plugin.md) |
+| What makes a good spec, and how to write one | [Is the spec good?](docs/concept/is-the-spec-good.md) |
 | Packages, layers and the repository layout | [Architecture](docs/architecture.md) and the generated [code map](docs/development/code-map.md) |
-| The record, `status` and `mark` | [The record](internal/run/README.md) |
-| The agents' rights and the hook | [The agents' rights](internal/guard/README.md) |
 | Releases | [Releasing](docs/releasing.md) |
 | Where Main is and what comes next | [Roadmap](docs/roadmap.md) |
 | Where earlier concepts and records are | [History](docs/history.md) |
 | How Markitect is developed | This page |
-
-The guides and the internal READMEs describe the 0.34.0 tool until the rebuild reaches them; the concept owns the target.
 
 **Rules for documentation.**
 
@@ -89,7 +83,7 @@ CI runs on Linux only, with quality checks and the race detector, in about five 
 gh workflow run ci.yaml --ref BRANCH
 ```
 
-Local checks and the independent review are the basis for a merge, and CI is optional for ordinary changes. When you run it, run it on the reviewed head and merge only when it is green. The tests run in about a minute on Windows too; Git is started only by one test of `init`, by the test support's own tests and by `TestWalkMatchesGit`, which compares the rebuilt tool's walk with Git and is skipped where Git is not installed.
+Local checks and the independent review are the basis for a merge, and CI is optional for ordinary changes. When you run it, run it on the reviewed head and merge only when it is green. The tests run in about a minute on Windows too; Git is started only by `TestWalkMatchesGit`, which compares the tool's walk with Git and is skipped where Git is not installed.
 
 ## Review and land
 
@@ -97,7 +91,7 @@ Local checks and the independent review are the basis for a merge, and CI is opt
 2. **Get one independent review of the complete diff,** by someone who did not write it: a person, or a fresh agent that has not seen your reasoning. Fix what it finds, and review again if the fixes are substantial.
 3. **Merge the reviewed head:** with a merge commit and the head matched, `gh pr merge NUMBER --merge --match-head-commit SHA`, without bypassing branch protection. Then read Main back.
 
-**Real agent runs.** The skills `/markitect-architect`, `/markitect-build`, `/markitect-review`, `/markitect-cleanup`, `/markitect-bughunt` and `/markitect-audit`, and the routines, start real agents. Run them only on a committed test project, in your own Claude Code session or a worktree of that project. Before a run, name the project and its source commit, the limits, when to abort and the cleanup; after it, report what happened, failures included, in the PR it informs. The tool's commands start no agent and run anywhere.
+**Real agent runs.** The skills `/markitect-architect`, `/markitect-build`, `/markitect-review`, `/markitect-bughunt`, `/markitect-cleanup`, `/markitect-improve`, `/markitect-control-sample`, `/markitect-read`, `/markitect-triage` and `/markitect-intake` start real agents. Run them only on a committed test project, in your own Claude Code session or a worktree of that project. Before a run, name the project and its source commit, the limits, when to abort and the cleanup; after it, report what happened, failures included, in the PR it informs. The tool's commands start no agent and run anywhere.
 
 **Releases** follow [Releasing](docs/releasing.md) ([DEC-133](docs/decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version)). There is no deployment.
 

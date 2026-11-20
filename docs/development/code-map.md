@@ -90,4 +90,4 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `tools/smoke` | Command smoke builds markitect from the repository and drives its commands over a small project with exact assertions. | [docs/architecture.md#distribution](../architecture.md#distribution) |
+| `tools/smoke` | Command smoke builds markitect from the repository and drives its commands over a small fresh project with exact assertions. | [docs/architecture.md#distribution](../architecture.md#distribution) |
