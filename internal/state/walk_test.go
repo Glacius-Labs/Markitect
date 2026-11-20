@@ -230,7 +230,19 @@ func TestWalkLeavesOut(t *testing.T) {
 		"docs/spec/lending.md":        "",
 		"docs/.markitect/version":     "",
 		"docs/spec/.GIT/objects/xx":   "",
-		".Markitect/elsewhere":        "",
+		".MARKITECT/hidden.js":        "",
+		"bad-head/.git/HEAD":          "garbage\n",
+		"bad-head/.git/objects/x":     "",
+		"bad-head/.git/refs/x":        "",
+		"bad-head/a":                  "",
+		"empty-head/.git/HEAD":        "",
+		"empty-head/.git/objects/x":   "",
+		"empty-head/.git/refs/x":      "",
+		"empty-head/a":                "",
+		"hash-head/.git/HEAD":         "0123456789abcdef0123456789abcdef01234567\n",
+		"hash-head/.git/objects/x":    "",
+		"hash-head/.git/refs/x":       "",
+		"hash-head/a":                 "",
 		"docs/spec/.git/objects/more": "",
 	})
 	got, err := Walk(fsys)
@@ -240,8 +252,8 @@ func TestWalkLeavesOut(t *testing.T) {
 	// .markitect/ignore and the .gitignore files each exclude on their own: a
 	// negation in one brings back nothing the other excludes. A fake nested
 	// repository hides nothing.
-	want := []string{".gitignore", "docs/.markitect/version", "docs/spec/lending.md", "fake/file.go", "head-only/a",
-		"keep.log", "nowhere/a", "repo", "src/main.go", "worktree"}
+	want := []string{".MARKITECT/hidden.js", ".gitignore", "bad-head/a", "docs/.markitect/version", "docs/spec/lending.md",
+		"empty-head/a", "fake/file.go", "hash-head", "head-only/a", "keep.log", "nowhere/a", "repo", "src/main.go", "worktree"}
 	if strings.Join(got, "|") != strings.Join(want, "|") {
 		t.Errorf("got %q\nwant %q", got, want)
 	}
@@ -267,10 +279,10 @@ func (o outside) Outside(name string) (fs.FS, string, bool) {
 
 func TestWalkReachesAGitFolderOutside(t *testing.T) {
 	host := mapFS(map[string]string{
-		"main/.git/HEAD":                   "",
+		"main/.git/HEAD":                   "ref: refs/heads/main\n",
 		"main/.git/objects/x":              "",
 		"main/.git/refs/heads/main":        "",
-		"main/.git/worktrees/wt/HEAD":      "",
+		"main/.git/worktrees/wt/HEAD":      "ref: refs/heads/wt\n",
 		"main/.git/worktrees/wt/gitdir":    "",
 		"main/.git/worktrees/wt/commondir": "../..\n",
 	})
@@ -542,14 +554,39 @@ func TestWalkGoesThroughJunctions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The loop back to the project is not walked, and a junction that leads
-	// nowhere is one entry that hashes.
-	if strings.Join(got, "|") != "dangling|j/x/a.txt|real/x/a.txt" {
+	// The loop back to the project is dropped, and so is a junction that leads
+	// nowhere.
+	if strings.Join(got, "|") != "j/x/a.txt|real/x/a.txt" {
 		t.Errorf("got %q", got)
 	}
 	for _, f := range got {
 		if _, err := HashFile(fsys, f); err != nil {
 			t.Errorf("%s: %v", f, err)
 		}
+	}
+}
+
+func TestWalkLeavesOutOtherKindsOfFile(t *testing.T) {
+	fsys := fstest.MapFS{
+		"a.txt":  {Data: []byte("a")},
+		"pipe":   {Mode: fs.ModeNamedPipe},
+		"socket": {Mode: fs.ModeSocket},
+		"device": {Mode: fs.ModeDevice | fs.ModeCharDevice},
+	}
+	if got, err := Walk(fsys); err != nil || strings.Join(got, "|") != "a.txt" {
+		t.Errorf("got %q %v", got, err)
+	}
+	if runtime.GOOS == "windows" {
+		return
+	}
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("a"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if out, err := exec.Command("mkfifo", filepath.Join(dir, "pipe")).CombinedOutput(); err != nil {
+		t.Skip("mkfifo:", err, string(out))
+	}
+	if got, err := Walk(os.DirFS(dir)); err != nil || strings.Join(got, "|") != "a.txt" {
+		t.Errorf("got %q %v", got, err)
 	}
 }

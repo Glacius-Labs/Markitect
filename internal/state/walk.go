@@ -26,12 +26,13 @@ type OutsideFS interface {
 
 // Walk returns every file of the project at fsys, by its path below the
 // project folder with forward slashes, sorted. It leaves out every entry named
-// .git, .markitect/ at the top, both in any case, and what the project's
+// .git, in any case, .markitect/ at the top, and what the project's
 // .gitignore files or .markitect/ignore exclude. A folder that is another valid repository or
 // worktree is one entry and is not walked. A symbolic link is one entry and is
 // not followed. A Windows junction, or any other entry that leads to a folder
-// without being a symbolic link, is walked like a folder, except when it leads
-// back to a folder the walk is in.
+// without being a symbolic link, is walked like a folder, and dropped when it
+// leads back to a folder the walk is in. Any other kind of file, a FIFO, a
+// socket, a device or a junction that leads nowhere, is left out.
 func Walk(fsys fs.FS) ([]string, error) {
 	own, err := readIgnore(fsys, IgnoreFile)
 	if err != nil {
@@ -58,16 +59,20 @@ func (w *walker) walk(p string, above []string) error {
 	above = append(above, name)
 	for _, e := range entries {
 		child := path.Join(p, e.Name())
-		if strings.EqualFold(e.Name(), ".git") || strings.EqualFold(child, Dir) {
+		if strings.EqualFold(e.Name(), ".git") || child == Dir {
 			continue
 		}
 		mode := e.Type()
 		dir, through := e.IsDir(), false
 		if !dir && mode&fs.ModeSymlink == 0 && !mode.IsRegular() {
-			// A junction: walked like a folder when it leads to one.
-			if info, err := fs.Stat(w.fsys, child); err == nil && info.IsDir() {
-				dir, through = true, true
+			// A junction is walked like a folder when it leads to one. Any
+			// other kind of file, such as a FIFO, a socket or a device, is
+			// left out, as Git leaves it out, so that reading it never blocks.
+			info, err := fs.Stat(w.fsys, child)
+			if err != nil || !info.IsDir() {
+				continue
 			}
+			dir, through = true, true
 		}
 		excluded, err := w.excluded(child, dir)
 		if err != nil {
@@ -197,11 +202,36 @@ func nestedRepository(fsys fs.FS, dir string) bool {
 	return ok && gitFolder(host, name)
 }
 
-// gitFolder says whether a folder is a Git folder: it holds HEAD, and objects/
+// validHead says whether a HEAD file is one Git accepts: "ref:" and a ref
+// below refs/, or a full object hash of SHA-1 or SHA-256.
+func validHead(data []byte) bool {
+	s := string(data)
+	if rest, ok := strings.CutPrefix(s, "ref:"); ok {
+		return strings.HasPrefix(strings.TrimLeft(rest, " \t\n\r"), "refs/")
+	}
+	for _, n := range []int{64, 40} {
+		if len(s) >= n && isHex(s[:n]) {
+			return true
+		}
+	}
+	return false
+}
+
+func isHex(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if !isDigit(s[i]) && (s[i] < 'a' || s[i] > 'f') {
+			return false
+		}
+	}
+	return true
+}
+
+// gitFolder says whether a folder is a Git folder: it holds a valid HEAD, and objects/
 // and refs/ lie in it or in the common folder its commondir file names, as in
 // a worktree's folder.
 func gitFolder(fsys fs.FS, dir string) bool {
-	if info, err := fs.Stat(fsys, path.Join(dir, "HEAD")); err != nil || info.IsDir() {
+	head, err := fs.ReadFile(fsys, path.Join(dir, "HEAD"))
+	if err != nil || !validHead(head) {
 		return false
 	}
 	common := dir

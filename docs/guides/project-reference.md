@@ -36,7 +36,7 @@ It writes nothing else: no `AGENTS.md`, no `CLAUDE.md`, nothing in `.claude/` an
 
 The walk lists every file of the project by its path below the project folder, sorted. It reads the folder itself and uses no Git. It leaves out:
 
-- every entry named `.git`, file or folder, at any depth, and `.markitect/` at the top, both in any case;
+- every entry named `.git`, file or folder, at any depth and in any case, and `.markitect/` at the top, spelled exactly so;
 - what the project's `.gitignore` files exclude, each read in its own folder, as Git reads them;
 - what `.markitect/ignore` excludes, read like a `.gitignore` file at the top of the project.
 
@@ -64,9 +64,10 @@ The last pattern that matches decides, and a `.gitignore` file in a deeper folde
 
 **Other entries.**
 
-- **Another repository.** A folder that is a valid repository or worktree of its own, as Git decides, is one entry and is not walked; it reads as the fixed line `a repository of its own`. Valid means that its `.git` is a folder with `HEAD`, `objects/` and `refs/`, or with `HEAD` and a `commondir` file naming a folder with `objects/` and `refs/`, as a worktree's has; or that its `.git` is a file whose `gitdir:` line names such a folder, relative to the folder or absolute. Any other `.git` is left out and the folder is walked, so a fake repository never hides files.
+- **Another repository.** A folder that is a valid repository or worktree of its own, as Git decides, is one entry and is not walked; it reads as the fixed line `a repository of its own`. Valid means that its `.git` is a folder with `objects/`, `refs/` and a `HEAD` that holds `ref: refs/…` or a full object hash, or with such a `HEAD` and a `commondir` file naming a folder with `objects/` and `refs/`, as a worktree's has; or that its `.git` is a file whose `gitdir:` line names such a folder, relative to the folder or absolute. Any other `.git` is left out and the folder is walked, so a fake repository never hides files.
 - **A symbolic link** is one entry, read as the path it points to, as Git stores it, and is not followed; a pattern for folders does not match it.
-- **A Windows junction** is walked like the folder it leads to, and its files are listed below the junction's path. A junction that leads back to a folder the walk is in is not walked again. One that leads nowhere is one entry, read as the path it points to.
+- **A Windows junction** is walked like the folder it leads to, and its files are listed below the junction's path. A junction that leads back to a folder the walk is already in is dropped entirely, and so is one that leads nowhere.
+- **Other kinds of file,** such as FIFOs, sockets and devices, are left out, as Git leaves them out, so that reading the project never blocks. The walk lists only regular files, symbolic links, folders and junctions to folders.
 
 **The limits.** Without Git, the walk cannot know what is committed: a file that is committed although a `.gitignore` excludes it is not walked, while Git keeps tracking it. The walk reads only the `.gitignore` files inside the project folder: in a project below the top of a repository, the files above it do not count, though Git applies them. Global Git settings and `.git/info/exclude` are not read.
 
