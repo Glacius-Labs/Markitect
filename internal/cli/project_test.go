@@ -44,7 +44,7 @@ func TestInitWritesOnlyMarkitectAndTheSpecFolder(t *testing.T) {
 	if code != ExitOK || out != "created .markitect/\ncreated docs/spec/\n" || errOut != "" {
 		t.Fatal(code, out, errOut)
 	}
-	want := []string{".markitect/", ".markitect/.gitattributes", ".markitect/ignore", ".markitect/spec", ".markitect/version", "docs/", "docs/spec/"}
+	want := []string{".markitect/", ".markitect/.gitattributes", ".markitect/ignore", ".markitect/settings.md", ".markitect/spec", ".markitect/version", "docs/", "docs/spec/"}
 	if got := tree(t, dir); strings.Join(got, " ") != strings.Join(want, " ") {
 		t.Errorf("init wrote %v", got)
 	}

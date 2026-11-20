@@ -52,6 +52,7 @@ DEFAULT_DOCUMENTS = (
     "docs/guides/library.md",
     "docs/guides/signals.md",
     "docs/guides/project-reference.md",
+    "docs/guides/reports.md",
     "docs/guides/good-spec.md",
     "docs/guides/project-workflow.md",
     "internal/run/README.md",

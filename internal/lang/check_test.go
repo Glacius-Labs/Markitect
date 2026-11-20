@@ -1,6 +1,7 @@
 package lang
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"sort"
@@ -460,4 +461,38 @@ func TestSectionFirstLine(t *testing.T) {
 		got = append(got, s.Heading+"="+s.First)
 	}
 	expect(t, got, "One=First line x", "Two=", "Three=", "Four=", "Five=", "Six=after")
+}
+
+func TestSectionValues(t *testing.T) {
+	src := "# Settings\n\n## Write table\n- builder: src/__init__.py\n<!-- a comment\nover lines -->\n\n  reviewer: *.md  \n### More\n\nkept\n\nCounter-checks\n--------------\ntests/checks\n# Next\n## Last\nend"
+	d := Parse("settings.md", []byte(src))
+	var got []string
+	for _, s := range d.Sections {
+		for _, v := range s.Values() {
+			got = append(got, fmt.Sprintf("%s@%02d: %s", s.Heading, v.Line, v.Text))
+		}
+	}
+	// Markup is kept as written; the lines of a heading, a comment and the
+	// underline of a heading are none; a level-1 heading ends a section.
+	want := []string{"Write table@04: - builder: src/__init__.py", "Write table@08: reviewer: *.md", "Write table@09: ### More", "Write table@11: kept",
+		"Counter-checks@15: tests/checks", "Last@18: end"}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Errorf("got\n%s", strings.Join(got, "\n"))
+	}
+	if len(d.Sections) != 3 || d.Sections[0].Raw[0].Line != 4 || len(d.Sections[1].Raw) != 1 {
+		t.Errorf("%+v", d.Sections)
+	}
+}
+
+func TestCheckAgainst(t *testing.T) {
+	typ := Parse("report.md", []byte("# Report\n\n## Source\nWho.\n\n## Rating (optional)\nHow bad.\n"))
+	d := Parse("reports/a.md", []byte("Text first.\n\n## Rating\n\n## Own\n"))
+	var got []string
+	for _, x := range CheckAgainst(d, typ, "the report type") {
+		got = append(got, x.String())
+	}
+	want := []string{"reports/a.md:1: title: missing level-1 title", `reports/a.md:1: section.missing: missing section "Source" required by the report type`, `reports/a.md:3: section.empty: empty section "Rating"`}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Errorf("got\n%s", strings.Join(got, "\n"))
+	}
 }

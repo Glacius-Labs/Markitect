@@ -28,10 +28,10 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `composition` | Constructs the command line with its adapters. | `spec`, `project`, `service`, `run`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
 | `language` | The spec language of the rebuilt tool over a supplied file system: documents, types, sections, links and check. | nothing | 1 |
-| `library` | The library built into the rebuilt tool: packages, templates and the report type. | nothing | 1 |
+| `library` | The library built into the rebuilt tool: packages, templates and the types the tool owns, of reports, settings and control samples. | nothing | 1 |
 | `editing` | The change sets of the rebuilt tool's commands that write a spec: new, move and apply, over supplied file systems. | `language` | 1 |
 | `signals` | The statements of a spec, its signals and the topic view of the rebuilt tool, over a parsed spec. | `language` | 1 |
-| `state` | A project of the rebuilt tool over a supplied file system: the .markitect/ layout, the project loaded with its spec, the walk of its files, file hashes, the state with status, mark and move, the history, the comparison of two projects and the change signals. | `language` | 1 |
+| `state` | A project of the rebuilt tool over a supplied file system: the .markitect/ layout, the project loaded with its spec, the walk of its files, file hashes, the state with status, mark and move, the history, the reports, settings and control samples, the comparison of two projects and the figures. | `language`, `library` | 1 |
 | `command-line` | The command line of the rebuilt tool: its arguments, the project it works in, init and version, the spec folder and the state it reads and writes, the lock of mark, and its text and JSON output. | `build`, `language`, `library`, `editing`, `signals`, `state` | 1 |
 | `entrypoint` | markitect-next, the rebuilt tool beside markitect until it replaces it. | `command-line` | 1 |
 | `maintenance` | The import gate and the code map, separate from product execution. | nothing | 1 |
@@ -135,7 +135,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/library` | Package library is the library built into the tool: the packages of types, the templates that apply copies into a spec, the report type, which the tool owns and never copies, and per package its reference values and its question catalog, which the tool reads and never copies. | [docs/guides/library.md](../guides/library.md) |
+| `internal/library` | Package library is the library built into the tool: the packages of types, the templates that apply copies into a spec, the types the tool owns and never copies, of reports, settings and control samples, and per package its reference values and its question catalog, which the tool reads and never copies. | [docs/guides/library.md](../guides/library.md) |
 
 ## Editing
 
@@ -153,7 +153,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/state` | Package state is a project of the rebuilt tool, over a file system rooted at the project folder: the layout of .markitect/, the project loaded with its spec, the files of the project without what its ignore files exclude, the hash of a file, the state: its rows, what status lists and the rows a mark or a move leaves, the history, the comparison of two projects and the change signals of the history. | [docs/guides/project-reference.md](../guides/project-reference.md) |
+| `internal/state` | Package state is a project of the rebuilt tool, over a file system rooted at the project folder: the layout of .markitect/, the project loaded with its spec, the files of the project without what its ignore files exclude, the hash of a file, the state: its rows, what status lists and the rows a mark or a move leaves, the history, the reports, the settings and the results of control samples with the forms of their values, the comparison of two projects, the change signals of the history and the figures of the factory. | [docs/guides/project-reference.md](../guides/project-reference.md) |
 
 ## Command line
 

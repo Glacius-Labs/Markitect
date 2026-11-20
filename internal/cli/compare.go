@@ -30,6 +30,10 @@ func snapshot(dir string) (*state.Snapshot, []diagnostic, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	f, err := factoryOf(w)
+	if err != nil {
+		return nil, nil, err
+	}
 	var notes []diagnostic
 	for _, p := range problems {
 		notes = append(notes, diagnostic{File: state.StateFile, Line: p.Line, Code: state.CodeUnreadable, Message: p.Message})
@@ -37,7 +41,7 @@ func snapshot(dir string) (*state.Snapshot, []diagnostic, error) {
 	for _, p := range historyProblems {
 		notes = append(notes, diagnostic{File: state.HistoryFile, Line: p.Line, Code: state.CodeHistoryUnreadable, Message: p.Message})
 	}
-	return &state.Snapshot{Project: w.Project, Status: s, History: events}, notes, nil
+	return &state.Snapshot{Project: w.Project, Status: s, History: events, Reports: f.Reports}, notes, nil
 }
 
 // projectAt is a project folder named on the command line, which must hold
@@ -67,6 +71,7 @@ type compareDocument struct {
 	Suspect     []suspectJSON `json:"suspect"`
 	Verdicts    []verdictJSON `json:"verdicts"`
 	Unexplained []string      `json:"unexplained"`
+	Reports     []reportJSON  `json:"reports"`
 	// Notes are the lines of either project's state and history that compare
 	// cannot read and leaves out, with the side, "old" or "new".
 	Notes []compareNote `json:"notes"`
@@ -75,6 +80,15 @@ type compareDocument struct {
 type compareNote struct {
 	Side string `json:"side"`
 	diagnostic
+}
+
+// reportJSON is a report that is new, closed, changed or gone; closing is
+// the first line of a closed report's closing.
+type reportJSON struct {
+	Name    string `json:"name"`
+	Change  string `json:"change"`
+	Closing string `json:"closing"`
+	Diff    string `json:"diff"`
 }
 
 type movedJSON struct {
@@ -128,7 +142,7 @@ func compare(o options, stdout io.Writer) (int, error) {
 	}
 	c := state.Compare(older, newer, replay(older, newer))
 	doc := compareDocument{header: newHeader("compare"), New: nonNil(c.New), Gone: nonNil(c.Gone), Moved: []movedJSON{}, Rewritten: nonNil(c.Rewritten),
-		Changed: []changedJSON{}, Suspect: []suspectJSON{}, Verdicts: []verdictJSON{}, Unexplained: nonNil(c.Unexplained)}
+		Changed: []changedJSON{}, Suspect: []suspectJSON{}, Verdicts: []verdictJSON{}, Unexplained: nonNil(c.Unexplained), Reports: []reportJSON{}}
 	var b strings.Builder
 	section := func(title string, n int) {
 		fmt.Fprintf(&b, "## %s (%d)\n\n", title, n)
@@ -198,6 +212,19 @@ func compare(o options, stdout io.Writer) (int, error) {
 	for _, u := range c.Unexplained {
 		b.WriteString(u + "\n")
 	}
+	b.WriteString("\n")
+	section("Reports", len(c.Reports))
+	for _, r := range c.Reports {
+		doc.Reports = append(doc.Reports, reportJSON{r.Name, r.Kind, r.Closing, r.Diff})
+		switch r.Kind {
+		case state.ReportClosed:
+			b.WriteString(r.Kind + ": " + r.Name + ": " + r.Closing + "\n" + r.Diff)
+		case state.ReportChanged:
+			b.WriteString(r.Kind + ": " + r.Name + "\n" + r.Diff)
+		default:
+			b.WriteString(r.Kind + ": " + r.Name + "\n")
+		}
+	}
 	code, err := output(o, stdout, doc, b.String())
 	if err == nil && c.Differs() {
 		code = ExitFound
@@ -229,6 +256,61 @@ type figuresDocument struct {
 	Reference map[string]string       `json:"reference"`
 	Weakening string                  `json:"weakening"`
 	History   []diagnostic            `json:"history"`
+	// The figures of the factory, whose references join reference.
+	Samples        []sampleJSON        `json:"samples"`
+	Planted        int                 `json:"planted"`
+	Hit            int                 `json:"hit"`
+	Reverdicts     int                 `json:"reverdicts"`
+	Contradictions []contradictionJSON `json:"contradictions"`
+	Reports        reportsJSON         `json:"reports"`
+	// StoppedJobs is not computed yet and always null.
+	StoppedJobs *int `json:"stopped_jobs"`
+	// Notes are what check finds in the files of the factory; the figures
+	// leave out each value that is not of its form.
+	Notes []diagnostic `json:"notes"`
+}
+
+type sampleJSON struct {
+	Name    string   `json:"name"`
+	Day     string   `json:"day"`
+	Planted int      `json:"planted"`
+	Hit     int      `json:"hit"`
+	Missed  []string `json:"missed"`
+}
+
+type contradictionJSON struct {
+	Doc  string `json:"doc"`
+	Was  string `json:"was"`
+	Now  string `json:"now"`
+	Time string `json:"time"`
+}
+
+type reportsJSON struct {
+	Total     int             `json:"total"`
+	Open      int             `json:"open"`
+	Days      []dayJSON       `json:"days"`
+	Areas     []areaJSON      `json:"areas"`
+	Recurring []recurringJSON `json:"recurring"`
+}
+
+type dayJSON struct {
+	Day    string `json:"day"`
+	Raised int    `json:"raised"`
+	Closed int    `json:"closed"`
+	Open   int    `json:"open"`
+}
+
+type areaJSON struct {
+	Area    string `json:"area"`
+	Reports int    `json:"reports"`
+	Open    int    `json:"open"`
+}
+
+type recurringJSON struct {
+	Kind    string   `json:"kind"`
+	Place   string   `json:"place"`
+	Reports []string `json:"reports"`
+	Detail  string   `json:"detail"`
 }
 
 type changeJSON struct {
@@ -243,7 +325,9 @@ type figureJSON struct {
 	Detail string   `json:"detail"`
 }
 
-// figures prints the change signals computed from the history.
+// figures prints the change signals computed from the history, and the
+// figures of the factory computed from the results of control samples, the
+// history and the reports.
 func figures(o options, stdout io.Writer) (int, error) {
 	w, err := load(o)
 	if err != nil {
@@ -283,7 +367,86 @@ func figures(o options, stdout io.Writer) (int, error) {
 		}
 	}
 	fmt.Fprintf(&b, "\n### weakening\n\n%s\n", state.Weakening)
+	factory, err := factoryOf(w)
+	if err != nil {
+		return ExitFailed, err
+	}
+	factoryFigures(o, &doc, &b, state.ComputeFactoryFigures(w.Project, factory, events), factory)
 	return output(o, stdout, doc, b.String())
+}
+
+// factoryFigures adds the figures of the factory to the document and the
+// text of figures.
+func factoryFigures(o options, doc *figuresDocument, b *strings.Builder, ff *state.FactoryFigures, f *state.Factory) {
+	doc.Samples, doc.Contradictions, doc.Notes = []sampleJSON{}, []contradictionJSON{}, []diagnostic{}
+	doc.Reports = reportsJSON{Total: ff.Reports, Open: ff.Open, Days: []dayJSON{}, Areas: []areaJSON{}, Recurring: []recurringJSON{}}
+	doc.Planted, doc.Hit, doc.Reverdicts = ff.Planted, ff.Hit, ff.Reverdicts
+	for k, v := range ff.Reference {
+		doc.Reference[k] = v
+	}
+	b.WriteString("\n# Figures of the factory\n")
+	if len(f.Diagnostics) > 0 {
+		b.WriteString("\n")
+	}
+	for _, d := range f.Diagnostics {
+		n := diagnostic{File: d.Path, Line: d.Line, Code: d.Code, Message: d.Message}
+		doc.Notes = append(doc.Notes, n)
+		fmt.Fprintf(b, "note: %s\n", n)
+	}
+	heading := func(name string, n int) {
+		fmt.Fprintf(b, "\n### %s (%d)\n\nreference: %s\n", name, n, ff.Reference[name])
+	}
+	// list prints the first lines of a figure, or every one with --all.
+	list := func(lines []string) {
+		for i, line := range lines {
+			if !o.all && i == shownPerSignal {
+				fmt.Fprintf(b, "… %d more; --all shows them\n", len(lines)-i)
+				return
+			}
+			b.WriteString(line + "\n")
+		}
+	}
+	heading("hit-rate", len(ff.Samples))
+	var lines []string
+	for _, s := range ff.Samples {
+		doc.Samples = append(doc.Samples, sampleJSON{s.Name, s.Day, s.Planted, s.Hit, s.Missed})
+		line := fmt.Sprintf("%s (%s): %d of %d found", s.Name, orNone(s.Day, "no day"), s.Hit, s.Planted)
+		if len(s.Missed) > 0 {
+			line += "; missed " + strings.Join(s.Missed, ", ")
+		}
+		lines = append(lines, line)
+	}
+	list(lines)
+	heading("contradictions", len(ff.Contradictions))
+	lines = nil
+	for _, c := range ff.Contradictions {
+		t := c.Time.UTC().Format(time.RFC3339Nano)
+		doc.Contradictions = append(doc.Contradictions, contradictionJSON{c.Doc, c.Was, c.Now, t})
+		lines = append(lines, fmt.Sprintf("%s: %s, then %s at %s on the same inputs", c.Doc, c.Was, c.Now, t))
+	}
+	list(lines)
+	heading("open-reports", ff.Open)
+	lines = nil
+	for _, d := range ff.Days {
+		doc.Reports.Days = append(doc.Reports.Days, dayJSON{d.Day, d.Raised, d.Closed, d.Open})
+		lines = append(lines, fmt.Sprintf("%s: %d raised, %d closed, %d open", d.Day, d.Raised, d.Closed, d.Open))
+	}
+	list(lines)
+	heading("findings-per-area", len(ff.Areas))
+	lines = nil
+	for _, a := range ff.Areas {
+		doc.Reports.Areas = append(doc.Reports.Areas, areaJSON{a.Name, a.Reports, a.Open})
+		lines = append(lines, fmt.Sprintf("%s: %s, %d open", a.Name, plural(a.Reports, "report"), a.Open))
+	}
+	list(lines)
+	heading("recurring-reports", len(ff.Recurring))
+	lines = nil
+	for _, r := range ff.Recurring {
+		doc.Reports.Recurring = append(doc.Reports.Recurring, recurringJSON{r.Kind, r.Place, r.Reports, r.Detail})
+		lines = append(lines, r.Detail)
+	}
+	list(lines)
+	fmt.Fprintf(b, "\n### stopped-jobs\n\n%s\n", state.StoppedJobs)
 }
 
 // replay makes, from the older project's documents, the texts the newer

@@ -217,7 +217,7 @@ func TestLookAtNamesChangedAssets(t *testing.T) {
 	dir := markedWith(t, withFlow())
 	write(t, dir, "docs/spec/lending/flow.png", "\x89PNG new flow")
 	e, _ := statusOf(t, dir).entry("lending/borrow.md")
-	same(t, "where to look", e.LookAt, []string{"docs/spec/lending/borrow.md", "src/loans.go", "tests/loans_test.go", "tests/loans_test.go:3", "docs/spec/lending/flow.png"})
+	same(t, "where to look", e.LookAt, []string{"docs/spec/lending/borrow.md", "src/loans.go", "tests/counter-checks/loans_test.go", "tests/counter-checks/loans_test.go:3", "docs/spec/lending/flow.png"})
 }
 
 // mark writes the state and the history together: when the history cannot

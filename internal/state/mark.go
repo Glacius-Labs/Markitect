@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -20,6 +21,9 @@ type MarkRequest struct {
 	Doc, Fingerprint, Verdict string
 	Files, Checks, Evidence   []string
 	Reason                    string
+	// CheckFolder is the counter-check folder the settings name, below the
+	// project folder; when it is set, a counter-check must lie in it.
+	CheckFolder string
 }
 
 // Fingerprint is the fingerprint of a document as status computes it, and
@@ -63,6 +67,20 @@ func ProjectPath(arg string) (string, bool) {
 	}
 	p = path.Clean(p)
 	return p, cleanPath(p)
+}
+
+// InputsDigest is the hash over a row's inputs without its evidence: what a
+// verdict rests on, as the history records it, so that two verdicts on the
+// same inputs can be told apart from verdicts on changed ones.
+func InputsDigest(in Inputs) string {
+	var lines []string
+	for k, h := range in {
+		if !strings.HasPrefix(k, InputEvidence) {
+			lines = append(lines, k+" "+h+"\n")
+		}
+	}
+	sort.Strings(lines)
+	return Hash([]byte(strings.Join(lines, "")))
 }
 
 // Mark binds a verdict to the document at the state status computed, and
@@ -113,6 +131,8 @@ func Mark(s *Status, req MarkRequest) ([]Row, error) {
 				refuse("%s is no file of the project: it does not exist, lies in .markitect/ or is ignored", p)
 			case named[p] != "" && named[p] != list.kind:
 				refuse("%s is named as an artifact and as a counter-check", p)
+			case list.kind == InputCheck && req.CheckFolder != "" && !strings.HasPrefix(p, req.CheckFolder+"/"):
+				refuse("%s lies outside %s, the counter-check folder the settings name", p, req.CheckFolder)
 			default:
 				named[p] = list.kind
 				row.Inputs[list.kind+p], err = s.folder.hash(p)

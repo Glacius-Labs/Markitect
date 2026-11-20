@@ -184,8 +184,8 @@ func TestEveryTemplateApplies(t *testing.T) {
 				}
 			}
 			for p := range files(t, dir) {
-				if path.Base(p) == library.ReportType {
-					t.Errorf("%s copied the report type", tpl)
+				if b := path.Base(p); b == library.ReportType || b == library.SettingsType || b == library.SampleType {
+					t.Errorf("%s copied the type %s the tool owns", tpl, b)
 				}
 			}
 		}

@@ -29,16 +29,21 @@ type Event struct {
 	Time time.Time `json:"time"`
 	Type string    `json:"type"`
 	// A verdict: the document, the verdict, its self hash, absent for a gone
-	// document, and every other document status listed as changed then.
+	// document, the InputsDigest of its row, absent for a gone document and
+	// in events written before the history recorded it, and every other
+	// document status listed as changed then.
 	Doc     string    `json:"doc,omitempty"`
 	Verdict string    `json:"verdict,omitempty"`
 	Self    string    `json:"self,omitempty"`
+	Inputs  string    `json:"inputs,omitempty"`
 	Changed []Pending `json:"changed,omitempty"`
-	// A move: the paths before and after, and the documents whose links it
-	// rewrote, by their paths after the move.
+	// A move: the paths before and after, the documents whose links it
+	// rewrote, by their paths after the move, and the reports whose place
+	// it rewrote, by their paths below the project folder.
 	From      string   `json:"from,omitempty"`
 	To        string   `json:"to,omitempty"`
 	Rewritten []string `json:"rewritten,omitempty"`
+	Reports   []string `json:"reports,omitempty"`
 }
 
 // Pending is a document listed as changed beside a verdict, with the hash of
@@ -56,6 +61,7 @@ type verdictLine struct {
 	Doc     string    `json:"doc"`
 	Verdict string    `json:"verdict"`
 	Self    string    `json:"self,omitempty"`
+	Inputs  string    `json:"inputs,omitempty"`
 	Changed []Pending `json:"changed"`
 }
 
@@ -65,6 +71,7 @@ type moveLine struct {
 	From      string   `json:"from"`
 	To        string   `json:"to"`
 	Rewritten []string `json:"rewritten"`
+	Reports   []string `json:"reports,omitempty"`
 }
 
 // Line is the event as one line of the history, with its line end.
@@ -77,13 +84,13 @@ func (e Event) Line() []byte {
 		if changed == nil {
 			changed = []Pending{}
 		}
-		v = verdictLine{t, e.Type, e.Doc, e.Verdict, e.Self, changed}
+		v = verdictLine{t, e.Type, e.Doc, e.Verdict, e.Self, e.Inputs, changed}
 	case EventMove:
 		rewritten := e.Rewritten
 		if rewritten == nil {
 			rewritten = []string{}
 		}
-		v = moveLine{t, e.Type, e.From, e.To, rewritten}
+		v = moveLine{t, e.Type, e.From, e.To, rewritten, e.Reports}
 	default:
 		panic("unknown event " + e.Type)
 	}
@@ -171,6 +178,9 @@ func (e Event) problem() string {
 		if !cleanPath(e.Doc) || e.Verdict != VerdictOK && e.Verdict != VerdictFail && e.Verdict != VerdictSkip {
 			return "a verdict event needs a doc and ok, fail or skip"
 		}
+		if e.Inputs != "" && !validHash(e.Inputs) {
+			return "the inputs of a verdict event are no sha256 hash"
+		}
 	case EventMove:
 		if !cleanPath(e.From) || !cleanPath(e.To) {
 			return "a move event needs from and to"
@@ -179,10 +189,11 @@ func (e Event) problem() string {
 	return ""
 }
 
-// VerdictEvent is the event of a verdict on a document, with every other
-// document status lists as changed.
-func (s *Status) VerdictEvent(at time.Time, doc, verdict string) Event {
-	e := Event{Time: at, Type: EventVerdict, Doc: doc, Verdict: verdict, Changed: []Pending{}}
+// VerdictEvent is the event of a verdict on a document, with the
+// InputsDigest of the row it binds, "" for a document that is gone, and
+// every other document status lists as changed.
+func (s *Status) VerdictEvent(at time.Time, doc, verdict, inputs string) Event {
+	e := Event{Time: at, Type: EventVerdict, Doc: doc, Verdict: verdict, Inputs: inputs, Changed: []Pending{}}
 	if d, ok := s.docs[doc]; ok && d.current != nil {
 		e.Self = d.current[InputSelf]
 	}

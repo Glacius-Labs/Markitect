@@ -18,7 +18,7 @@ A report is a document of the language in `.markitect/reports/`, one file per re
 | Place | The document, artifact or path it concerns | The job |
 | Finding | What is wrong or wanted, with evidence | The job |
 | Occurred or risk | Whether it happened or may happen | The job |
-| Violated property | One of the five properties, or correct ([§5](is-the-spec-good.md#what-is-built-and-the-questions-raised)) | The job |
+| Violated property | One of the five properties, or correct ([§5](is-the-spec-good.md#what-is-built-and-the-questions-raised)), or none, when the spec holds and an artifact deviates | The job |
 | Rating | Impact and likelihood | Triage |
 | Actions | The branch that answers it, or the proposals for the owner | Triage |
 | Prevention | The fixed question or counter-check the action adds | The job that does the action |

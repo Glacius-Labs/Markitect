@@ -36,8 +36,13 @@ func TestEmbedsPackagesTemplatesAndTheReportType(t *testing.T) {
 	if !strings.HasPrefix(string(report), "# Report\n") {
 		t.Errorf("report type starts %q", strings.SplitN(string(report), "\n", 2)[0])
 	}
-	if _, err := fs.Stat(FS(), path.Join("packages", ReportType)); err == nil {
-		t.Error("the report type is inside packages/")
+	for _, own := range []string{ReportType, SettingsType, SampleType} {
+		if _, err := fs.Stat(FS(), own); err != nil {
+			t.Error(err)
+		}
+		if matches, _ := fs.Glob(FS(), path.Join("packages", "*", own)); len(matches) > 0 {
+			t.Errorf("the type %s is inside packages/: %v", own, matches)
+		}
 	}
 }
 

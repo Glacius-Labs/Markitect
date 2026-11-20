@@ -1,6 +1,6 @@
 # Library
 
-The library built into the rebuilt tool `markitect-next`: the packages of types, the templates that `apply` copies into a spec, the report type, and per package its reference values and question catalog ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version)). It ships in the tool's version. A spec owns the copy `apply` makes and may change it. [The language reference](language-reference.md) gives the rules of the language and the commands. The reference values, `references/PACKAGE.md`, and the question catalogs, `questions/PACKAGE.md`, are read by the tool and never copied; [signals](signals.md) describes them.
+The library built into the rebuilt tool `markitect-next`: the packages of types, the templates that `apply` copies into a spec, the types the tool owns, and per package its reference values and question catalog ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version)). It ships in the tool's version. A spec owns the copy `apply` makes and may change it. [The language reference](language-reference.md) gives the rules of the language and the commands. The reference values, `references/PACKAGE.md`, and the question catalogs, `questions/PACKAGE.md`, are read by the tool and never copied; [signals](signals.md) describes them.
 
 ## Packages
 
@@ -70,20 +70,40 @@ After `apply`, `check` reports nothing but `section.empty`: that list is the wor
 - **Links.** Links of the copied documents into the library's packages are rewritten to the spec's copy. Links between the copied documents stay as they are.
 - **Refusals.** Nothing is copied when a document's path exists in the spec, when a copied document or a needed package links elsewhere in the library, including a template folder that links to its parent when applied alone, or when a package is missing. Every reason is reported.
 
-## The report type
+## The types the tool owns
 
-The report type is the tool's own: `apply` never copies it, and a spec does not hold it. A report is a document of this type in `.markitect/reports/` ([reports and actions](../concept/reports-and-actions.md#the-report)); `check` checks reports when the jobs are built, in step 4 of the [roadmap](../roadmap.md#current-steps).
+Three types belong to the tool, since it reads their sections: the report type, `report.md`, the settings type, `settings.md`, and the sample type, `sample.md`. They lie outside `packages/`, so `apply` never copies them, and a spec does not hold them. Their documents lie in `.markitect/` and name no type: the folder says which type they are of. `check` checks them against these types and the forms of their values ([reports, settings and control samples](reports.md)).
+
+**The report type.** A report is a document of this type in `.markitect/reports/` ([reports and actions](../concept/reports-and-actions.md#the-report)).
 
 | Section | Holds |
 |---|---|
-| Source | Who or what raised it: a job and its role, intake, or the owner |
-| Place | The document, artifact or path it concerns |
+| Source | Who or what raised it, a job and its role, intake, or the owner, and the day |
+| Place | The spec document, artifact or folder it concerns |
 | Finding | What is wrong or wanted, with the evidence |
 | Occurred or risk | Whether it happened or may happen |
-| Violated property | One of the five properties of a good spec, or correct |
+| Violated property | One of the five properties of a good spec, correct, or none, when the spec holds and an artifact deviates from it |
 | *Rating* | Impact and likelihood |
 | *Actions* | The branch that answers it, or the proposals for the owner |
 | *Prevention* | The fixed question or counter-check the action adds |
 | *Closing* | How it was closed, and why |
 
 The first five are required, since the job that writes a report knows them. Rating, actions and closing are optional because triage adds them later, and prevention because the job that does the action adds it.
+
+**The settings type.** The settings are a document of this type, `.markitect/settings.md` ([jobs and runners](../concept/jobs-and-runners.md#the-project)). Every section is optional.
+
+| Section | Holds |
+|---|---|
+| *Models* | The model per role |
+| *Counter-checks* | The folder of the counter-checks |
+| *Cadence* | How often each job runs |
+| *Write table* | What each role may write, narrower than the table the tool ships |
+
+**The sample type.** The result of a control sample is a document of this type in `.markitect/samples/` ([trust](../concept/trust.md#control-samples)).
+
+| Section | Holds |
+|---|---|
+| Source | The control-sample job, its sampler and the day |
+| Copy | The commit or branch of the throwaway copy |
+| Planted | The deviations planted, by document |
+| Verdicts | The reviewer's verdicts on the copy, by document |
