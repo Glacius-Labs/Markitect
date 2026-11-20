@@ -19,7 +19,7 @@ The tool reads a project through a file system rooted at its folder, the spec an
 | `rules.md` | The rules learned of the owner's decisions, a [control file](rights.md#the-write-table); reserved, not yet read |
 | `state.jsonl` | The state: one row per document with its verdict and the hashes it rests on ([below](#the-state)); written by `mark` and `move` |
 | `history.jsonl` | The history: what changed when, as hashes ([below](#the-history)); appended to by `mark` and `move` |
-| `settings.md` | The settings: the model per role, the counter-check folder, the cadence of the jobs and a narrower write table ([settings](reports.md#settings)); written by `init` |
+| `settings.md` | The settings: the model per role, the counter-check folder, the tests command, the cadence of the jobs, a narrower write table and the CI definition ([settings](reports.md#settings)); written by `init` |
 | `reports/` | The reports, one file `NAME.md` each ([reports](reports.md#reports)); written by the jobs and in conversations |
 | `samples/` | The results of control samples, one file `NAME.md` each ([control samples](reports.md#control-samples)); written by the control-sample job |
 

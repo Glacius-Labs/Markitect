@@ -97,9 +97,10 @@ Every command but `init` and `version` works in a project and finds its spec thr
 | `markitect-next mark DOCUMENT@FINGERPRINT VERDICT` | Binds `ok`, `fail` or `skip`, with artifacts, counter-checks and evidence, to the state `status` showed ([project reference](project-reference.md#mark)) |
 | `markitect-next compare OLD [NEW]` | What is new, gone, moved, changed or suspect in NEW, by default this project, against OLD, with diffs, changed verdicts and the reports that are new, closed or changed ([project reference](project-reference.md#compare)) |
 | `markitect-next figures` | The signals of the spec's changes, from the history ([signals](signals.md#the-change-signals)), and the [figures of the factory](reports.md#the-figures-of-the-factory) |
+| `markitect-next settings` | The settings: the model per role, the counter-check folder, the tests command, the cadence, the write table and the CI definition ([settings](reports.md#settings)) |
 | `markitect-next version` | The tool's version, and whether it is the one the project pins ([project reference](project-reference.md#version)) |
 
-**Exit codes.** 0 when all is well, 1 when `check`, `status` or `compare` found something, `mark` refused, or `version` found a project that pins another version, and 2 when the command could not run: an unknown command or flag, a wrong number of arguments, no project, a `.markitect/` that cannot be read, a spec folder that does not exist (`apply` creates it), an unknown document, a file that cannot be read, or a refused `init`, `new`, `move` or `apply`. A command that does not succeed changes nothing, also when writing fails partway, unless undoing fails as well, which it reports ([below](#commands-that-write)).
+**Exit codes.** 0 when all is well, 1 when `check`, `status`, `compare` or `settings` found something, `mark` refused, or `version` found a project that pins another version, and 2 when the command could not run: an unknown command or flag, a wrong number of arguments, no project, a `.markitect/` that cannot be read, a spec folder that does not exist (`apply` creates it), an unknown document, a file that cannot be read, or a refused `init`, `new`, `move` or `apply`. A command that does not succeed changes nothing, also when writing fails partway, unless undoing fails as well, which it reports ([below](#commands-that-write)).
 
 ### Commands that read
 
@@ -134,6 +135,7 @@ With `--json`, every command prints one document that starts with `format_versio
 | `table` | `type`, `columns`, and `rows` with `path`, `title` and `cells`; without a type, `type` is empty and the columns are `Verdict` and `Artifacts` |
 | `init`, `version`, `status`, `mark`, `compare` | As the [project reference](project-reference.md) says |
 | `figures` | As [signals](signals.md#the-change-signals) and [the figures of the factory](reports.md#the-figures-of-the-factory) say |
+| `settings` | As [settings](reports.md#settings) says |
 | `new` | `path` |
 | `move` | `from`, `to` and `changed` |
 | `apply` | `documents` and `packages` |

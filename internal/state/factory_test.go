@@ -364,3 +364,18 @@ func TestSettingsCIAndStepRoles(t *testing.T) {
 		t.Errorf("%+v", s)
 	}
 }
+
+func TestSettingsTests(t *testing.T) {
+	_, f := loadFactory(t, map[string]string{SettingsFile: "# Settings\n\n## Tests\n`go test ./... -count=1`\n"})
+	if got := diagnostics(f); len(got) != 0 || f.Settings.Tests != "go test ./... -count=1" {
+		t.Errorf("%v %q", got, f.Settings.Tests)
+	}
+	_, f = loadFactory(t, map[string]string{SettingsFile: "# Settings\n\n## Tests\n- go test ./...\n- npm test\n"})
+	if got := diagnostics(f); strings.Join(got, " ") != ".markitect/settings.md:05: settings.form" || f.Settings.Tests != "go test ./..." {
+		t.Errorf("%v %q", got, f.Settings.Tests)
+	}
+	// Without the section the settings name no command.
+	if _, f = loadFactory(t, map[string]string{SettingsFile: DefaultSettings}); f.Settings.Tests != "" {
+		t.Error(f.Settings.Tests)
+	}
+}

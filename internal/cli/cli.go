@@ -59,6 +59,9 @@ const usage = `usage: markitect-next COMMAND ARGUMENTS [-C PROJECT] [--json]
                               and its reports that are new, closed or changed
   figures [--all]             the change signals computed from the history, and
                               the figures of the reports and control samples
+  settings                    the settings: the model per role, the counter-check
+                              folder, the tests command, the cadence, the write
+                              table and the CI definition
   version                     the tool's version, and whether the project pins it
 
 The project is the nearest folder, from the working directory upward, that
@@ -90,6 +93,7 @@ var commands = map[string]command{
 	"mark":      {2, 2, mark},
 	"compare":   {1, 2, compare},
 	"figures":   {0, 0, figures},
+	"settings":  {0, 0, settings},
 }
 
 // Run runs the command line args, without the program name, and returns the
