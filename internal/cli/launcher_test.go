@@ -30,22 +30,18 @@ import (
 // serves: the test binary itself, which the launcher downloads and starts.
 const launcherEnv = "MARKITECT_LAUNCHER_TEST"
 
-// pluginEnv is the variable the launcher sets to the plugin's version before
-// it starts the binary.
-const pluginEnv = "MARKITECT_PLUGIN"
-
 // TestLauncherChild is what the launcher starts in the tests below.
 func TestLauncherChild(t *testing.T) {
 	if os.Getenv(launcherEnv) == "" {
 		t.Skip("only run by the launcher tests")
 	}
 	// It returns, so that TestMain removes its temporary cache folder.
-	fmt.Printf("child: plugin %s\n", os.Getenv(pluginEnv))
+	fmt.Println("child: started")
 }
 
 // testVersion is the release the tests serve. The plugin of the repository says
-// -dev between releases, which the launcher refuses, so the tests run a copy of
-// the plugin that names this version.
+// -dev between releases, whose launcher fetches nothing and starts the build on
+// the PATH instead, so the tests run a copy of the plugin that names this version.
 const testVersion = "9.9.9"
 
 // assetName is the file of a release that holds the binary for a system, as
@@ -75,7 +71,7 @@ func readJSON(t *testing.T, file string, into any) {
 // The plugin's version is the version of the source, always: the release tag of
 // the catalog pins the plugin to the commit of a release, where the launcher reads
 // the version it fetches. Between releases both say -dev, and the launcher then
-// refuses to fetch anything.
+// fetches nothing and starts the build from source on the PATH.
 func TestPluginHasTheVersionOfTheSource(t *testing.T) {
 	var manifest struct{ Name, Version string }
 	readJSON(t, filepath.Join(pluginDir, ".claude-plugin", "plugin.json"), &manifest)
@@ -236,14 +232,14 @@ func TestLauncherFetchesTheReleaseOfThePlugin(t *testing.T) {
 	childArgs := []string{"-test.run=TestLauncherChild"}
 
 	out, code := launch(t, root, mirror, data, nil, childArgs...)
-	if code != 0 || !strings.Contains(out, "child: plugin "+version) {
+	if code != 0 || !strings.Contains(out, "child: started") {
 		t.Fatalf("first call: exit %d\n%s", code, out)
 	}
 	if n := downloads.Load(); n != 2 {
 		t.Fatalf("first call made %d downloads, want the checksums and the binary", n)
 	}
 	out, code = launch(t, root, mirror, data, nil, childArgs...)
-	if code != 0 || !strings.Contains(out, "child: plugin "+version) {
+	if code != 0 || !strings.Contains(out, "child: started") {
 		t.Fatalf("second call: exit %d\n%s", code, out)
 	}
 	if n := downloads.Load(); n != 2 {
@@ -275,7 +271,7 @@ func TestLauncherCalledAtTheSameTime(t *testing.T) {
 		}()
 	}
 	for i := 0; i < calls; i++ {
-		if r := <-results; r.code != 0 || !strings.Contains(r.out, "child: plugin "+version) {
+		if r := <-results; r.code != 0 || !strings.Contains(r.out, "child: started") {
 			t.Errorf("a call failed: exit %d\n%s", r.code, r.out)
 		}
 	}
@@ -340,7 +336,7 @@ func TestLauncherFindsTheDataFolderOfAnInstalledPlugin(t *testing.T) {
 	root := filepath.Join(plugins, "cache", "some.market", "markitect", version)
 	pluginCopy(t, root, version)
 	out, code := launch(t, root, mirror, "", nil, "-test.run=TestLauncherChild")
-	if code != 0 || !strings.Contains(out, "child: plugin "+version) {
+	if code != 0 || !strings.Contains(out, "child: started") {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
 	// Every character that is no letter, digit, underscore or hyphen becomes a hyphen.
@@ -388,13 +384,13 @@ func TestDevelopmentLauncherStartsTheBuildOnThePath(t *testing.T) {
 	if err := os.MkdirAll(source, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(source, "markitect"), []byte("#!/bin/sh\necho \"from source: $* (plugin $MARKITECT_PLUGIN)\"\n"), 0o755); err != nil {
+	if err := os.WriteFile(filepath.Join(source, "markitect"), []byte("#!/bin/sh\necho \"from source: $*\"\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	path := "PATH=" + strings.Join([]string{bin, source, pathWithoutMarkitect()}, string(os.PathListSeparator))
 	data := testkit.TempDir(t)
 	out, code := launch(t, root, "http://unused.invalid", data, []string{path}, "status", "--json", "two words")
-	if code != 0 || !strings.Contains(out, "from source: status --json two words (plugin 0.16.0-dev)") {
+	if code != 0 || !strings.Contains(out, "from source: status --json two words") {
 		t.Fatalf("exit %d:\n%s", code, out)
 	}
 	if entries, _ := os.ReadDir(data); len(entries) != 0 {
@@ -407,7 +403,7 @@ func TestDevelopmentLauncherStartsTheBuildOnThePath(t *testing.T) {
 		if _, err := exec.LookPath("git"); err == nil {
 			cmd := exec.Command("cmd", "/d", "/c", "markitect status")
 			cmd.Env = append(os.Environ(), path, "CLAUDE_PLUGIN_DATA="+data, "HOME="+testkit.TempDir(t))
-			if out, err := cmd.CombinedOutput(); err != nil || !strings.Contains(string(out), "from source: status (plugin 0.16.0-dev)") {
+			if out, err := cmd.CombinedOutput(); err != nil || !strings.Contains(string(out), "from source: status") {
 				t.Fatalf("markitect.cmd: %v\n%s", err, out)
 			}
 		}
@@ -548,7 +544,7 @@ markitect -test.run=TestLauncherChild`
 	cmd := exec.Command(sh, "-c", check, "check", filepath.ToSlash(envFile), filepath.ToSlash(root))
 	cmd.Env = append(os.Environ(), "CLAUDE_PLUGIN_DATA="+data, "MARKITECT_RELEASES_URL="+mirror, launcherEnv+"=1")
 	out, err := cmd.CombinedOutput()
-	if err != nil || !strings.Contains(string(out), "child: plugin "+testVersion) {
+	if err != nil || !strings.Contains(string(out), "child: started") {
 		t.Fatalf("markitect by name after the hook's line: %v\n%s", err, out)
 	}
 }
@@ -585,7 +581,7 @@ func TestShimRunsTheLauncherOnWindows(t *testing.T) {
 		cmd := exec.Command("cmd", "/d", "/c", "markitect -test.run=TestLauncherChild")
 		cmd.Env = env(bin+string(os.PathListSeparator)+os.Getenv("PATH"), gitBash)
 		out, err := cmd.CombinedOutput()
-		if err != nil || !strings.Contains(string(out), "child: plugin "+testVersion) {
+		if err != nil || !strings.Contains(string(out), "child: started") {
 			t.Fatalf("markitect by name in cmd, CLAUDE_CODE_GIT_BASH_PATH=%q: %v\n%s", gitBash, err, out)
 		}
 	}

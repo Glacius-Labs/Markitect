@@ -14,7 +14,7 @@ With Markitect, people architect their project in a typed specification language
 
 - **A folder without `.markitect/`:** `markitect init` writes `.markitect/` and the spec folder, and nothing else. Then the `markitect:markitect-architect` skill walks the first design with the owner, area by area.
 - **A project with a spec:** `markitect check` says whether the spec is sound, and `markitect status` what is to build or confirm.
-- **Settings:** `.markitect/settings.md` names the model per role and the counter-check folder. Name the command that runs the tests and the counter-checks in its Tests section: without it, no job lands.
+- **Settings:** `.markitect/settings.md` names the model per role and the counter-check folder. Add a `## Tests` section to it with the command that runs the tests and the counter-checks, since `init` writes none: without it, no job lands.
 
 ## The skills
 

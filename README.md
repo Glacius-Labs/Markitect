@@ -59,7 +59,7 @@ For a new project, make an empty folder, run `git init` in it, and then:
 With the plugin, Claude Code takes it from there:
 
 3. **Architect the project.** `/markitect-architect`, in a folder without `.markitect/`, runs `init` and `apply` itself. It walks the first design with you, area by area, asks what only you can know, and proposes the rest for you to accept.
-4. **Build it.** Name the command that runs your tests in the Tests section of `.markitect/settings.md`, then run `/markitect-build`. A counter-checker writes checks from the spec alone, a builder realizes what `markitect status` lists, and a fresh reviewer confirms each document, on a branch of the job's own. The branch lands only when `status` shows nothing new against the target and the tests pass.
+4. **Build it.** Add a `## Tests` section to `.markitect/settings.md` with the command that runs your tests, since `init` writes none, then run `/markitect-build`. A counter-checker writes checks from the spec alone, a builder realizes what `markitect status` lists, and a fresh reviewer confirms each document, on a branch of the job's own. The branch lands only when `status` shows nothing new against the target and the tests pass.
 
 The [language reference](docs/guides/language-reference.md) lists every command, and [the plugin](docs/guides/plugin.md) every skill.
 

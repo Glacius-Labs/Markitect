@@ -48,8 +48,6 @@ fall_through() {
 		case "$MARKITECT_PLUGIN_PASSED" in *":$real:"*) continue ;; esac
 		for name in markitect.exe markitect; do
 			if [ -f "$real/$name" ] && [ -x "$real/$name" ]; then
-				MARKITECT_PLUGIN=$version
-				export MARKITECT_PLUGIN
 				exec "$real/$name" "$@"
 			fi
 		done
@@ -154,8 +152,6 @@ fetch() {
 
 [ -x "$exe" ] || fetch
 
-MARKITECT_PLUGIN=$version
-export MARKITECT_PLUGIN
 if [ -n "${MARKITECT_ENSURE_ONLY:-}" ]; then
 	exit 0
 fi
