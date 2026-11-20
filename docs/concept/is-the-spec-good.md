@@ -46,7 +46,7 @@ Four steps, as a person who reviews a spec would take them:
 | Structure | **Size:** statements of a document against documents of the same type | Structured |
 | | **Text before the first section** of a typed document, where a fact usually sits in the wrong place or the type lacks a section | Structured |
 | | **A recurring group of links:** the same three or more links in the same section of many documents | Structured: a missing group |
-| | **Scattered rules:** one thing in many conditional statements across many documents, which belongs in one place | Structured, consistent |
+| | **Scattered rules:** one thing in many conditional or restricting statements across many documents, which belongs in one place | Structured, consistent |
 | Connections | **Mention without a link:** a document's title in another's text, unlinked | Consistent, structured |
 
 **Two references for every number** ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)). A value is shown beside the reference value of its type, which ships with the package, and beside the rest of the project: "documents of this type usually have 200 to 400 characters; all of yours do, and this one has 900". Both are needed: when every document of a project is too long, nothing stands out within it. Reference values come from proven specs, those the owner names as a reference, and improve with each version of the package. Until there are enough, the package's values hold.

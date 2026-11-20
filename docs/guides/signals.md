@@ -18,7 +18,7 @@ A statement is the unit of every signal: a sentence of a paragraph, a list item,
 
 - **Sentences.** A paragraph splits after `.`, `!` or `?`, together with any further `.!?` and closing quotes or brackets, when white space or the end follows. It does not split after `e.g.`, `i.e.`, `etc.` or `vs.`, nor inside a number such as `2.5`.
 - **Whole units.** A list item is one statement, whatever its sentences; its nested lists are statements of their own. A table body row is one statement, its cells joined by ` | `; the header row is none. A block quote's paragraphs and lists are statements like any other.
-- **Not statements.** Headings, the type line and any other line starting with `Type:`, code, HTML, link reference definitions and footnotes.
+- **Not statements.** Headings, the type line and any other line starting with `Type:`, code, HTML, link reference definitions and footnotes. In a type, the text under its sections tells the writer what belongs there and is no statement of the spec; only its text before the first section, which says what the type is, counts.
 - **What a statement keeps.** Its document, its section, or none before the first section, its line, its words, the documents its links point to, and its markers.
 - **Words** are runs of letters and digits, joined inside a word by a hyphen or an apostrophe, compared in lower case. `user-friendly` is one word; `e.g.` is two.
 
@@ -44,7 +44,7 @@ Each signal is a list sorted strongest first; equal ones stand in path and line 
 | Size | `size` | Every document with a type: its statements, beside the median, range and number of documents of the same type and the type's reference | Highest ratio to the median of its type |
 | Text before the first section | `text-before-sections` | Every document with a type that has statements before its first section, after the type line, with their number | Most statements |
 | Recurring link group | `link-group` | The same three or more link targets under the same section heading, compared without regard to case, in two or more documents. Only the largest group with the same documents is listed | Most documents, then most links |
-| Scattered rules | `scattered-rules` | Every document that conditional statements of other documents refer to, with those documents | Most other documents |
+| Scattered rules | `scattered-rules` | Every document that conditional or restricting statements of other documents refer to, with those documents. A statement is restricting when it holds one of the strong words only, never, must not, no one, nobody or none, or "not" followed by "alone" within three words | Most other documents |
 | Mention without a link | `unlinked-mention` | Every pair of a document and another document whose title stands in its statements while it has no link to it anywhere, the type line included | Most mentions |
 
 **Mention without a link.** A title is found as whole words, without regard to case; at each word the longest title counts. One-word titles shorter than four letters do not count, nor do the titles of types, which stand in prose as ordinary words, such as "the role". A document does not mention itself.
@@ -57,7 +57,7 @@ A topic is a document, a type, which is a document that another names in its typ
 
 1. **Strong statements about it** from other documents: those that link to it or name it. They come first, since the single cases are read against them.
 2. **The topic itself:** a document's text; a type's text and its documents as the [`table`](language-reference.md#commands-that-read); a folder's documents in path order, its README among them.
-3. **Linked from:** every statement of another document that links to it, with its section.
+3. **Linked from:** every statement of another document that links to it, with its section. A link outside a statement, such as one in a heading, does not appear here; `show` lists it.
 4. **Mentioned without a link:** every statement of another document that names it while that document has no link to it.
 5. **Signals:** every finding that concerns a document of the topic.
 
@@ -69,4 +69,4 @@ The reference values ship inside the tool, one file per package in the library, 
 
 ## Question catalogs
 
-Each package has a catalog of competency questions in the library, `questions/PACKAGE.md`: five to ten questions across documents that a spec built on that package should answer, generic and in English. `questions` prints the catalogs of the library packages the spec has. Answering them, each from the spec alone with a citation, is the work of a job, and a project's own questions beside the spec come with the layout of the project.
+Each package has a catalog of competency questions in the library, `questions/PACKAGE.md`: five to ten questions across documents that a spec built on that package should answer, generic and in English. `questions` prints the catalogs of the library packages the spec has. A template may bring a catalog of its own; the shipped templates rely on the catalogs of their packages. Answering them, each from the spec alone with a citation, is the work of a job, and a project's own questions beside the spec come with the layout of the project.

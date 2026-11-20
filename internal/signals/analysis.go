@@ -57,8 +57,21 @@ type Analysis struct {
 func Analyze(spec *lang.Spec, refs References) *Analysis {
 	a := &Analysis{Spec: spec, Findings: map[string][]Finding{}, links: map[string]map[string]bool{},
 		inbound: map[string]map[string]bool{}, refs: refs}
+	types := map[string]bool{}
 	for _, d := range spec.Documents {
-		a.Statements = append(a.Statements, Statements(d)...)
+		if d.HasType() {
+			types[d.TypePath] = true
+		}
+	}
+	for _, d := range spec.Documents {
+		for _, st := range Statements(d) {
+			// The text under a type's sections guides the writer; only what
+			// stands before its first section says what the type is.
+			if types[d.Path] && (st.Section != "" || len(d.Sections) > 0 && st.Line > d.Sections[0].Line) {
+				continue
+			}
+			a.Statements = append(a.Statements, st)
+		}
 		a.links[d.Path] = map[string]bool{}
 		for _, r := range d.Refs {
 			a.links[d.Path][r.Target] = true
@@ -345,7 +358,7 @@ func subset(small, big []string) bool {
 func (a *Analysis) scatteredRules() {
 	from := map[string]map[string]bool{}
 	for i, st := range a.Statements {
-		if len(st.Conditions) == 0 {
+		if !bearsRule(st) {
 			continue
 		}
 		for _, x := range a.refersTo(i) {
@@ -365,8 +378,34 @@ func (a *Analysis) scatteredRules() {
 		list := sortedKeys(docs)
 		d, _ := a.Spec.Document(x)
 		a.add(Finding{Signal: ScatteredRules, Path: x, Line: max(d.TitleLine, 1), Docs: append([]string{x}, list...), rank: float64(len(list)),
-			Detail: fmt.Sprintf("conditional statements in %s refer to it: %s", plural(len(list), "other document"), strings.Join(list, ", "))})
+			Detail: fmt.Sprintf("conditional or restricting statements in %s refer to it: %s", plural(len(list), "other document"), strings.Join(list, ", "))})
 	}
+}
+
+// restricting are the strong words that restrict.
+var restricting = []string{"only", "never", "must not", "no one", "nobody", "none"}
+
+// bearsRule reports whether a statement states a rule: it has a condition, a
+// restricting strong word, or "not" followed by "alone" within three words.
+func bearsRule(st Statement) bool {
+	if len(st.Conditions) > 0 {
+		return true
+	}
+	for _, s := range st.Strong {
+		if contains(restricting, s) {
+			return true
+		}
+	}
+	for i, w := range st.Words {
+		if w == "not" {
+			for k := i + 1; k < len(st.Words) && k <= i+3; k++ {
+				if st.Words[k] == "alone" {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func (a *Analysis) unlinkedMentions() {

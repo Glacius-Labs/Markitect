@@ -138,8 +138,8 @@ func TestStructureSignals(t *testing.T) {
 		`members/ada.md:10: link-group: section "Branch" links the same 3 documents in 2 documents: members/ada.md, members/grace.md (links: places/README.md, places/central.md, places/east.md)`,
 	})
 	eq(t, findings(a, ScatteredRules), []string{
-		"places/central.md:1: scattered-rules: conditional statements in 2 other documents refer to it: members/alan.md, rules/loans.md",
-		"places/east.md:1: scattered-rules: conditional statements in 1 other document refer to it: rules/fees.md",
+		"places/central.md:1: scattered-rules: conditional or restricting statements in 2 other documents refer to it: members/alan.md, rules/loans.md",
+		"places/east.md:1: scattered-rules: conditional or restricting statements in 1 other document refer to it: rules/fees.md",
 	})
 	// Alan links the Central Library elsewhere, so only the East Branch is an unlinked mention.
 	eq(t, findings(a, UnlinkedMention), []string{
@@ -221,4 +221,31 @@ func TestEmptySpec(t *testing.T) {
 	if topic, ok := a.Topic(""); !ok || len(topic.Docs) != 0 {
 		t.Error(topic, ok)
 	}
+}
+
+func TestRuleBearingStatements(t *testing.T) {
+	files := map[string]string{
+		"desk.md": "# Front Desk\n",
+		"a.md":    "# A\n\nThe Front Desk never closes.\n",
+		"b.md":    "# B\n\nA trainee does not work alone at the Front Desk.\n",
+		"c.md":    "# C\n\nThe Front Desk opens at nine.\n",
+		"d.md":    "# D\n\nOnly the Front Desk lends maps.\n",
+	}
+	eq(t, findings(Analyze(spec(t, files), nil), ScatteredRules), []string{
+		"desk.md:1: scattered-rules: conditional or restricting statements in 3 other documents refer to it: a.md, b.md, d.md",
+	})
+}
+
+func TestTypeSectionsAreGuidance(t *testing.T) {
+	files := map[string]string{
+		"types/shelf.md":    "# Shelf\n\nA shelf holds books of one kind.\n\n## Place\nWhere it stands, in a few words.\n",
+		"shelves/novels.md": "# Novels\n\nType: [Shelf](../types/shelf.md)\n\n## Place\nBy the window.\n",
+	}
+	a := Analyze(spec(t, files), nil)
+	var got []string
+	for _, st := range a.Statements {
+		got = append(got, st.Doc+": "+st.Text)
+	}
+	eq(t, got, []string{"shelves/novels.md: By the window.", "types/shelf.md: A shelf holds books of one kind."})
+	eq(t, len(a.Findings[Weak]), 0)
 }
