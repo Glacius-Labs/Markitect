@@ -37,6 +37,9 @@ const usage = `usage: markitect-next COMMAND SPECFOLDER ARGUMENTS [--json]
   new SPECFOLDER TYPE PATH [TITLE]     create a document of a type
   move SPECFOLDER OLD NEW              move a document and rewrite the links to it
   apply SPECFOLDER TEMPLATE [TARGET]   copy a template of the library into the spec
+  topic SPECFOLDER [TOPIC] [--all]     the signals of the spec, or everything about a
+                                       document, a type or a folder
+  questions SPECFOLDER                 the questions of the packages the spec has
 
 A DOCUMENT, TYPE or PATH is a path below the spec folder, with or without .md.
 Diagnostics read path:line: code: message. --json prints one document with
@@ -51,12 +54,14 @@ type command struct {
 }
 
 var commands = map[string]command{
-	"check": {1, 1, check},
-	"show":  {2, 2, show},
-	"table": {2, 2, table},
-	"new":   {3, 4, newDocument},
-	"move":  {3, 3, move},
-	"apply": {2, 3, apply},
+	"check":     {1, 1, check},
+	"show":      {2, 2, show},
+	"table":     {2, 2, table},
+	"new":       {3, 4, newDocument},
+	"move":      {3, 3, move},
+	"apply":     {2, 3, apply},
+	"topic":     {1, 2, topic},
+	"questions": {1, 1, questions},
 }
 
 // Run runs the command line args, without the program name, and returns the
@@ -102,6 +107,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 // anywhere; "--" ends them.
 type options struct {
 	json       bool
+	all        bool
 	positional []string
 }
 
@@ -114,6 +120,8 @@ func parse(args []string) (options, error) {
 			return o, nil
 		case a == "--json" || a == "-json":
 			o.json = true
+		case a == "--all" || a == "-all":
+			o.all = true
 		case strings.HasPrefix(a, "-") && a != "-":
 			return o, fmt.Errorf("unknown flag %s", a)
 		default:

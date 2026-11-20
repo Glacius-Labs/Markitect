@@ -1,6 +1,6 @@
 # Library
 
-The library built into the rebuilt tool `markitect-next`: the packages of types, the templates that `apply` copies into a spec, and the report type ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version)). It ships in the tool's version. A spec owns the copy `apply` makes and may change it. [The language reference](language-reference.md) gives the rules of the language and the commands. The reference values and the question catalogs are not built yet ([roadmap](../roadmap.md#current-steps)).
+The library built into the rebuilt tool `markitect-next`: the packages of types, the templates that `apply` copies into a spec, the report type, and per package its reference values and question catalog ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version)). It ships in the tool's version. A spec owns the copy `apply` makes and may change it. [The language reference](language-reference.md) gives the rules of the language and the commands. The reference values, `references/PACKAGE.md`, and the question catalogs, `questions/PACKAGE.md`, are read by the tool and never copied; [signals](signals.md) describes them.
 
 ## Packages
 

@@ -388,3 +388,60 @@ func TestCreateRefusesAFileThatAppeared(t *testing.T) {
 		t.Errorf("created %q", data)
 	}
 }
+
+func TestTopicAndQuestions(t *testing.T) {
+	dir := spec(t, branches)
+	code, out, _ := run("topic", dir)
+	if code != ExitOK || !strings.HasPrefix(out, "# Signals of the spec\n") || !strings.Contains(out, "\n### weak (") || !strings.Contains(out, "\n### unlinked-mention (") {
+		t.Fatal(code, out)
+	}
+	code, out, _ = run("topic", dir, "places/central")
+	for _, part := range []string{"# Topic: places/central.md (document)\n", "\n## Strong statements about it\n", "\n## Text\n\n# Central\n",
+		"\n## Linked from\n\nmembers/ada.md:10 (Branch): Central, see Grace.\n", "\n## Mentioned without a link\n", "\n## Signals\n"} {
+		if code != ExitOK || !strings.Contains(out, part) {
+			t.Errorf("missing %q in\n%s", part, out)
+		}
+	}
+	_, out, _ = run("topic", dir, "types/member", "--json")
+	var doc map[string]any
+	if err := json.Unmarshal([]byte(out), &doc); err != nil {
+		t.Fatal(err)
+	}
+	if doc["kind"] != "topic" || doc["topic_kind"] != "type" || len(doc["typed_documents"].([]any)) != 2 {
+		t.Error(out)
+	}
+	if code, _, errOut := run("topic", dir, "nowhere"); code != ExitFailed || !strings.Contains(errOut, "unknown topic") {
+		t.Error(code, errOut)
+	}
+	code, out, _ = run("questions", dir)
+	if code != ExitOK || !strings.Contains(out, "no package of the library") {
+		t.Error(code, out)
+	}
+	applied := filepath.Join(t.TempDir(), "spec")
+	run("apply", applied, "software")
+	_, out, _ = run("questions", applied)
+	if !strings.HasPrefix(out, "## core\n\n1. ") || !strings.Contains(out, "\n## software\n\n1. Who may call each operation") {
+		t.Error(out)
+	}
+	if code, out, _ := run("topic", applied, "--json"); code != ExitOK || !strings.Contains(out, `"topic_kind": "spec"`) {
+		t.Error(code, out)
+	}
+}
+
+func TestReferenceValuesCoverEveryType(t *testing.T) {
+	refs, err := references()
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = fs.WalkDir(library.FS(), "packages", func(p string, e fs.DirEntry, err error) error {
+		if err == nil && !e.IsDir() {
+			if _, ok := refs.For(p); !ok {
+				t.Errorf("no reference value for %s", p)
+			}
+		}
+		return err
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}

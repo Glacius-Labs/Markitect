@@ -58,6 +58,8 @@ type Document struct {
 	// UnplacedHTML are lines of HTML that name an href or src whose value
 	// could not be read.
 	UnplacedHTML []int
+	// Texts are the stretches of prose, in order.
+	Texts []Text
 	// Source is the document's bytes as read.
 	Source []byte
 }
@@ -239,6 +241,7 @@ func (p *parser) read(root ast.Node) {
 			}
 		}
 		p.links(n, section)
+		p.texts(n, section)
 	}
 }
 
