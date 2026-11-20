@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -38,6 +36,9 @@ type statusDocument struct {
 	Suspect     []statusEntry `json:"suspect"`
 	Unexplained []string      `json:"unexplained"`
 	Notes       []statusNote  `json:"notes"`
+	// History holds the lines of the history status cannot read: notes,
+	// which do not change the exit code.
+	History []diagnostic `json:"history"`
 }
 
 type statusEntry struct {
@@ -83,7 +84,7 @@ func status(o options, stdout io.Writer) (int, error) {
 		return ExitFailed, err
 	}
 	doc := statusDocument{header: newHeader("status"), Errors: blockers(w, problems),
-		Changed: []statusEntry{}, Suspect: []statusEntry{}, Unexplained: []string{}, Notes: []statusNote{}}
+		Changed: []statusEntry{}, Suspect: []statusEntry{}, Unexplained: []string{}, Notes: []statusNote{}, History: []diagnostic{}}
 	var b strings.Builder
 	if len(doc.Errors) > 0 {
 		for _, d := range doc.Errors {
@@ -112,6 +113,15 @@ func status(o options, stdout io.Writer) (int, error) {
 	for _, u := range s.Unexplained {
 		doc.Unexplained = append(doc.Unexplained, u)
 		fmt.Fprintf(&b, "unexplained: %s\n", u)
+	}
+	_, historyProblems, err := state.ReadHistory(w.FS)
+	if err != nil {
+		return ExitFailed, err
+	}
+	for _, p := range historyProblems {
+		d := diagnostic{File: state.HistoryFile, Line: p.Line, Code: state.CodeHistoryUnreadable, Message: p.Message}
+		doc.History = append(doc.History, d)
+		fmt.Fprintf(&b, "note: %s\n", d)
 	}
 	for _, n := range s.Notes {
 		doc.Notes = append(doc.Notes, statusNote{n.Doc, n.Verdict, n.Reason})
@@ -190,7 +200,11 @@ func mark(o options, stdout io.Writer) (int, error) {
 	if !lock.held() {
 		return ExitFailed, errors.New("another mark took over the lock of the state; nothing is written")
 	}
-	if err := writeAtomic(filepath.Join(dir, filepath.FromSlash(state.StateFile)), state.FormatState(rows)); err != nil {
+	changes, err := withHistory(dir, edit.Changes{}, rows, s.VerdictEvent(now(), doc, verdict))
+	if err != nil {
+		return ExitFailed, err
+	}
+	if err := applyChanges(dir, changes); err != nil {
 		return ExitFailed, err
 	}
 	text := "marked " + doc + " " + verdict + "\n"
@@ -209,34 +223,14 @@ func cutLast(s, sep string) (string, string, bool) {
 	return s[:i], s[i+len(sep):], true
 }
 
-// writeAtomic replaces a file in one step: a crash leaves the old one or the
-// new one.
-func writeAtomic(file string, data []byte) error {
-	tmp, err := os.CreateTemp(filepath.Dir(file), ".markitect-*.tmp")
-	if err != nil {
-		return err
+// now is the clock of the history; tests replace it.
+var now = func() time.Time { return time.Now().UTC() }
+
+// lineStart is what goes before a line appended to data: a line end when
+// data does not end with one.
+func lineStart(data []byte) []byte {
+	if len(data) > 0 && data[len(data)-1] != '\n' {
+		return []byte("\n")
 	}
-	temp := tmp.Name()
-	defer os.Remove(temp)
-	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Sync(); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	if err := os.Chmod(temp, 0o644); err != nil {
-		return err
-	}
-	for i := 0; ; i++ {
-		// A rename beside a reader is refused for a moment on Windows.
-		if err = os.Rename(temp, file); err == nil || i == 20 {
-			return err
-		}
-		time.Sleep(50 * time.Millisecond)
-	}
+	return nil
 }

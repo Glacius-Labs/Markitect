@@ -1,6 +1,6 @@
 # Project reference
 
-How the rebuilt tool `markitect-next` finds and sets up a project, what lies in `.markitect/`, which files of the project it sees, how it hashes them, and the state with `status` and `mark` ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version), [DEC-097](../decisions.md#dec-097-markitect-uses-no-git)). [The project](../concept/jobs-and-runners.md#the-project) and [the state](../concept/the-state.md) in the concept say what they are for; this page says precisely what the tool does. [The language reference](language-reference.md) gives the commands that read and write the spec. The examples are a small lending library.
+How the rebuilt tool `markitect-next` finds and sets up a project, what lies in `.markitect/`, which files of the project it sees, how it hashes them, the state with `status`, `mark` and `move`, and the history ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version), [DEC-097](../decisions.md#dec-097-markitect-uses-no-git)). [The project](../concept/jobs-and-runners.md#the-project) and [the state](../concept/the-state.md) in the concept say what they are for; this page says precisely what the tool does. [The language reference](language-reference.md) gives the commands that read and write the spec. The examples are a small lending library.
 
 ## The project
 
@@ -16,7 +16,8 @@ The tool reads a project through a file system rooted at its folder, the spec an
 | `spec` | One line: the spec folder, a path below the project folder, by default `docs/spec` |
 | `.gitattributes` | `state.jsonl merge=union` and `history.jsonl merge=union`, so that Git keeps the lines of both sides of a merge |
 | `ignore` | Files the project does not explain, written like a `.gitignore` ([the walk](#the-walk)); empty at `init` |
-| `state.jsonl` | The state: one row per document with its verdict and the hashes it rests on ([below](#the-state)); written by `mark` |
+| `state.jsonl` | The state: one row per document with its verdict and the hashes it rests on ([below](#the-state)); written by `mark` and `move` |
+| `history.jsonl` | The history: what changed when, as hashes ([below](#the-history)); appended to by `mark` and `move` |
 
 `version` and `spec` are read as one line each: a byte order mark, white space and the line end around it are dropped, so a checkout with CRLF reads the same. An empty file, a second line or a missing file stops every command that reads it. The spec folder is a relative path with `/` or `\`; it may not be empty, absolute, the project folder itself, outside it, in `.markitect/` or in a `.git` folder. `.markitect` and `.git` count in any case, as a file system that ignores case reads them, so `.Markitect/spec` is refused too. Nor may it lie outside the project through a symbolic link or a Windows junction: `init` and every command that reads `.markitect/spec` resolve the folder, or the nearest folder above it that exists, and refuse one that lands outside. A spec folder that does not exist stops every command that reads the spec; `init` and `apply` create it.
 
@@ -88,7 +89,7 @@ A file's hash is its SHA-256, written `sha256:` and 64 hexadecimal digits. A fil
 |---|---|
 | `doc` | The document, by its path below the spec folder |
 | `verdict` | `ok`, `fail` or `skip` |
-| `source` | What wrote the row: `mark` |
+| `source` | What wrote the row last: `mark`, or `move` for a row a move carried |
 | `inputs` | The hash of each input at the confirmation, by key, sorted |
 | `evidence` | The evidence as the reviewer gave it: `path`, `path:line`, `path:line-line` or `path:line:col` |
 | `reason` | Why, for a `fail` or a `skip`; one line |
@@ -149,3 +150,32 @@ markitect-next mark lending/return.md@5d0e9b11 fail --file src/returns.go -m "a 
 It computes the fingerprint as `status` does and refuses, writes nothing and exits 1 when it differs: a file of the project was created, edited or removed since `status`, such as by a builder working beside the reviewer or by a test run. It also exits 1 when the spec has errors, the state has a line it cannot read, the document is in neither the spec nor the state, or a path is bad, naming every reason. A malformed command, an unknown verdict, an `ok` without evidence or a `fail` or `skip` without a reason exits 2.
 
 It writes under a lock: a file in `markitect/locks/` of the user's cache folder, named after the project folder's real path, so that a symbolic link, a junction, a short name or a substituted drive lead to the same lock. It holds the process's ID and a random token. A lock is stale once its process is gone or it is older than an hour, since a process ID may be reused; it is moved aside in one rename, which only one of several takers can make, and a lock moved aside by mistake is put back. `mark` checks that the lock is still its own before it writes, and removes no lock that is not. The lock lives on one system: Windows and WSL working on one checkout have different cache folders and do not share it. Under it, `mark` reads the folder and the state afresh and replaces the state file in one step, so parallel reviewers lose no row. The file it writes holds one row per document, the row `status` takes, except the rows of a conflict, which stay until a mark of that document settles it; a verdict rewrites only the row of its own document. It prints `marked DOCUMENT VERDICT`, or `removed the row of DOCUMENT, which is gone`; with `--json`, `doc`, `verdict` and `removed`.
+
+## move and the state
+
+`markitect-next move OLD NEW` ([language reference](language-reference.md#commands-that-write)) carries the state with the document, so that a move leaves `status` as it was. It takes the lock of `mark`, refuses while the spec has errors or the state a line it cannot read, and writes the moved and rewritten documents, the state and the history in one change set: when a step fails, every step done is undone, the state and the history included.
+
+- The moved document's rows take the new path, and every `type:` and `link:` input that names it names the new path.
+- For each document whose text `move` rewrote, the moved one included: a `self` that matched its text before the move takes the hash of its new text, and so does a `type:` or `link:` input of another row that matched it. One that did not match stays, so a document that was changed or suspect before the move is so after it.
+- Every row the move touched has `source` `move`.
+- It appends a `move` event to the history.
+
+The other inputs stay: an artifact, a counter-check or a file of the spec folder that a document links keeps its path, and the moved document's rewritten links reach the same file.
+
+## The history
+
+`.markitect/history.jsonl` records, as hashes, what changed when: one JSON event per line, only ever appended to, and joined with `merge=union` like the state. Only `mark` and `move` write it. Each event has `time`, in UTC and RFC 3339, and `type`:
+
+| Type | Fields | Written |
+|---|---|---|
+| `verdict` | `doc`, `verdict`, `self`, the hash of the document's text, absent for a document that is gone, and `changed`: every other document `status` lists as changed at that moment, each with `doc` and its `self`, the whole list | By `mark`, in one change set with the state, under the lock |
+| `move` | `from`, `to`, and `rewritten`, the documents whose links `move` rewrote, by their paths after the move | By `move`, in the change set of the move |
+
+```text
+{"time":"2026-11-20T09:00:01Z","type":"verdict","doc":"lending/borrow.md","verdict":"ok","self":"sha256:…","changed":[{"doc":"lending/return.md","self":"sha256:…"}]}
+{"time":"2026-11-20T09:00:05Z","type":"move","from":"lending/borrow.md","to":"loans/borrow.md","rewritten":["loans/borrow.md","roles/member.md"]}
+```
+
+`mark` writes the state and the history together, all or nothing: when the history cannot be written, the state is not written either, and `mark` exits 2.
+
+**Reading it.** Events are read in time order, the file's order among equal times; the time is the writing machine's clock. The change signals read the history in this order, so a machine whose clock is wrong can reorder events and shift what they show. A line that both sides of a merge hold is read once, a type the tool does not know is skipped, so new types need no format version, and a line that is not an event, without a time in RFC 3339 or a type, or a known event without its fields, is reported as `.markitect/history.jsonl:LINE: history.unreadable: MESSAGE` and skipped, without failing. `status` prints each such line as a note, `note: .markitect/history.jsonl:LINE: …`, which does not change its exit code, and with `--json` lists them in `history`.
