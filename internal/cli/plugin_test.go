@@ -2,13 +2,17 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"slices"
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/library"
 	"github.com/Glacius-Labs/Markitect/internal/state"
 	"go.yaml.in/yaml/v3"
 )
@@ -34,7 +38,66 @@ var (
 	// up to a shell separator.
 	invocation = regexp.MustCompile(`(?:^|[\s(])markitect-next((?:[ \t][^;|&>)\n]*)?)`)
 	agentTools = []string{"Read", "Write", "Edit", "Glob", "Grep", "Bash", "WebFetch"}
+	// jsonValue is a value of a command's JSON document, written
+	// COMMAND.KEY in a code span, such as settings.tests.
+	jsonValue = regexp.MustCompile(`^(status|settings|figures|reports)((?:\.[a-z_]+)+)$`)
+	// placeholder is a word that stands for a value, such as ROLE.
+	placeholder = regexp.MustCompile(`^[A-Z][A-Z_]*$`)
 )
+
+// jsonDocuments are the JSON documents of the commands whose values the
+// plugin reads, by command.
+var jsonDocuments = map[string][]any{
+	"status":   {statusDocument{}, checksDocument{}},
+	"settings": {settingsDocument{}},
+	"figures":  {figuresDocument{}},
+	"reports":  {reportsDocument{}},
+}
+
+// jsonKeys adds the key paths of a JSON document's type, such as
+// .waiting.counts; a map takes any key below it, which "*" marks.
+func jsonKeys(t reflect.Type, prefix string, keys map[string]bool) {
+	for t.Kind() == reflect.Slice || t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	switch t.Kind() {
+	case reflect.Map:
+		keys[prefix+".*"] = true
+		return
+	case reflect.Struct:
+	default:
+		return
+	}
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		name, _, _ := strings.Cut(f.Tag.Get("json"), ",")
+		switch {
+		case f.Anonymous && name == "":
+			jsonKeys(f.Type, prefix, keys)
+		case name != "" && name != "-":
+			keys[prefix+"."+name] = true
+			jsonKeys(f.Type, prefix+"."+name, keys)
+		}
+	}
+}
+
+// knownValue says whether a key path is in a command's JSON document.
+func knownValue(command, path string) bool {
+	keys := map[string]bool{}
+	for _, doc := range jsonDocuments[command] {
+		jsonKeys(reflect.TypeOf(doc), "", keys)
+	}
+	if keys[path] {
+		return true
+	}
+	for p := path; strings.Contains(p, "."); {
+		p = p[:strings.LastIndex(p, ".")]
+		if keys[p+".*"] {
+			return true
+		}
+	}
+	return false
+}
 
 // pluginFiles are the files the test reads: every skill, every agent, the
 // frame of the jobs and the guide to the plugin.
@@ -225,7 +288,7 @@ func TestPluginNamesOnlyWhatExists(t *testing.T) {
 	for _, path := range agents {
 		known[strings.TrimSuffix(filepath.Base(path), ".md")] = true
 	}
-	lines, names := 0, 0
+	lines, names, values := 0, 0, 0
 	for _, path := range all {
 		data, err := os.ReadFile(path)
 		if err != nil {
@@ -258,6 +321,12 @@ func TestPluginNamesOnlyWhatExists(t *testing.T) {
 			}
 		}
 		for _, piece := range code(text) {
+			if m := jsonValue.FindStringSubmatch(piece); m != nil && !strings.HasSuffix(piece, ".md") && !strings.HasSuffix(piece, ".jsonl") {
+				values++
+				if !knownValue(m[1], m[2]) {
+					t.Errorf("%s: `%s`: the JSON of %s has no such value", path, piece, m[1])
+				}
+			}
 			for _, m := range invocation.FindAllStringSubmatch(piece, -1) {
 				args := words(m[1])
 				if len(args) == 0 || len(args) == 1 && args[0] == "help" {
@@ -273,6 +342,14 @@ func TestPluginNamesOnlyWhatExists(t *testing.T) {
 				if err == nil {
 					err = validate(args[0], c, o)
 				}
+				if err == nil && o.step != "" && !placeholder.MatchString(o.step) && !slices.Contains(state.StepRoles, o.step) {
+					err = errors.New("--step " + o.step + " is no role of a step")
+				}
+				if err == nil && args[0] == "apply" && !placeholder.MatchString(o.positional[0]) {
+					if info, statErr := fs.Stat(library.FS(), "templates/"+o.positional[0]); statErr != nil || !info.IsDir() {
+						err = errors.New(o.positional[0] + " is no template of the library")
+					}
+				}
 				if err != nil {
 					first, _, _ := strings.Cut(err.Error(), "\n")
 					t.Errorf("%s: `markitect-next%s`: %s", path, m[1], first)
@@ -280,7 +357,7 @@ func TestPluginNamesOnlyWhatExists(t *testing.T) {
 			}
 		}
 	}
-	if lines < 40 || names < 10 {
-		t.Errorf("found %d command lines and %d scoped names; the search no longer fits the plugin", lines, names)
+	if lines < 40 || names < 10 || values < 10 {
+		t.Errorf("found %d command lines, %d scoped names and %d JSON values; the search no longer fits the plugin", lines, names, values)
 	}
 }
