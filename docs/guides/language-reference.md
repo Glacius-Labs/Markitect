@@ -80,20 +80,22 @@ A document reports each unresolved target once, at its first link: `[the archive
 
 ## Commands
 
-Every command takes the spec folder first. A `DOCUMENT`, `TYPE`, `OLD`, `NEW` or `PATH` is a path below the spec folder, with or without `.md`, with `/` or `\` between folders; a path that leaves the spec folder, is absolute or starts with a scheme names no document. Flags may stand anywhere, `-json` is the same as `--json`, and `--` ends the flags, so that a name starting with `-` can follow. `markitect-next help`, `-h` or `--help` prints the usage. Output paths are below the spec folder, with `/`.
+Every command but `init` and `version` works in a project and finds its spec through it: the folder `-C PROJECT` names, or the nearest folder from the working directory upward that holds `.markitect/version` ([project reference](project-reference.md#the-project)). A `DOCUMENT`, `TYPE`, `OLD`, `NEW` or `PATH` is a path below the spec folder, with or without `.md`, with `/` or `\` between folders; a path that leaves the spec folder, is absolute or starts with a scheme names no document. Flags may stand anywhere, `-json` is the same as `--json`, and `--` ends the flags, so that a name starting with `-` can follow. `markitect-next help`, `-h` or `--help` prints the usage. Output paths are below the spec folder, with `/`.
 
 | Command | Does |
 |---|---|
-| `markitect-next check SPECFOLDER` | Checks the spec by the rules above |
-| `markitect-next show SPECFOLDER DOCUMENT` | The document's title, its type, its sections (a type's with their `(optional)` marker), the documents it links to, the documents that link to it with the section each link stands in, and for a type, its documents |
-| `markitect-next table SPECFOLDER TYPE` | Every document of the type as a Markdown table: the title, then one column per section of the type |
-| `markitect-next new SPECFOLDER TYPE PATH [TITLE]` | Creates a document of the type |
-| `markitect-next move SPECFOLDER OLD NEW` | Moves or renames a document and rewrites the links to it |
-| `markitect-next apply SPECFOLDER TEMPLATE [TARGET]` | Copies a template of the [library](library.md) into the spec |
-| `markitect-next topic SPECFOLDER [TOPIC]` | The signals of the spec, or the topic view of a document, a type or a folder ([signals](signals.md)) |
-| `markitect-next questions SPECFOLDER` | The question catalogs of the library packages the spec has ([signals](signals.md#question-catalogs)) |
+| `markitect-next init [--spec PATH]` | Sets up a project: `.markitect/` and the spec folder ([project reference](project-reference.md#init)) |
+| `markitect-next check` | Checks the spec by the rules above |
+| `markitect-next show DOCUMENT` | The document's title, its type, its sections (a type's with their `(optional)` marker), the documents it links to, the documents that link to it with the section each link stands in, and for a type, its documents |
+| `markitect-next table TYPE` | Every document of the type as a Markdown table: the title, then one column per section of the type |
+| `markitect-next new TYPE PATH [TITLE]` | Creates a document of the type |
+| `markitect-next move OLD NEW` | Moves or renames a document and rewrites the links to it |
+| `markitect-next apply TEMPLATE [TARGET]` | Copies a template of the [library](library.md) into the spec |
+| `markitect-next topic [TOPIC]` | The signals of the spec, or the topic view of a document, a type or a folder ([signals](signals.md)) |
+| `markitect-next questions` | The question catalogs of the library packages the spec has ([signals](signals.md#question-catalogs)) |
+| `markitect-next version` | The tool's version, and whether it is the one the project pins ([project reference](project-reference.md#version)) |
 
-**Exit codes.** 0 when all is well, 1 when `check` found something, and 2 when the command could not run: an unknown command or flag, a wrong number of arguments, a spec folder that does not exist (`apply` creates it), an unknown document, a file that cannot be read, or a refused `new`, `move` or `apply`. A command that does not succeed changes nothing, also when writing fails partway, unless undoing fails as well, which it reports ([below](#commands-that-write)).
+**Exit codes.** 0 when all is well, 1 when `check` found something or `version` a project that pins another version, and 2 when the command could not run: an unknown command or flag, a wrong number of arguments, no project, a `.markitect/` that cannot be read, a spec folder that does not exist (`apply` creates it), an unknown document, a file that cannot be read, or a refused `init`, `new`, `move` or `apply`. A command that does not succeed changes nothing, also when writing fails partway, unless undoing fails as well, which it reports ([below](#commands-that-write)).
 
 ### Commands that read
 
@@ -126,6 +128,7 @@ With `--json`, every command prints one document that starts with `format_versio
 | `check` | `documents`, the number of documents, and `diagnostics`, a list, empty when nothing is found, of objects with `file`, `line`, `code` and `message` |
 | `show` | `path`, `title`, `type`, `type_state` (`none`, `invalid`, `missing` or `ok`), `sections` with `heading`, `links_to` with `path` and `missing`, `linked_from` with `path` and `section`, and `documents` |
 | `table` | `type`, `columns`, and `rows` with `path`, `title` and `cells` |
+| `init`, `version` | As the [project reference](project-reference.md) says |
 | `new` | `path` |
 | `move` | `from`, `to` and `changed` |
 | `apply` | `documents` and `packages` |

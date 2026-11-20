@@ -1,10 +1,7 @@
 package cli
 
 import (
-	"errors"
-	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"strings"
 
@@ -33,40 +30,38 @@ type applyResult struct {
 }
 
 func newDocument(o options, stdout io.Writer) (int, error) {
-	folder := o.positional[0]
-	spec, fsys, err := load(folder)
+	w, err := load(o)
 	if err != nil {
 		return ExitFailed, err
 	}
-	t, err := document(spec, o.positional[1])
+	t, err := document(w.Spec, o.positional[0])
 	if err != nil {
 		return ExitFailed, err
 	}
 	title := ""
-	if len(o.positional) > 3 {
-		title = o.positional[3]
+	if len(o.positional) > 2 {
+		title = o.positional[2]
 	}
-	p, changes, err := edit.NewDocument(spec, fsys, t.Path, o.positional[2], title)
+	p, changes, err := edit.NewDocument(w.Spec, w.SpecFS, t.Path, o.positional[1], title)
 	if err != nil {
 		return ExitFailed, err
 	}
-	if err := applyChanges(folder, changes); err != nil {
+	if err := applyChanges(w.specDir(), changes); err != nil {
 		return ExitFailed, err
 	}
 	return output(o, stdout, newResult{newHeader("new"), p}, "created "+p+"\n")
 }
 
 func move(o options, stdout io.Writer) (int, error) {
-	folder := o.positional[0]
-	spec, fsys, err := load(folder)
+	w, err := load(o)
 	if err != nil {
 		return ExitFailed, err
 	}
-	m, err := edit.MoveDocument(spec, fsys, o.positional[1], o.positional[2])
+	m, err := edit.MoveDocument(w.Spec, w.SpecFS, o.positional[0], o.positional[1])
 	if err != nil {
 		return ExitFailed, err
 	}
-	if err := applyChanges(folder, m.Changes); err != nil {
+	if err := applyChanges(w.specDir(), m.Changes); err != nil {
 		return ExitFailed, err
 	}
 	text := "moved " + m.From + " -> " + m.To + "\n"
@@ -77,15 +72,19 @@ func move(o options, stdout io.Writer) (int, error) {
 }
 
 func apply(o options, stdout io.Writer) (int, error) {
-	folder := o.positional[0]
-	if info, err := os.Stat(folder); err == nil && !info.IsDir() || err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return ExitFailed, fmt.Errorf("not a folder: %s", folder)
+	dir, err := mustProject(o)
+	if err != nil {
+		return ExitFailed, err
+	}
+	folder, err := specFolderOf(dir)
+	if err != nil {
+		return ExitFailed, err
 	}
 	target := ""
-	if len(o.positional) > 2 {
-		target = o.positional[2]
+	if len(o.positional) > 1 {
+		target = o.positional[1]
 	}
-	a, err := edit.Apply(os.DirFS(folder), library.FS(), o.positional[1], target)
+	a, err := edit.Apply(os.DirFS(folder), library.FS(), o.positional[0], target)
 	if err != nil {
 		return ExitFailed, err
 	}

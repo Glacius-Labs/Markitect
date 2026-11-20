@@ -37,11 +37,12 @@ type showLink struct {
 }
 
 func show(o options, stdout io.Writer) (int, error) {
-	spec, _, err := load(o.positional[0])
+	w, err := load(o)
 	if err != nil {
 		return ExitFailed, err
 	}
-	d, err := document(spec, o.positional[1])
+	spec := w.Spec
+	d, err := document(spec, o.positional[0])
 	if err != nil {
 		return ExitFailed, err
 	}
@@ -170,11 +171,12 @@ type tableRow struct {
 }
 
 func table(o options, stdout io.Writer) (int, error) {
-	spec, _, err := load(o.positional[0])
+	w, err := load(o)
 	if err != nil {
 		return ExitFailed, err
 	}
-	t, err := document(spec, o.positional[1])
+	spec := w.Spec
+	t, err := document(spec, o.positional[0])
 	if err != nil {
 		return ExitFailed, err
 	}

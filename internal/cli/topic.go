@@ -62,18 +62,19 @@ type findingJSON struct {
 }
 
 func topic(o options, stdout io.Writer) (int, error) {
-	spec, _, err := load(o.positional[0])
+	w, err := load(o)
 	if err != nil {
 		return ExitFailed, err
 	}
+	spec := w.Spec
 	refs, err := references()
 	if err != nil {
 		return ExitFailed, err
 	}
 	a := signals.Analyze(spec, refs)
 	name := ""
-	if len(o.positional) > 1 {
-		name = o.positional[1]
+	if len(o.positional) > 0 {
+		name = o.positional[0]
 	}
 	t, ok := a.Topic(name)
 	if !ok {
@@ -178,10 +179,11 @@ type packageQuestions struct {
 }
 
 func questions(o options, stdout io.Writer) (int, error) {
-	_, fsys, err := load(o.positional[0])
+	w, err := load(o)
 	if err != nil {
 		return ExitFailed, err
 	}
+	fsys := w.SpecFS
 	doc := questionsDocument{header: newHeader("questions"), Packages: []packageQuestions{}}
 	entries, _ := fs.ReadDir(fsys, "packages")
 	var b strings.Builder

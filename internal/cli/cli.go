@@ -1,7 +1,7 @@
 // Package cli is the command line of the rebuilt tool, markitect-next: it
-// parses the arguments, reads the spec folder they name, prints what the
-// language finds, as text or as JSON, and applies the changes of the commands
-// that write.
+// parses the arguments, finds the project they work in, sets one up with
+// init, reads its spec, prints what the language finds, as text or as JSON,
+// and applies the changes of the commands that write.
 package cli
 
 import (
@@ -10,8 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
-	"os"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/edit"
@@ -29,22 +27,27 @@ const (
 	ExitFailed = 2 // the command could not run
 )
 
-const usage = `usage: markitect-next COMMAND SPECFOLDER ARGUMENTS [--json]
+const usage = `usage: markitect-next COMMAND ARGUMENTS [-C PROJECT] [--json]
 
-  check SPECFOLDER                     check the spec
-  show SPECFOLDER DOCUMENT             a document with its type, sections and links
-  table SPECFOLDER TYPE                every document of a type as a Markdown table
-  new SPECFOLDER TYPE PATH [TITLE]     create a document of a type
-  move SPECFOLDER OLD NEW              move a document and rewrite the links to it
-  apply SPECFOLDER TEMPLATE [TARGET]   copy a template of the library into the spec
-  topic SPECFOLDER [TOPIC] [--all]     the signals of the spec, or everything about a
-                                       document, a type or a folder
-  questions SPECFOLDER                 the questions of the packages the spec has
+  init [--spec PATH]          set up a project: .markitect/ and the spec folder,
+                              by default docs/spec
+  check                       check the spec
+  show DOCUMENT               a document with its type, sections and links
+  table TYPE                  every document of a type as a Markdown table
+  new TYPE PATH [TITLE]       create a document of a type
+  move OLD NEW                move a document and rewrite the links to it
+  apply TEMPLATE [TARGET]     copy a template of the library into the spec
+  topic [TOPIC] [--all]       the signals of the spec, or everything about a
+                              document, a type or a folder
+  questions                   the questions of the packages the spec has
+  version                     the tool's version, and whether the project pins it
 
-A DOCUMENT, TYPE or PATH is a path below the spec folder, with or without .md.
-Diagnostics read path:line: code: message. --json prints one document with
-format_version and kind. Exit codes: 0 when all is well, 1 when the command
-found something, 2 when it could not run.
+The project is the nearest folder, from the working directory upward, that
+holds .markitect/version, or the folder -C names. A DOCUMENT, TYPE or PATH is a path
+below the spec folder, with or without .md. Diagnostics read
+path:line: code: message. --json prints one document with format_version and
+kind. Exit codes: 0 when all is well, 1 when the command found something, 2
+when it could not run.
 `
 
 // A command takes its positional arguments, between min and max of them.
@@ -54,14 +57,16 @@ type command struct {
 }
 
 var commands = map[string]command{
-	"check":     {1, 1, check},
-	"show":      {2, 2, show},
-	"table":     {2, 2, table},
-	"new":       {3, 4, newDocument},
-	"move":      {3, 3, move},
-	"apply":     {2, 3, apply},
-	"topic":     {1, 2, topic},
-	"questions": {1, 1, questions},
+	"init":      {0, 0, initProject},
+	"check":     {0, 0, check},
+	"show":      {1, 1, show},
+	"table":     {1, 1, table},
+	"new":       {2, 3, newDocument},
+	"move":      {2, 2, move},
+	"apply":     {1, 2, apply},
+	"topic":     {0, 1, topic},
+	"questions": {0, 0, questions},
+	"version":   {0, 0, version},
 }
 
 // Run runs the command line args, without the program name, and returns the
@@ -83,8 +88,12 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		return ExitFailed
 	}
 	o, err := parse(args[1:])
-	if err == nil && (len(o.positional) < c.min || len(o.positional) > c.max) {
+	switch {
+	case err != nil:
+	case len(o.positional) < c.min || len(o.positional) > c.max:
 		err = fmt.Errorf("wrong number of arguments\n\n%s", usage)
+	case o.specSet && name != "init":
+		err = errors.New("--spec is a flag of init")
 	}
 	code := ExitFailed
 	if err == nil {
@@ -106,14 +115,28 @@ func Run(args []string, stdout, stderr io.Writer) int {
 // options are a command's flags and positional arguments. Flags may stand
 // anywhere; "--" ends them.
 type options struct {
-	json       bool
-	all        bool
+	json bool
+	all  bool
+	// dir is the project folder -C names, "" without the flag.
+	dir string
+	// spec is the spec folder --spec names, specSet whether it was given.
+	spec       string
+	specSet    bool
 	positional []string
 }
 
 func parse(args []string) (options, error) {
 	var o options
-	for i, a := range args {
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		value := func(flag string) (string, error) {
+			if i+1 >= len(args) {
+				return "", fmt.Errorf("flag %s needs a value", flag)
+			}
+			i++
+			return args[i], nil
+		}
+		var err error
 		switch {
 		case a == "--":
 			o.positional = append(o.positional, args[i+1:]...)
@@ -122,23 +145,26 @@ func parse(args []string) (options, error) {
 			o.json = true
 		case a == "--all" || a == "-all":
 			o.all = true
+		case a == "-C":
+			if o.dir, err = value(a); err == nil && o.dir == "" {
+				err = errors.New("flag -C needs a folder")
+			}
+		case a == "--spec" || a == "-spec":
+			o.spec, err = value(a)
+			o.specSet = true
+		case strings.HasPrefix(a, "--spec=") || strings.HasPrefix(a, "-spec="):
+			_, o.spec, _ = strings.Cut(a, "=")
+			o.specSet = true
 		case strings.HasPrefix(a, "-") && a != "-":
-			return o, fmt.Errorf("unknown flag %s", a)
+			err = fmt.Errorf("unknown flag %s", a)
 		default:
 			o.positional = append(o.positional, a)
 		}
+		if err != nil {
+			return o, err
+		}
 	}
 	return o, nil
-}
-
-// load reads the spec in a folder that must exist.
-func load(folder string) (*lang.Spec, fs.FS, error) {
-	if info, err := os.Stat(folder); err != nil || !info.IsDir() {
-		return nil, nil, fmt.Errorf("not a folder: %s", folder)
-	}
-	fsys := os.DirFS(folder)
-	spec, err := lang.Load(fsys)
-	return spec, fsys, err
 }
 
 // document finds a document named on the command line.
@@ -152,10 +178,11 @@ func document(spec *lang.Spec, arg string) (*lang.Document, error) {
 }
 
 func check(o options, stdout io.Writer) (int, error) {
-	spec, _, err := load(o.positional[0])
+	w, err := load(o)
 	if err != nil {
 		return ExitFailed, err
 	}
+	spec := w.Spec
 	found := lang.Check(spec)
 	if o.json {
 		doc := checkDocument{header: newHeader("check"), Documents: len(spec.Documents), Diagnostics: []diagnostic{}}

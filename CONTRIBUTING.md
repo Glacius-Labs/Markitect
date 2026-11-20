@@ -33,6 +33,7 @@ Product code and tests that handle a project's `.markitect/` folder use fixtures
 | The spec language as the rebuilt tool implements it, and its commands | [Language reference](docs/guides/language-reference.md) |
 | The library built into the rebuilt tool: packages, templates and the report type | [Library](docs/guides/library.md) |
 | The signals, the topic view, reference values and question catalogs of the rebuilt tool | [Signals](docs/guides/signals.md) |
+| The project of the rebuilt tool: finding it, `init`, the `.markitect/` layout, the walk of its files and their hashes | [Project reference](docs/guides/project-reference.md) |
 | Designing a good spec | [What makes a good spec](docs/guides/good-spec.md) |
 | Using Markitect on a project | [Project workflow](docs/guides/project-workflow.md) |
 | Packages, layers and the repository layout | [Architecture](docs/architecture.md) and the generated [code map](docs/development/code-map.md) |
@@ -85,7 +86,7 @@ CI runs on Linux only, with quality checks and the race detector, in about five 
 gh workflow run ci.yaml --ref BRANCH
 ```
 
-Local checks and the independent review are the basis for a merge, and CI is optional for ordinary changes. When you run it, run it on the reviewed head and merge only when it is green. The tests run in about a minute on Windows too; Git is started only by one test of `init` and by the test support's own tests.
+Local checks and the independent review are the basis for a merge, and CI is optional for ordinary changes. When you run it, run it on the reviewed head and merge only when it is green. The tests run in about a minute on Windows too; Git is started only by one test of `init`, by the test support's own tests and by `TestWalkMatchesGit`, which compares the rebuilt tool's walk with Git and is skipped where Git is not installed.
 
 ## Review and land
 

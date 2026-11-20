@@ -6,9 +6,9 @@ How the rebuilt tool `markitect-next` shows where reading a spec pays off: the s
 
 | Command | Does |
 |---|---|
-| `markitect-next topic SPECFOLDER` | The signals of the whole spec. The text shows the first ten findings of each signal; `--all` shows every one, and `--json` always does |
-| `markitect-next topic SPECFOLDER TOPIC` | The topic view of a document, a type or a folder, with every finding |
-| `markitect-next questions SPECFOLDER` | The question catalogs of the library packages the spec has in `packages/` |
+| `markitect-next topic` | The signals of the whole spec. The text shows the first ten findings of each signal; `--all` shows every one, and `--json` always does |
+| `markitect-next topic TOPIC` | The topic view of a document, a type or a folder, with every finding |
+| `markitect-next questions` | The question catalogs of the library packages the spec has in `packages/` |
 
 A finding reads `path:line: signal: detail`. With `--json`, `topic` prints `topic`, `topic_kind` (`spec`, `document`, `type` or `folder`), `documents`, `strong`, `linked_from` and `mentions` as lists of statements with `file`, `line`, `section` and `text`, and `signals`, each signal's list of findings with `file`, `line` and `detail`; for a type also `typed_documents`. `questions` prints `packages`, each with `package` and `questions`.
 
