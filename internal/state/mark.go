@@ -29,10 +29,7 @@ func (s *Status) Fingerprint(doc string) (string, bool, error) {
 	if !ok {
 		return "", false, nil
 	}
-	if d.entry != nil {
-		return d.entry.Fingerprint, true, nil
-	}
-	fp, err := s.fingerprint(d, false)
+	fp, err := s.fingerprint(d, d.entry != nil && d.entry.Kind == Changed)
 	return fp, true, err
 }
 
@@ -100,7 +97,6 @@ func Mark(s *Status, req MarkRequest) ([]Row, error) {
 	for k, h := range d.current {
 		row.Inputs[k] = h
 	}
-	prefix := s.project.SpecFolder + "/"
 	named := map[string]string{}
 	for _, list := range []struct {
 		kind string
@@ -111,7 +107,7 @@ func Mark(s *Status, req MarkRequest) ([]Row, error) {
 			switch {
 			case !ok:
 				refuse("%s is not a path below the project folder", arg)
-			case strings.HasPrefix(p, prefix):
+			case s.project.InSpec(p):
 				refuse("%s lies in the spec folder: an artifact or a counter-check lies outside it", p)
 			case !s.folder.Has(p):
 				refuse("%s is no file of the project: it does not exist, lies in .markitect/ or is ignored", p)

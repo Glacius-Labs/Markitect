@@ -81,6 +81,9 @@ func status(o options, stdout io.Writer) (int, error) {
 		return ExitFailed, err
 	}
 	s, problems, err := evaluate(w)
+	if err == nil {
+		err = s.Fingerprints()
+	}
 	if err != nil {
 		return ExitFailed, err
 	}

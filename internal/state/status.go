@@ -159,29 +159,34 @@ func Evaluate(p *Project, f *Folder, rows []Row) (*Status, error) {
 			}
 		}
 	}
-	prefix := p.SpecFolder + "/"
 	for _, file := range f.Files {
-		if !mapped[file] && !strings.HasPrefix(file, prefix) {
+		if !mapped[file] && !p.InSpec(file) {
 			s.Unexplained = append(s.Unexplained, file)
 		}
 	}
 	for _, doc := range docs {
-		d := s.docs[doc]
-		if d.entry == nil {
-			continue
-		}
-		fp, err := s.fingerprint(d, d.entry.Kind == Changed)
-		if err != nil {
-			return nil, err
-		}
-		d.entry.Fingerprint = fp
-		if d.entry.Kind == Changed {
-			s.Changed = append(s.Changed, *d.entry)
-		} else {
-			s.Suspect = append(s.Suspect, *d.entry)
+		if e := s.docs[doc].entry; e != nil && e.Kind == Changed {
+			s.Changed = append(s.Changed, *e)
+		} else if e != nil {
+			s.Suspect = append(s.Suspect, *e)
 		}
 	}
 	return s, nil
+}
+
+// Fingerprints computes the fingerprint of every entry on the list. Evaluate
+// leaves them out, since they hash every unexplained file.
+func (s *Status) Fingerprints() error {
+	for _, list := range [][]Entry{s.Changed, s.Suspect} {
+		for i := range list {
+			fp, _, err := s.Fingerprint(list[i].Doc)
+			if err != nil {
+				return err
+			}
+			list[i].Fingerprint = fp
+		}
+	}
+	return nil
 }
 
 // currentInputs computes self, type and links of every document: the

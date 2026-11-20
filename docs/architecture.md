@@ -45,8 +45,8 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 | The library built into the rebuilt tool: packages, templates and the report type | `internal/library` | No other Markitect package |
 | The rebuilt tool's change sets of `new`, `move` and `apply` over supplied file systems: files to move and files to write | `internal/edit` | The rebuilt tool's spec language |
 | The rebuilt tool's statements, signals and topic view over a parsed spec ([signals](guides/signals.md)) | `internal/signals` | The rebuilt tool's spec language |
-| The rebuilt tool's project over a supplied file system: the `.markitect/` layout, the project loaded with its spec, the walk of its files and their hashes ([project reference](guides/project-reference.md)) | `internal/state` | The rebuilt tool's spec language |
-| The rebuilt tool's command line: arguments, the project it works in, `init` and `version`, the spec folder it reads and writes, and the output | `internal/cli` | The rebuilt tool's spec language, its library, its change sets, its signals, its project, and build data |
+| The rebuilt tool's project over a supplied file system: the `.markitect/` layout, the project loaded with its spec, the walk of its files, their hashes, and the state with `status` and `mark` ([project reference](guides/project-reference.md)) | `internal/state` | The rebuilt tool's spec language |
+| The rebuilt tool's command line: arguments, the project it works in, `init` and `version`, the spec folder and the state it reads and writes, the lock of `mark`, and the output | `internal/cli` | The rebuilt tool's spec language, its library, its change sets, its signals, its project, and build data |
 | The rebuilt tool's entrypoint, `markitect-next`, beside `markitect` until step 4 of the [roadmap](roadmap.md#current-steps) replaces it | `cmd/markitect-next` | The rebuilt tool's command line |
 | Version and license notices | `internal/buildinfo` | No other Markitect package |
 | Maintenance: the import gate and the code map | `internal/tooling/architecture` | No other Markitect package; separate from product execution |

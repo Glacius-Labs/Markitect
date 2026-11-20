@@ -483,3 +483,99 @@ func TestStateAsATable(t *testing.T) {
 		t.Error(out)
 	}
 }
+
+// A mark that maps a file changes what is unexplained, and with it the
+// fingerprint of every other changed document: a second mark at the
+// fingerprint of the same status is refused.
+func TestMappingAFileMovesOtherFingerprints(t *testing.T) {
+	dir := project(t, lending)
+	l := statusOf(t, dir)
+	borrow, _ := l.entry("lending/borrow.md")
+	member, _ := l.entry("roles/member.md")
+	if code, _, errOut := run("mark", "-C", dir, "lending/borrow.md@"+borrow.Fingerprint, "ok", "--file", "src/loans.go", "-e", "src/loans.go"); code != ExitOK {
+		t.Fatal(errOut)
+	}
+	if code, _, errOut := run("mark", "-C", dir, "roles/member.md@"+member.Fingerprint, "ok", "--file", "src/member.go", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "is not the state now") {
+		t.Error(code, errOut)
+	}
+}
+
+// Marks of several documents at once each keep their row: the lock lets one
+// write at a time, and each reads the state afresh.
+func TestParallelMarksLoseNoRow(t *testing.T) {
+	dir := marked(t)
+	docs := []string{"lending/borrow.md", "lending/return.md", "roles/member.md", "types/operation.md"}
+	fps := map[string]string{}
+	for _, doc := range docs {
+		fps[doc] = fingerprint(t, dir, doc)
+	}
+	done := make(chan string, len(docs))
+	for _, doc := range docs {
+		go func() {
+			code, _, errOut := run("mark", "-C", dir, doc+"@"+fps[doc], "skip", "-m", "reason of "+doc)
+			if code != ExitOK {
+				done <- doc + ": " + errOut
+				return
+			}
+			done <- ""
+		}()
+	}
+	for range docs {
+		if msg := <-done; msg != "" {
+			t.Error(msg)
+		}
+	}
+	state := read(t, dir, ".markitect/state.jsonl")
+	for _, doc := range docs {
+		if !strings.Contains(state, `"reason":"reason of `+doc+`"`) {
+			t.Errorf("the mark of %s was lost:\n%s", doc, state)
+		}
+	}
+}
+
+// Evidence alone maps no file.
+func TestEvidenceMapsNothing(t *testing.T) {
+	dir := marked(t)
+	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "-e", "tests/loans_test.go")
+	same(t, "after evidence without --check", statusOf(t, dir).summary(), []string{"unexplained tests/loans_test.go"})
+}
+
+// Of several rows of which none matches, the closest names the change.
+func TestClosestRowNamesTheChange(t *testing.T) {
+	dir := marked(t)
+	older := read(t, dir, ".markitect/state.jsonl")
+	write(t, dir, "src/loans.go", "package lending\n\nfunc Borrow() { lend() }\n")
+	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--check", "tests/loans_test.go", "-e", "tests/loans_test.go")
+	write(t, dir, ".markitect/state.jsonl", older+read(t, dir, ".markitect/state.jsonl"))
+	write(t, dir, "docs/spec/lending/borrow.md", read(t, dir, "docs/spec/lending/borrow.md")+"\nOne more rule.\n")
+	same(t, "with two rows, none matching", statusOf(t, dir).summary(), []string{
+		"changed lending/borrow.md: self", "suspect roles/member.md: link:lending/borrow.md"})
+}
+
+// A spec folder reached through a link inside the project: its files are
+// the spec's, wherever the walk finds them.
+func TestSpecFolderBehindALink(t *testing.T) {
+	files := map[string]string{}
+	for p, text := range lending {
+		files[strings.Replace(p, "docs/spec/", "handbook/spec/", 1)] = text
+	}
+	dir := t.TempDir()
+	for p, text := range files {
+		if !strings.HasPrefix(p, ".markitect/") {
+			write(t, dir, p, text)
+		}
+	}
+	link(t, filepath.Join(dir, "handbook"), filepath.Join(dir, "docs"))
+	if code, _, errOut := run("init", "-C", dir); code != ExitOK {
+		t.Fatal(errOut)
+	}
+	write(t, dir, ".markitect/ignore", lending[".markitect/ignore"])
+	same(t, "the project behind a link", statusOf(t, dir).summary(), []string{
+		"changed lending/borrow.md: no row", "changed lending/return.md: no row",
+		"changed roles/member.md: no row", "changed types/operation.md: no row",
+		"unexplained src/loans.go", "unexplained src/member.go", "unexplained src/returns.go", "unexplained tests/loans_test.go"})
+	fp := fingerprint(t, dir, "roles/member.md")
+	if code, _, errOut := run("mark", "-C", dir, "roles/member.md@"+fp, "ok", "--file", "handbook/spec/roles/member.md", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "lies in the spec folder") {
+		t.Error(code, errOut)
+	}
+}

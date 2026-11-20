@@ -106,3 +106,25 @@ func specInside(dir, spec string) error {
 	}
 	return nil
 }
+
+// specAlias is where the spec folder lies below the project folder once every
+// link on the way is resolved, when that differs from its path.
+func specAlias(dir, spec string) (string, bool) {
+	project, err := realPath(dir, 0)
+	if err != nil {
+		return "", false
+	}
+	real, err := realPath(filepath.Join(dir, filepath.FromSlash(spec)), 0)
+	if err != nil {
+		return "", false
+	}
+	rel, err := filepath.Rel(project, real)
+	if err != nil {
+		return "", false
+	}
+	rel = filepath.ToSlash(rel)
+	if rel == spec || rel == "." || rel == ".." || strings.HasPrefix(rel, "../") {
+		return "", false
+	}
+	return rel, true
+}

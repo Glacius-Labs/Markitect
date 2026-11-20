@@ -86,16 +86,18 @@ Every command but `init` and `version` works in a project and finds its spec thr
 |---|---|
 | `markitect-next init [--spec PATH]` | Sets up a project: `.markitect/` and the spec folder ([project reference](project-reference.md#init)) |
 | `markitect-next check` | Checks the spec by the rules above |
-| `markitect-next show DOCUMENT` | The document's title, its type, its sections (a type's with their `(optional)` marker), the documents it links to, the documents that link to it with the section each link stands in, and for a type, its documents |
-| `markitect-next table TYPE` | Every document of the type as a Markdown table: the title, then one column per section of the type |
+| `markitect-next show DOCUMENT` | The document's title, its type, its sections (a type's with their `(optional)` marker), the documents it links to, the documents that link to it with the section each link stands in, for a type its documents, and its row in the state |
+| `markitect-next table [TYPE]` | Every document of the type as a Markdown table: the title, then one column per section of the type. Without a type, every document with its verdict and artifacts |
 | `markitect-next new TYPE PATH [TITLE]` | Creates a document of the type |
 | `markitect-next move OLD NEW` | Moves or renames a document and rewrites the links to it |
 | `markitect-next apply TEMPLATE [TARGET]` | Copies a template of the [library](library.md) into the spec |
 | `markitect-next topic [TOPIC]` | The signals of the spec, or the topic view of a document, a type or a folder ([signals](signals.md)) |
 | `markitect-next questions` | The question catalogs of the library packages the spec has ([signals](signals.md#question-catalogs)) |
+| `markitect-next status` | What is changed, suspect or unexplained ([project reference](project-reference.md#status)) |
+| `markitect-next mark DOCUMENT@FINGERPRINT VERDICT` | Binds `ok`, `fail` or `skip`, with artifacts, counter-checks and evidence, to the state `status` showed ([project reference](project-reference.md#mark)) |
 | `markitect-next version` | The tool's version, and whether it is the one the project pins ([project reference](project-reference.md#version)) |
 
-**Exit codes.** 0 when all is well, 1 when `check` found something or `version` a project that pins another version, and 2 when the command could not run: an unknown command or flag, a wrong number of arguments, no project, a `.markitect/` that cannot be read, a spec folder that does not exist (`apply` creates it), an unknown document, a file that cannot be read, or a refused `init`, `new`, `move` or `apply`. A command that does not succeed changes nothing, also when writing fails partway, unless undoing fails as well, which it reports ([below](#commands-that-write)).
+**Exit codes.** 0 when all is well, 1 when `check` or `status` found something, `mark` refused, or `version` found a project that pins another version, and 2 when the command could not run: an unknown command or flag, a wrong number of arguments, no project, a `.markitect/` that cannot be read, a spec folder that does not exist (`apply` creates it), an unknown document, a file that cannot be read, or a refused `init`, `new`, `move` or `apply`. A command that does not succeed changes nothing, also when writing fails partway, unless undoing fails as well, which it reports ([below](#commands-that-write)).
 
 ### Commands that read
 
@@ -107,9 +109,9 @@ lending/loans/4711.md:9: section.empty: empty section "Due"
 2 errors in 14 documents
 ```
 
-**`show`** prints the document's path, `Title:`, `Type:` (the type's path, `(none)`, `(invalid line)` for a type line that is not one link, or the path with `(missing)`), then the lists `Sections:`, `Links to:`, with `(missing)` after a path that names no document, and `Linked from:`, each `(none)` when empty, and `Documents:` only for a type that has some. `Links to:` holds each path once; `Linked from:` holds one entry per linking document and section, `path (Section)`, so a document that links from two sections appears twice. Both are sorted without regard to case.
+**`show`** prints the document's path, `Title:`, `Type:` (the type's path, `(none)`, `(invalid line)` for a type line that is not one link, or the path with `(missing)`), then the lists `Sections:`, `Links to:`, with `(missing)` after a path that names no document, and `Linked from:`, each `(none)` when empty, and `Documents:` only for a type that has some. `Links to:` holds each path once; `Linked from:` holds one entry per linking document and section, `path (Section)`, so a document that links from two sections appears twice. Both are sorted without regard to case. Then comes the document's row in the state, the one `status` takes ([project reference](project-reference.md#the-state)): `Verdict:`, `(no row)` without one and `(rows conflict)` after it for a conflict, the lists `Artifacts:`, `Counter-checks:` and `Evidence:`, each `(none)` when empty, and `Reason:` when the row gives one.
 
-**`table`** prints a row per document of the type, in path order. A cell holds the first line of the section's text as plain text: markup, list markers, HTML tags and comments are dropped, and links, reference links and images show as their text. A section that starts with code shows its first code line, one that starts with a table its first row, cells separated by ` | `. `|` is escaped, and a cell is empty when the section has no text or the document leaves an optional section out. A row's title is the document's title, or its path.
+**`table`** prints a row per document of the type, in path order. A cell holds the first line of the section's text as plain text: markup, list markers, HTML tags and comments are dropped, and links, reference links and images show as their text. A section that starts with code shows its first code line, one that starts with a table its first row, cells separated by ` | `. `|` is escaped, and a cell is empty when the section has no text or the document leaves an optional section out. A row's title is the document's title, or its path. Without a type, `table` prints every document of the spec in path order as `| Document | Verdict | Artifacts |`: its path, the verdict of the row `status` takes, empty without one and with `(rows conflict)` for a conflict, and its artifacts.
 
 ### Commands that write
 
@@ -126,9 +128,9 @@ With `--json`, every command prints one document that starts with `format_versio
 | Kind | Fields |
 |---|---|
 | `check` | `documents`, the number of documents, and `diagnostics`, a list, empty when nothing is found, of objects with `file`, `line`, `code` and `message` |
-| `show` | `path`, `title`, `type`, `type_state` (`none`, `invalid`, `missing` or `ok`), `sections` with `heading`, `links_to` with `path` and `missing`, `linked_from` with `path` and `section`, and `documents` |
-| `table` | `type`, `columns`, and `rows` with `path`, `title` and `cells` |
-| `init`, `version` | As the [project reference](project-reference.md) says |
+| `show` | `path`, `title`, `type`, `type_state` (`none`, `invalid`, `missing` or `ok`), `sections` with `heading`, `links_to` with `path` and `missing`, `linked_from` with `path` and `section`, `documents`, and from the state `verdict`, empty without a row, `conflict` when rows conflict, `artifacts`, `counter_checks`, `evidence` and `reason` |
+| `table` | `type`, `columns`, and `rows` with `path`, `title` and `cells`; without a type, `type` is empty and the columns are `Verdict` and `Artifacts` |
+| `init`, `version`, `status`, `mark` | As the [project reference](project-reference.md) says |
 | `new` | `path` |
 | `move` | `from`, `to` and `changed` |
 | `apply` | `documents` and `packages` |

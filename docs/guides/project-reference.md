@@ -1,6 +1,6 @@
 # Project reference
 
-How the rebuilt tool `markitect-next` finds and sets up a project, what lies in `.markitect/`, which files of the project it sees and how it hashes them ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version), [DEC-097](../decisions.md#dec-097-markitect-uses-no-git)). [The project](../concept/jobs-and-runners.md#the-project) and [the state](../concept/the-state.md) in the concept say what they are for; this page says precisely what the tool does. [The language reference](language-reference.md) gives the commands that read and write the spec. The examples are a small lending library.
+How the rebuilt tool `markitect-next` finds and sets up a project, what lies in `.markitect/`, which files of the project it sees, how it hashes them, and the state with `status` and `mark` ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version), [DEC-097](../decisions.md#dec-097-markitect-uses-no-git)). [The project](../concept/jobs-and-runners.md#the-project) and [the state](../concept/the-state.md) in the concept say what they are for; this page says precisely what the tool does. [The language reference](language-reference.md) gives the commands that read and write the spec. The examples are a small lending library.
 
 ## The project
 
@@ -16,6 +16,7 @@ The tool reads a project through a file system rooted at its folder, the spec an
 | `spec` | One line: the spec folder, a path below the project folder, by default `docs/spec` |
 | `.gitattributes` | `state.jsonl merge=union` and `history.jsonl merge=union`, so that Git keeps the lines of both sides of a merge |
 | `ignore` | Files the project does not explain, written like a `.gitignore` ([the walk](#the-walk)); empty at `init` |
+| `state.jsonl` | The state: one row per document with its verdict and the hashes it rests on ([below](#the-state)); written by `mark` |
 
 `version` and `spec` are read as one line each: a byte order mark, white space and the line end around it are dropped, so a checkout with CRLF reads the same. An empty file, a second line or a missing file stops every command that reads it. The spec folder is a relative path with `/` or `\`; it may not be empty, absolute, the project folder itself, outside it, in `.markitect/` or in a `.git` folder. `.markitect` and `.git` count in any case, as a file system that ignores case reads them, so `.Markitect/spec` is refused too. Nor may it lie outside the project through a symbolic link or a Windows junction: `init` and every command that reads `.markitect/spec` resolve the folder, or the nearest folder above it that exists, and refuse one that lands outside. A spec folder that does not exist stops every command that reads the spec; `init` and `apply` create it.
 
@@ -74,3 +75,76 @@ The last pattern that matches decides, and a `.gitignore` file in a deeper folde
 ## Hashing
 
 A file's hash is its SHA-256, written `sha256:` and 64 hexadecimal digits. A file is text, as Git decides, unless a NUL byte stands in its first 8000 bytes. A text file, in any encoding, Latin-1 included, is hashed with each CRLF as LF, so a checkout on Windows and one on Linux of the same commit agree; a lone CR stays. Any other file is hashed as it is, so the CRLF in an image is kept.
+
+## The state
+
+`.markitect/state.jsonl` maps each document to its artifacts and verdict ([DEC-124](../decisions.md#dec-124-a-state-maps-each-document-to-its-artifacts-and-status-is-the-plan)). It holds one JSON object per line, one line per document, sorted by `doc`, with the fields in this order:
+
+```json
+{"doc":"lending/borrow.md","verdict":"ok","source":"mark","inputs":{"check:tests/loans_test.go":"sha256:…","evidence:tests/loans_test.go":"sha256:…","file:src/loans.go":"sha256:…","link:roles/member.md":"sha256:…","self":"sha256:…","type:types/operation.md":"sha256:…"},"evidence":["tests/loans_test.go:3"],"reason":""}
+```
+
+| Field | Holds |
+|---|---|
+| `doc` | The document, by its path below the spec folder |
+| `verdict` | `ok`, `fail` or `skip` |
+| `source` | What wrote the row: `mark` |
+| `inputs` | The hash of each input at the confirmation, by key, sorted |
+| `evidence` | The evidence as the reviewer gave it: `path`, `path:line`, `path:line-line` or `path:line:col` |
+| `reason` | Why, for a `fail` or a `skip`; one line |
+
+| Input | Is |
+|---|---|
+| `self` | The document's own text |
+| `type:PATH` | Its type, by its path below the spec folder |
+| `link:PATH` | Each document it links to and each document that links to it, not itself; the type line is no link |
+| `file:PATH` | An artifact the reviewer named, by its path below the project folder |
+| `check:PATH` | A counter-check the reviewer named |
+| `evidence:PATH` | A file of the evidence |
+
+Every hash is a file's hash as [hashing](#hashing) computes it, so a row written on one system holds on the other.
+
+**Reading it.** Lines may stand in any order and twice, as a union merge of two branches leaves them, and a blank line, a byte order mark and CR at line ends count for nothing. A field the tool does not know is ignored. A line that is not a row is reported as `.markitect/state.jsonl:LINE: state.unreadable: MESSAGE`: one that is no JSON object, whose `doc` is no clean path below the spec folder, whose verdict or source is unknown, that has no `self`, or that has an input of an unknown kind, a path that is not clean or a value that is no `sha256:` hash. `status` and `mark` refuse while one is there; `show` and `table` leave it out.
+
+**Which row counts.** Of several rows for one document, the tool takes the row whose inputs all match the project as it is: each input has its current hash, and the document has no `type:` or `link:` input the row lacks. Two such rows with different verdicts are a conflict. When none matches, it takes the closest, the row with the most inputs that match, to say what changed. A file a row names that the walk does not list, deleted or now ignored, matches nothing.
+
+## status
+
+`markitect-next status` is the plan: what moved since the last confirmation, from the folder and the state alone. It changes nothing. While the spec has errors of [`check`](language-reference.md#what-check-reports), or the state a line it cannot read, it prints them and `no list while the spec or the state has errors`, gives no list and exits 1. Otherwise it lists:
+
+| Entry | When |
+|---|---|
+| **changed** | The document has no row; its own text changed; an artifact, a counter-check or a file of its evidence changed or is gone; its verdict is `fail`, which stays on the list with its reason; rows of it conflict; or it is gone from the spec and still has a row |
+| **suspect** | Only its type or the documents it links to or that link to it changed, or the set of those documents changed |
+| **unexplained** | A file of the [walk](#the-walk) outside the spec folder that no `file:` or `check:` input names in the row taken for a document of the spec. Evidence alone maps no file, and the files of a gone document's row are unexplained |
+
+```text
+changed: lending/borrow.md@3f9a1c07: self
+  look at: docs/spec/lending/borrow.md, src/loans.go, tests/loans_test.go, tests/loans_test.go:3
+suspect: roles/member.md@81be07d2: link:lending/borrow.md
+  look at: docs/spec/roles/member.md, src/member.go, src/member.go:3
+unexplained: src/fines.go
+note: lending/return.md: skip: no returns at the kiosk
+1 changed, 1 suspect, 1 unexplained
+```
+
+Each entry reads `DOCUMENT@FINGERPRINT: CHANGES`, in path order. A change is `no row`, `gone`, `self`, an input such as `file:src/loans.go`, with ` (gone)` for a file that is gone, ` (new)` for a type or a link the row lacks and ` (dropped)` for one the document no longer has, `fail: REASON`, or `conflict: fail, ok`. `look at:` names the document's file, below the project folder, the artifacts and counter-checks of the row taken, and its evidence. A `skip` at the document's current state is a note, not an entry. `status` exits 0 when it lists nothing and 1 otherwise; notes never change that. With `--json` it prints `errors`, with `file`, `line`, `code` and `message`, `changed` and `suspect`, each with `doc`, `fingerprint`, `changes` and `look_at`, `unexplained`, and `notes`, with `doc`, `verdict` and `reason`.
+
+**The fingerprint** is the first 8 hexadecimal digits of the SHA-256 of what a verdict on the document will rest on, without the evidence, which the reviewer chooses after reading: its `self`, `type:` and `link:` inputs, the current hashes of the artifacts and counter-checks of the row taken, and for a changed document the path and hash of every unexplained file, which the reviewer may map. So a file created or edited after `status` changes the fingerprint of a changed document. A mark that maps a file changes what is unexplained, and with it the fingerprint of every other changed document: run `status` again after it.
+
+## mark
+
+`markitect-next mark DOCUMENT@FINGERPRINT VERDICT [--file PATH]... [--check PATH]... [-e EVIDENCE]... [-m REASON]` binds a verdict to the state `status` showed:
+
+```text
+markitect-next mark lending/borrow.md@3f9a1c07 ok --file src/loans.go --check tests/loans_test.go -e "tests/loans_test.go:3 (TestBorrow)"
+markitect-next mark lending/return.md@5d0e9b11 fail --file src/returns.go -m "a book comes back after four weeks"
+```
+
+- **The verdict.** `ok` needs at least one piece of evidence; `fail` and `skip` need a reason with `-m`, kept on one line. A document gone from the spec takes only `ok`, without artifacts or evidence, which removes its row.
+- **The paths** are below the project folder, with `/` or `\`. `--file` names an artifact, `--check` a counter-check; each must be a file of the walk outside the spec folder, and one file cannot be both. The named artifacts and counter-checks replace those of the earlier row. Evidence is `path`, `path:line`, `path:line-line` or `path:line:col`, and a trailing `(note)`, such as a test name, is dropped; its file must be a file of the walk, and its hash becomes an input.
+- **The row** holds the document's `self`, `type:` and `link:` inputs, the named files and the evidence, each at its current hash, with `source` `mark`.
+
+It computes the fingerprint as `status` does and refuses, writes nothing and exits 1 when it differs: a builder edited a file beside the reviewer, or a file appeared that the reviewer may map. It also exits 1 when the spec has errors, the state has a line it cannot read, the document is in neither the spec nor the state, or a path is bad, naming every reason. A malformed command, an unknown verdict, an `ok` without evidence or a `fail` or `skip` without a reason exits 2.
+
+It writes under a lock: a file named after the project folder in `markitect/locks/` of the user's cache folder, which holds the process's ID and is taken over once that process is gone. Under it, `mark` reads the folder and the state afresh and replaces the state file in one step, so parallel reviewers lose no row. The file it writes holds one row per document, the row `status` takes, except the rows of a conflict, which stay until a mark of that document settles it; a verdict rewrites only the row of its own document. It prints `marked DOCUMENT VERDICT`, or `removed the row of DOCUMENT, which is gone`; with `--json`, `doc`, `verdict` and `removed`.

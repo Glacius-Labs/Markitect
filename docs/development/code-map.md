@@ -31,8 +31,8 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `library` | The library built into the rebuilt tool: packages, templates and the report type. | nothing | 1 |
 | `editing` | The change sets of the rebuilt tool's commands that write a spec: new, move and apply, over supplied file systems. | `language` | 1 |
 | `signals` | The statements of a spec, its signals and the topic view of the rebuilt tool, over a parsed spec. | `language` | 1 |
-| `state` | A project of the rebuilt tool over a supplied file system: the .markitect/ layout, the project loaded with its spec, the walk of its files with the ignore files, and file hashes. | `language` | 1 |
-| `command-line` | The command line of the rebuilt tool: its arguments, the project it works in, init and version, the spec folder it reads and writes, and its text and JSON output. | `build`, `language`, `library`, `editing`, `signals`, `state` | 1 |
+| `state` | A project of the rebuilt tool over a supplied file system: the .markitect/ layout, the project loaded with its spec, the walk of its files, file hashes, and the state with status and mark. | `language` | 1 |
+| `command-line` | The command line of the rebuilt tool: its arguments, the project it works in, init and version, the spec folder and the state it reads and writes, the lock of mark, and its text and JSON output. | `build`, `language`, `library`, `editing`, `signals`, `state` | 1 |
 | `entrypoint` | markitect-next, the rebuilt tool beside markitect until it replaces it. | `command-line` | 1 |
 | `maintenance` | The import gate and the code map, separate from product execution. | nothing | 1 |
 | `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 1 |
@@ -153,7 +153,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/state` | Package state is a project of the rebuilt tool, over a file system rooted at the project folder: the layout of .markitect/, the project loaded with its spec, the files of the project without what its ignore files exclude, and the hash of a file. | [docs/guides/project-reference.md](../guides/project-reference.md) |
+| `internal/state` | Package state is a project of the rebuilt tool, over a file system rooted at the project folder: the layout of .markitect/, the project loaded with its spec, the files of the project without what its ignore files exclude, the hash of a file, and the state: its rows, what status lists and the rows a mark leaves. | [docs/guides/project-reference.md](../guides/project-reference.md) |
 
 ## Command line
 
