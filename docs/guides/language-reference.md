@@ -93,7 +93,7 @@ Every command but `init` and `version` works in a project and finds its spec thr
 | `markitect-next apply TEMPLATE [TARGET]` | Copies a template of the [library](library.md) into the spec |
 | `markitect-next topic [TOPIC]` | The signals of the spec, or the topic view of a document, a type or a folder ([signals](signals.md)) |
 | `markitect-next questions` | The question catalogs of the library packages the spec has ([signals](signals.md#question-catalogs)) |
-| `markitect-next status` | What is changed, suspect, unexplained or waiting on a report ([project reference](project-reference.md#status)) |
+| `markitect-next status` | What is changed, suspect, unexplained or waiting on a report ([project reference](project-reference.md#status)); with `--step ROLE --before DIR`, what a step wrote against the write table, and with `--target DIR`, whether the branch lands ([rights and landing](rights.md)) |
 | `markitect-next mark DOCUMENT@FINGERPRINT VERDICT` | Binds `ok`, `fail` or `skip`, with artifacts, counter-checks and evidence, to the state `status` showed ([project reference](project-reference.md#mark)) |
 | `markitect-next compare OLD [NEW]` | What is new, gone, moved, changed or suspect in NEW, by default this project, against OLD, with diffs, changed verdicts and the reports that are new, closed or changed ([project reference](project-reference.md#compare)) |
 | `markitect-next figures` | The signals of the spec's changes, from the history ([signals](signals.md#the-change-signals)), and the [figures of the factory](reports.md#the-figures-of-the-factory) |

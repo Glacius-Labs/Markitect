@@ -350,3 +350,17 @@ func TestReportFigures(t *testing.T) {
 		t.Error(ff.Reference)
 	}
 }
+
+func TestSettingsCIAndStepRoles(t *testing.T) {
+	_, f := loadFactory(t, map[string]string{SettingsFile: DefaultSettings})
+	if strings.Join(f.Settings.CI, " ") != ".github/workflows/" {
+		t.Error(f.Settings.CI)
+	}
+	_, f = loadFactory(t, map[string]string{SettingsFile: "# Settings\n\n## Write table\nowner: docs/\njob: .markitect/reports/\n\n## CI\n.gitlab-ci.yml\nci/[a-\n"})
+	if got := diagnostics(f); strings.Join(got, " ") != ".markitect/settings.md:09: settings.form" {
+		t.Error(got)
+	}
+	if s := f.Settings; strings.Join(s.CI, " ") != ".gitlab-ci.yml" || len(s.WriteTable) != 2 || s.WriteTable[0].Role != "owner" {
+		t.Errorf("%+v", s)
+	}
+}

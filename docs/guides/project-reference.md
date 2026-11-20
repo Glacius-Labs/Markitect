@@ -16,6 +16,7 @@ The tool reads a project through a file system rooted at its folder, the spec an
 | `spec` | One line: the spec folder, a path below the project folder, by default `docs/spec` |
 | `.gitattributes` | `state.jsonl merge=union` and `history.jsonl merge=union`, so that Git keeps the lines of both sides of a merge |
 | `ignore` | Files the project does not explain, written like a `.gitignore` ([the walk](#the-walk)); empty at `init` |
+| `rules.md` | The rules learned of the owner's decisions, a [control file](rights.md#the-write-table); reserved, not yet read |
 | `state.jsonl` | The state: one row per document with its verdict and the hashes it rests on ([below](#the-state)); written by `mark` and `move` |
 | `history.jsonl` | The history: what changed when, as hashes ([below](#the-history)); appended to by `mark` and `move` |
 | `settings.md` | The settings: the model per role, the counter-check folder, the cadence of the jobs and a narrower write table ([settings](reports.md#settings)); written by `init` |
@@ -115,7 +116,7 @@ Every hash is a file's hash as [hashing](#hashing) computes it, so a row written
 
 ## status
 
-`markitect-next status` is the plan: what moved since the last confirmation, from the folder, the state and the reports. It changes nothing. While [`check`](language-reference.md#what-check-reports) finds errors, in the spec or in [the reports, the settings and the results of control samples](reports.md#what-check-reports), or the state has a line it cannot read, it prints them and `no list while check finds errors or the state has errors`, gives no list and exits 1. Otherwise it lists:
+With `--step` or `--target`, `status` checks a step against the write table or whether the branch lands instead ([rights and landing](rights.md)). Without them, `markitect-next status` is the plan: what moved since the last confirmation, from the folder, the state and the reports. It changes nothing. While [`check`](language-reference.md#what-check-reports) finds errors, in the spec or in [the reports, the settings and the results of control samples](reports.md#what-check-reports), or the state has a line it cannot read, it prints them and `no list while check finds errors or the state has errors`, gives no list and exits 1. Otherwise it lists:
 
 | Entry | When |
 |---|---|

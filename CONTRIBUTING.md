@@ -35,6 +35,7 @@ Product code and tests that handle a project's `.markitect/` folder use fixtures
 | The signals, the topic view, reference values, question catalogs and change signals of the rebuilt tool | [Signals](docs/guides/signals.md) |
 | The project of the rebuilt tool: finding it, `init`, the `.markitect/` layout, the walk of its files, their hashes, the state with `status`, `mark` and `move`, the history and `compare` | [Project reference](docs/guides/project-reference.md) |
 | The reports, settings and results of control samples of the rebuilt tool: their value forms, what `check` finds in them, waiting entries and the figures of the factory | [Reports, settings and control samples](docs/guides/reports.md) |
+| The write table of the rebuilt tool, the step check and the landing check | [Rights and landing](docs/guides/rights.md) |
 | Designing a good spec | [What makes a good spec](docs/guides/good-spec.md) |
 | Using Markitect on a project | [Project workflow](docs/guides/project-workflow.md) |
 | Packages, layers and the repository layout | [Architecture](docs/architecture.md) and the generated [code map](docs/development/code-map.md) |
