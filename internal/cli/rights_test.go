@@ -469,3 +469,21 @@ func TestHonestMovesPass(t *testing.T) {
 		t.Error(code, out)
 	}
 }
+
+func TestAFailOnTheBranchKeepsItFromLanding(t *testing.T) {
+	target := marked(t)
+	write(t, target, "docs/spec/roles/member.md", "# Member\n\nA card holder with a card.\n")
+	branch := copyTree(t, target, false)
+	// The target lists the document as changed, and so does the branch with
+	// its fail: the same kind, and still an entry the branch adds.
+	verdict(t, branch, "roles/member.md", "fail", "--file", "src/member.go", "-m", "no card number")
+	code, out, _ := run("status", "-C", branch, "--target", target)
+	if code != ExitFound || !strings.Contains(out, "adds changed: roles/member.md: fail: no card number\n") {
+		t.Error(code, out)
+	}
+	// A fail the target has too adds nothing.
+	verdict(t, target, "roles/member.md", "fail", "--file", "src/member.go", "-m", "no card")
+	if code, out, _ := run("status", "-C", branch, "--target", target); code != ExitOK {
+		t.Error(code, out)
+	}
+}
