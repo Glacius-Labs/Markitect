@@ -210,11 +210,24 @@ func TestMoveCarriesEveryRelativeDestination(t *testing.T) {
 	if err != nil || len(m.Changes.Writes) != 0 {
 		t.Error(m, err)
 	}
-	// An attribute whose value cannot be read refuses a move to another folder.
-	fsys["a.md"] = &fstest.MapFile{Data: []byte("# A\n\n<img src=\n\"diagram.png\">\n")}
+	// A value split over two lines of a block quote cannot be placed and refuses a move to another folder.
+	fsys["a.md"] = &fstest.MapFile{Data: []byte("# A\n\n> <div><img src=\"diagram\n> .png\"></div>\n")}
 	if _, err := MoveDocument(load(t, fsys), fsys, "a.md", "sub/n.md"); !IsRefusal(err) || !strings.Contains(err.Error(), "line 3") {
 		t.Error(err)
 	}
+	// A value on the next line of the same tag is placed.
+	fsys["a.md"] = &fstest.MapFile{Data: []byte("# A\n\n<img src=\n\"diagram.png\">\n")}
+	_, after = move(t, fsys, "a.md", "sub/n.md")
+	eq(t, text(after, "sub/n.md"), "# A\n\n<img src=\n\"../diagram.png\">\n")
+}
+
+func TestMoveRewritesOnlyRealAttributes(t *testing.T) {
+	doc := "# A\n\n<div>\nSet href=config.md in the file, or src = lib/x.js.\n</div>\n\n" +
+		"<pre><code>&lt;img src=\"example.png\"&gt;</code></pre>\n\n" +
+		"<a title=\"href=fake.md\" data-src='x.png' href=\"real.md\">real</a>\n\n" +
+		"<script>var s = '<img src=\"in-script.png\">';</script>\n"
+	_, after := move(t, mapFS(map[string]string{"a.md": doc}), "a.md", "sub/a.md")
+	eq(t, text(after, "sub/a.md"), strings.Replace(doc, `href="real.md"`, `href="../real.md"`, 1))
 }
 
 func TestMoveDecodesCharacterReferences(t *testing.T) {

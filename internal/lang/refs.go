@@ -2,7 +2,6 @@ package lang
 
 import (
 	"bytes"
-	"regexp"
 	"strings"
 	"unicode/utf8"
 
@@ -98,17 +97,14 @@ func (p *parser) refs(root ast.Node) {
 		case *ast.Image:
 			dest, md = n.Destination, false
 		case *ast.RawHTML:
-			for i := 0; i < n.Segments.Len(); i++ {
-				p.html(n.Segments.At(i).Start, n.Segments.At(i).Stop)
-			}
+			p.html(n.Segments.Sliced(0, n.Segments.Len()))
 			return ast.WalkContinue, nil
 		case *ast.HTMLBlock:
-			for i := 0; i < n.Lines().Len(); i++ {
-				p.html(n.Lines().At(i).Start, n.Lines().At(i).Stop)
-			}
+			segs := n.Lines().Sliced(0, n.Lines().Len())
 			if n.HasClosure() {
-				p.html(n.ClosureLine.Start, n.ClosureLine.Stop)
+				segs = append(segs, n.ClosureLine)
 			}
+			p.html(segs)
 			return ast.WalkContinue, nil
 		default:
 			return ast.WalkContinue, nil
@@ -133,63 +129,6 @@ func (p *parser) refs(root ast.Node) {
 		}
 		return ast.WalkContinue, nil
 	})
-}
-
-var (
-	// htmlAttr is an href or src attribute with its value, quoted or not.
-	htmlAttr = regexp.MustCompile(`(?i)(?:^|[\s"'/])(?:href|src)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>` + "`" + `]+))`)
-	// htmlName is where an href or src attribute starts.
-	htmlName = regexp.MustCompile(`(?i)(?:^|[\s"'/])(?:href|src)\s*=`)
-)
-
-// html collects the relative href and src values in the HTML between start
-// and stop, outside comments. A line where an attribute is named but its value
-// cannot be read is recorded in UnplacedHTML.
-func (p *parser) html(start, stop int) {
-	s := []byte(blankComments(string(p.source[start:stop])))
-	matches := htmlAttr.FindAllSubmatchIndex(s, -1)
-	if len(matches) != len(htmlName.FindAllIndex(s, -1)) {
-		p.doc.UnplacedHTML = append(p.doc.UnplacedHTML, p.line(start))
-	}
-	for _, m := range matches {
-		for g := 2; g < len(m); g += 2 {
-			if m[g] < 0 {
-				continue
-			}
-			value := string(s[m[g]:m[g+1]])
-			raw, ok := relativePath(value)
-			if !ok {
-				break
-			}
-			off := start + m[g]
-			p.doc.Paths = append(p.doc.Paths, Ref{Dest: value, Raw: raw, Target: resolve(p.doc.Path, raw), Line: p.line(off),
-				Start: p.orig[off], End: p.orig[off+len(value)]})
-			break
-		}
-	}
-}
-
-// blankComments replaces each HTML comment by spaces, keeping every offset.
-func blankComments(s string) string {
-	b := []byte(s)
-	for i := 0; ; {
-		open := strings.Index(s[i:], "<!--")
-		if open < 0 {
-			return string(b)
-		}
-		open += i
-		end := strings.Index(s[open+4:], "-->")
-		stop := len(s)
-		if end >= 0 {
-			stop = open + 4 + end + 3
-		}
-		for k := open; k < stop; k++ {
-			if b[k] != '\n' {
-				b[k] = ' '
-			}
-		}
-		i = stop
-	}
 }
 
 // relativePath returns the path of a destination that is relative: not empty,

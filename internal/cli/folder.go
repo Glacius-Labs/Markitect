@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/edit"
 )
@@ -14,13 +15,18 @@ import (
 // folder and fails that step when it returns an error.
 var fault func(step int) error
 
+// undoFault, when set by a test, is called before each undo step and fails it
+// when it returns an error.
+var undoFault func(step int) error
+
 // applyChanges carries a change set out in the folder, all or nothing. It
 // checks first that every move and every created file meets nothing, that
 // every file to rewrite can be written and that every target folder can be
 // written in. It then writes each new content to a temporary file beside its
 // target, makes the moves and renames the temporary files into place, keeping
 // each replaced file aside until the end. When a step fails, every step done
-// is undone.
+// is undone; when an undo fails too, the error names the original failure and
+// every file left behind, so that the user can restore by hand.
 func applyChanges(folder string, c edit.Changes) (err error) {
 	local := func(p string) string { return filepath.Join(folder, filepath.FromSlash(p)) }
 	if err := precheck(folder, c, local); err != nil {
@@ -28,10 +34,12 @@ func applyChanges(folder string, c edit.Changes) (err error) {
 	}
 	t := &transaction{}
 	defer func() {
-		if err != nil {
-			t.rollback()
-		} else {
+		if err == nil {
 			t.commit()
+			return
+		}
+		if failed := t.rollback(); len(failed) > 0 {
+			err = fmt.Errorf("%w; undoing it failed: %s; left behind: %s", err, strings.Join(failed, "; "), strings.Join(t.leftovers(), ", "))
 		}
 	}()
 	var dirs []string
@@ -130,11 +138,13 @@ func probe(dir string) error {
 	return os.Remove(name)
 }
 
-// transaction records how to undo each step it made.
+// transaction records how to undo each step it made, and the temporary and
+// backup files it made.
 type transaction struct {
 	step    int
-	undo    []func()
+	undo    []func() error
 	cleanup []func()
+	files   []string
 }
 
 func (t *transaction) next() error {
@@ -145,16 +155,51 @@ func (t *transaction) next() error {
 	return nil
 }
 
-func (t *transaction) rollback() {
+// rollback undoes every step, the last first, and returns what it could not
+// undo.
+func (t *transaction) rollback() []string {
+	var failed []string
 	for i := len(t.undo) - 1; i >= 0; i-- {
-		t.undo[i]()
+		err := error(nil)
+		if undoFault != nil {
+			err = undoFault(len(t.undo) - i)
+		}
+		if err == nil {
+			err = t.undo[i]()
+		}
+		if err != nil {
+			failed = append(failed, err.Error())
+		}
 	}
+	return failed
+}
+
+// leftovers returns the temporary and backup files that still exist.
+func (t *transaction) leftovers() []string {
+	var out []string
+	for _, f := range t.files {
+		if _, err := os.Lstat(f); err == nil {
+			out = append(out, f)
+		}
+	}
+	if len(out) == 0 {
+		return []string{"none of the temporary or backup files"}
+	}
+	return out
 }
 
 func (t *transaction) commit() {
 	for _, f := range t.cleanup {
 		f()
 	}
+}
+
+// removeIfThere removes a file and ignores that it is gone already.
+func removeIfThere(path string) error {
+	if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+	return nil
 }
 
 // mkdirAll creates dir and its missing ancestors, each to be removed again on
@@ -176,7 +221,7 @@ func (t *transaction) mkdirAll(dir string) error {
 	} else if err != nil {
 		return err
 	}
-	t.undo = append(t.undo, func() { os.Remove(dir) })
+	t.undo = append(t.undo, func() error { return os.Remove(dir) })
 	return nil
 }
 
@@ -190,7 +235,8 @@ func (t *transaction) temp(dir string, data []byte) (string, error) {
 		return "", err
 	}
 	name := f.Name()
-	t.undo = append(t.undo, func() { os.Remove(name) })
+	t.files = append(t.files, name)
+	t.undo = append(t.undo, func() error { return removeIfThere(name) })
 	_, err = f.Write(data)
 	if cerr := f.Close(); err == nil {
 		err = cerr
@@ -205,40 +251,73 @@ func (t *transaction) rename(from, to string) error {
 	if err := os.Rename(from, to); err != nil {
 		return err
 	}
-	t.undo = append(t.undo, func() { os.Rename(to, from) })
+	t.undo = append(t.undo, func() error { return os.Rename(to, from) })
 	return nil
 }
 
-// place renames a temporary file to path. A file already at path is kept
-// aside until the end, unless create says that none may be there.
+// place puts a temporary file at path. A new file is linked there, which
+// fails when anything is at path, then the temporary name is removed; where
+// the file system has no links, it is created exclusively and filled. A file
+// already at path is renamed aside first and kept until the end.
 func (t *transaction) place(temp, path string, create bool) error {
-	if _, err := os.Lstat(path); err == nil {
-		if create {
-			return fmt.Errorf("%s: already exists", path)
-		}
-		f, err := os.CreateTemp(filepath.Dir(path), ".markitect-*.bak")
-		if err != nil {
-			return err
-		}
-		backup := f.Name()
-		f.Close()
+	if create {
 		if err := t.next(); err != nil {
-			os.Remove(backup)
 			return err
 		}
-		if err := os.Rename(path, backup); err != nil {
-			os.Remove(backup)
+		if err := createFrom(temp, path); err != nil {
 			return err
 		}
-		t.undo = append(t.undo, func() { os.Rename(backup, path) })
-		t.cleanup = append(t.cleanup, func() { os.Remove(backup) })
+		t.undo = append(t.undo, func() error { return os.Remove(path) })
+		return removeIfThere(temp)
 	}
+	f, err := os.CreateTemp(filepath.Dir(path), ".markitect-*.bak")
+	if err != nil {
+		return err
+	}
+	backup := f.Name()
+	f.Close()
+	t.files = append(t.files, backup)
+	t.cleanup = append(t.cleanup, func() { os.Remove(backup) })
+	if err := t.next(); err != nil {
+		os.Remove(backup)
+		return err
+	}
+	if err := os.Rename(path, backup); err != nil {
+		os.Remove(backup)
+		return err
+	}
+	t.undo = append(t.undo, func() error { return os.Rename(backup, path) })
 	if err := t.next(); err != nil {
 		return err
 	}
 	if err := os.Rename(temp, path); err != nil {
 		return err
 	}
-	t.undo = append(t.undo, func() { os.Remove(path) })
+	t.undo = append(t.undo, func() error { return os.Remove(path) })
 	return nil
+}
+
+// createFrom makes path a new file with the contents of temp and refuses when
+// anything is at path.
+func createFrom(temp, path string) error {
+	err := os.Link(temp, path)
+	if err == nil || errors.Is(err, fs.ErrExist) {
+		return err
+	}
+	data, rerr := os.ReadFile(temp)
+	if rerr != nil {
+		return rerr
+	}
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(data)
+	if cerr := f.Close(); err == nil {
+		err = cerr
+	}
+	if err != nil {
+		os.Remove(path)
+	}
+	return err
 }

@@ -333,3 +333,58 @@ func TestFailureLeavesTheSpecAsItWas(t *testing.T) {
 		})
 	}
 }
+
+func TestFailedUndoNamesWhatIsLeft(t *testing.T) {
+	args := func(dir string) []string { return []string{"move", dir, "places/central", "elsewhere/main hall"} }
+	steps := 0
+	fault = func(int) error { steps++; return nil }
+	run(args(spec(t, branches))...)
+	fault = func(step int) error {
+		if step == steps {
+			return errors.New("injected")
+		}
+		return nil
+	}
+	undoFault = func(int) error { return errors.New("undo refused") }
+	t.Cleanup(func() { fault, undoFault = nil, nil })
+	dir := spec(t, branches)
+	code, out, errOut := run(args(dir)...)
+	if code != ExitFailed || out != "" || !strings.Contains(errOut, "injected") || !strings.Contains(errOut, "undoing it failed: undo refused") {
+		t.Fatal(code, out, errOut)
+	}
+	_, left, ok := strings.Cut(strings.TrimSpace(errOut), "left behind: ")
+	if !ok || !strings.Contains(left, ".markitect-") {
+		t.Fatal(errOut)
+	}
+	for _, f := range strings.Split(left, ", ") {
+		if _, err := os.Lstat(f); err != nil {
+			t.Errorf("named %s, which is not there", f)
+		}
+	}
+}
+
+func TestCreateRefusesAFileThatAppeared(t *testing.T) {
+	dir := t.TempDir()
+	temp, path := filepath.Join(dir, "new.tmp"), filepath.Join(dir, "doc.md")
+	if err := os.WriteFile(temp, []byte("new"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte("there first"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := createFrom(temp, path); !errors.Is(err, fs.ErrExist) {
+		t.Errorf("got %v", err)
+	}
+	if data, _ := os.ReadFile(path); string(data) != "there first" {
+		t.Errorf("overwrote it with %q", data)
+	}
+	if err := os.Remove(path); err != nil {
+		t.Fatal(err)
+	}
+	if err := createFrom(temp, path); err != nil {
+		t.Fatal(err)
+	}
+	if data, _ := os.ReadFile(path); string(data) != "new" {
+		t.Errorf("created %q", data)
+	}
+}
