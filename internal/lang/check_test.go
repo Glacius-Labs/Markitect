@@ -446,11 +446,18 @@ func TestRefs(t *testing.T) {
 }
 
 func TestSectionFirstLine(t *testing.T) {
+	plainDoc := Parse("b.md", []byte("# B\n\n## List\n- [ ] see [the rules][r] and ![a map](map.png)\n- two\n\n[r]: rules.md\n"+
+		"## Fence\n```text\n  first code\n```\n## Table\n| Shelf | `Lent` |\n|---|---|\n| a | b |\n## Quote\n> **Bold** start\n> more\n"))
+	var plain []string
+	for _, s := range plainDoc.Sections {
+		plain = append(plain, s.Heading+"="+s.First)
+	}
+	expect(t, plain, "List=see the rules and a map", "Fence=first code", "Table=Shelf | Lent", "Quote=Bold start")
 	d := Parse("a.md", []byte("# A\n\n## One\n<!-- later -->\n\n  First *line* [x](x.md)\nsecond\n\nTwo\n---\n\n## Three\n"+
 		"## Four\n<!--\nfill in\nthe due date\n-->\n## Five\n[r]: x.md\n## Six\n<!-- a --> after <!--\nb -->\n"))
 	var got []string
 	for _, s := range d.Sections {
 		got = append(got, s.Heading+"="+s.First)
 	}
-	expect(t, got, "One=First *line* [x](x.md)", "Two=", "Three=", "Four=", "Five=", "Six=after")
+	expect(t, got, "One=First line x", "Two=", "Three=", "Four=", "Five=", "Six=after")
 }

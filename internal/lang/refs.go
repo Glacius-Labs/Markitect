@@ -2,6 +2,8 @@ package lang
 
 import (
 	"bytes"
+	"regexp"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/yuin/goldmark/ast"
@@ -77,39 +79,131 @@ func normalize(src []byte) (text []byte, orig []int) {
 	return text, append(orig, len(src))
 }
 
-// refs collects every destination of a link to a .md path in the document.
+// refs collects the destinations of the document: in Refs those of links to
+// .md paths, in Paths every relative destination of a link, an image, a
+// definition or an HTML href or src.
 func (p *parser) refs(root ast.Node) {
-	seen := map[int]bool{}
+	seenRef, seenPath := map[int]bool{}, map[int]bool{}
 	_ = ast.Walk(root, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		if !entering {
 			return ast.WalkContinue, nil
 		}
 		var dest []byte
+		md := true
 		switch n := n.(type) {
 		case *ast.Link:
 			dest = n.Destination
 		case *ast.LinkReferenceDefinition:
 			dest = n.Destination
+		case *ast.Image:
+			dest, md = n.Destination, false
+		case *ast.RawHTML:
+			for i := 0; i < n.Segments.Len(); i++ {
+				p.html(n.Segments.At(i).Start, n.Segments.At(i).Stop)
+			}
+			return ast.WalkContinue, nil
+		case *ast.HTMLBlock:
+			for i := 0; i < n.Lines().Len(); i++ {
+				p.html(n.Lines().At(i).Start, n.Lines().At(i).Stop)
+			}
+			if n.HasClosure() {
+				p.html(n.ClosureLine.Start, n.ClosureLine.Stop)
+			}
+			return ast.WalkContinue, nil
 		default:
 			return ast.WalkContinue, nil
 		}
-		raw, ok := localPath(string(dest))
-		if !ok {
-			return ast.WalkContinue, nil
-		}
-		ref := Ref{Dest: string(dest), Raw: raw, Target: resolve(p.doc.Path, raw), Line: p.line(n.Pos()), Start: -1, End: -1}
-		if off, ok := p.offset(dest); ok {
-			if seen[off] {
-				return ast.WalkContinue, nil
-			}
-			seen[off] = true
+		ref := Ref{Dest: string(dest), Line: p.line(n.Pos()), Start: -1, End: -1}
+		off, placed := p.offset(dest)
+		if placed {
 			ref.Start, ref.End = p.orig[off], p.orig[off+len(dest)]
 			ref.Angle = off > 0 && p.source[off-1] == '<'
 			ref.Line = p.line(off)
 		}
-		p.doc.Refs = append(p.doc.Refs, ref)
+		if raw, ok := relativePath(ref.Dest); ok && !(placed && seenPath[off]) {
+			seenPath[off] = placed
+			path := ref
+			path.Raw, path.Target = raw, resolve(p.doc.Path, raw)
+			p.doc.Paths = append(p.doc.Paths, path)
+		}
+		if raw, ok := localPath(ref.Dest); ok && md && !(placed && seenRef[off]) {
+			seenRef[off] = placed
+			ref.Raw, ref.Target = raw, resolve(p.doc.Path, raw)
+			p.doc.Refs = append(p.doc.Refs, ref)
+		}
 		return ast.WalkContinue, nil
 	})
+}
+
+var (
+	// htmlAttr is an href or src attribute with its value, quoted or not.
+	htmlAttr = regexp.MustCompile(`(?i)(?:^|[\s"'/])(?:href|src)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>` + "`" + `]+))`)
+	// htmlName is where an href or src attribute starts.
+	htmlName = regexp.MustCompile(`(?i)(?:^|[\s"'/])(?:href|src)\s*=`)
+)
+
+// html collects the relative href and src values in the HTML between start
+// and stop, outside comments. A line where an attribute is named but its value
+// cannot be read is recorded in UnplacedHTML.
+func (p *parser) html(start, stop int) {
+	s := []byte(blankComments(string(p.source[start:stop])))
+	matches := htmlAttr.FindAllSubmatchIndex(s, -1)
+	if len(matches) != len(htmlName.FindAllIndex(s, -1)) {
+		p.doc.UnplacedHTML = append(p.doc.UnplacedHTML, p.line(start))
+	}
+	for _, m := range matches {
+		for g := 2; g < len(m); g += 2 {
+			if m[g] < 0 {
+				continue
+			}
+			value := string(s[m[g]:m[g+1]])
+			raw, ok := relativePath(value)
+			if !ok {
+				break
+			}
+			off := start + m[g]
+			p.doc.Paths = append(p.doc.Paths, Ref{Dest: value, Raw: raw, Target: resolve(p.doc.Path, raw), Line: p.line(off),
+				Start: p.orig[off], End: p.orig[off+len(value)]})
+			break
+		}
+	}
+}
+
+// blankComments replaces each HTML comment by spaces, keeping every offset.
+func blankComments(s string) string {
+	b := []byte(s)
+	for i := 0; ; {
+		open := strings.Index(s[i:], "<!--")
+		if open < 0 {
+			return string(b)
+		}
+		open += i
+		end := strings.Index(s[open+4:], "-->")
+		stop := len(s)
+		if end >= 0 {
+			stop = open + 4 + end + 3
+		}
+		for k := open; k < stop; k++ {
+			if b[k] != '\n' {
+				b[k] = ' '
+			}
+		}
+		i = stop
+	}
+}
+
+// relativePath returns the path of a destination that is relative: not empty,
+// no bare #section or ?query, not absolute and without a scheme. The path
+// ends before the #section or ?query.
+func relativePath(dest string) (string, bool) {
+	raw := cutFragment(dest)
+	if i := strings.IndexByte(raw, '?'); i >= 0 {
+		raw = raw[:i]
+	}
+	if raw == "" || strings.HasPrefix(raw, "/") || hasScheme(raw) {
+		return "", false
+	}
+	return raw, true
 }
 
 // offset returns where a destination stands in the parsed text, when the

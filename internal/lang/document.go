@@ -51,6 +51,13 @@ type Document struct {
 	// Refs are all destinations of links to .md paths, type lines, footnotes
 	// and link reference definitions included, with their place in Source.
 	Refs []Ref
+	// Paths are all relative destinations, of links to any file, images,
+	// link reference definitions and HTML href and src values, with their
+	// place in Source.
+	Paths []Ref
+	// UnplacedHTML are lines of HTML that name an href or src whose value
+	// could not be read.
+	UnplacedHTML []int
 	// Source is the document's bytes as read.
 	Source []byte
 }
@@ -63,8 +70,8 @@ type Section struct {
 	// HasText is whether a block under the heading shows something other than
 	// white space and HTML comments.
 	HasText bool
-	// First is the first line under the heading that shows something, without
-	// surrounding white space, as written.
+	// First is the first line of text under the heading that shows something,
+	// as plain text.
 	First string
 }
 
@@ -208,7 +215,6 @@ func (p *parser) read(root ast.Node) {
 	})
 	section := ""
 	sec := -1
-	var bodies [][2]int // the first and last line under each section's heading
 	for n := root.FirstChild(); n != nil; n = n.NextSibling() {
 		if !isBlock(n) {
 			p.links(n, "")
@@ -216,9 +222,6 @@ func (p *parser) read(root ast.Node) {
 		}
 		if h, ok := n.(*ast.Heading); ok && h.Level <= 2 {
 			line := p.line(h.Pos())
-			if sec >= 0 && bodies[sec][1] == 0 {
-				bodies[sec][1] = line - 1
-			}
 			if h.Level == 1 {
 				if n != first && d.SecondTitleLine == 0 {
 					d.SecondTitleLine = line
@@ -228,30 +231,14 @@ func (p *parser) read(root ast.Node) {
 				section = p.headingText(h)
 				d.Sections = append(d.Sections, Section{Heading: section, Line: line})
 				sec = len(d.Sections) - 1
-				bodies = append(bodies, [2]int{p.headingEnd(h) + 1, 0})
 			}
 		} else if sec >= 0 && p.hasText(n) {
 			d.Sections[sec].HasText = true
-		}
-		p.links(n, section)
-	}
-	for i, b := range bodies {
-		if !d.Sections[i].HasText {
-			continue
-		}
-		if b[1] == 0 {
-			b[1] = len(p.starts)
-		}
-		var body []string
-		for l := b[0]; l <= b[1]; l++ {
-			body = append(body, p.lineAt(l))
-		}
-		for _, line := range strings.Split(withoutComments(strings.Join(body, "\n")), "\n") {
-			if line = strings.TrimSpace(line); line != "" {
-				d.Sections[i].First = line
-				break
+			if d.Sections[sec].First == "" {
+				d.Sections[sec].First = p.firstLine(n)
 			}
 		}
+		p.links(n, section)
 	}
 }
 
@@ -272,28 +259,6 @@ func withoutComments(s string) string {
 		}
 		s = after
 	}
-}
-
-// lineAt returns the text of a line without its line break.
-func (p *parser) lineAt(line int) string {
-	if line < 1 || line > len(p.starts) {
-		return ""
-	}
-	end := len(p.source)
-	if line < len(p.starts) {
-		end = p.starts[line]
-	}
-	return strings.TrimSuffix(string(p.source[p.starts[line-1]:end]), "\n")
-}
-
-// headingEnd returns the last line of a heading: its own for a heading with
-// #, the underline for an underlined one.
-func (p *parser) headingEnd(h *ast.Heading) int {
-	line := p.line(h.Pos())
-	if strings.HasPrefix(strings.TrimLeft(p.lineAt(line), " "), "#") || h.Lines().Len() == 0 {
-		return line
-	}
-	return p.line(h.Lines().At(h.Lines().Len()-1).Start) + 1
 }
 
 // isBlock reports whether a top-level node is a block of the text: link
@@ -415,11 +380,22 @@ func soleLink(s string) (string, bool) {
 // localPath returns the path of a link destination that names a .md file;
 // ok is false for a web address, mailto:, a bare #section or any other file.
 func localPath(dest string) (string, bool) {
-	raw, _, _ := strings.Cut(dest, "#")
+	raw := cutFragment(dest)
 	if hasScheme(raw) || !strings.HasSuffix(strings.ToLower(decode(raw)), ".md") {
 		return "", false
 	}
 	return raw, true
+}
+
+// cutFragment returns a destination without its #section. A # that belongs
+// to a numeric character reference, &#46;, is no section.
+func cutFragment(dest string) string {
+	for i := 0; i < len(dest); i++ {
+		if dest[i] == '#' && (i == 0 || dest[i-1] != '&') {
+			return dest[:i]
+		}
+	}
+	return dest
 }
 
 // hasScheme reports whether s starts with a URI scheme and a colon.

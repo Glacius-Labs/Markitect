@@ -23,7 +23,7 @@ A link is a Markdown link outside code and raw HTML: an inline link, `[text](des
 
 A link counts when its destination, without its `#section` and after decoding, ends in `.md` in any case and does not start with a scheme such as `https:`, `mailto:` or `C:`. Web addresses, other files and a bare `#section` are not checked.
 
-- **Resolution.** The path is relative to the folder of the linking document. Backslash escapes and character references are resolved, and percent-encoding is decoded, so `open%20loans.md` names `open loans.md`; a `%` that is not followed by two hexadecimal digits stays as it is. A path that starts with `/`, or that leaves the spec folder with `..`, names no document.
+- **Resolution.** The path is relative to the folder of the linking document. Backslash escapes and character references, named and numeric such as `&#46;` and `&#x2E;`, are resolved, and percent-encoding is decoded, so `open%20loans.md` names `open loans.md`; a `%` that is not followed by two hexadecimal digits stays as it is. A path that starts with `/`, or that leaves the spec folder with `..`, names no document.
 - **Sections.** A link with a section, `[Card](members/ada.md#card)`, points to the document; the section is not checked.
 - **Every counted link must point to a document of the spec**, by its exact path.
 
@@ -91,7 +91,7 @@ Every command takes the spec folder first. A `DOCUMENT`, `TYPE`, `OLD`, `NEW` or
 | `markitect-next move SPECFOLDER OLD NEW` | Moves or renames a document and rewrites the links to it |
 | `markitect-next apply SPECFOLDER TEMPLATE [TARGET]` | Copies a template of the [library](library.md) into the spec |
 
-**Exit codes.** 0 when all is well, 1 when `check` found something, and 2 when the command could not run: an unknown command or flag, a wrong number of arguments, a spec folder that does not exist (`apply` creates it), an unknown document, a file that cannot be read, or a refused `new`, `move` or `apply`. A refused command changes nothing.
+**Exit codes.** 0 when all is well, 1 when `check` found something, and 2 when the command could not run: an unknown command or flag, a wrong number of arguments, a spec folder that does not exist (`apply` creates it), an unknown document, a file that cannot be read, or a refused `new`, `move` or `apply`. A command that does not succeed changes nothing, also when writing fails partway ([below](#commands-that-write)).
 
 ### Commands that read
 
@@ -103,16 +103,16 @@ lending/loans/4711.md:9: section.empty: empty section "Due"
 2 errors in 14 documents
 ```
 
-**`show`** prints the document's path, `Title:`, `Type:` (the type's path, `(none)`, `(invalid line)` for a type line that is not one link, or the path with `(missing)`), then the lists `Sections:`, `Links to:`, with `(missing)` after a path that names no document, and `Linked from:`, each `(none)` when empty, and `Documents:` only for a type that has some. The link lists hold each path once, sorted without regard to case.
+**`show`** prints the document's path, `Title:`, `Type:` (the type's path, `(none)`, `(invalid line)` for a type line that is not one link, or the path with `(missing)`), then the lists `Sections:`, `Links to:`, with `(missing)` after a path that names no document, and `Linked from:`, each `(none)` when empty, and `Documents:` only for a type that has some. `Links to:` holds each path once; `Linked from:` holds one entry per linking document and section, `path (Section)`, so a document that links from two sections appears twice. Both are sorted without regard to case.
 
-**`table`** prints a row per document of the type, in path order. A cell holds the first line under the section that shows something, HTML comments left out, with links and images shown as their text and `|` escaped; it is empty when the document leaves an optional section out. A row's title is the document's title, or its path.
+**`table`** prints a row per document of the type, in path order. A cell holds the first line of the section's text as plain text: markup, list markers, HTML tags and comments are dropped, and links, reference links and images show as their text. A section that starts with code shows its first code line, one that starts with a table its first row, cells separated by ` | `. `|` is escaped, and a cell is empty when the section has no text or the document leaves an optional section out. A row's title is the document's title, or its path.
 
 ### Commands that write
 
-They compute every change first and write only when nothing stands in the way.
+They compute every change first and check that nothing stands in the way: no file at a path to create, every file to rewrite writable, and every target folder writable. They then write each new content to a temporary file beside its target, make the moves and rename the temporary files into place, keeping each replaced file aside until the end. When a step fails, every step done is undone, so the spec is as it was.
 
 - **`new`** writes `# TITLE`, by default the file name, the type line with a relative link to the type, percent-encoded where the path needs it, and an empty level-2 heading for each section the type requires. It refuses when `PATH` exists, as a document or as anything else.
-- **`move`** moves the document and rewrites every link to it in the spec: links, type lines and link reference definitions. When the document changes folder, it also rewrites its own relative links so that they reach the same documents. A rewritten destination keeps its `#section` and its `<…>` form, and is percent-encoded when it was, or when the new path holds white space, a parenthesis or an angle bracket; nothing else in a file changes, line ends and byte order mark included. It refuses when `OLD` is no document or `NEW` exists. It prints `moved OLD -> NEW`, then `changed PATH` for each file it rewrote.
+- **`move`** moves the document and rewrites every link to it in the spec: links, type lines and link reference definitions. When the document changes folder, it also rewrites every relative destination in it so that it reaches the same file: links to any file, images, link reference definitions, and `href` and `src` values in HTML outside comments. It refuses when an HTML `href` or `src` value cannot be read, such as one split over two lines. A rewritten destination keeps its `#section` and its `<…>` form, and is percent-encoded when it was, or when the new path holds white space, a parenthesis or an angle bracket; nothing else in a file changes, line ends and byte order mark included. It refuses when `OLD` is no document or `NEW` exists. It prints `moved OLD -> NEW`, then `changed PATH` for each file it rewrote.
 - **`apply`** copies the template, with every package it needs, into the spec at `TARGET`, by default the spec's root; the spec folder is created when it does not exist. It prints `copied PATH` for each document and `copied packages/NAME/` for each package. The [library](library.md#apply) gives the rules.
 
 ### JSON

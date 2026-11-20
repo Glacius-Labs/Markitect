@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/edit"
@@ -101,50 +100,4 @@ func apply(o options, stdout io.Writer) (int, error) {
 		b.WriteString("copied packages/" + p + "/\n")
 	}
 	return output(o, stdout, applyResult{newHeader("apply"), append([]string{}, a.Documents...), append([]string{}, a.Packages...)}, b.String())
-}
-
-// applyChanges carries a change set out in the folder: it checks first that no
-// move and no created file meets something already there, then moves, then
-// writes, creating folders as needed. A created file is opened exclusively.
-func applyChanges(folder string, c edit.Changes) error {
-	local := func(p string) string { return filepath.Join(folder, filepath.FromSlash(p)) }
-	for _, m := range c.Moves {
-		if _, err := os.Lstat(local(m.To)); err == nil {
-			return fmt.Errorf("%s: already exists", m.To)
-		}
-	}
-	for _, w := range c.Writes {
-		if _, err := os.Lstat(local(w.Path)); w.Create && err == nil {
-			return fmt.Errorf("%s: already exists", w.Path)
-		}
-	}
-	for _, m := range c.Moves {
-		if err := os.MkdirAll(filepath.Dir(local(m.To)), 0o755); err != nil {
-			return err
-		}
-		if err := os.Rename(local(m.From), local(m.To)); err != nil {
-			return err
-		}
-	}
-	for _, w := range c.Writes {
-		if err := os.MkdirAll(filepath.Dir(local(w.Path)), 0o755); err != nil {
-			return err
-		}
-		flags := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
-		if w.Create {
-			flags = os.O_WRONLY | os.O_CREATE | os.O_EXCL
-		}
-		f, err := os.OpenFile(local(w.Path), flags, 0o644)
-		if err != nil {
-			return err
-		}
-		_, err = f.Write(w.Data)
-		if cerr := f.Close(); err == nil {
-			err = cerr
-		}
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }

@@ -46,7 +46,7 @@ func Apply(spec, lib fs.FS, templateArg, targetArg string) (Applied, error) {
 	var problems, wanted []string
 	retarget := func(src, dst string, data []byte) []byte {
 		d := lang.Parse(src, data)
-		fresh, err := rewrite(d, func(r lang.Ref) (string, bool) {
+		fresh, err := rewrite(d, d.Refs, func(r lang.Ref) (string, bool) {
 			if strings.HasPrefix(r.Target, "packages/") {
 				wanted = append(wanted, strings.Split(r.Target, "/")[1])
 				if dst == "" {

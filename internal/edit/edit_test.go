@@ -182,10 +182,10 @@ func TestMoveToAnotherFolder(t *testing.T) {
 	if !strings.Contains(text(after, "ada.md"), "[Librarian](staff/desk/clerk.md), [at the desk](staff/desk/clerk.md#desk), [bracketed](<staff/desk/clerk.md>)") {
 		t.Error(text(after, "ada.md"))
 	}
-	// The moved document's own links: the type line, a neighbour, itself. Web links and images stay.
+	// The moved document's own destinations: the type line, a neighbour, itself and the image. Web links stay.
 	eq(t, text(after, "staff/desk/clerk.md"), "# Librarian\n\nType: [Post](../../types/post.md)\n\n"+
 		"Lends books at the [desk](clerk.md#desk), answers to the [director](../director.md), "+
-		"see the [site](https://example.org/librarian.md).\nA badge ![badge](../img/badge.png).\n")
+		"see the [site](https://example.org/librarian.md).\nA badge ![badge](../../img/badge.png).\n")
 	checkClean(t, after)
 	// Up a folder: every path is computed from each linking document.
 	_, after = move(t, lending(), "types/post.md", "post")
@@ -193,6 +193,40 @@ func TestMoveToAnotherFolder(t *testing.T) {
 		t.Error(text(after, "ada.md"), text(after, "roles/librarian.md"))
 	}
 	checkClean(t, after)
+}
+
+func TestMoveCarriesEveryRelativeDestination(t *testing.T) {
+	fsys := mapFS(map[string]string{
+		"a.md": "# A\n\n![d](diagram.png) and the [pdf](files/r.pdf), [up](../shared/notes.txt), [web](https://example.org/x.png).\n\n" +
+			"<img src=\"diagram.png\" alt=\"d\"> <a href='files/r.pdf'>pdf</a> <a href=files/r.pdf#p2>page</a>\n\n" +
+			"<div>\n<img SRC = \"img/a b.png\">\n<!-- <img src=\"old.png\"> -->\n</div>\n\n[logo]: img/logo.svg\n",
+	})
+	_, after := move(t, fsys, "a.md", "sub dir/n.md")
+	eq(t, text(after, "sub dir/n.md"), "# A\n\n![d](../diagram.png) and the [pdf](../files/r.pdf), [up](../../shared/notes.txt), [web](https://example.org/x.png).\n\n"+
+		"<img src=\"../diagram.png\" alt=\"d\"> <a href='../files/r.pdf'>pdf</a> <a href=../files/r.pdf#p2>page</a>\n\n"+
+		"<div>\n<img SRC = \"../img/a%20b.png\">\n<!-- <img src=\"old.png\"> -->\n</div>\n\n[logo]: ../img/logo.svg\n")
+	// Within the folder nothing changes but the links to the document itself.
+	m, err := MoveDocument(load(t, fsys), fsys, "a.md", "b.md")
+	if err != nil || len(m.Changes.Writes) != 0 {
+		t.Error(m, err)
+	}
+	// An attribute whose value cannot be read refuses a move to another folder.
+	fsys["a.md"] = &fstest.MapFile{Data: []byte("# A\n\n<img src=\n\"diagram.png\">\n")}
+	if _, err := MoveDocument(load(t, fsys), fsys, "a.md", "sub/n.md"); !IsRefusal(err) || !strings.Contains(err.Error(), "line 3") {
+		t.Error(err)
+	}
+}
+
+func TestMoveDecodesCharacterReferences(t *testing.T) {
+	fsys := mapFS(map[string]string{
+		"due.md":  "# Due\n",
+		"list.md": "# List\n\n[decimal](due&#46;md) [hex](due&#x2E;md#top) [named](due&period;md)\n",
+	})
+	if found := lang.Check(load(t, fsys)); len(found) != 0 {
+		t.Error(found)
+	}
+	_, after := move(t, fsys, "due.md", "late.md")
+	eq(t, text(after, "list.md"), "# List\n\n[decimal](late.md) [hex](late.md#top) [named](late.md)\n")
 }
 
 func TestMoveKeepsBytes(t *testing.T) {

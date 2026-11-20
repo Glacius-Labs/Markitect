@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"io/fs"
 	"os"
 	"path"
@@ -261,4 +262,74 @@ func unique(list []string) []string {
 		}
 	}
 	return out
+}
+
+func TestReadOnlyFileChangesNothing(t *testing.T) {
+	dir := spec(t, map[string]string{"a.md": "# A\n", "z.md": "# Z\n\nSee [a](a.md).\n"})
+	z := filepath.Join(dir, "z.md")
+	if err := os.Chmod(z, 0o444); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chmod(z, 0o644) })
+	if f, err := os.OpenFile(z, os.O_WRONLY, 0); err == nil {
+		f.Close()
+		t.Skip("the file system lets this user write a read-only file")
+	}
+	before := files(t, dir)
+	code, out, errOut := run("move", dir, "a.md", "n.md")
+	if code != ExitFailed || out != "" || !strings.Contains(errOut, "z.md: cannot be written") || !equalMaps(files(t, dir), before) {
+		t.Error(code, out, errOut)
+	}
+}
+
+// TestFailureLeavesTheSpecAsItWas fails each step of a move and an apply in turn
+// and checks that the spec folder is as it was.
+func TestFailureLeavesTheSpecAsItWas(t *testing.T) {
+	cases := []struct {
+		name string
+		args func(dir string) []string
+	}{
+		{"move", func(dir string) []string { return []string{"move", dir, "places/central", "elsewhere/deep/main hall"} }},
+		{"apply", func(dir string) []string { return []string{"apply", dir, "software", "areas/new"} }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			steps := 0
+			fault = func(int) error { steps++; return nil }
+			if code, _, errOut := run(tc.args(spec(t, branches))...); code != ExitOK {
+				t.Fatal(errOut)
+			}
+			if steps < 4 {
+				t.Fatalf("only %d steps", steps)
+			}
+			for k := 1; k <= steps; k++ {
+				dir := spec(t, branches)
+				before := files(t, dir)
+				fault = func(step int) error {
+					if step == k {
+						return errors.New("injected")
+					}
+					return nil
+				}
+				code, out, errOut := run(tc.args(dir)...)
+				if code != ExitFailed || out != "" || !strings.Contains(errOut, "injected") {
+					t.Errorf("step %d: %d %q %q", k, code, out, errOut)
+				}
+				if after := files(t, dir); !equalMaps(after, before) {
+					t.Errorf("step %d changed the spec: %v", k, after)
+				}
+				var dirs []string
+				_ = filepath.WalkDir(dir, func(p string, e fs.DirEntry, err error) error {
+					if err == nil && e.IsDir() && p != dir {
+						dirs = append(dirs, p)
+					}
+					return err
+				})
+				if len(dirs) != 3 {
+					t.Errorf("step %d left folders %v", k, dirs)
+				}
+			}
+			fault = nil
+		})
+	}
 }

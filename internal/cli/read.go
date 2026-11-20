@@ -2,7 +2,6 @@ package cli
 
 import (
 	"io"
-	"regexp"
 	"sort"
 	"strings"
 )
@@ -168,9 +167,6 @@ type tableRow struct {
 	Cells []string `json:"cells"`
 }
 
-// linkText matches an inline link or image, to show only its text.
-var linkText = regexp.MustCompile(`!?\[([^\]]*)\]\([^)]*\)`)
-
 func table(o options, stdout io.Writer) (int, error) {
 	spec, _, err := load(o.positional[0])
 	if err != nil {
@@ -191,7 +187,7 @@ func table(o options, stdout io.Writer) (int, error) {
 		row := tableRow{Path: d.Path, Title: d.Title, Cells: []string{}}
 		for _, name := range doc.Columns {
 			s, _ := d.Section(name)
-			row.Cells = append(row.Cells, linkText.ReplaceAllString(s.First, "$1"))
+			row.Cells = append(row.Cells, s.First)
 		}
 		doc.Rows = append(doc.Rows, row)
 	}

@@ -163,12 +163,12 @@ func needsQuote(p string) bool {
 	})
 }
 
-// rewrite returns the document's bytes with the path of each destination for
-// which newPath gives one replaced by it, keeping the #section and the < >
+// rewrite returns the document's bytes with the path of each destination of
+// list for which newPath gives one replaced by it, keeping the #section and the < >
 // form. The path is percent-encoded when the destination was, or when it
 // cannot stand plain. Everything else stays byte for byte.
-func rewrite(d *lang.Document, newPath func(lang.Ref) (string, bool)) ([]byte, error) {
-	refs := append([]lang.Ref(nil), d.Refs...)
+func rewrite(d *lang.Document, list []lang.Ref, newPath func(lang.Ref) (string, bool)) ([]byte, error) {
+	refs := append([]lang.Ref(nil), list...)
 	sort.SliceStable(refs, func(i, j int) bool { return refs[i].Start < refs[j].Start })
 	var out []byte
 	last := 0

@@ -20,9 +20,11 @@ type Moved struct {
 
 // MoveDocument moves the document oldArg to newArg, both document names as on
 // the command line. Every link to it, type lines and link reference
-// definitions included, points to the new path; when it changes folder, its
-// own relative links are rewritten to reach the same documents. Link text, the
-// #section and every other byte stay as they are.
+// definitions included, points to the new path. When it changes folder, every
+// relative destination in it, of links, images, definitions and HTML href and
+// src values, is rewritten to reach the same file; an HTML value it cannot
+// read refuses the move. Link text, the #section and every other byte stay as
+// they are.
 func MoveDocument(spec *lang.Spec, fsys fs.FS, oldArg, newArg string) (Moved, error) {
 	old, ok := DocumentPath(oldArg)
 	if _, known := spec.Document(old); !ok || !known {
@@ -47,7 +49,16 @@ func MoveDocument(spec *lang.Spec, fsys fs.FS, oldArg, newArg string) (Moved, er
 			}
 			return r.Target
 		}
-		fresh, err := rewrite(d, func(r lang.Ref) (string, bool) {
+		// The moved document rewrites every relative destination, to any file,
+		// when it changes folder; the others only their links to it.
+		refs, pick := d.Refs, func(d *lang.Document) []lang.Ref { return d.Refs }
+		if src == old {
+			refs, pick = d.Paths, func(d *lang.Document) []lang.Ref { return d.Paths }
+			if dir(src) != dir(dst) && len(d.UnplacedHTML) > 0 {
+				return Moved{}, refuse(src + ": cannot read the HTML link at line " + strconv.Itoa(d.UnplacedHTML[0]))
+			}
+		}
+		fresh, err := rewrite(d, refs, func(r lang.Ref) (string, bool) {
 			if r.Target != old && dir(src) == dir(dst) || strings.HasPrefix(r.Target, "/") {
 				return "", false
 			}
@@ -59,7 +70,7 @@ func MoveDocument(spec *lang.Spec, fsys fs.FS, oldArg, newArg string) (Moved, er
 		if bytes.Equal(fresh, d.Source) {
 			continue
 		}
-		if err := verify(dst, fresh, d.Refs, target); err != nil {
+		if err := verify(dst, fresh, refs, pick, target); err != nil {
 			return Moved{}, err
 		}
 		m.Changed = append(m.Changed, dst)
@@ -70,8 +81,8 @@ func MoveDocument(spec *lang.Spec, fsys fs.FS, oldArg, newArg string) (Moved, er
 
 // verify reads the rewritten document again and checks that each of its
 // links reaches the target it should.
-func verify(p string, fresh []byte, before []lang.Ref, target func(lang.Ref) string) error {
-	after := lang.Parse(p, fresh).Refs
+func verify(p string, fresh []byte, before []lang.Ref, pick func(*lang.Document) []lang.Ref, target func(lang.Ref) string) error {
+	after := pick(lang.Parse(p, fresh))
 	if len(after) != len(before) {
 		return refuse(p + ": rewriting its links changed how many there are")
 	}
