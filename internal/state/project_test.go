@@ -36,7 +36,7 @@ func TestSpecPath(t *testing.T) {
 			t.Errorf("%q: got %q %v, want %q", arg, got, err, want)
 		}
 	}
-	for _, arg := range []string{"", " ", ".", "./", "..", "../spec", "/spec", `C:\spec`, "c:spec", ".markitect", ".markitect/spec", "a/.git/spec", ".git"} {
+	for _, arg := range []string{"", " ", ".", "./", "..", "../spec", "/spec", `C:\spec`, "c:spec", ".markitect", ".markitect/spec", ".Markitect/x", "a/.git/spec", ".git", "a/.GIT/b", ".Git"} {
 		if got, err := SpecPath(arg); err == nil {
 			t.Errorf("%q: got %q, want a refusal", arg, got)
 		}

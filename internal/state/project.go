@@ -1,7 +1,7 @@
 // Package state is a project of the rebuilt tool, over a file system rooted
 // at the project folder: the layout of .markitect/, the project loaded with
-// its spec, the files of the project as Git would commit them, and the hash
-// of a file. It reads only the file system it is handed, so that two projects,
+// its spec, the files of the project without what its ignore files exclude,
+// and the hash of a file. It reads only the file system it is handed, so that two projects,
 // such as two states to compare, load the same way.
 //
 // The rules are in docs/guides/project-reference.md.
@@ -61,7 +61,7 @@ func InitFiles(version, spec string) []File {
 // .markitect/spec, into a clean path below the project folder with forward
 // slashes. It refuses a path that is empty, absolute, has a drive, leaves the
 // project folder, is the project folder itself, or lies in .markitect/ or a
-// .git folder.
+// .git folder, in any case.
 func SpecPath(arg string) (string, error) {
 	p := strings.TrimSpace(strings.ReplaceAll(arg, "\\", "/"))
 	switch {
@@ -74,9 +74,14 @@ func SpecPath(arg string) (string, error) {
 	if p == "." || p == ".." || strings.HasPrefix(p, "../") {
 		return "", fmt.Errorf("the spec folder %s is not a path below the project folder", arg)
 	}
+	// The reserved names count in any case, as a file system that ignores
+	// case reads them.
 	for i, part := range strings.Split(p, "/") {
-		if i == 0 && part == Dir || part == ".git" {
-			return "", fmt.Errorf("the spec folder %s lies in %s", arg, part)
+		switch {
+		case i == 0 && strings.EqualFold(part, Dir):
+			return "", fmt.Errorf("the spec folder %s lies in %s/", arg, Dir)
+		case strings.EqualFold(part, ".git"):
+			return "", fmt.Errorf("the spec folder %s lies in a .git folder", arg)
 		}
 	}
 	return p, nil

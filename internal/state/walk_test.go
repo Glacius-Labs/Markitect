@@ -84,6 +84,36 @@ var ignoreCases = []ignoreCase{
 	{name: "byte order mark and CRLF", portable: true,
 		files: map[string]string{".gitignore": "\xef\xbb\xbfone\r\ntwo\r\n", "one": "", "two": "", "three": ""},
 		keep:  []string{".gitignore", "three"}},
+	{name: "a bracket that starts with ]", portable: true,
+		files: map[string]string{".gitignore": "[]a]x\n", "]x": "", "ax": "", "bx": ""},
+		keep:  []string{".gitignore", "bx"}},
+	{name: "negation with a caret", portable: true,
+		files: map[string]string{".gitignore": "[^a]y\n", "ay": "", "by": ""},
+		keep:  []string{".gitignore", "ay"}},
+	{name: "ranges and an escaped hyphen", portable: true,
+		files: map[string]string{".gitignore": "[a-c]r\n[x\\-z]s\n", "br": "", "dr": "", "-s": "", "ys": ""},
+		keep:  []string{".gitignore", "dr", "ys"}},
+	{name: "POSIX classes", portable: true,
+		files: map[string]string{".gitignore": "[[:digit:]]*.log\nx[[:upper:]]\n[[:alpha:][:digit:]]q\n", "1a.log": "", "a1.log": "", "xA": "", "xb": "", "7q": "", "-q": ""},
+		keep:  []string{"-q", ".gitignore", "a1.log", "xb"}},
+	{name: "a malformed bracket", portable: true,
+		files: map[string]string{".gitignore": "[abc\n[[:nope:]]z\n", "[abc": "", "az": ""},
+		keep:  []string{".gitignore", "[abc", "az"}},
+	{name: "three stars", portable: true,
+		files: map[string]string{".gitignore": "***/deep.txt\nx/***\n", "deep.txt": "", "a/b/deep.txt": "", "deeper.txt": "", "x/y/z": ""},
+		keep:  []string{".gitignore", "deeper.txt"}},
+	{name: "a star stays in one folder", portable: true,
+		files: map[string]string{".gitignore": "a/*/c\n", "a/b/c": "", "a/b/d/c": ""},
+		keep:  []string{".gitignore", "a/b/d/c"}},
+	{name: "a question mark is one byte", portable: true,
+		files: map[string]string{".gitignore": "?.md\n??.txt\n", "a.md": "", "\xc3\xa9.md": "", "\xc3\xa9.txt": ""},
+		keep:  []string{".gitignore", "\xc3\xa9.md"}},
+	{name: "an escaped backslash before a trailing space",
+		files: map[string]string{".gitignore": "back\\\\ \n", "back\\": "", "back": ""},
+		keep:  []string{".gitignore", "back"}},
+	{name: "a fake nested repository", portable: true,
+		files: map[string]string{"head-only/.git/HEAD": "ref: refs/heads/main\n", "head-only/a": "", "nowhere/.git": "gitdir: /nonexistent\n", "nowhere/a": ""},
+		keep:  []string{"head-only/a", "nowhere/a"}},
 }
 
 func mapFS(files map[string]string) fstest.MapFS {
@@ -129,7 +159,7 @@ func TestWalkMatchesGit(t *testing.T) {
 		return string(out)
 	}
 	cases := append([]ignoreCase{}, ignoreCases...)
-	cases = append(cases, ignoreCase{name: "another repository", portable: true,
+	cases = append(cases, ignoreCase{name: "another repository and a worktree", portable: true,
 		files: map[string]string{".gitignore": "*.o\n", "lib/inner/a.txt": "", "lib/b.txt": "", "c.o": ""}})
 	for _, c := range cases {
 		if !c.portable && runtime.GOOS == "windows" {
@@ -146,8 +176,11 @@ func TestWalkMatchesGit(t *testing.T) {
 			}
 		}
 		gitIn(dir, "init", "-q")
-		if c.name == "another repository" {
-			gitIn(filepath.Join(dir, "lib", "inner"), "init", "-q")
+		if strings.HasPrefix(c.name, "another repository") {
+			inner := filepath.Join(dir, "lib", "inner")
+			gitIn(inner, "init", "-q")
+			gitIn(inner, "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-q", "--allow-empty", "-m", "first")
+			gitIn(inner, "worktree", "add", "-q", filepath.Join(dir, "wt"))
 		}
 		var want []string
 		for _, p := range strings.Split(gitIn(dir, "-c", "core.ignorecase=false", "ls-files", "--others", "--exclude-standard", "-z"), "\x00") {
@@ -156,7 +189,7 @@ func TestWalkMatchesGit(t *testing.T) {
 			}
 		}
 		sort.Strings(want)
-		got, err := Walk(os.DirFS(dir))
+		got, err := Walk(diskFS(dir))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -168,33 +201,47 @@ func TestWalkMatchesGit(t *testing.T) {
 
 func TestWalkLeavesOut(t *testing.T) {
 	fsys := mapFS(map[string]string{
-		".git/HEAD":                 "ref: refs/heads/main\n",
-		".markitect/version":        "1.0.0\n",
-		".markitect/ignore":         "*.txt\n!notes.md\nscratch/\n",
-		".gitignore":                "notes.md\n*.log\n!keep.log\n",
-		"notes.md":                  "",
-		"a.txt":                     "",
-		"keep.log":                  "",
-		"scratch/x.md":              "",
-		"src/main.go":               "",
-		"src/.git":                  "not a repository\n",
-		"repo/.git/HEAD":            "ref: refs/heads/main\n",
-		"repo/inside.go":            "",
-		"worktree/.git":             "gitdir: ../.git/worktrees/w\n",
-		"worktree/inside.go":        "",
-		"fake/.git/config":          "",
-		"fake/file.go":              "",
-		"docs/spec/lending.md":      "",
-		"docs/.markitect/version":   "",
-		"docs/spec/.git/objects/xx": "",
+		".git/HEAD":                   "ref: refs/heads/main\n",
+		".git/objects/info/packs":     "",
+		".git/refs/heads/main":        "",
+		".git/worktrees/w/HEAD":       "ref: refs/heads/w\n",
+		".git/worktrees/w/commondir":  "../..\n",
+		".markitect/version":          "1.0.0\n",
+		".markitect/ignore":           "*.txt\n!notes.md\nscratch/\n",
+		".gitignore":                  "notes.md\n*.log\n!keep.log\n",
+		"notes.md":                    "",
+		"a.txt":                       "",
+		"keep.log":                    "",
+		"scratch/x.md":                "",
+		"src/main.go":                 "",
+		"src/.git":                    "not a repository\n",
+		"repo/.git/HEAD":              "ref: refs/heads/main\n",
+		"repo/.git/objects/info/x":    "",
+		"repo/.git/refs/heads/main":   "",
+		"repo/inside.go":              "",
+		"worktree/.git":               "gitdir: ../.git/worktrees/w\n",
+		"worktree/inside.go":          "",
+		"head-only/.git/HEAD":         "ref: refs/heads/main\n",
+		"head-only/a":                 "",
+		"nowhere/.git":                "gitdir: /nonexistent\n",
+		"nowhere/a":                   "",
+		"fake/.git/config":            "",
+		"fake/file.go":                "",
+		"docs/spec/lending.md":        "",
+		"docs/.markitect/version":     "",
+		"docs/spec/.GIT/objects/xx":   "",
+		".Markitect/elsewhere":        "",
+		"docs/spec/.git/objects/more": "",
 	})
 	got, err := Walk(fsys)
 	if err != nil {
 		t.Fatal(err)
 	}
 	// .markitect/ignore and the .gitignore files each exclude on their own: a
-	// negation in one brings back nothing the other excludes.
-	want := []string{".gitignore", "docs/.markitect/version", "docs/spec/lending.md", "fake/file.go", "keep.log", "repo", "src/main.go", "worktree"}
+	// negation in one brings back nothing the other excludes. A fake nested
+	// repository hides nothing.
+	want := []string{".gitignore", "docs/.markitect/version", "docs/spec/lending.md", "fake/file.go", "head-only/a",
+		"keep.log", "nowhere/a", "repo", "src/main.go", "worktree"}
 	if strings.Join(got, "|") != strings.Join(want, "|") {
 		t.Errorf("got %q\nwant %q", got, want)
 	}
@@ -203,6 +250,109 @@ func TestWalkLeavesOut(t *testing.T) {
 	}
 	if _, err := Content(fsys, "fake"); err == nil {
 		t.Error("a folder read as a file")
+	}
+}
+
+// outside is a project file system that reaches a second one for the
+// absolute paths below /elsewhere.
+type outside struct {
+	fstest.MapFS
+	host fstest.MapFS
+}
+
+func (o outside) Outside(name string) (fs.FS, string, bool) {
+	rest, ok := strings.CutPrefix(name, "/elsewhere/")
+	return o.host, rest, ok
+}
+
+func TestWalkReachesAGitFolderOutside(t *testing.T) {
+	host := mapFS(map[string]string{
+		"main/.git/HEAD":                   "",
+		"main/.git/objects/x":              "",
+		"main/.git/refs/heads/main":        "",
+		"main/.git/worktrees/wt/HEAD":      "",
+		"main/.git/worktrees/wt/gitdir":    "",
+		"main/.git/worktrees/wt/commondir": "../..\n",
+	})
+	project := mapFS(map[string]string{
+		"wt/.git":   "gitdir: /elsewhere/main/.git/worktrees/wt\r\n",
+		"wt/a.go":   "",
+		"up/.git":   "gitdir: ../../gone\n",
+		"up/a.go":   "",
+		"bare/.git": "gitdir: /elsewhere/main\n",
+		"bare/a.go": "",
+	})
+	got, err := Walk(outside{project, host})
+	if err != nil || strings.Join(got, "|") != "bare/a.go|up/a.go|wt" {
+		t.Errorf("got %q %v", got, err)
+	}
+	// Without a way outside, the worktree is walked: nothing is hidden.
+	if got, _ := Walk(project); strings.Join(got, "|") != "bare/a.go|up/a.go|wt/a.go" {
+		t.Errorf("got %q", got)
+	}
+}
+
+func TestWildmatch(t *testing.T) {
+	for _, c := range []struct {
+		pattern, text  string
+		pathname, want bool
+	}{
+		{"foo", "foo", true, true},
+		{"foo", "Foo", true, false},
+		{"f?o", "f/o", true, false},
+		{"f?o", "f/o", false, true},
+		{"*", "a/b", true, false},
+		{"**", "a/b", true, true},
+		{"***", "a/b", true, true},
+		{"a/**", "a", true, false},
+		{"a/**", "a/b/c", true, true},
+		{"a/**/b", "a/b", true, true},
+		{"a/**/b", "a/x/y/b", true, true},
+		{"**/b", "b", true, true},
+		{"**/b", "x/y/b", true, true},
+		{"a**b", "a/b", true, false},
+		{"a/*/c", "a/b/c", true, true},
+		{"a/*/c", "a/b/d/c", true, false},
+		{"[]a]x", "]x", true, true},
+		{"[]a]x", "ax", true, true},
+		{"[]a]x", "bx", true, false},
+		{"[!]a]x", "bx", true, true},
+		{"[^a]x", "bx", true, true},
+		{"[^a]x", "ax", true, false},
+		{"[a-c]", "b", true, true},
+		{"[a-c]", "-", true, false},
+		{"[a-]", "-", true, true},
+		{"[a\\-c]", "-", true, true},
+		{"[[:digit:]]", "7", true, true},
+		{"[[:digit:]]", "x", true, false},
+		{"[[:alpha:][:digit:]]q", "-q", true, false},
+		{"[[:upper:]]", "A", true, true},
+		{"[[:space:]]", " ", true, true},
+		{"[[:punct:]]", "!", true, true},
+		{"[[:xdigit:]]", "f", true, true},
+		{"[[:nope:]]", "x", true, false},
+		{"[[:digit]", "[", true, true},
+		{"[abc", "[abc", true, false},
+		{"\\*", "*", true, true},
+		{"\\*", "x", true, false},
+		{"a\\", "a", true, false},
+		{"?.md", "\xc3\xa9.md", true, false},
+		{"??.md", "\xc3\xa9.md", true, true},
+		{"[/]", "/", true, false},
+	} {
+		if got := wildmatch(c.pattern, c.text, c.pathname); got != c.want {
+			t.Errorf("%q against %q (pathname %v): got %v", c.pattern, c.text, c.pathname, got)
+		}
+	}
+}
+
+func TestTrimTrailingSpaces(t *testing.T) {
+	for line, want := range map[string]string{
+		"a  ": "a", "a\\ ": "a\\ ", "a\\  ": "a\\ ", "a\\\\ ": "a\\\\", "a\\": "a\\", "  ": "",
+	} {
+		if got := trimTrailingSpaces(line); got != want {
+			t.Errorf("%q: got %q, want %q", line, got, want)
+		}
 	}
 }
 
@@ -311,13 +461,95 @@ func TestHashIgnoresLineEndingsOfText(t *testing.T) {
 	if a["logo.png"] != sha(binary) || Hash(binary) == Hash(bytes.ReplaceAll(binary, []byte("\r\n"), []byte("\n"))) {
 		t.Error("a binary file's CRLF was changed")
 	}
-	// Text that is not UTF-8 counts as binary.
-	latin := []byte("caf\xe9\r\n")
-	if Hash(latin) != sha(latin) {
-		t.Error("text that is not UTF-8 was changed")
+	// Text in any encoding is text, as Git decides.
+	if Hash([]byte("caf\xe9\r\nline\r\n")) != Hash([]byte("caf\xe9\nline\n")) {
+		t.Error("Latin-1 text with CRLF hashes apart from its LF form")
+	}
+	// Only a NUL byte in the first 8000 bytes makes a file binary.
+	late := append(bytes.Repeat([]byte("a\r\n"), 3000), 0)
+	if Hash(late) != Hash(bytes.ReplaceAll(late, []byte("\r\n"), []byte("\n"))) {
+		t.Error("a NUL byte after 8000 bytes made a file binary")
+	}
+	early := append([]byte("a\r\n"), late...)
+	early[7999] = 0
+	if Hash(early) != sha(early) {
+		t.Error("a NUL byte in the first 8000 bytes did not make a file binary")
 	}
 	// A lone CR stays.
 	if Hash([]byte("a\rb")) == Hash([]byte("a\nb")) {
 		t.Error("a lone CR was changed")
+	}
+}
+
+// disk is a folder on disk that reaches paths outside it, as the command
+// line's project folder does.
+type disk struct {
+	fs.FS
+	dir string
+}
+
+func diskFS(dir string) disk { return disk{os.DirFS(dir), dir} }
+
+func (d disk) ReadDir(name string) ([]fs.DirEntry, error) { return fs.ReadDir(d.FS, name) }
+func (d disk) Stat(name string) (fs.FileInfo, error)      { return fs.Stat(d.FS, name) }
+func (d disk) Lstat(name string) (fs.FileInfo, error)     { return fs.Lstat(d.FS, name) }
+func (d disk) ReadLink(name string) (string, error)       { return fs.ReadLink(d.FS, name) }
+
+func (d disk) Outside(name string) (fs.FS, string, bool) {
+	abs := filepath.FromSlash(name)
+	if !filepath.IsAbs(abs) {
+		abs = filepath.Join(d.dir, abs)
+	}
+	vol := filepath.VolumeName(abs)
+	root := vol + string(filepath.Separator)
+	rel, err := filepath.Rel(root, abs)
+	if err != nil {
+		return nil, "", false
+	}
+	return os.DirFS(root), filepath.ToSlash(rel), true
+}
+
+// junction makes a Windows junction at link that leads to target.
+func junction(t *testing.T, link, target string) {
+	t.Helper()
+	if out, err := exec.Command("cmd", "/c", "mklink", "/J", link, target).CombinedOutput(); err != nil {
+		t.Fatalf("mklink: %v %s", err, out)
+	}
+}
+
+func TestWalkGoesThroughJunctions(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("junctions are a Windows thing")
+	}
+	dir := t.TempDir()
+	for _, f := range []string{"real/x/a.txt", "gone/b.txt"} {
+		file := filepath.Join(dir, filepath.FromSlash(f))
+		if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(file, []byte("a\r\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	junction(t, filepath.Join(dir, "j"), filepath.Join(dir, "real"))
+	junction(t, filepath.Join(dir, "real", "loop"), dir)
+	junction(t, filepath.Join(dir, "dangling"), filepath.Join(dir, "gone"))
+	if err := os.RemoveAll(filepath.Join(dir, "gone")); err != nil {
+		t.Fatal(err)
+	}
+	fsys := os.DirFS(dir)
+	got, err := Walk(fsys)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The loop back to the project is not walked, and a junction that leads
+	// nowhere is one entry that hashes.
+	if strings.Join(got, "|") != "dangling|j/x/a.txt|real/x/a.txt" {
+		t.Errorf("got %q", got)
+	}
+	for _, f := range got {
+		if _, err := HashFile(fsys, f); err != nil {
+			t.Errorf("%s: %v", f, err)
+		}
 	}
 }

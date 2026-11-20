@@ -5,7 +5,9 @@ import (
 	"errors"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -233,5 +235,95 @@ func TestOutsideAProject(t *testing.T) {
 	}
 	if code, _, errOut := run("check"); code != ExitFailed || !strings.Contains(errOut, "upward holds .markitect/version; markitect-next init makes one") {
 		t.Error(code, errOut)
+	}
+}
+
+// link makes link lead to the folder target: a symbolic link, or a junction
+// on Windows, where a symbolic link needs a privilege.
+func link(t *testing.T, target, link string) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		if out, err := exec.Command("cmd", "/c", "mklink", "/J", link, target).CombinedOutput(); err != nil {
+			t.Fatalf("mklink: %v %s", err, out)
+		}
+		return
+	}
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSpecFolderOutsideTheProjectIsRefused(t *testing.T) {
+	elsewhere := t.TempDir()
+	dir := t.TempDir()
+	link(t, elsewhere, filepath.Join(dir, "docs"))
+	if code, _, errOut := run("init", "-C", dir); code != ExitFailed || !strings.Contains(errOut, "the spec folder docs/spec lies outside the project") {
+		t.Fatal(code, errOut)
+	}
+	if got := tree(t, elsewhere); len(got) != 0 {
+		t.Errorf("a refused init wrote %v outside", got)
+	}
+	// A link inside the project is fine.
+	inside := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(inside, "handbook"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	link(t, filepath.Join(inside, "handbook"), filepath.Join(inside, "docs"))
+	if code, _, errOut := run("init", "-C", inside); code != ExitOK {
+		t.Fatal(errOut)
+	}
+	// A spec folder that a link moved outside later stops every command that
+	// reads it.
+	project := spec(t, map[string]string{"a.md": "# A\n"})
+	if err := os.RemoveAll(specOf(project)); err != nil {
+		t.Fatal(err)
+	}
+	link(t, elsewhere, specOf(project))
+	for _, args := range [][]string{{"check"}, {"apply", "software"}, {"show", "a"}} {
+		if code, _, errOut := run(append(args, "-C", project)...); code != ExitFailed || !strings.Contains(errOut, "lies outside the project") {
+			t.Errorf("%v: %d %q", args, code, errOut)
+		}
+	}
+}
+
+func TestReservedSpecFolders(t *testing.T) {
+	for spec, want := range map[string]string{".Markitect/x": "lies in .markitect/", "a/.GIT/b": "lies in a .git folder"} {
+		if code, _, errOut := run("init", "-C", t.TempDir(), "--spec", spec); code != ExitFailed || !strings.Contains(errOut, want) {
+			t.Errorf("%s: %d %q", spec, code, errOut)
+		}
+	}
+}
+
+func TestInitFolderMode(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows has no Unix modes")
+	}
+	dir := initialized(t)
+	info, err := os.Stat(filepath.Join(dir, ".markitect"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode().Perm() != 0o755 {
+		t.Errorf(".markitect/ has mode %v", info.Mode().Perm())
+	}
+}
+
+func TestProjectFSReachesOutside(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "HEAD"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	project := filepath.Join(dir, "project")
+	if err := os.Mkdir(project, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{filepath.ToSlash(filepath.Join(dir, "HEAD")), "../HEAD"} {
+		host, p, ok := diskProject(project).Outside(name)
+		if !ok {
+			t.Fatalf("%s: not reached", name)
+		}
+		if data, err := fs.ReadFile(host, p); err != nil || string(data) != "x" {
+			t.Errorf("%s: read %q %v", name, data, err)
+		}
 	}
 }

@@ -4,96 +4,148 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io/fs"
+	"os"
 	"path"
 	"path/filepath"
 	"sort"
 	"strings"
-	"unicode/utf8"
 )
+
+// OutsideFS is a project file system that can also reach a path outside the
+// project, as a .git file may name one. A file system without it treats such
+// a .git file as naming no repository, so that the folder is walked.
+type OutsideFS interface {
+	fs.FS
+	// Outside returns a file system that holds name, a path that is absolute
+	// or that leaves the project folder with "..", relative to it, and the path
+	// of name in that file system.
+	Outside(name string) (fs.FS, string, bool)
+}
 
 // Walk returns every file of the project at fsys, by its path below the
 // project folder with forward slashes, sorted. It leaves out every entry named
-// .git, .markitect/ at the top, and what the project's .gitignore files or
-// .markitect/ignore exclude. A folder that is another repository, whose .git
-// is a folder with a HEAD or a file naming one, is one entry and is not
-// walked; a symbolic link is one entry and is not followed.
+// .git, .markitect/ at the top, both in any case, and what the project's
+// .gitignore files or .markitect/ignore exclude. A folder that is another valid repository or
+// worktree is one entry and is not walked. A symbolic link is one entry and is
+// not followed. A Windows junction, or any other entry that leads to a folder
+// without being a symbolic link, is walked like a folder, except when it leads
+// back to a folder the walk is in.
 func Walk(fsys fs.FS) ([]string, error) {
 	own, err := readIgnore(fsys, IgnoreFile)
 	if err != nil {
 		return nil, err
 	}
 	w := &walker{fsys: fsys, own: parseIgnore("", own), git: map[string][]pattern{}}
-	var files []string
-	err = fs.WalkDir(fsys, ".", func(p string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if p == "." {
-			return nil
-		}
-		dir := d.IsDir()
-		skip := func() error {
-			if dir {
-				return fs.SkipDir
-			}
-			return nil
-		}
-		if d.Name() == ".git" || p == Dir {
-			return skip()
-		}
-		excluded, err := w.excluded(p, dir)
-		if err != nil {
-			return err
-		}
-		if excluded {
-			return skip()
-		}
-		if dir && !nestedRepository(fsys, p) {
-			return nil
-		}
-		files = append(files, p)
-		return skip()
-	})
-	if err != nil {
+	if err := w.walk("", nil); err != nil {
 		return nil, err
 	}
-	sort.Strings(files)
-	return files, nil
+	sort.Strings(w.files)
+	return w.files, nil
+}
+
+// walk walks the folder p, "" for the top, below the folders above.
+func (w *walker) walk(p string, above []string) error {
+	name := p
+	if name == "" {
+		name = "."
+	}
+	entries, err := fs.ReadDir(w.fsys, name)
+	if err != nil {
+		return err
+	}
+	above = append(above, name)
+	for _, e := range entries {
+		child := path.Join(p, e.Name())
+		if strings.EqualFold(e.Name(), ".git") || strings.EqualFold(child, Dir) {
+			continue
+		}
+		mode := e.Type()
+		dir, through := e.IsDir(), false
+		if !dir && mode&fs.ModeSymlink == 0 && !mode.IsRegular() {
+			// A junction: walked like a folder when it leads to one.
+			if info, err := fs.Stat(w.fsys, child); err == nil && info.IsDir() {
+				dir, through = true, true
+			}
+		}
+		excluded, err := w.excluded(child, dir)
+		if err != nil {
+			return err
+		}
+		switch {
+		case excluded:
+		case !dir:
+			w.files = append(w.files, child)
+		case nestedRepository(w.fsys, child):
+			w.files = append(w.files, child)
+		case through && w.cycle(child, above):
+		default:
+			if err := w.walk(child, above); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// cycle says whether the folder a junction leads to is one the walk is in.
+func (w *walker) cycle(p string, above []string) bool {
+	target, err := fs.Stat(w.fsys, p)
+	if err != nil {
+		return true
+	}
+	for _, a := range above {
+		if info, err := fs.Stat(w.fsys, a); err == nil && os.SameFile(info, target) {
+			return true
+		}
+	}
+	return false
 }
 
 // repositoryEntry is what another repository, one entry of the walk, reads as.
 const repositoryEntry = "a repository of its own\n"
 
-// Content reads a file the walk lists: a symbolic link as where it points,
-// with forward slashes, and another repository as one fixed line, as Git
-// keeps them.
+// Content reads a file the walk lists: a symbolic link, or a junction that
+// leads to no folder, as where it points, with forward slashes, and another
+// repository as one fixed line, as Git keeps them.
 func Content(fsys fs.FS, name string) ([]byte, error) {
 	info, err := fs.Lstat(fsys, name)
 	if err != nil {
 		return nil, err
 	}
+	mode := info.Mode()
 	switch {
-	case info.Mode()&fs.ModeSymlink != 0:
+	case mode&fs.ModeSymlink != 0:
 		to, err := fs.ReadLink(fsys, name)
 		return []byte(filepath.ToSlash(to)), err
-	case info.IsDir():
+	case mode.IsDir() || !mode.IsRegular() && isFolder(fsys, name):
 		if nestedRepository(fsys, name) {
 			return []byte(repositoryEntry), nil
 		}
 		return nil, fmt.Errorf("%s: a folder", name)
+	case !mode.IsRegular():
+		if to, err := fs.ReadLink(fsys, name); err == nil {
+			return []byte(filepath.ToSlash(to)), nil
+		}
 	}
 	return fs.ReadFile(fsys, name)
 }
 
+func isFolder(fsys fs.FS, name string) bool {
+	info, err := fs.Stat(fsys, name)
+	return err == nil && info.IsDir()
+}
+
+// textProbe is how far Hash looks for a NUL byte, as Git does.
+const textProbe = 8000
+
 // Hash is the SHA-256 of a file's content as "sha256:" and 64 hexadecimal
-// digits. A text file, valid UTF-8 without a NUL byte, hashes with each CRLF
-// as LF, so that a checkout on Windows and one on Linux agree; any other file
-// hashes as it is.
+// digits. A text file, one without a NUL byte in its first 8000 bytes as Git
+// decides, whatever its encoding, hashes with each CRLF as LF, so that a
+// checkout on Windows and one on Linux agree; any other file hashes as it is.
 func Hash(data []byte) string {
-	if utf8.Valid(data) && bytes.IndexByte(data, 0) < 0 {
+	if bytes.IndexByte(data[:min(len(data), textProbe)], 0) < 0 {
 		data = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
 	}
 	sum := sha256.Sum256(data)
@@ -109,8 +161,9 @@ func HashFile(fsys fs.FS, name string) (string, error) {
 	return Hash(data), nil
 }
 
-// nestedRepository says whether a folder is a repository or worktree of its
-// own: its .git is a folder with a HEAD, or a file that names one.
+// nestedRepository says whether a folder is a valid repository or worktree of
+// its own, as Git decides: its .git is a Git folder, or a file whose gitdir:
+// line names one, relative to the folder or absolute.
 func nestedRepository(fsys fs.FS, dir string) bool {
 	git := path.Join(dir, ".git")
 	info, err := fs.Stat(fsys, git)
@@ -118,177 +171,61 @@ func nestedRepository(fsys fs.FS, dir string) bool {
 	case err != nil:
 		return false
 	case info.IsDir():
-		_, err := fs.Stat(fsys, path.Join(git, "HEAD"))
-		return err == nil
+		return gitFolder(fsys, git)
 	}
 	data, err := fs.ReadFile(fsys, git)
-	return err == nil && strings.HasPrefix(string(data), "gitdir:")
+	if err != nil {
+		return false
+	}
+	line, _, _ := strings.Cut(string(data), "\n")
+	target, ok := strings.CutPrefix(strings.TrimRight(line, "\r"), "gitdir: ")
+	if !ok || target == "" {
+		return false
+	}
+	target = filepath.ToSlash(target)
+	if !filepath.IsAbs(filepath.FromSlash(target)) && !strings.HasPrefix(target, "/") {
+		if inside := path.Join(dir, target); inside != ".." && !strings.HasPrefix(inside, "../") {
+			return gitFolder(fsys, inside)
+		}
+		target = path.Join(dir, target)
+	}
+	outside, ok := fsys.(OutsideFS)
+	if !ok {
+		return false
+	}
+	host, name, ok := outside.Outside(target)
+	return ok && gitFolder(host, name)
 }
 
-// walker holds the ignore files one walk reads.
+// gitFolder says whether a folder is a Git folder: it holds HEAD, and objects/
+// and refs/ lie in it or in the common folder its commondir file names, as in
+// a worktree's folder.
+func gitFolder(fsys fs.FS, dir string) bool {
+	if info, err := fs.Stat(fsys, path.Join(dir, "HEAD")); err != nil || info.IsDir() {
+		return false
+	}
+	common := dir
+	if data, err := fs.ReadFile(fsys, path.Join(dir, "commondir")); err == nil {
+		c := filepath.ToSlash(strings.TrimSpace(string(data)))
+		if c == "" || strings.HasPrefix(c, "/") || filepath.IsAbs(filepath.FromSlash(c)) {
+			return false
+		}
+		common = path.Join(dir, c)
+	}
+	for _, sub := range []string{"objects", "refs"} {
+		if !isFolder(fsys, path.Join(common, sub)) {
+			return false
+		}
+	}
+	return true
+}
+
+// walker holds the files and the ignore files of one walk.
 type walker struct {
-	fsys fs.FS
+	fsys  fs.FS
+	files []string
 	// own is .markitect/ignore; git holds the patterns of the .gitignore file
 	// of each folder read so far.
 	own []pattern
 	git map[string][]pattern
-}
-
-// excluded says whether the .gitignore files or .markitect/ignore exclude a
-// path whose folders the walk took. The two are judged apart, so a negation
-// in one never brings back what the other excludes.
-func (w *walker) excluded(p string, dir bool) (bool, error) {
-	if lastMatch(w.own, p, dir) {
-		return true, nil
-	}
-	// The files of the folders from the top down, so that deeper ones win.
-	parts := strings.Split(p, "/")
-	var all []pattern
-	for i := 0; i < len(parts); i++ {
-		folder := strings.Join(parts[:i], "/")
-		ps, ok := w.git[folder]
-		if !ok {
-			data, err := readIgnore(w.fsys, path.Join(folder, ".gitignore"))
-			if err != nil {
-				return false, err
-			}
-			ps = parseIgnore(folder, data)
-			w.git[folder] = ps
-		}
-		all = append(all, ps...)
-	}
-	return lastMatch(all, p, dir), nil
-}
-
-// lastMatch says whether the last pattern that matches p excludes it.
-func lastMatch(patterns []pattern, p string, dir bool) bool {
-	excluded := false
-	for _, pt := range patterns {
-		if pt.matches(p, dir) {
-			excluded = !pt.negate
-		}
-	}
-	return excluded
-}
-
-// readIgnore reads an ignore file. A missing one, a folder and a symbolic
-// link, which Git does not follow, are none; any other error fails.
-func readIgnore(fsys fs.FS, name string) ([]byte, error) {
-	info, err := fs.Lstat(fsys, name)
-	switch {
-	case errors.Is(err, fs.ErrNotExist):
-		return nil, nil
-	case err != nil:
-		return nil, err
-	case !info.Mode().IsRegular():
-		return nil, nil
-	}
-	return fs.ReadFile(fsys, name)
-}
-
-// pattern is one line of an ignore file.
-type pattern struct {
-	// base is the folder of the ignore file, "" at the top.
-	base    string
-	glob    string
-	negate  bool
-	dirOnly bool
-	// anchored patterns match the path below base; the others match the name
-	// at any depth below it.
-	anchored bool
-}
-
-// parseIgnore reads an ignore file in the folder base, as Git reads a
-// .gitignore file.
-func parseIgnore(base string, data []byte) []pattern {
-	data = bytes.TrimPrefix(data, []byte("\xef\xbb\xbf"))
-	var out []pattern
-	for _, line := range strings.Split(string(data), "\n") {
-		line = strings.TrimSuffix(line, "\r")
-		// Trailing spaces go, unless a backslash keeps one.
-		for strings.HasSuffix(line, " ") && !strings.HasSuffix(line, `\ `) {
-			line = line[:len(line)-1]
-		}
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		p := pattern{base: base}
-		if strings.HasPrefix(line, "!") {
-			p.negate, line = true, line[1:]
-		} else if strings.HasPrefix(line, `\!`) || strings.HasPrefix(line, `\#`) {
-			line = line[1:]
-		}
-		if strings.HasSuffix(line, "/") {
-			p.dirOnly, line = true, strings.TrimSuffix(line, "/")
-		}
-		p.anchored = strings.Contains(line, "/")
-		p.glob = strings.TrimPrefix(line, "/")
-		if p.glob != "" {
-			out = append(out, p)
-		}
-	}
-	return out
-}
-
-func (p pattern) matches(rel string, dir bool) bool {
-	if p.dirOnly && !dir {
-		return false
-	}
-	below := rel
-	if p.base != "" {
-		var ok bool
-		if below, ok = strings.CutPrefix(rel, p.base+"/"); !ok {
-			return false
-		}
-	}
-	if !p.anchored {
-		return globMatch(p.glob, path.Base(below))
-	}
-	return matchParts(strings.Split(p.glob, "/"), strings.Split(below, "/"))
-}
-
-// matchParts matches a path against a pattern part by part. A part "**"
-// stands for any number of parts, none included; a trailing "**" for one or
-// more, so that it holds what is inside a folder and not the folder.
-func matchParts(pat, name []string) bool {
-	for len(pat) > 0 {
-		if pat[0] == "**" {
-			if len(pat) == 1 {
-				return len(name) > 0
-			}
-			for i := 0; i <= len(name); i++ {
-				if matchParts(pat[1:], name[i:]) {
-					return true
-				}
-			}
-			return false
-		}
-		if len(name) == 0 || !globMatch(pat[0], name[0]) {
-			return false
-		}
-		pat, name = pat[1:], name[1:]
-	}
-	return len(name) == 0
-}
-
-// globMatch matches one part of a path as Git does, with case: "*" and "?"
-// within the part, "[a-z]", "[!x]" for "not x", and a backslash escaping the
-// character after it. path.Match is used, never filepath.Match, which takes a
-// backslash for a separator on Windows.
-func globMatch(glob, name string) bool {
-	var b strings.Builder
-	for i := 0; i < len(glob); i++ {
-		switch {
-		case glob[i] == '\\' && i+1 < len(glob):
-			b.WriteString(glob[i : i+2])
-			i++
-		case glob[i] == '[' && i+1 < len(glob) && glob[i+1] == '!':
-			b.WriteString("[^")
-			i++
-		default:
-			b.WriteByte(glob[i])
-		}
-	}
-	ok, _ := path.Match(b.String(), name)
-	return ok
 }

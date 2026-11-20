@@ -86,7 +86,7 @@ CI runs on Linux only, with quality checks and the race detector, in about five 
 gh workflow run ci.yaml --ref BRANCH
 ```
 
-Local checks and the independent review are the basis for a merge, and CI is optional for ordinary changes. When you run it, run it on the reviewed head and merge only when it is green. The tests run in about a minute on Windows too; Git is started only by one test of `init` and by the test support's own tests.
+Local checks and the independent review are the basis for a merge, and CI is optional for ordinary changes. When you run it, run it on the reviewed head and merge only when it is green. The tests run in about a minute on Windows too; Git is started only by one test of `init`, by the test support's own tests and by `TestWalkMatchesGit`, which compares the rebuilt tool's walk with Git and is skipped where Git is not installed.
 
 ## Review and land
 

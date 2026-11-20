@@ -52,8 +52,8 @@ func workingFolder(o options) (string, error) {
 }
 
 // projectFolder is the project a command works in: the folder -C names, which
-// must hold .markitect/, or the nearest folder from the working directory
-// upward that holds it. found is false when there is none.
+// must hold .markitect/version, or the nearest folder from the working
+// directory upward that holds it. found is false when there is none.
 func projectFolder(o options) (dir string, found bool, err error) {
 	at, err := workingFolder(o)
 	if err != nil {
@@ -100,9 +100,12 @@ func load(o options) (*workspace, error) {
 	if err != nil {
 		return nil, err
 	}
-	p, err := state.Load(os.DirFS(dir))
+	p, err := state.Load(diskProject(dir))
 	if err != nil {
 		return nil, fmt.Errorf("the project %s: %w", dir, err)
+	}
+	if err := specInside(dir, p.SpecFolder); err != nil {
+		return nil, err
 	}
 	return &workspace{dir: dir, Project: p}, nil
 }
@@ -137,6 +140,9 @@ func initProject(o options, stdout io.Writer) (code int, err error) {
 	if _, err := os.Lstat(target); err == nil {
 		return ExitFailed, fmt.Errorf("%s/ exists already in %s", state.Dir, dir)
 	}
+	if err := specInside(dir, spec); err != nil {
+		return ExitFailed, err
+	}
 	specDir := filepath.Join(dir, filepath.FromSlash(spec))
 	info, statErr := os.Stat(specDir)
 	if statErr == nil && !info.IsDir() {
@@ -168,6 +174,10 @@ func initProject(o options, stdout io.Writer) (code int, err error) {
 	}
 	t.files = append(t.files, temp)
 	t.undo = append(t.undo, func() error { return os.RemoveAll(temp) })
+	// A temporary folder is private; .markitect/ is not.
+	if err := os.Chmod(temp, 0o755); err != nil {
+		return ExitFailed, err
+	}
 	for _, f := range state.InitFiles(buildinfo.Version(), spec) {
 		if err := t.next(); err != nil {
 			return ExitFailed, err
@@ -235,6 +245,9 @@ func specFolderOf(dir string) (string, error) {
 	layout, err := state.ReadLayout(os.DirFS(dir))
 	if err != nil {
 		return "", fmt.Errorf("the project %s: %w", dir, err)
+	}
+	if err := specInside(dir, layout.SpecFolder); err != nil {
+		return "", err
 	}
 	folder := filepath.Join(dir, filepath.FromSlash(layout.SpecFolder))
 	if info, err := os.Stat(folder); err == nil && !info.IsDir() || err != nil && !errors.Is(err, fs.ErrNotExist) {
