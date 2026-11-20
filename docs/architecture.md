@@ -19,6 +19,8 @@ None of these commands starts an agent, and none needs credentials. The [command
 
 `status` and `mark` run `cmd/markitect → internal/bootstrap → CLI adapter → the record`. Bootstrap builds [the record](../internal/run/README.md) (`internal/run`) over the folder adapter, with the lock of each project's record in the user's cache folder; the record itself, `.markitect/review.sum`, lies in the project. `hook` runs `CLI adapter → the agents' rights`: the adapter reads the call, the environment and the plugin's files, and [`internal/guard`](../internal/guard/README.md) decides over their bytes. The driver, by default the owner's own Claude Code session through the skills of [DEC-100](https://github.com/Glacius-Labs/Markitect/blob/da1cf1bc54cb0b3fc7cc58c8ab194e8bbaee18d8/docs/decisions.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role), such as `/markitect-build` and `/markitect-review`, sequentially or through the shipped parallel workflow ([DEC-103](https://github.com/Glacius-Labs/Markitect/blob/da1cf1bc54cb0b3fc7cc58c8ab194e8bbaee18d8/docs/decisions.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)), starts the agents and makes every Git step: nothing in the tool starts or drives an agent, which calls `markitect` like any other tool. `config` reads and writes the harness configuration (`internal/harness`), from which `init` and `update` write the agents' front matter.
 
+The rebuilt tool grows beside it as `markitect-next` ([roadmap](roadmap.md#current-steps)): `cmd/markitect-next → internal/cli → internal/lang`. The command line reads the spec folder named on it through `os.DirFS`, and `internal/lang` parses and checks the documents of the file system it is handed, writes nothing and imports no package of the 0.34.0 tool, so that removing that tool is a pure deletion.
+
 The default driver needs Claude Code on the user's own login: its agents are subagents of the owner's session, with the user's rights, the builder in a worktree of its own and a reviewer alone in the owner's folder ([concept, §7](https://github.com/Glacius-Labs/Markitect/blob/da1cf1bc54cb0b3fc7cc58c8ab194e8bbaee18d8/docs/concept/how-sure-we-are.md)).
 
 ## Layers
@@ -39,6 +41,9 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 | Project-folder, command-line and update adapters; no adapter imports another | `internal/adapters/folder`, `internal/adapters/cli`, `internal/adapters/upgrade` | Their inward consumers and build data |
 | Composition | `internal/bootstrap` | The adapters and the record |
 | Entrypoints | `cmd/markitect` | Bootstrap |
+| The rebuilt tool's spec language over a supplied file system: documents, types, sections, links and `check` ([language reference](guides/language-reference.md)) | `internal/lang` | No other Markitect package |
+| The rebuilt tool's command line: arguments, the spec folder and the output | `internal/cli` | The rebuilt tool's spec language |
+| The rebuilt tool's entrypoint, `markitect-next`, beside `markitect` until step 4 of the [roadmap](roadmap.md#current-steps) replaces it | `cmd/markitect-next` | The rebuilt tool's command line |
 | Version and license notices | `internal/buildinfo` | No other Markitect package |
 | Maintenance: the import gate and the code map | `internal/tooling/architecture` | No other Markitect package; separate from product execution |
 | Test support, test files only | `internal/testkit` | No Markitect package |
@@ -70,7 +75,7 @@ One Go module at the root, with `cmd/` and `internal/` below it.
 
 | Path | Holds |
 |---|---|
-| `cmd/` | The Go entrypoint `markitect`, the CLI that ships |
+| `cmd/` | The Go entrypoints: `markitect`, the CLI that ships, and `markitect-next`, the rebuilt tool beside it |
 | `internal/` | The Go packages, including the standard Libraries (`internal/libraries`) and the skills and agents (`internal/skills`) that the binary embeds; the [code map](development/code-map.md) lists every package |
 | `plugin/` | The Claude Code plugin `markitect`, with its launcher, hooks and skill |
 | `tools/` | Independent tools that import no product code: the command smoke |

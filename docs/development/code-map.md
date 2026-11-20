@@ -27,6 +27,9 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `adapter` | Concrete project-folder, command-line and update adapters; no adapter imports another. | `spec`, `assets`, `harness`, `domain`, `project`, `service`, `run`, `guard`, `setup`, `build` | 3 |
 | `composition` | Constructs the command line with its adapters. | `spec`, `project`, `service`, `run`, `adapter` | 1 |
 | `command` | Thin entrypoints to product composition. | `composition` | 1 |
+| `language` | The spec language of the rebuilt tool over a supplied file system: documents, types, sections, links and check. | nothing | 1 |
+| `command-line` | The command line of the rebuilt tool: its arguments, the spec folder it reads and its text and JSON output. | `language` | 1 |
+| `entrypoint` | markitect-next, the rebuilt tool beside markitect until it replaces it. | `command-line` | 1 |
 | `maintenance` | The import gate and the code map, separate from product execution. | nothing | 1 |
 | `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 1 |
 | `standalone` | The command smoke. It imports no Markitect package, not even from tests. | nothing | 1 |
@@ -117,6 +120,24 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Package | Summary | Owning document |
 |---|---|---|
 | `cmd/markitect` | Command markitect is the Markitect command line: install, update, init, tidy, check, vet, list, doc, status, mark, version and licenses. | [docs/guides/spec-language.md#commands](../guides/spec-language.md#commands) |
+
+## Language
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/lang` | Package lang is the spec language over supplied files: it parses documents, with their title, type line, sections and links, loads a spec from a file system and checks it. | [docs/guides/language-reference.md#documents](../guides/language-reference.md#documents) |
+
+## Command line
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/cli` | Package cli is the command line of the rebuilt tool, markitect-next: it parses the arguments, reads the spec folder they name and prints what the language finds, as text or as JSON. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
+
+## Rebuilt tool entrypoint
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `cmd/markitect-next` | Command markitect-next is the rebuilt Markitect tool while it grows beside markitect: check. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
 
 ## Maintenance
 

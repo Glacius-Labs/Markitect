@@ -30,6 +30,7 @@ Product code and tests that handle a project's `.markitect/` folder use fixtures
 | The product as a whole | [Concept](docs/concept/README.md) |
 | Decisions in force and open questions | [Decisions](docs/decisions.md) |
 | The spec language, the `.markitect/` layout and the commands | [Spec language](docs/guides/spec-language.md) |
+| The spec language as the rebuilt tool implements it | [Language reference](docs/guides/language-reference.md) |
 | Designing a good spec | [What makes a good spec](docs/guides/good-spec.md) |
 | Using Markitect on a project | [Project workflow](docs/guides/project-workflow.md) |
 | Packages, layers and the repository layout | [Architecture](docs/architecture.md) and the generated [code map](docs/development/code-map.md) |
