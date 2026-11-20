@@ -44,6 +44,10 @@ func TestEventLines(t *testing.T) {
 	if got := string(m.Line()); got != `{"time":"2026-11-20T08:00:00.000000005Z","type":"move","from":"a.md","to":"b.md","rewritten":[]}`+"\n" {
 		t.Error(got)
 	}
+	m.Reports = []string{".markitect/reports/late-fee.md"}
+	if got := string(m.Line()); got != `{"time":"2026-11-20T08:00:00.000000005Z","type":"move","from":"a.md","to":"b.md","rewritten":[],"reports":[".markitect/reports/late-fee.md"]}`+"\n" {
+		t.Error(got)
+	}
 }
 
 func TestMoveRows(t *testing.T) {

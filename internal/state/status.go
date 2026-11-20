@@ -96,6 +96,24 @@ type Waiting struct {
 	Changes []string
 }
 
+// Unexcused are the changes a report does not excuse: waiting excuses only
+// the need to build the document, having no row or a change of its own
+// text, its type or its links. A changed artifact, counter-check, evidence
+// or linked file, a fail and a conflict count as usual.
+func (w Waiting) Unexcused() []string {
+	var out []string
+	for _, c := range w.Changes {
+		if c != "no row" && c != InputSelf && !strings.HasPrefix(c, InputType) && !strings.HasPrefix(c, InputLink) {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+// Counts says whether the entry makes status fail: it does not wait on the
+// owner, or it has changes the report does not excuse.
+func (w Waiting) Counts() bool { return !w.Escalated || len(w.Unexcused()) > 0 }
+
 // Status is what status lists, and the row it takes for each document.
 type Status struct {
 	Changed, Suspect []Entry
@@ -129,11 +147,11 @@ type docState struct {
 }
 
 // Lists says whether the state has anything to list: an entry other than a
-// document waiting on the owner.
+// document waiting on the owner with nothing unexcused.
 func (s *Status) Lists() bool {
 	n := len(s.Changed) + len(s.Suspect) + len(s.Unexplained)
 	for _, w := range s.Waiting {
-		if !w.Escalated {
+		if w.Counts() {
 			n++
 		}
 	}

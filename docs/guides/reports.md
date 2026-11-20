@@ -24,7 +24,7 @@ A report is **open** while it has no Closing section.
 
 **A place that is gone.** A build may delete the artifact a report names, so a place need not exist. When the place of an open report is gone, `status` says so in a note, `note: report NAME: place gone: PLACE`, which changes neither its list nor its exit code. The place names its path in the case it is written, on every system: a place in another case is gone.
 
-**A place that moves.** `move` rewrites the place of every report that names the moved document, closed reports included: a path takes the new path, a link the new path relative to the report, with its `#section`. The rewritten reports are listed with the documents `move` changed and in the `rewritten` list of its event in the [history](project-reference.md#the-history). A path whose line does not hold the clean path, such as `./docs/spec/lending/return.md`, or whose new path holds white space, and a link whose new path would need `<` and `>`, stay as they are and then name a place that is gone.
+**A place that moves.** `move` rewrites the place of every report that names the moved document, closed reports included: a path takes the new path, a link the new path relative to the report, with its `#section`. The rewritten reports are listed with the files `move` changed and in the `reports` list of its event in the [history](project-reference.md#the-history). A path is rewritten where its line holds the clean path, so `./docs/spec/lending/return.md` becomes `./docs/spec/loans/return.md`. A path written otherwise, such as `docs/spec/lending/../lending/return.md`, a path whose new path holds white space, and a link whose new path would need `<` and `>`, stay as they are and then name a place that is gone.
 
 ```markdown
 # The fee for a late book
@@ -54,7 +54,8 @@ complete
 
 An open report whose violated property is not `none` and whose place is a document of the spec makes that document **waiting on report NAME** in [`status`](project-reference.md#status). It is then listed only as waiting, not as changed or suspect, and a `skip` note on it is left out; its neighbours are listed as before.
 
-- When every open report it waits on says `escalated` in its actions, the document **waits on the owner**: it is shown, and does not make `status` exit 1.
+- Waiting excuses only the need to build the document: having no row, or a change of its own text, its type or its links. A change of an artifact, a counter-check, a file of the evidence or a linked file of the spec folder, a `fail` and a conflict are listed in the entry and counted as usual.
+- When every open report it waits on says `escalated` in its actions, the document **waits on the owner**: it is shown, and does not make `status` exit 1 unless it has such a change.
 - Otherwise the waiting entry counts like any entry.
 - A report whose property is `none` blocks nothing: its action repairs the artifact, and the document is listed as the state says.
 
@@ -63,7 +64,7 @@ waiting: lending/return.md@5d0e9b11: report late-fee (escalated: waits on the ow
 0 changed, 0 suspect, 0 unexplained, 1 waiting, 1 of them on the owner
 ```
 
-A waiting entry reads `waiting: DOCUMENT@FINGERPRINT: report NAME`, with every report it waits on, and ` (escalated: waits on the owner)` when it waits on the owner. The summary adds `, N waiting` and `, N of them on the owner` when there are any. With `--json`, `status` lists `waiting` with `doc`, `fingerprint`, `reports`, `escalated` and `changes`, what it would list for the document otherwise, empty when nothing moved.
+A waiting entry reads `waiting: DOCUMENT@FINGERPRINT: report NAME`, with every report it waits on, ` (escalated: waits on the owner)` when it waits on the owner, and `: CHANGES` with every change, as a changed or suspect entry names them. The summary adds `, N waiting` and `, N of them on the owner` when there are any. With `--json`, `status` lists `waiting` with `doc`, `fingerprint`, `reports`, `escalated`, `changes`, what it would list for the document otherwise, empty when nothing moved, and `counts`, whether the entry makes `status` exit 1.
 
 ## Settings
 

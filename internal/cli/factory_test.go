@@ -76,9 +76,17 @@ func TestWaitingOnReports(t *testing.T) {
 	// Escalated, it waits on the owner, which does not make status fail.
 	write(t, dir, ".markitect/reports/late-fee.md", lendingReport("job read reader, 2026-11-18", place, "complete", "escalated\nCharge per day.\nCharge once.", ""))
 	code, out, _ = run("status", "-C", dir)
-	if code != ExitOK || !strings.Contains(out, ": report late-fee (escalated: waits on the owner)\n") || !strings.HasSuffix(out, ", 1 waiting, 1 of them on the owner\n") {
+	if code != ExitOK || !strings.Contains(out, ": report late-fee (escalated: waits on the owner): self\n") || !strings.HasSuffix(out, ", 1 waiting, 1 of them on the owner\n") {
 		t.Error(code, out)
 	}
+	// Waiting excuses only building it: a changed artifact counts, also on
+	// the owner.
+	write(t, dir, "src/returns.go", "package lending\n\nfunc Return() { late() }\n")
+	code, out, _ = run("status", "-C", dir)
+	if code != ExitFound || !strings.Contains(out, ": report late-fee (escalated: waits on the owner): self, file:src/returns.go, evidence:src/returns.go\n") {
+		t.Error(code, out)
+	}
+	write(t, dir, "src/returns.go", lending["src/returns.go"])
 	// A second open report that is not escalated makes it count again.
 	write(t, dir, ".markitect/reports/fee-limit.md", lendingReport("owner, 2026-11-19", "[Return](../../"+place+")", "consistent", "", ""))
 	waiting, _, code = waitingOf(t, dir)
@@ -127,7 +135,8 @@ func TestMoveRewritesThePlaceOfReports(t *testing.T) {
 		t.Error(got)
 	}
 	events := history(t, dir)
-	if last := events[len(events)-1]; last.Type != state.EventMove || !strings.Contains(strings.Join(last.Rewritten, " "), ".markitect/reports/late-fee.md") {
+	if last := events[len(events)-1]; last.Type != state.EventMove || strings.Join(last.Reports, " ") != ".markitect/reports/fee-limit.md .markitect/reports/late-fee.md" ||
+		strings.Contains(strings.Join(last.Rewritten, " "), ".markitect") {
 		t.Errorf("%+v", last)
 	}
 	if waiting, errs, _ := waitingOf(t, dir); len(errs) != 0 || len(waiting) != 2 || waiting[1].Doc != "loans/give-back.md" {

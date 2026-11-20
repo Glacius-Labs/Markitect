@@ -66,6 +66,9 @@ type waitingJSON struct {
 	Reports     []string `json:"reports"`
 	Escalated   bool     `json:"escalated"`
 	Changes     []string `json:"changes"`
+	// Counts says that it makes status fail: it does not wait on the owner,
+	// or something changed that the report does not excuse.
+	Counts bool `json:"counts"`
 }
 
 type placeGoneJSON struct {
@@ -149,11 +152,14 @@ func status(o options, stdout io.Writer) (int, error) {
 	}
 	onOwner := 0
 	for _, w := range s.Waiting {
-		doc.Waiting = append(doc.Waiting, waitingJSON{w.Doc, w.Fingerprint, w.Reports, w.Escalated, w.Changes})
+		doc.Waiting = append(doc.Waiting, waitingJSON{w.Doc, w.Fingerprint, w.Reports, w.Escalated, w.Changes, w.Counts()})
 		fmt.Fprintf(&b, "waiting: %s@%s: report %s", w.Doc, w.Fingerprint, strings.Join(w.Reports, ", report "))
 		if w.Escalated {
 			onOwner++
 			b.WriteString(" (escalated: waits on the owner)")
+		}
+		if len(w.Changes) > 0 {
+			b.WriteString(": " + strings.Join(w.Changes, ", "))
 		}
 		b.WriteString("\n")
 	}

@@ -30,7 +30,7 @@ A gap or contradiction in the spec is no verdict: it is a report, and the docume
 | **Changed** | The document's own text, one of its artifacts or its evidence moved, it has no row yet, or its verdict is `fail` | A builder realizes or repairs it, then a reviewer confirms it |
 | **Suspect** | A document it links to, or one that links to it, changed, or its type changed | A reviewer judges whether the change means something here, mostly without a builder |
 | **Unexplained** | A file is mapped to no document and not ignored, a file of a document that is gone included | The reviewer maps it when it confirms, or it is removed or ignored |
-| **Waiting on report X** | An open report about a gap or a contradiction in the spec concerns the document | Triage, or the owner when the report is escalated |
+| **Waiting on report X** | An open report about a gap or a contradiction in the spec concerns the document. It excuses only the need to build it: no row, or a change of its own text, its type or its links. A changed artifact, counter-check, evidence or linked file, and a `fail`, are listed and counted as usual, also while it waits on the owner | Triage, or the owner when the report is escalated |
 
 Links count in both directions, as suspect links do in DOORS: a changed rule reaches what it links and what links to it. "Applies to" is an ordinary section, and there is no binding by place. A changed type makes its documents suspect; a new required section missing from them is already an error of `check`.
 
@@ -38,7 +38,7 @@ Links count in both directions, as suspect links do in DOORS: a changed rule rea
 
 **`check` and `status` stay apart**, as `validate` and `plan` do. `check` compares nothing with artifacts; everything that compares spec and artifacts is in `status`. `status` gives no list while there are errors in the spec, the reports, the settings or the samples.
 
-`status` exits 1 when it lists anything. Documents waiting on the owner are shown and do not make it fail. On the main branch, where every spec change lands with its realization ([§8](the-factory.md#the-landing-rule)), `status` in CI is a check for drift: a changed, suspect or unexplained entry there came past the jobs. Given the state of the target branch, `status` applies the landing rule; given the states before and after a step and its role, it checks the write table ([§11](the-tool.md)).
+`status` exits 1 when it lists anything. Documents waiting on the owner are shown and do not make it fail, unless something changed that the report does not excuse. On the main branch, where every spec change lands with its realization ([§8](the-factory.md#the-landing-rule)), `status` in CI is a check for drift: a changed, suspect or unexplained entry there came past the jobs. Given the state of the target branch, `status` applies the landing rule; given the states before and after a step and its role, it checks the write table ([§11](the-tool.md)).
 
 ## Binding a verdict
 
