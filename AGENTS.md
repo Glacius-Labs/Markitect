@@ -1,6 +1,6 @@
 # Markitect agent entrypoint
 
-With Markitect, people architect their project in Markdown ([DEC-101](docs/decisions.md#dec-101-people-architect-their-project-in-markdown)). They maintain one typed spec of it. The `markitect` tool checks and analyses it like code and records what was verified; agents started by the user's own Claude Code session realize it and verify it.
+With Markitect, people architect their project in a typed, declarative specification language in Markdown ([DEC-119](docs/decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)). They maintain one spec of it. The `markitect` tool checks it and computes what is built and verified; jobs, started by a runner the user chooses, realize it and check it.
 
 **Before you assess or change the product's direction,** read, in this order:
 
@@ -14,6 +14,7 @@ With Markitect, people architect their project in Markdown ([DEC-101](docs/decis
 
 - Markitect itself has no spec. `.markitect/` in code and tests belongs to a target project and is handled with fixtures.
 - Fix a failure in how agents work with Markitect in the tool contract, not with more prompt text ([DEC-051](docs/decisions.md#dec-051-agents-get-tasks-not-process)).
+- The code, the guides in `docs/guides/` and the pages under `internal/` are still the 0.34.0 tool of the earlier concept; the [roadmap](docs/roadmap.md#where-main-is) says how they are rebuilt to the concept.
 - `/markitect-architect`, `/markitect-build`, `/markitect-review`, `/markitect-cleanup`, `/markitect-bughunt`, `/markitect-audit` and the routines start real agents: run them only on a committed test project, bounded, as CONTRIBUTING says.
 - Documentation is in English and describes only the current state, with one concept and no quotes.
 

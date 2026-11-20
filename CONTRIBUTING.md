@@ -90,7 +90,7 @@ Local checks and the independent review are the basis for a merge, and CI is opt
 
 **Real agent runs.** The skills `/markitect-architect`, `/markitect-build`, `/markitect-review`, `/markitect-cleanup`, `/markitect-bughunt` and `/markitect-audit`, and the routines, start real agents. Run them only on a committed test project, in your own Claude Code session or a worktree of that project. Before a run, name the project and its source commit, the limits, when to abort and the cleanup; after it, report what happened, failures included, in the PR it informs. The tool's commands start no agent and run anywhere.
 
-**Releases** follow [Releasing](docs/releasing.md) ([DEC-095](docs/decisions.md#dec-095-releases-a-plugin-and-a-binary-that-updates-itself)). There is no deployment.
+**Releases** follow [Releasing](docs/releasing.md) ([DEC-133](docs/decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version)). There is no deployment.
 
 ## Reporting
 
