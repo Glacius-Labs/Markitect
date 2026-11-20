@@ -410,3 +410,9 @@ func with(fsys fstest.MapFS, p, text string) fstest.MapFS {
 	out[p] = &fstest.MapFile{Data: []byte(text)}
 	return out
 }
+
+func TestMoveKeepsTheSlashOfAFolder(t *testing.T) {
+	fsys := mapFS(map[string]string{"a.md": "# A\n\nThe [api](dir/) and <a href=\"dir/\">the api</a>.\n"})
+	_, after := move(t, fsys, "a.md", "sub/a.md")
+	eq(t, text(after, "sub/a.md"), "# A\n\nThe [api](../dir/) and <a href=\"../dir/\">the api</a>.\n")
+}

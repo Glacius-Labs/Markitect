@@ -65,3 +65,27 @@ func TestEveryFileIsADocumentWithATitleAndLineFeeds(t *testing.T) {
 		t.Errorf("only %d files", n)
 	}
 }
+
+func TestEveryPackageHasReferencesAndQuestions(t *testing.T) {
+	entries, err := fs.ReadDir(FS(), "packages")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		refs, err := fs.ReadFile(FS(), "references/"+e.Name()+".md")
+		if err != nil {
+			t.Fatal(err)
+		}
+		types, _ := fs.Glob(FS(), "packages/"+e.Name()+"/*.md")
+		if rows := strings.Count(string(refs), "\n| ") - 1; rows != len(types) {
+			t.Errorf("%s: %d reference rows for %d types", e.Name(), rows, len(types))
+		}
+		questions, err := fs.ReadFile(FS(), "questions/"+e.Name()+".md")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n := strings.Count(string(questions), "\n- "); n < 5 || n > 10 {
+			t.Errorf("%s: %d questions", e.Name(), n)
+		}
+	}
+}

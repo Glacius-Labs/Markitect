@@ -4,6 +4,8 @@ import (
 	"io"
 	"sort"
 	"strings"
+
+	"github.com/Glacius-Labs/Markitect/internal/lang"
 )
 
 // showDocument is the JSON document of show. Later steps add the document's
@@ -176,6 +178,12 @@ func table(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
+	doc := tableOf(spec, t)
+	return output(o, stdout, doc, tableText(doc))
+}
+
+// tableOf is every document of the type t as a row.
+func tableOf(spec *lang.Spec, t *lang.Document) tableDocument {
 	doc := tableDocument{header: newHeader("table"), Type: t.Path, Columns: []string{}, Rows: []tableRow{}}
 	for _, s := range t.Declared() {
 		doc.Columns = append(doc.Columns, s.Name)
@@ -191,7 +199,7 @@ func table(o options, stdout io.Writer) (int, error) {
 		}
 		doc.Rows = append(doc.Rows, row)
 	}
-	return output(o, stdout, doc, tableText(doc))
+	return doc
 }
 
 func tableText(doc tableDocument) string {

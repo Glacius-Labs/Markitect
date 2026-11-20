@@ -90,6 +90,8 @@ Every command takes the spec folder first. A `DOCUMENT`, `TYPE`, `OLD`, `NEW` or
 | `markitect-next new SPECFOLDER TYPE PATH [TITLE]` | Creates a document of the type |
 | `markitect-next move SPECFOLDER OLD NEW` | Moves or renames a document and rewrites the links to it |
 | `markitect-next apply SPECFOLDER TEMPLATE [TARGET]` | Copies a template of the [library](library.md) into the spec |
+| `markitect-next topic SPECFOLDER [TOPIC]` | The signals of the spec, or the topic view of a document, a type or a folder ([signals](signals.md)) |
+| `markitect-next questions SPECFOLDER` | The question catalogs of the library packages the spec has ([signals](signals.md#question-catalogs)) |
 
 **Exit codes.** 0 when all is well, 1 when `check` found something, and 2 when the command could not run: an unknown command or flag, a wrong number of arguments, a spec folder that does not exist (`apply` creates it), an unknown document, a file that cannot be read, or a refused `new`, `move` or `apply`. A command that does not succeed changes nothing, also when writing fails partway, unless undoing fails as well, which it reports ([below](#commands-that-write)).
 
@@ -127,3 +129,4 @@ With `--json`, every command prints one document that starts with `format_versio
 | `new` | `path` |
 | `move` | `from`, `to` and `changed` |
 | `apply` | `documents` and `packages` |
+| `topic`, `questions` | As [signals](signals.md#commands) says |

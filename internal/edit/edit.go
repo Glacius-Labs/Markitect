@@ -180,6 +180,9 @@ func rewrite(d *lang.Document, list []lang.Ref, newPath func(lang.Ref) (string, 
 		if ref.Start < 0 {
 			return nil, refuse(d.Path + ": cannot rewrite the link at line " + strconv.Itoa(ref.Line))
 		}
+		if strings.HasSuffix(ref.Raw, "/") && !strings.HasSuffix(p, "/") {
+			p += "/" // a link to a folder stays one
+		}
 		if strings.Contains(ref.Dest, "%") || !ref.Angle && needsQuote(p) {
 			p = quote(p)
 		}

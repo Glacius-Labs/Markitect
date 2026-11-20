@@ -30,7 +30,8 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `language` | The spec language of the rebuilt tool over a supplied file system: documents, types, sections, links and check. | nothing | 1 |
 | `library` | The library built into the rebuilt tool: packages, templates and the report type. | nothing | 1 |
 | `editing` | The change sets of the rebuilt tool's commands that write a spec: new, move and apply, over supplied file systems. | `language` | 1 |
-| `command-line` | The command line of the rebuilt tool: its arguments, the spec folder it reads and writes, and its text and JSON output. | `language`, `library`, `editing` | 1 |
+| `signals` | The statements of a spec, its signals and the topic view of the rebuilt tool, over a parsed spec. | `language` | 1 |
+| `command-line` | The command line of the rebuilt tool: its arguments, the spec folder it reads and writes, and its text and JSON output. | `language`, `library`, `editing`, `signals` | 1 |
 | `entrypoint` | markitect-next, the rebuilt tool beside markitect until it replaces it. | `command-line` | 1 |
 | `maintenance` | The import gate and the code map, separate from product execution. | nothing | 1 |
 | `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 1 |
@@ -133,13 +134,19 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/library` | Package library is the library built into the tool: the packages of types, the templates that apply copies into a spec, and the report type, which the tool owns and never copies. | [docs/guides/library.md](../guides/library.md) |
+| `internal/library` | Package library is the library built into the tool: the packages of types, the templates that apply copies into a spec, the report type, which the tool owns and never copies, and per package its reference values and its question catalog, which the tool reads and never copies. | [docs/guides/library.md](../guides/library.md) |
 
 ## Editing
 
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/edit` | Package edit computes the changes of the commands that write a spec: new, move and apply. | [docs/guides/language-reference.md#commands-that-write](../guides/language-reference.md#commands-that-write) |
+
+## Signals
+
+| Package | Summary | Owning document |
+|---|---|---|
+| `internal/signals` | Package signals finds where reading a spec pays off: it splits the prose of the documents into statements, finds the marker words in them, computes the eight signals of the spec itself and gathers the topic view of a document, a type or a folder. | [docs/guides/signals.md](../guides/signals.md) |
 
 ## Command line
 
