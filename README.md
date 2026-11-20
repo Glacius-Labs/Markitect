@@ -34,14 +34,16 @@ The usual fixes have no measure. A session that checks whether everything fits h
 
 Markitect gives the project that statement, and agents build to it.
 
-**You architect in Markdown.** The spec is the plan of the whole project: one place you own, where what is written is binding. You decide what the project is, how it is divided and which rules hold, and an agent writes it down with you. The spec is typed prose: Definitions of a Kind, in Packages, with links that work like imports. The `markitect` tool checks its structure, never its meaning, as a compiler checks code.
+**You architect in Markdown.** The spec is the plan of the whole project: one place you own, where what is written is binding. You decide what the project is, how it is divided and which rules hold, and an agent writes it down with you. The spec is a typed, declarative specification language in Markdown: documents with a type and ordinary links, which say what should hold, not how. The `markitect` tool checks its structure, never its meaning.
 
-**Agents build to spec.** `markitect status` computes from the spec and the record of what was verified which Definitions a change reaches through their declared links, so the list of work does not depend on an agent's memory. A builder agent makes code, tests, configuration and documentation match the spec for that list. A reviewer agent with fresh context verifies every Definition on it against the spec and records a verdict with its evidence.
+**Agents build to spec.** `markitect status` computes from the spec and a state of what was confirmed which documents a change reaches, so the list of work does not depend on an agent's memory. A builder agent makes code, tests, configuration and documentation match the spec for that list, and a reviewer agent with fresh context confirms each document with evidence. Checks derived from the spec alone and planted control samples measure how well that checking works, so nobody has to read the work to trust it.
 
-Markitect builds on requirements traceability, architecture metrics and the conventions of Go's tools, and it works with Claude Code's own skills, subagents, hooks and worktrees. The [vision](docs/vision.md#why-markitect-exists) gives the full reasoning.
+Markitect builds on Terraform's declared state, requirements traceability with suspect links, and quality management, and it works with Claude Code's own plugins, skills, subagents and scheduled tasks. The [vision](docs/vision.md#why-markitect-exists) gives the full reasoning.
 
 > [!IMPORTANT]
 > **Early access.** The latest release runs the whole way of working on Claude Code, with tests. Real runs on real projects are only beginning, and commands, files and skills may still change. Try it on a small project you can throw away, read the [limits](#limits), and tell us in [Issues](https://github.com/Glacius-Labs/Markitect/issues) what worked and what broke.
+>
+> The quick start, how it works, the example and the install below describe the latest release, 0.34.0, which follows the earlier concept. The tool is being rebuilt to the current [concept](docs/concept/README.md), step by step ([roadmap](docs/roadmap.md#where-main-is)).
 
 ## Quick start
 
@@ -106,7 +108,7 @@ Markitect needs Claude Code. Pick one way to get the `markitect` command:
 
 ## Status
 
-Markitect is built, released and covered by tests. An earlier form of the build and review flow passed three small real changes, and the parallel workflow passed two real runs on a project of 6 Definitions, and a build in slices passed once on a project of 24 items; the first two slices of a spec of 158 items were built once. A review has found planted defects behind weakened tests on one small project. A real project and reliability on Sonnet over a series of changes come next ([roadmap](docs/roadmap.md#current-steps)).
+Markitect is built, released and covered by tests. An earlier form of the build and review flow passed three small real changes, and the parallel workflow passed two real runs on a project of 6 Definitions, and a build in slices passed once on a project of 24 items; the first two slices of a spec of 158 items were built once. A review has found planted defects behind weakened tests on one small project. The rebuild to the current concept comes next, then a lab test and a proof on a project that is not ours ([roadmap](docs/roadmap.md#current-steps)).
 
 ### Limits
 

@@ -1,6 +1,8 @@
 # The agents' rights
 
-`internal/guard` holds the rights of the four roles ([DEC-100](../../docs/decisions.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)): which role may write what and start whom, the hook that holds them before a tool call, and the hook's entries in a project's `.claude/settings.json`, which `internal/setup` writes. It reads no files and no environment: the command line reads the hook's input, the settings and the plugin's files and hands it their bytes.
+> This page describes the shipped 0.34.0 tool. The [concept](../../docs/concept/README.md) describes the target, and the rebuild replaces this page step by step ([roadmap](../../docs/roadmap.md#current-steps)).
+
+`internal/guard` holds the rights of the four roles ([DEC-100](https://github.com/Glacius-Labs/Markitect/blob/da1cf1bc54cb0b3fc7cc58c8ab194e8bbaee18d8/docs/decisions.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)): which role may write what and start whom, the hook that holds them before a tool call, and the hook's entries in a project's `.claude/settings.json`, which `internal/setup` writes. It reads no files and no environment: the command line reads the hook's input, the settings and the plugin's files and hands it their bytes.
 
 ## The hook
 
@@ -10,12 +12,12 @@ The guard never stops a call because it could not run: the project's hook exits 
 
 `update` puts the current groups in place of any group whose every handler ends in `markitect hook pretool`, whatever stands before the call, and keeps every other hook.
 
-The hook holds the rights of the four roles ([DEC-100](../../docs/decisions.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)) and guards the record and the spec, not the process:
+The hook holds the rights of the four roles ([DEC-100](https://github.com/Glacius-Labs/Markitect/blob/da1cf1bc54cb0b3fc7cc58c8ab194e8bbaee18d8/docs/decisions.md#dec-100-skills-are-named-after-the-activity-agents-after-the-role)) and guards the record and the spec, not the process:
 
 - **Only the reviewer agent runs `markitect mark`.** So the agent that built does not verify its own work. A call from the owner's session through Claude Code is refused too. The role's name is compared without regard to case.
 - **A subagent writes only what its role may.** The builder, and any subagent that is none of the four roles, writes code (every file outside `.markitect/`) and the registry pages (`registry.md` and `registry/*.md`); the architect writes the spec (the rest of `.markitect/`) and the registry pages; the reviewer and the auditor write nothing; and nobody writes `review.sum`, `history.jsonl` or `inbox.jsonl`, which only the tool writes, through `mark`, for the history also `run` and the hook, and for the inbox `inbox add` and `inbox close`, `.markitect/.gitattributes`, which only `init` and `update` write, or the files that steer the agents: the project's `.claude/settings.json` and `settings.local.json`, everything under `.claude/hooks/` and `.claude/rules/`, Markitect's skills, agents and workflows (`.claude/workflows/markitect-*`), the harness configuration `.markitect/harness.yaml`, which the architect may not write either, and `AGENTS.md`, `CLAUDE.md` and `CLAUDE.local.md`. So a builder cannot weaken a Definition during the work, write lines into the record, or drop the hook from work that comes back by itself. The owner's own session, where the owner architects, is no subagent and stays free.
 - **The builder starts only the reviewer,** the other roles start no agent, and no subagent starts the builder or the architect. Claude Code ignores the agent types a subagent's own `tools` list, so the hook holds this.
-- **No subagent runs a workflow,** since a workflow starts agents of every role ([DEC-103](../../docs/decisions.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)). The owner's session starts the parallel workflow, and its agents' calls come to the hook with their types like any subagent's.
+- **No subagent runs a workflow,** since a workflow starts agents of every role ([DEC-103](https://github.com/Glacius-Labs/Markitect/blob/da1cf1bc54cb0b3fc7cc58c8ab194e8bbaee18d8/docs/decisions.md#dec-103-claude-chooses-the-parallelism-per-run-through-a-shipped-workflow)). The owner's session starts the parallel workflow, and its agents' calls come to the hook with their types like any subagent's.
 
 Each refusal also goes into the project's history as a `refusal` event, with the agent, the tool, what the call named and why ([the history](../run/README.md#the-history)); the command line adapter writes it, and a failure to write it lets nothing through and stops nothing.
 
