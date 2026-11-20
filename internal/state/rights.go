@@ -138,10 +138,15 @@ func CheckStep(role string, before, after, control *Project) ([]Violation, error
 	deny := func(p, format string, args ...any) {
 		out = append(out, Violation{p, fmt.Sprintf(format, args...)})
 	}
-	// The reports whose place a move of this step rewrote.
+	// The reports whose place a move of this step rewrote, and what its moves
+	// make of the spec and the state.
 	var moved map[string]bool
-	if role == "architect" {
+	var mc moveCheck
+	if role == "architect" || role == "owner" {
 		if moved, err = movedReports(before.FS, after.FS); err != nil {
+			return nil, err
+		}
+		if mc, err = checkMoves(role, before, after); err != nil {
 			return nil, err
 		}
 	}
@@ -158,9 +163,9 @@ func CheckStep(role string, before, after, control *Project) ([]Violation, error
 		var msgs []string
 		switch kind {
 		case kindState:
-			msgs, err = stateRights(role, before, after)
+			msgs, err = stateRights(role, before.FS, after.FS, mc.rows)
 		case kindHistory:
-			msgs, err = historyRights(role, before.FS, after.FS)
+			msgs, err = historyRights(role, before.FS, after.FS, mc.problems)
 		case kindReport:
 			msgs, err = reportRights(role, p, before.FS, after.FS, moved)
 		}
@@ -319,30 +324,12 @@ func lines(fsys fs.FS, name string) ([]string, error) {
 // source move, each carried by a move event of the step from a row there
 // was. Rows are compared as the tool writes them, so a rewritten file
 // changes no row that stayed.
-func stateRights(role string, beforeP, afterP *Project) ([]string, error) {
-	before, after := beforeP.FS, afterP.FS
-	canonical := func(fsys fs.FS) (map[string]Row, []string, error) {
-		ls, err := lines(fsys, StateFile)
-		if err != nil {
-			return nil, nil, err
-		}
-		rows := map[string]Row{}
-		var bad []string
-		for _, l := range ls {
-			parsed, problems := ParseState([]byte(l))
-			if len(problems) > 0 || len(parsed) != 1 {
-				bad = append(bad, l)
-				continue
-			}
-			rows[string(parsed[0].line())] = parsed[0]
-		}
-		return rows, bad, nil
-	}
-	was, wasBad, err := canonical(before)
+func stateRights(role string, before, after fs.FS, moveRows map[string]bool) ([]string, error) {
+	was, wasBad, err := canonicalRows(before)
 	if err != nil {
 		return nil, err
 	}
-	is, isBad, err := canonical(after)
+	is, isBad, err := canonicalRows(after)
 	if err != nil {
 		return nil, err
 	}
@@ -367,26 +354,47 @@ func stateRights(role string, beforeP, afterP *Project) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	var old []Row
-	for _, r := range was {
-		old = append(old, r)
-	}
 	for _, k := range keys {
 		row := is[k]
 		switch {
 		case row.Source == "mark" && role == "reviewer":
-			if !verdictFor(row, events) {
+			switch {
+			case !verdictFor(row, events):
 				out = append(out, fmt.Sprintf("%s may not write a row with source mark without a verdict event of the step on it with its verdict and inputs: %s", role, row.Doc))
+			case row.Verdict == VerdictOK && len(row.Evidence) == 0:
+				out = append(out, fmt.Sprintf("%s may not write an ok row without evidence: %s", role, row.Doc))
+			case row.Verdict != VerdictOK && strings.TrimSpace(row.Reason) == "":
+				out = append(out, fmt.Sprintf("%s may not write a %s row without a reason: %s", role, row.Verdict, row.Doc))
 			}
 		case row.Source == "move" && (role == "architect" || role == "owner"):
-			if !carried(row, old, events, beforeP, afterP) {
-				out = append(out, fmt.Sprintf("%s may not write a row with source move that no move of the step carried from a row there was: %s", role, row.Doc))
+			if !moveRows[k] {
+				out = append(out, fmt.Sprintf("%s may not write a row with source move that is not what the moves of the step make of the rows there were: %s", role, row.Doc))
 			}
 		default:
 			out = append(out, fmt.Sprintf("%s may not write a row with source %s: %s", role, row.Source, row.Doc))
 		}
 	}
 	return out, nil
+}
+
+// canonicalRows are the rows of the state at fsys, each by its line as the
+// tool writes it, and the lines that are no row.
+func canonicalRows(fsys fs.FS) (map[string]Row, []string, error) {
+	ls, err := lines(fsys, StateFile)
+	if err != nil {
+		return nil, nil, err
+	}
+	rows := map[string]Row{}
+	var bad []string
+	for _, l := range ls {
+		parsed, problems := ParseState([]byte(l))
+		if len(problems) > 0 || len(parsed) != 1 {
+			bad = append(bad, l)
+			continue
+		}
+		rows[string(parsed[0].line())] = parsed[0]
+	}
+	return rows, bad, nil
 }
 
 // addedEvents are the events of the lines a step added to the history, in
@@ -425,92 +433,10 @@ func verdictFor(row Row, events []Event) bool {
 	return false
 }
 
-// carried says whether a row with source move is what the moves of the
-// step make of a row there was, as MoveRows carries it: the same verdict,
-// reason and evidence, its document and its type: and link: inputs at the
-// paths the moves lead to, and every hash as it was, but a self, type: or
-// link: hash of a document a move rewrote, which matched its text before
-// and matches it after.
-func carried(row Row, old []Row, events []Event, before, after *Project) bool {
-	var moves []Event
-	rewritten := map[string]bool{}
-	for _, e := range events {
-		if e.Type == EventMove {
-			moves = append(moves, e)
-			rewritten[e.To] = true
-			for _, p := range e.Rewritten {
-				rewritten[p] = true
-			}
-		}
-	}
-	if len(moves) == 0 {
-		return false
-	}
-	lead := func(p string) string {
-		for _, m := range moves {
-			if p == m.From {
-				p = m.To
-			}
-		}
-		return p
-	}
-	back := func(p string) string {
-		for i := len(moves) - 1; i >= 0; i-- {
-			if p == moves[i].To {
-				p = moves[i].From
-			}
-		}
-		return p
-	}
-	text := func(p *Project, doc string) string {
-		if d, ok := p.Spec.Document(doc); ok {
-			return Hash(d.Source)
-		}
-		return ""
-	}
-	target := func(key, doc string) string {
-		switch {
-		case key == InputSelf:
-			return doc
-		case strings.HasPrefix(key, InputType):
-			return strings.TrimPrefix(key, InputType)
-		case strings.HasPrefix(key, InputLink):
-			return strings.TrimPrefix(key, InputLink)
-		}
-		return ""
-	}
-next:
-	for _, o := range old {
-		if lead(o.Doc) != row.Doc || o.Verdict != row.Verdict || o.Reason != row.Reason ||
-			strings.Join(o.Evidence, "\n") != strings.Join(row.Evidence, "\n") || len(o.Inputs) != len(row.Inputs) {
-			continue
-		}
-		for k, h := range o.Inputs {
-			key := k
-			if t := target(k, o.Doc); t != "" && k != InputSelf {
-				key = strings.TrimSuffix(k, t) + lead(t)
-			}
-			now, ok := row.Inputs[key]
-			if !ok {
-				continue next
-			}
-			if now == h {
-				continue
-			}
-			t := target(key, row.Doc)
-			if t == "" || !rewritten[t] || h != text(before, back(t)) || now != text(after, t) {
-				continue next
-			}
-		}
-		return true
-	}
-	return false
-}
-
 // historyRights checks the lines a step added to the history, which is only
 // appended to: the reviewer adds verdict events, the architect and the owner
-// move events.
-func historyRights(role string, before, after fs.FS) ([]string, error) {
+// move events, each one a move made, as moveProblems says.
+func historyRights(role string, before, after fs.FS, moveProblems []string) ([]string, error) {
 	was, err := lines(before, HistoryFile)
 	if err != nil {
 		return nil, err
@@ -548,7 +474,7 @@ func historyRights(role string, before, after fs.FS) ([]string, error) {
 			out = append(out, fmt.Sprintf("%s may not add a move event: %s -> %s", role, events[0].From, events[0].To))
 		}
 	}
-	return out, nil
+	return append(out, moveProblems...), nil
 }
 
 // movedReports are the reports the move events a step added name.

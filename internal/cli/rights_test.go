@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/internal/state"
 )
 
 // stepCheck runs the step check of role on dir, after the step, against
@@ -258,13 +260,13 @@ func TestMoveRowsMustComeFromAMove(t *testing.T) {
 	state += `{"doc":"lending/n.md","verdict":"ok","source":"move","inputs":{"self":"` + self + `"},"evidence":[],"reason":""}` + "\n"
 	write(t, after, ".markitect/state.jsonl", state)
 	denied(t, "architect", before, after,
-		".markitect/state.jsonl: architect may not write a row with source move that no move of the step carried from a row there was: lending/n.md",
-		".markitect/state.jsonl: architect may not write a row with source move that no move of the step carried from a row there was: lending/return.md")
+		".markitect/state.jsonl: architect may not write a row with source move that is not what the moves of the step make of the rows there were: lending/n.md",
+		".markitect/state.jsonl: architect may not write a row with source move that is not what the moves of the step make of the rows there were: lending/return.md")
 	// Without a move in the step, no row with source move.
 	before, after = stepped(t)
 	state = read(t, after, ".markitect/state.jsonl")
 	write(t, after, ".markitect/state.jsonl", strings.Replace(state, `"doc":"roles/member.md","verdict":"ok","source":"mark"`, `"doc":"roles/member.md","verdict":"ok","source":"move"`, 1))
-	denied(t, "owner", before, after, ".markitect/state.jsonl: owner may not write a row with source move that no move of the step carried from a row there was: roles/member.md")
+	denied(t, "owner", before, after, ".markitect/state.jsonl: owner may not write a row with source move that is not what the moves of the step make of the rows there were: roles/member.md")
 }
 
 func TestMarkRowsNeedAVerdictEvent(t *testing.T) {
@@ -331,4 +333,99 @@ func TestControlFilesInAnyCase(t *testing.T) {
 	if code != ExitFound || len(msgs) != 2 || !strings.Contains(joined, "builder may not change a control file") || !strings.Contains(joined, "ci.yml: builder may not change a control file") {
 		t.Errorf("%d\n%s", code, joined)
 	}
+}
+
+// appendLine adds a line to a file of the project.
+func appendLine(t *testing.T, dir, p, line string) {
+	t.Helper()
+	write(t, dir, p, read(t, dir, p)+line+"\n")
+}
+
+// selfOf is the hash of a document's text as the state holds it.
+func selfOf(t *testing.T, dir, doc string) string {
+	t.Helper()
+	return state.Hash([]byte(read(t, dir, "docs/spec/"+doc)))
+}
+
+func TestMoveEventsMustBeMoves(t *testing.T) {
+	const denial = "architect may not write a row with source move that is not what the moves of the step make of the rows there were: "
+	moveEvent := func(from, to string, rewritten ...string) string {
+		list, _ := json.Marshal(append([]string{}, rewritten...))
+		return `{"time":"2099-01-01T00:00:00Z","type":"move","from":"` + from + `","to":"` + to + `","rewritten":` + string(list) + `}`
+	}
+	reself := func(dir, doc, was, now string) {
+		state := read(t, dir, ".markitect/state.jsonl")
+		line := state[strings.Index(state, `{"doc":"`+doc+`"`):]
+		line = line[:strings.Index(line, "\n")]
+		fixed := strings.Replace(strings.Replace(line, `"source":"mark"`, `"source":"move"`, 1), was, now, 1)
+		write(t, dir, ".markitect/state.jsonl", strings.Replace(state, line, fixed, 1))
+	}
+	// A: a move of a document onto itself, with an edit and its self.
+	before, after := stepped(t)
+	was := selfOf(t, after, "lending/return.md")
+	write(t, after, "docs/spec/lending/return.md", "# Return\n\nType: [Operation](../types/operation.md)\n\n## Rule\nA book comes back within four weeks.\n")
+	appendLine(t, after, ".markitect/history.jsonl", moveEvent("lending/return.md", "lending/return.md", "lending/return.md"))
+	reself(after, "lending/return.md", was, selfOf(t, after, "lending/return.md"))
+	code, msgs := stepCheck(t, "architect", before, after)
+	joined := strings.Join(msgs, "\n")
+	if code != ExitFound || !strings.Contains(joined, "lending/return.md -> lending/return.md: it moves a document onto itself") || !strings.Contains(joined, denial+"lending/return.md") {
+		t.Errorf("A: %d\n%s", code, joined)
+	}
+	// B: a copy presented as a move.
+	before, after = stepped(t)
+	write(t, after, "docs/spec/lending/give-back.md", read(t, after, "docs/spec/lending/return.md"))
+	appendLine(t, after, ".markitect/history.jsonl", moveEvent("lending/return.md", "lending/give-back.md"))
+	state := read(t, after, ".markitect/state.jsonl")
+	line := state[strings.Index(state, `{"doc":"lending/return.md"`):]
+	line = line[:strings.Index(line, "\n")]
+	write(t, after, ".markitect/state.jsonl", state+strings.Replace(strings.Replace(line, "lending/return.md", "lending/give-back.md", 1), `"source":"mark"`, `"source":"move"`, 1)+"\n")
+	code, msgs = stepCheck(t, "architect", before, after)
+	joined = strings.Join(msgs, "\n")
+	if code != ExitFound || !strings.Contains(joined, "lending/return.md is still there, and a copy is no move") || !strings.Contains(joined, denial+"lending/give-back.md") {
+		t.Errorf("B: %d\n%s", code, joined)
+	}
+	// C: a real move, and an edit of another document with its self
+	// refreshed as if the move had made it.
+	before, after = stepped(t)
+	if code, _, errOut := run("move", "-C", after, "lending/borrow.md", "loans/borrow.md"); code != ExitOK {
+		t.Fatal(code, errOut)
+	}
+	was = selfOf(t, after, "lending/return.md")
+	write(t, after, "docs/spec/lending/return.md", "# Return\n\nType: [Operation](../types/operation.md)\n\n## Rule\nA book comes back within four weeks.\n")
+	// Without a forged row, the edit is an ordinary change of the spec, and
+	// status lists what changed: here on the document that waits on the
+	// open report.
+	allowed(t, "architect", before, after)
+	if waiting, _, _ := waitingOf(t, after); len(waiting) != 1 || waiting[0].Doc != "lending/return.md" || strings.Join(waiting[0].Changes, " ") != "self" {
+		t.Errorf("C: %+v", waiting)
+	}
+	reself(after, "lending/return.md", was, selfOf(t, after, "lending/return.md"))
+	denied(t, "architect", before, after, ".markitect/state.jsonl: "+denial+"lending/return.md")
+}
+
+func TestOkRowsNeedEvidence(t *testing.T) {
+	// D: an ok row without evidence, with its verdict event.
+	before, after := stepped(t)
+	verdict(t, after, "roles/member.md", "ok", "--file", "src/member.go", "-e", "src/member.go:1")
+	write(t, after, ".markitect/state.jsonl", strings.Replace(read(t, after, ".markitect/state.jsonl"), `"evidence":["src/member.go:1"]`, `"evidence":[]`, 1))
+	denied(t, "reviewer", before, after, ".markitect/state.jsonl: reviewer may not write an ok row without evidence: roles/member.md")
+	// A fail without a reason.
+	before, after = stepped(t)
+	verdict(t, after, "roles/member.md", "fail", "--file", "src/member.go", "-m", "no card")
+	write(t, after, ".markitect/state.jsonl", strings.Replace(read(t, after, ".markitect/state.jsonl"), `"reason":"no card"`, `"reason":""`, 1))
+	denied(t, "reviewer", before, after, ".markitect/state.jsonl: reviewer may not write a fail row without a reason: roles/member.md")
+}
+
+func TestNestedRefChains(t *testing.T) {
+	// E: HEAD names a ref that names another ref; the reviewer moves its end.
+	_, after := stepped(t)
+	repository(t, after, "vendor/lib", "ref: refs/heads/real")
+	write(t, after, "vendor/lib/.git/refs/heads/real", strings.Repeat("a", 40)+"\n")
+	before := copyTree(t, after, false)
+	write(t, after, "vendor/lib/.git/refs/heads/real", strings.Repeat("b", 40)+"\n")
+	denied(t, "reviewer", before, after, "vendor/lib: reviewer may not change the commit of a nested repository")
+	// The end in packed-refs counts too.
+	remove(t, after, "vendor/lib/.git/refs/heads/real")
+	write(t, after, "vendor/lib/.git/packed-refs", strings.Repeat("a", 40)+" refs/heads/real\n")
+	allowed(t, "reviewer", before, after)
 }
