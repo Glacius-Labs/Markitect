@@ -227,7 +227,7 @@ func TestSections(t *testing.T) {
 		"twice.md": "# A\n\nType: [Role](role.md)\n\n## Duty\n\n## Duty\nsecond\n## Size ##\nz\n",
 		// No-break space is white space.
 		"blank.md": "# A\n\nType: [Role](role.md)\n\n## Duty\n\u00a0\n## Size\nz\n",
-		// An HTML comment is text of its section.
+		// HTML comments are no text, so a template's placeholder stays empty.
 		"comment.md": "# A\n\nType: [Role](role.md)\n\n## Duty\n<!-- to do -->\n## Size\nz\n",
 		// Headings in code are no sections.
 		"code.md": "# A\n\nType: [Role](role.md)\n\n```\n## Duty\na sample\n```\n\n`## Size ##`\n",
@@ -235,6 +235,7 @@ func TestSections(t *testing.T) {
 		`blank.md:5: section.empty: empty section "Duty"`,
 		`code.md:3: section.missing: missing section "Duty" required by role.md`,
 		`code.md:3: section.missing: missing section "Size" required by role.md`,
+		`comment.md:5: section.empty: empty section "Duty"`,
 		`h1.md:5: section.empty: empty section "Duty"`,
 		"h1.md:6: title: second level-1 heading",
 		`nested.md:3: section.missing: missing section "Size" required by role.md`,
@@ -265,6 +266,40 @@ func TestOptionalSections(t *testing.T) {
 	}
 	d := Parse("reservation.md", []byte(reservation))
 	expect(t, []string{renderDeclared(d.Declared())}, "Copy, Pickup branch?, Reminder?, Expiry?")
+}
+
+func TestSectionText(t *testing.T) {
+	loan := "# Loan\n\nOne copy lent.\n\n## Borrower\nThe member.\n\n## Due\nThe date.\n"
+	doc := func(body string) string { return "# Loan 9\n\nType: [Loan](loan.md)\n\n## Borrower\n" + body }
+	expect(t, checkFiles(t, map[string]string{
+		"loan.md": loan,
+		// Comments alone, in a block, on several lines, inline or unclosed, are no text.
+		"block.md":     doc("<!-- fill in -->\n\n<!--\nwho borrows\n-->\n\n## Due\n<!-- open"),
+		"inline.md":    doc("text <!-- note -->\n## Due\n  <!-- a --> <!-- b -->\n"),
+		"after.md":     doc("<!-- note --> Ada\n## Due\n<div></div>\n"),
+		"defs-last.md": doc("Ada\n\n## Due\n\n[r]: ../x.md\n[s]: other.md \"t\"\n"),
+		"defs-in.md":   doc("[r]: ../x.md\n\n## Due\n1 March\n"),
+	}),
+		`block.md:5: section.empty: empty section "Borrower"`,
+		`block.md:12: section.empty: empty section "Due"`,
+		`defs-in.md:5: section.empty: empty section "Borrower"`,
+		`defs-last.md:8: section.empty: empty section "Due"`,
+		`inline.md:7: section.empty: empty section "Due"`,
+	)
+}
+
+func TestDefinitionsAreNoBlocks(t *testing.T) {
+	expect(t, checkFiles(t, map[string]string{
+		// A link reference definition before the title leaves the title first.
+		"defined.md": "[r]: x.md\n# T\n\nSee [r].\n",
+		"x.md":       "# X\n",
+		// A footnote definition is no block either, and the links of a footnote that
+		// is referred to count; GitHub shows no other footnote.
+		"noted.md": "[^1]: [n](ghost-note.md)\n\n# Noted\n\nText[^1][^2].\n\n[^2]: Also [m](ghost-two.md).\n\n[^3]: [o](ghost-unused.md)\n",
+	}),
+		`noted.md:1: link.unresolved: no document at "ghost-note.md"`,
+		`noted.md:7: link.unresolved: no document at "ghost-two.md"`,
+	)
 }
 
 func TestSectionDeclaredTwice(t *testing.T) {

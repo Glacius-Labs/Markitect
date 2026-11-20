@@ -18,6 +18,7 @@ import (
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
+	east "github.com/yuin/goldmark/extension/ast"
 	"github.com/yuin/goldmark/text"
 	"github.com/yuin/goldmark/util"
 )
@@ -53,8 +54,8 @@ type Document struct {
 type Section struct {
 	Heading string
 	Line    int
-	// HasText is whether a block with a character other than white space
-	// stands under the heading.
+	// HasText is whether a block under the heading shows something other than
+	// white space and HTML comments.
 	HasText bool
 }
 
@@ -120,7 +121,7 @@ func cutOptional(heading string) (string, bool) {
 	return strings.TrimRightFunc(heading[:n], unicode.IsSpace), true
 }
 
-var markdown = goldmark.New(goldmark.WithExtensions(extension.GFM))
+var markdown = goldmark.New(goldmark.WithExtensions(extension.GFM, extension.Footnote))
 
 const typePrefix = "Type:"
 
@@ -160,7 +161,7 @@ func lineStarts(source []byte) []int {
 func (p *parser) read(root ast.Node) {
 	d := p.doc
 	p.typeLines = map[int]bool{}
-	first := root.FirstChild()
+	first := nextBlock(root.FirstChild())
 	if first != nil {
 		d.ContentLine = p.line(first.Pos())
 		if h, ok := first.(*ast.Heading); ok && h.Level == 1 {
@@ -170,7 +171,7 @@ func (p *parser) read(root ast.Node) {
 		}
 	}
 	if d.TitleLine != 0 {
-		if para, ok := first.NextSibling().(*ast.Paragraph); ok && para.Lines().Len() > 0 {
+		if para, ok := nextBlock(first.NextSibling()).(*ast.Paragraph); ok {
 			seg := para.Lines().At(0)
 			if line := p.lineText(seg); strings.HasPrefix(line, typePrefix) {
 				d.TypeLine = p.line(seg.Start)
@@ -199,6 +200,10 @@ func (p *parser) read(root ast.Node) {
 	section := ""
 	sec := -1
 	for n := root.FirstChild(); n != nil; n = n.NextSibling() {
+		if !isBlock(n) {
+			p.links(n, "")
+			continue
+		}
 		if h, ok := n.(*ast.Heading); ok && h.Level <= 2 {
 			line := p.line(h.Pos())
 			if h.Level == 1 {
@@ -218,14 +223,70 @@ func (p *parser) read(root ast.Node) {
 	}
 }
 
-// hasText reports whether the source of a top-level block, up to the next
-// block, holds a character other than white space.
-func (p *parser) hasText(block ast.Node) bool {
-	start, end := p.starts[p.line(block.Pos())-1], len(p.source)
-	if next := block.NextSibling(); next != nil {
-		end = p.starts[p.line(next.Pos())-1]
+// isBlock reports whether a top-level node is a block of the text: link
+// reference definitions are not, nor is the list that gathers the footnote
+// definitions at the end.
+func isBlock(n ast.Node) bool {
+	return n.Kind() != ast.KindLinkReferenceDefinition && n.Kind() != east.KindFootnoteList
+}
+
+// nextBlock returns n or the first block after it, or nil.
+func nextBlock(n ast.Node) ast.Node {
+	for n != nil && !isBlock(n) {
+		n = n.NextSibling()
 	}
-	return strings.TrimFunc(string(p.source[start:end]), unicode.IsSpace) != ""
+	return n
+}
+
+// hasText reports whether a block shows something: text other than white
+// space and HTML comments, code, a rule, an image or a link.
+func (p *parser) hasText(block ast.Node) bool {
+	found := false
+	_ = ast.Walk(block, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+		if !entering {
+			return ast.WalkContinue, nil
+		}
+		switch n := n.(type) {
+		case *ast.Text:
+			found = visible(string(n.Segment.Value(p.source)))
+		case *ast.String:
+			found = visible(string(n.Value))
+		case *ast.RawHTML:
+			found = visible(string(n.Segments.Value(p.source)))
+		case *ast.HTMLBlock:
+			s := string(n.Lines().Value(p.source))
+			if n.HasClosure() {
+				s += string(n.ClosureLine.Value(p.source))
+			}
+			found = visible(s)
+		case *ast.FencedCodeBlock, *ast.CodeBlock, *ast.ThematicBreak, *ast.CodeSpan, *ast.Image, *ast.Link, *ast.AutoLink:
+			found = true
+		}
+		if found {
+			return ast.WalkStop, nil
+		}
+		return ast.WalkContinue, nil
+	})
+	return found
+}
+
+// visible reports whether s holds a character other than white space outside
+// HTML comments; an unclosed comment runs to the end.
+func visible(s string) bool {
+	for {
+		before, rest, ok := strings.Cut(s, "<!--")
+		if strings.TrimFunc(before, unicode.IsSpace) != "" {
+			return true
+		}
+		if !ok {
+			return false
+		}
+		if _, after, closed := strings.Cut(rest, "-->"); closed {
+			s = after
+		} else {
+			return false
+		}
+	}
 }
 
 // links collects the links to .md paths in a block, outside the type lines.
