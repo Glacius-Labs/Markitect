@@ -25,16 +25,16 @@ Each role runs as its own step, with its own allowed tools. The runner lays out 
 |---|---|
 | Builder | Artifacts |
 | Counter-checker | The counter-check folder the settings name |
-| Reviewer | Verdict rows only, through `mark` |
-| Architect | The spec, the ignore file and the rows that `move` writes |
-| The job itself | Reports and results of control samples, with the job as source |
+| Reviewer | Verdict rows and verdict events only, through `mark` |
+| Architect | The spec, the ignore file, and the rows, events and report places that `move` writes |
+| The job itself | Reports with the job or intake as source, the prevention of reports, and results of control samples |
 | Triage | Rating, actions and closing in reports |
 | Owner, on a branch from a conversation | What the conversation changes, such as the spec and artifacts, plus the control files and reports with the owner as source; never verdict rows |
-| Reader, sampler | Nothing that lands, but the sampler's list of planted deviations, which the job writes |
+| Reader, sampler, intake | Nothing that lands; the job writes the sampler's list of planted deviations and the intake's report |
 
 The write table ships with the tool, and a project may only narrow it in its settings.
 
-**Control files** are the write table, the settings, the version, the spec path, the learned rules and the CI definition. The tool reads them from the target branch, not from the branch that wants to land, so a job cannot widen its own rights. A verdict row that did not come from the reviewer's step keeps the branch from landing.
+**Control files** are the write table, the settings, the version, the spec path, the learned rules and the CI definition, which the settings name. Only the owner changes them. The tool reads them from the target branch, not from the branch that wants to land, so a job cannot widen its own rights. A verdict row that did not come from the reviewer's step keeps the branch from landing.
 
 **Where the check is a fact.** In CI the runner is a script that no agent can change, and it records the states out of every agent's reach; there the check is a fact, and a required check that a job cannot skip. In a session or a scheduled task the runner is Claude itself; there the check makes shortcuts visible and proves nothing. Markitect guards against forgetting and shortcuts, and against a deliberate bypass only by making it visible.
 

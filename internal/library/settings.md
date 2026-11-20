@@ -12,4 +12,7 @@ The folder of the counter-checks: one path below the project folder, outside the
 How often each job runs: a line `JOB: TEXT` per job, the text read by the runners.
 
 ## Write table (optional)
-What each role may write, narrower than the table the tool ships: lines `ROLE: PATTERN`, each pattern written like a line of a `.gitignore` file.
+What each role may write, narrower than the table the tool ships: lines `ROLE: PATTERN`, each pattern written like a line of a `.gitignore` file, the role one of the roles above, `job` or `owner`.
+
+## CI (optional)
+The files of the CI definition, a control file only the owner writes: a pattern per line, written like a line of a `.gitignore` file. Without this section it is `.github/workflows/`.

@@ -35,6 +35,10 @@ const (
 // Roles are the roles the settings and the sources of reports name.
 var Roles = []string{"architect", "builder", "reviewer", "counter-checker", "sampler", "reader", "triage", "intake"}
 
+// StepRoles are the roles of the steps whose writes the write table holds:
+// the roles, the job itself and the owner.
+var StepRoles = append(append([]string(nil), Roles...), "job", "owner")
+
 // Properties are the values of a report's violated property: the five
 // properties of a good spec, correct, and none for an artifact that deviates
 // from a spec that holds.
@@ -100,7 +104,13 @@ type Settings struct {
 	// folder, "" when the settings name none.
 	CounterChecks string
 	WriteTable    []WriteRule
+	// CI are the patterns of the CI definition, a control file; DefaultCI
+	// when the settings have no CI section.
+	CI []string
 }
+
+// DefaultCI is the CI definition when the settings name none.
+var DefaultCI = []string{".github/workflows/"}
 
 // WriteRule is one line of the settings' write table.
 type WriteRule struct{ Role, Pattern string }
@@ -580,7 +590,7 @@ var (
 
 // readSettings reads the values of the settings.
 func (f *Factory) readSettings(p *Project, d *lang.Document) *Settings {
-	s := &Settings{Doc: d, Models: map[string]string{}, Cadence: map[string]string{}}
+	s := &Settings{Doc: d, Models: map[string]string{}, Cadence: map[string]string{}, CI: DefaultCI}
 	bad := func(l lang.SourceLine, format string, args ...any) {
 		f.add(d.Path, l.Line, CodeSettingsForm, format, args...)
 	}
@@ -637,8 +647,8 @@ func (f *Factory) readSettings(p *Project, d *lang.Document) *Settings {
 		switch {
 		case m == nil:
 			bad(l, "write table: write ROLE: PATTERN")
-		case !oneOf(m[1], Roles):
-			bad(l, "write table: %s is no role; the roles are %s", m[1], strings.Join(Roles, ", "))
+		case !oneOf(m[1], StepRoles):
+			bad(l, "write table: %s is no role; the roles are %s", m[1], strings.Join(StepRoles, ", "))
 		default:
 			pattern := unquote(strings.TrimSpace(m[2]))
 			if msg := patternProblem(pattern); msg != "" {
@@ -646,6 +656,16 @@ func (f *Factory) readSettings(p *Project, d *lang.Document) *Settings {
 				continue
 			}
 			s.WriteTable = append(s.WriteTable, WriteRule{m[1], pattern})
+		}
+	}
+	if vs, has := values(d, "CI"); has {
+		s.CI = nil
+		for _, l := range vs {
+			if msg := patternProblem(l.Text); msg != "" {
+				bad(l, "ci: %s: %s", l.Text, msg)
+				continue
+			}
+			s.CI = append(s.CI, l.Text)
 		}
 	}
 	return s

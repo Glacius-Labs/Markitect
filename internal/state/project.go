@@ -3,8 +3,9 @@
 // its spec, the files of the project without what its ignore files exclude,
 // the hash of a file, the state: its rows, what status lists and the rows a
 // mark or a move leaves, the history, the reports, the settings and the
-// results of control samples with the forms of their values, the comparison
-// of two projects, the change signals of the history and the figures of the
+// results of control samples with the forms of their values, the write
+// table with the step check and the landing check, the comparison of two
+// projects, the change signals of the history and the figures of the
 // factory. It reads only the file system it is handed, so that two projects,
 // such as two states to compare, load the same way.
 //

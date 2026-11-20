@@ -45,6 +45,12 @@ const usage = `usage: markitect-next COMMAND ARGUMENTS [-C PROJECT] [--json]
   questions                   the questions of the packages the spec has
   status                      what is changed, suspect, unexplained or waiting
                               on a report
+  status --step ROLE --before DIR [--target DIR]
+                              what a step of ROLE wrote since DIR against the
+                              write table, read from the target or DIR
+  status --target DIR         whether the branch lands: what its status shows
+                              that the target DIR's does not; the tests and
+                              the counter-checks are the runner's to run
   mark DOCUMENT@FINGERPRINT VERDICT [--file PATH]... [--check PATH]...
        [-e EVIDENCE]... [-m REASON]
                               bind ok, fail or skip to the state status showed
@@ -111,6 +117,10 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		err = fmt.Errorf("wrong number of arguments\n\n%s", usage)
 	case o.specSet && name != "init":
 		err = errors.New("--spec is a flag of init")
+	case o.statusFlags && name != "status":
+		err = errors.New("--step, --before and --target are flags of status")
+	case o.step != "" && o.before == "" || o.before != "" && o.step == "":
+		err = errors.New("--step and --before go together")
 	case o.markFlags && name != "mark":
 		err = errors.New("--file, --check, -e and -m are flags of mark")
 	}
@@ -152,7 +162,11 @@ type options struct {
 	files, checks, evidence []string
 	reason                  string
 	reasonSet, markFlags    bool
-	positional              []string
+	// step, before and target are the flags of status, statusFlags whether
+	// any was given.
+	step, before, target string
+	statusFlags          bool
+	positional           []string
 }
 
 func parse(args []string) (options, error) {
@@ -197,6 +211,15 @@ func parse(args []string) (options, error) {
 			var v string
 			v, err = value(a)
 			o.evidence, o.markFlags = append(o.evidence, v), true
+		case a == "--step" || a == "-step":
+			o.step, err = value(a)
+			o.statusFlags = true
+		case a == "--before" || a == "-before":
+			o.before, err = value(a)
+			o.statusFlags = true
+		case a == "--target" || a == "-target":
+			o.target, err = value(a)
+			o.statusFlags = true
 		case a == "-m" || a == "--reason":
 			o.reason, err = value(a)
 			o.reasonSet, o.markFlags = true, true

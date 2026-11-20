@@ -1,0 +1,56 @@
+# Rights and landing
+
+What each role of a job may change, how the rebuilt tool `markitect-next` checks a step against it, and how it checks whether a branch lands ([DEC-127](../decisions.md#dec-127-one-landing-rule-and-a-spec-change-lands-with-its-realization), [DEC-132](../decisions.md#dec-132-markitect-is-a-tool-jobs-and-runners)). [Rights come from the steps](../concept/jobs-and-runners.md#rights-come-from-the-steps) and [the landing rule](../concept/the-factory.md#the-landing-rule) in the concept say what they are for; this page says precisely what the tool checks. The examples are a small lending library.
+
+## The write table
+
+The write table ships with the tool. A step runs as one role, and its role may change only what the table gives it, between the project before the step and the project after it.
+
+| Role | May change |
+|---|---|
+| `builder` | Artifacts: any file outside the spec folder, `.markitect/`, the counter-check folder and the control files |
+| `counter-checker` | Only files in the counter-check folder the settings name; nothing when they name none |
+| `reviewer` | Only `.markitect/state.jsonl` and `.markitect/history.jsonl`: every row it adds or changes has the source `mark`, and every line it adds to the history is a `verdict` event. No other file |
+| `architect` | The spec folder and `.markitect/ignore`; rows with the source `move` and `move` events; in reports, only a place that a `move` event of the step names in its `reports` |
+| `job` | The job itself, which the runner writes from an agent's answer: new reports whose source is a job or `intake`, the Prevention section of reports, and files in `.markitect/samples/` |
+| `triage` | In reports there were, only the Rating, Actions and Closing sections, a closing that names a duplicate included |
+| `owner` | A branch from a conversation: everything, the control files and new reports with the owner as source included, but never a row with the source `mark` and never a `verdict` event |
+| `reader`, `sampler`, `intake` | Nothing. The job writes the sampler's list of planted deviations and the intake's report |
+
+**Intake** is a job that reads a signal from outside isolated and writes only a report of fixed form ([intake](../concept/reports-and-actions.md#intake)). Its agent writes nothing; the job writes the report from its answer, with `intake` as the source, so the role `intake` has no rights and the step `job` writes its report.
+
+**Control files** are `.markitect/version`, `.markitect/spec`, `.markitect/settings.md`, `.markitect/.gitattributes`, `.markitect/rules.md`, which holds the rules learned of the owner's decisions, and the CI definition: the files the [settings' CI section](reports.md#settings) names, by default `.github/workflows/`. Only the owner changes them. Any other file of `.markitect/`, outside `reports/` and `samples/`, is the owner's too.
+
+**The history is only appended to.** No role, the owner included, removes a line of it.
+
+**Narrowing.** A project narrows the table with lines `ROLE: PATTERN` in the settings' [Write table](reports.md#settings), written like the lines of a `.gitignore` file at the top of the project. A role with such lines may change only a file both the shipped table and its patterns allow: a pattern takes a file as `.gitignore` would exclude it, by itself or by a folder above it, and as there, a negation brings back no file whose folder a pattern takes. So `builder: src/*` with `builder: !src/vendor/` lets the builder change `src/loans.go` and not `src/vendor/lib.go`. A role without lines keeps the shipped table.
+
+## The step check
+
+`markitect-next status --step ROLE --before DIR [--target DIR]` checks what a step of ROLE changed. The project after the step is the one the command works in, and DIR is the project as it was before the step, a folder with `.markitect/version` that the runner lays out, as for [`compare`](project-reference.md#compare); the tool uses no Git. It changes nothing.
+
+- **What it compares.** The files Git keeps of both projects: the files of the [walk](project-reference.md#the-walk) with what `.markitect/ignore` excludes, since that file says only what the project does not explain, and every file of `.markitect/`. What `.gitignore` excludes does not land and is not compared. A file is changed when it is new, gone, or its [hash](project-reference.md#hashing) differs, so CRLF and LF do not count. The state is compared by row, as the tool writes rows, the history by line, and a report by section.
+- **Where the table is read from.** The control files, the spec folder, the counter-check folder, the CI definition and the narrowing are read from `--target` when it is given, and otherwise from `--before`; never from the project after the step, so a step cannot widen its own rights.
+- **What it prints.** One line per change the table denies, `PATH: write.denied: ROLE may not …`, naming the row's document or the event for the state and the history, then `step ROLE: N changes the write table denies`. It exits 1 when there is any, 2 for an unknown role or settings with errors.
+
+```text
+docs/spec/lending/return.md: write.denied: builder may not change the spec
+.markitect/state.jsonl: write.denied: architect may not write a row with source mark: lending/borrow.md
+step builder: 2 changes the write table denies
+```
+
+## The landing check
+
+`markitect-next status --target DIR` checks whether the branch the command works in lands on the target, the project DIR of the target branch. It takes `status` on both, each with its [waiting entries](reports.md#waiting-on-a-report), and compares their entries by document, or file, and kind: changed, suspect, unexplained and waiting. Fingerprints do not count. Every entry of the branch that the target does not show keeps it from landing, apart from documents waiting on the owner with no change their reports do not excuse, which land unbuilt and visibly waiting. It prints one line per such entry, `adds KIND: DOCUMENT: CHANGES`, then `landing: N entries the target does not show`, and exits 1 when there is any. While `check` finds errors on the branch, it gives no answer and exits 1.
+
+```text
+adds changed: roles/member.md: self
+adds suspect: lending/borrow.md: link:roles/member.md
+landing: 2 entries the target does not show; the tests and the counter-checks are the runner's to run
+```
+
+The tests and the counter-checks are the runner's part of the landing rule: the tool runs nothing. `--step` and `--target` combine: the command then checks the step against the target's table, and the landing. With `--json`, `status` with either flag prints `step`, the role or empty, `errors`, `violations`, with `file`, `line`, 0, `code` and `message`, `landing`, whether it checked the landing, and `added`, with `kind`, `doc` and `changes`.
+
+## How firm it is
+
+In CI the runner is a script no agent can change, which lays out the states out of every agent's reach: there the checks are a fact, and a required check a job cannot skip. In a session or a scheduled task the runner is Claude itself, which could lay out a state that is not the one before the step: there the checks make shortcuts visible and prove nothing ([where the check is a fact](../concept/jobs-and-runners.md#rights-come-from-the-steps)).

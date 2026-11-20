@@ -75,7 +75,8 @@ The settings are `.markitect/settings.md`, of the settings type. Every section i
 | Models | A line `ROLE: MODEL` per role, MODEL one word: the model the runner gives the role |
 | Counter-checks | One folder below the project folder, outside the spec folder, `.markitect/` and any `.git` folder. It need not exist yet |
 | Cadence | A line `JOB: TEXT` per job, the text read by the runners |
-| Write table | Lines `ROLE: PATTERN`, each pattern written like a line of a `.gitignore` file, which narrow what the role may write. The tool checks that each parses: it names something, every `[` is closed, every class such as `[:digit:]` is one Git knows, and it does not end in a lone backslash. The check of the steps against the write table comes with step 4 of the [roadmap](../roadmap.md#current-steps) |
+| Write table | Lines `ROLE: PATTERN`, ROLE one of the roles, `job` or `owner`, each pattern written like a line of a `.gitignore` file, which narrow what the role may write ([narrowing](rights.md#the-write-table)). The tool checks that each parses: it names something, every `[` is closed, every class such as `[:digit:]` is one Git knows, and it does not end in a lone backslash |
+| CI | The files of the CI definition, a [control file](rights.md#the-write-table): a pattern per line, written like a line of a `.gitignore` file, checked as the write table's are. Without the section it is `.github/workflows/` |
 
 The roles are `architect`, `builder`, `reviewer`, `counter-checker`, `sampler`, `reader`, `triage` and `intake`. A role or a job named twice in one section is an error.
 

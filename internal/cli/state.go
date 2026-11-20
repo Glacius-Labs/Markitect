@@ -101,6 +101,9 @@ func (d diagnostic) String() string {
 }
 
 func status(o options, stdout io.Writer) (int, error) {
+	if o.statusFlags {
+		return statusChecks(o, stdout)
+	}
 	w, err := load(o)
 	if err != nil {
 		return ExitFailed, err
