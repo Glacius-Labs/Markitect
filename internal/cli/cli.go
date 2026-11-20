@@ -46,6 +46,9 @@ const usage = `usage: markitect-next COMMAND ARGUMENTS [-C PROJECT] [--json]
   mark DOCUMENT@FINGERPRINT VERDICT [--file PATH]... [--check PATH]...
        [-e EVIDENCE]... [-m REASON]
                               bind ok, fail or skip to the state status showed
+  compare OLD [NEW]           what is new, gone, moved, changed or suspect in NEW,
+                              by default this project, against the project OLD
+  figures [--all]             the change signals computed from the history
   version                     the tool's version, and whether the project pins it
 
 The project is the nearest folder, from the working directory upward, that
@@ -75,6 +78,8 @@ var commands = map[string]command{
 	"version":   {0, 0, version},
 	"status":    {0, 0, status},
 	"mark":      {2, 2, mark},
+	"compare":   {1, 2, compare},
+	"figures":   {0, 0, figures},
 }
 
 // Run runs the command line args, without the program name, and returns the
