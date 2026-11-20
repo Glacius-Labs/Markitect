@@ -39,8 +39,8 @@ func TestLauncherChild(t *testing.T) {
 	if os.Getenv(launcherEnv) == "" {
 		t.Skip("only run by the launcher tests")
 	}
+	// It returns, so that TestMain removes its temporary cache folder.
 	fmt.Printf("child: plugin %s\n", os.Getenv(pluginEnv))
-	os.Exit(0)
 }
 
 // testVersion is the release the tests serve. The plugin of the repository says
