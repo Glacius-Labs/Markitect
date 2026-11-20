@@ -19,14 +19,16 @@ type moveCheck struct {
 
 // checkMoves replays the move events a step added, in their order, on the
 // spec before the step, as move computes them, and carries the rows of the
-// state before through each, as move carries them. A move event is made by
-// a move when its document is one before it and its new path none, the two
-// differ, the document is gone after the step unless a later move brought
-// it back, and every document it names as rewritten, its new path
-// included, has after the step what the replay makes of it, line ends as
-// hashing reads them. Any other change of the spec in the step is an
-// ordinary change of the spec, and gets no row with source move. When an
-// event is no move made, no row with source move stands.
+// state before through each, as move carries them, with the replayed
+// texts. A move event is made by a move when, where the replay stands before
+// it, its document is there and its new path free, and the two differ; and
+// when, at the end of the replay, every path a move led to that is still
+// there is a document after the step, and every path a move left that is
+// not is gone after it. Paths between moves need not be anywhere. The texts
+// after the step may differ from the replay: an edit beside a move is an
+// ordinary change of the spec, and its document keeps the row the move
+// carried, with the replayed hash. When an event is no move made, no row
+// with source move stands.
 func checkMoves(role string, before, after *Project) (moveCheck, error) {
 	mc := moveCheck{rows: map[string]bool{}}
 	events, err := addedEvents(before.FS, after.FS)
@@ -46,7 +48,7 @@ func checkMoves(role string, before, after *Project) (moveCheck, error) {
 	for _, d := range before.Spec.Documents {
 		texts[d.Path] = d.Source
 	}
-	named := map[string]bool{}
+	moved := map[string]bool{}
 	var froms []string
 	deny := func(e Event, format string, args ...any) {
 		mc.problems = append(mc.problems, fmt.Sprintf("%s may not add a move event that no move made: %s -> %s: %s", role, e.From, e.To, fmt.Sprintf(format, args...)))
@@ -94,24 +96,18 @@ func checkMoves(role string, before, after *Project) (moveCheck, error) {
 		}
 		rows = MoveRows(rows, m.From, m.To, rewritten)
 		froms = append(froms, e.From)
-		named[e.To] = true
-		for _, p := range e.Rewritten {
-			named[p] = true
-		}
+		moved[e.To] = true
 	}
 	var paths []string
-	for p := range named {
-		paths = append(paths, p)
+	for p := range moved {
+		if _, still := texts[p]; still {
+			paths = append(paths, p)
+		}
 	}
 	sort.Strings(paths)
 	for _, p := range paths {
-		d, ok := after.Spec.Document(p)
-		text, replayed := texts[p]
-		switch {
-		case !ok || !replayed:
-			mc.problems = append(mc.problems, fmt.Sprintf("%s may not add a move event that no move made: %s is not where the moves lead", role, p))
-		case Hash(d.Source) != Hash(text):
-			mc.problems = append(mc.problems, fmt.Sprintf("%s may not add a move event that no move made: %s is not what the moves make of it", role, p))
+		if _, ok := after.Spec.Document(p); !ok {
+			mc.problems = append(mc.problems, fmt.Sprintf("%s may not add a move event that no move made: %s, where the moves lead, is no document", role, p))
 		}
 	}
 	for _, p := range froms {

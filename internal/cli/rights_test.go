@@ -429,3 +429,43 @@ func TestNestedRefChains(t *testing.T) {
 	write(t, after, "vendor/lib/.git/packed-refs", strings.Repeat("a", 40)+" refs/heads/real\n")
 	allowed(t, "reviewer", before, after)
 }
+
+func TestHonestMovesPass(t *testing.T) {
+	mv := func(dir, from, to string) {
+		t.Helper()
+		if code, _, errOut := run("move", "-C", dir, from, to); code != ExitOK {
+			t.Fatal(code, errOut)
+		}
+	}
+	// L: a chain of moves; the path between them is nowhere after.
+	before, after := stepped(t)
+	mv(after, "lending/borrow.md", "middle/borrow.md")
+	mv(after, "middle/borrow.md", "loans/borrow.md")
+	allowed(t, "architect", before, after)
+	// A chain with a forged refreshed row is still denied.
+	rows := read(t, after, ".markitect/state.jsonl")
+	line := rows[strings.Index(rows, `{"doc":"roles/member.md"`):]
+	line = line[:strings.Index(line, "\n")]
+	write(t, after, "docs/spec/roles/member.md", "# Member\n\nA card holder with a card.\n")
+	forged := strings.Replace(strings.Replace(line, `"source":"mark"`, `"source":"move"`, 1),
+		state.Hash([]byte("# Member\n\nA card holder.\n")), selfOf(t, after, "roles/member.md"), 1)
+	write(t, after, ".markitect/state.jsonl", strings.Replace(rows, line, forged, 1))
+	if code, msgs := stepCheck(t, "architect", before, after); code != ExitFound || len(msgs) != 1 || !strings.Contains(msgs[0], "roles/member.md") {
+		t.Errorf("forged chain: %d %v", code, msgs)
+	}
+	// M: there and back again.
+	before, after = stepped(t)
+	mv(after, "lending/borrow.md", "lending/b2.md")
+	mv(after, "lending/b2.md", "lending/borrow.md")
+	allowed(t, "architect", before, after)
+	// O: a move, and an edit of a document the move rewrote: an ordinary
+	// change of the spec, which the landing check lists as changed.
+	before, after = stepped(t)
+	mv(after, "lending/borrow.md", "loans/borrow.md")
+	write(t, after, "docs/spec/loans/borrow.md", strings.Replace(read(t, after, "docs/spec/loans/borrow.md"), "five", "six", 1))
+	allowed(t, "architect", before, after)
+	code, out, _ := run("status", "-C", after, "--target", before)
+	if code != ExitFound || !strings.Contains(out, "adds changed: loans/borrow.md: self\n") {
+		t.Error(code, out)
+	}
+}
