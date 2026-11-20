@@ -28,7 +28,7 @@ type Comparison struct {
 	Changed []ChangedDoc
 	// Suspect are the documents whose own text is the same, while a document
 	// they link to, one that links to them, or their type changed, is new,
-	// is gone or moved.
+	// is gone or moved, or a file of the spec folder they link changed.
 	Suspect []SuspectDoc
 	// Verdicts are the documents of the newer project whose verdict or
 	// artifacts differ from the older one's.
@@ -144,6 +144,40 @@ func Compare(older, newer *Snapshot) *Comparison {
 			c.Suspect = append(c.Suspect, SuspectDoc{Doc: d.Path, Because: sortedKeys(because)})
 		}
 	}
+	// Linked files of the spec folder that changed make their documents
+	// suspect.
+	for _, d := range newSpec.Documents {
+		if touched[d.Path] {
+			continue
+		}
+		var because []string
+		was, is := older.Status.assets(d.Path), newer.Status.assets(d.Path)
+		for k, h := range is {
+			if was[k] != h {
+				because = append(because, k)
+			}
+		}
+		for k := range was {
+			if _, ok := is[k]; !ok {
+				because = append(because, k)
+			}
+		}
+		if len(because) == 0 {
+			continue
+		}
+		found := false
+		for i := range c.Suspect {
+			if c.Suspect[i].Doc == d.Path {
+				c.Suspect[i].Because = append(c.Suspect[i].Because, because...)
+				sort.Strings(c.Suspect[i].Because)
+				found = true
+			}
+		}
+		if !found {
+			sort.Strings(because)
+			c.Suspect = append(c.Suspect, SuspectDoc{Doc: d.Path, Because: because})
+		}
+	}
 	// Verdicts, for every document of the newer project.
 	for _, d := range newSpec.Documents {
 		from := d.Path
@@ -179,6 +213,20 @@ func Compare(older, newer *Snapshot) *Comparison {
 	sort.Slice(c.Suspect, func(i, j int) bool { return c.Suspect[i].Doc < c.Suspect[j].Doc })
 	sort.Slice(c.Verdicts, func(i, j int) bool { return c.Verdicts[i].Doc < c.Verdicts[j].Doc })
 	return c
+}
+
+// assets are a document's linked files of the spec folder with their
+// hashes, as status read them.
+func (s *Status) assets(doc string) map[string]string {
+	out := map[string]string{}
+	if d, ok := s.docs[doc]; ok {
+		for k, h := range d.current {
+			if strings.HasPrefix(k, InputAsset) {
+				out[k] = h
+			}
+		}
+	}
+	return out
 }
 
 // textDiff is the diff of a document's text in two projects, with its file

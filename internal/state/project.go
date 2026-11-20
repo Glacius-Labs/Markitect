@@ -2,8 +2,9 @@
 // at the project folder: the layout of .markitect/, the project loaded with
 // its spec, the files of the project without what its ignore files exclude,
 // the hash of a file, the state: its rows, what status lists and the rows a
-// mark or a move leaves, and the history. It reads only the file system it
-// is handed, so that two projects, such as two states to compare, load the
+// mark or a move leaves, the history, the comparison of two projects and
+// the change signals of the history. It reads only the file system it is
+// handed, so that two projects, such as two states to compare, load the
 // same way.
 //
 // The rules are in docs/guides/project-reference.md.

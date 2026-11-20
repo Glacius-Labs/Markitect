@@ -17,12 +17,10 @@
 | `questions` | The competency questions of the packages and templates the spec uses ([§5](is-the-spec-good.md#the-spec-itself)) |
 | `status` | What is changed, suspect, unexplained or waiting on a report ([§6](the-state.md#what-status-lists)). Given the state of the target branch, it applies the landing rule; given the states before and after a step and the step's role, it checks the write table ([§12](jobs-and-runners.md#rights-come-from-the-steps)) |
 | `mark DOCUMENT@FINGERPRINT VERDICT` | Binds `ok`, `fail` or `skip`, with the artifacts and the evidence or the reason, to the state `status` showed ([§6](the-state.md#binding-a-verdict)) |
-| The comparison of two states | Compares two states, each a folder with a spec, a state and reports: what is new, gone, changed or suspect, with the old and the new text ([§10](overview.md#comparing-two-states)) |
-| The factory figures | The factory's figures ([below](#the-figures)) |
+| `compare OLD [NEW]` | Compares two states, each a folder with a spec, a state and reports: what is new, gone, changed or suspect, with the old and the new text ([§10](overview.md#comparing-two-states)) |
+| `figures` | The factory's figures ([below](#the-figures)) |
 | `version` | The tool's version, and whether it is the one the project pins |
 | `licenses` | The third-party notices |
-
-The build fixes the names of the commands for the comparison and the figures.
 
 **What the tool writes.** Of the state and the history it writes only what it binds: `mark` a verdict row and its history entry, `move` the moved row and its history entry. `init`, `apply`, `new` and `move` write documents on request. What a job reports, reports and the results of control samples, are files of fixed form that the job writes and `check` checks ([DEC-132](../decisions.md#dec-132-markitect-is-a-tool-jobs-and-runners)). There is no command to report, to start or end a run, or to steer anything.
 

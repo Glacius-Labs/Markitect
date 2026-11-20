@@ -67,7 +67,7 @@ func TestFigures(t *testing.T) {
 	if f.Reference["wide-change"] != "median 2, range 1–3 documents per change" {
 		t.Error(f.Reference["wide-change"])
 	}
-	if d := f.Signals["hotspot"][0].Detail; d != "a.md: changed 4 times, linked from 1 documents, 4" {
+	if d := f.Signals["hotspot"][0].Detail; d != "a.md: changed 4 times × linked from 1 document = 4" {
 		t.Error(d)
 	}
 }

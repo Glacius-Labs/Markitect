@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // copyTree copies a project folder; crlf turns every line end into CRLF.
@@ -116,9 +117,9 @@ func TestFiguresOfTheLendingProject(t *testing.T) {
 	code, out, _ := run("figures", "-C", newer)
 	// The marks of the confirmed project are one change, the marks after
 	// the edits two more; the move is left out.
-	if code != ExitOK || !strings.HasPrefix(out, "# Figures from the history\n\n3 changes from 7 verdicts; 1 moves left out, since they are mechanical.\n") ||
+	if code != ExitOK || !strings.HasPrefix(out, "# Figures from the history\n\n3 changes from 7 verdicts; moves left out, since they are mechanical: 1\n") ||
 		!strings.Contains(out, "\n### wide-change (3)\n\nreference: median 3, range 2–4 documents per change\n4 documents changed together at 2026-11-20T09:00:01Z") ||
-		!strings.Contains(out, "\n### hotspot (3)\n\nreference: changes per document: median 1; documents linking to one: median 0.5\nlending/return.md: changed 2 times, linked from 1 documents, 2\n") ||
+		!strings.Contains(out, "\n### hotspot (3)\n\nreference: changes per document: median 1; documents linking to one: median 0.5\nlending/return.md: changed 2 times × linked from 1 document = 2\n") ||
 		!strings.HasSuffix(out, "\n### weakening\n\nnot computed: a strong statement gathering conditions shows only in its old and new text, which an agent reads from Git; the history holds hashes\n") {
 		t.Error(code, out)
 	}
@@ -130,5 +131,44 @@ func TestFiguresOfTheLendingProject(t *testing.T) {
 	var doc figuresDocument
 	if err := json.Unmarshal([]byte(js), &doc); err != nil || doc.Kind != "figures" || doc.Moves != 1 || len(doc.Signals) != 5 || doc.Weakening == "" {
 		t.Error(js)
+	}
+}
+
+// A changed file of the spec folder makes the documents that link it
+// suspect; a line either side cannot read is a note.
+func TestCompareAssetsAndNotes(t *testing.T) {
+	older := markedWith(t, withFlow())
+	newer := copyTree(t, older, false)
+	write(t, newer, "docs/spec/lending/flow.png", "\x89PNG another flow")
+	write(t, newer, ".markitect/history.jsonl", read(t, newer, ".markitect/history.jsonl")+"not json\n")
+	code, out, _ := run("compare", older, newer)
+	if code != ExitFound || !strings.HasPrefix(out, "# Comparison\n\nnote: new: .markitect/history.jsonl:5: history.unreadable: ") ||
+		!strings.Contains(out, "## Suspect (1)\n\nlending/borrow.md: asset:lending/flow.png\n") {
+		t.Error(code, out)
+	}
+}
+
+// A document recorded fail stays in the changed list of every later
+// verdict, and so counts in every later change.
+func TestFiguresCountALingeringFail(t *testing.T) {
+	clock(t)
+	dir := marked(t)
+	verdict(t, dir, "roles/member.md", "fail", "--file", "src/member.go", "-m", "no card numbers yet")
+	saved := now
+	at := time.Date(2026, 11, 21, 9, 0, 0, 0, time.UTC)
+	now = func() time.Time { at = at.Add(2 * time.Hour); return at }
+	t.Cleanup(func() { now = saved })
+	write(t, dir, "src/returns.go", "package lending\n\nfunc Return() { late() }\n")
+	verdict(t, dir, "lending/return.md", "ok", "--file", "src/returns.go", "-e", "src/returns.go")
+	write(t, dir, "src/loans.go", "package lending\n\nfunc Borrow() { lend() }\n")
+	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--check", "tests/loans_test.go", "-e", "tests/loans_test.go")
+	_, out, _ := run("figures", "-C", dir, "--all")
+	for _, part := range []string{
+		"2 documents changed together at 2026-11-21T11:00:00Z (", "lending/return.md, roles/member.md\n",
+		"2 documents changed together at 2026-11-21T13:00:00Z (", "lending/borrow.md, roles/member.md\n",
+	} {
+		if !strings.Contains(out, part) {
+			t.Errorf("missing %q in\n%s", part, out)
+		}
 	}
 }

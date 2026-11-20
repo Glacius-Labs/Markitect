@@ -216,10 +216,10 @@ func (f *Figures) unlinked(spec *lang.Spec, links map[[2]string]bool) {
 			continue
 		}
 		out = append(out, Figure{Docs: []string{p[0], p[1]}, Count: n,
-			Detail: fmt.Sprintf("%s and %s changed together in %d of %d changes, with no link between them", p[0], p[1], n, len(f.Changes))})
+			Detail: fmt.Sprintf("%s and %s changed together in %d of %s, with no link between them", p[0], p[1], n, count(len(f.Changes), "change"))})
 	}
 	sortFigures(out)
-	f.Reference["unlinked-change"] = fmt.Sprintf("%d changes", len(f.Changes))
+	f.Reference["unlinked-change"] = count(len(f.Changes), "change")
 	f.Signals["unlinked-change"] = out
 }
 
@@ -248,11 +248,11 @@ func (f *Figures) dragged(spec *lang.Spec, linkedFrom map[string]map[string]bool
 		}
 		if n >= 2 {
 			out = append(out, Figure{Docs: append([]string{d.Path}, sortedKeys(with)...), Count: n,
-				Detail: fmt.Sprintf("%s: %d of its %d changes came with documents that link to it: %s", d.Path, n, counts[d.Path], strings.Join(sortedKeys(with), ", "))})
+				Detail: fmt.Sprintf("%s: %d of its %s came with documents that link to it: %s", d.Path, n, count(counts[d.Path], "change"), strings.Join(sortedKeys(with), ", "))})
 		}
 	}
 	sortFigures(out)
-	f.Reference["dragged-links"] = fmt.Sprintf("%d changes", len(f.Changes))
+	f.Reference["dragged-links"] = count(len(f.Changes), "change")
 	f.Signals["dragged-links"] = out
 }
 
@@ -267,7 +267,7 @@ func (f *Figures) hotspots(spec *lang.Spec, linkedFrom map[string]map[string]boo
 		changed, linked = append(changed, n), append(linked, in)
 		if n*in > 0 {
 			out = append(out, Figure{Docs: []string{d.Path}, Count: n * in,
-				Detail: fmt.Sprintf("%s: changed %d times, linked from %d documents, %d", d.Path, n, in, n*in)})
+				Detail: fmt.Sprintf("%s: changed %s × linked from %s = %d", d.Path, count(n, "time"), count(in, "document"), n*in)})
 		}
 	}
 	sortFigures(out)
@@ -291,12 +291,20 @@ func (f *Figures) backAndForth(selves map[int][]string, paths []string) {
 		}
 		if returns > 0 {
 			out = append(out, Figure{Docs: []string{paths[i]}, Count: returns,
-				Detail: fmt.Sprintf("%s: its text returned to an earlier version %d times in %d versions", paths[i], returns, len(seq))})
+				Detail: fmt.Sprintf("%s: its text returned to an earlier version %s in %s", paths[i], count(returns, "time"), count(len(seq), "version"))})
 		}
 	}
 	sortFigures(out)
-	f.Reference["back-and-forth"] = fmt.Sprintf("%d documents with versions in the history", tracked)
+	f.Reference["back-and-forth"] = count(tracked, "document") + " with versions in the history"
 	f.Signals["back-and-forth"] = out
+}
+
+// count is a number and a noun, in the plural unless the number is one.
+func count(n int, noun string) string {
+	if n == 1 {
+		return "1 " + noun
+	}
+	return fmt.Sprintf("%d %ss", n, noun)
 }
 
 // sortFigures sorts by count, highest first, then by the documents.

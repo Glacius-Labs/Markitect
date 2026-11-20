@@ -11,23 +11,30 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/state"
 )
 
-// snapshot reads a project as compare and figures read it: the project, the
-// state as status takes it, and the history, with the lines of the history
-// it cannot read.
-func snapshot(dir string) (*state.Snapshot, []state.HistoryProblem, error) {
+// snapshot reads a project as compare reads it: the project, the state as
+// status takes it, and the history, with the lines of the state and the
+// history it cannot read, which it leaves out.
+func snapshot(dir string) (*state.Snapshot, []diagnostic, error) {
 	w, err := loadDir(dir)
 	if err != nil {
 		return nil, nil, err
 	}
-	s, _, err := evaluate(w)
+	s, problems, err := evaluate(w)
 	if err != nil {
 		return nil, nil, err
 	}
-	events, problems, err := state.ReadHistory(w.FS)
+	events, historyProblems, err := state.ReadHistory(w.FS)
 	if err != nil {
 		return nil, nil, err
 	}
-	return &state.Snapshot{Project: w.Project, Status: s, History: events}, problems, nil
+	var notes []diagnostic
+	for _, p := range problems {
+		notes = append(notes, diagnostic{File: state.StateFile, Line: p.Line, Code: state.CodeUnreadable, Message: p.Message})
+	}
+	for _, p := range historyProblems {
+		notes = append(notes, diagnostic{File: state.HistoryFile, Line: p.Line, Code: state.CodeHistoryUnreadable, Message: p.Message})
+	}
+	return &state.Snapshot{Project: w.Project, Status: s, History: events}, notes, nil
 }
 
 // projectAt is a project folder named on the command line, which must hold
@@ -56,6 +63,14 @@ type compareDocument struct {
 	Suspect     []suspectJSON `json:"suspect"`
 	Verdicts    []verdictJSON `json:"verdicts"`
 	Unexplained []string      `json:"unexplained"`
+	// Notes are the lines of either project's state and history that compare
+	// cannot read and leaves out, with the side, "old" or "new".
+	Notes []compareNote `json:"notes"`
+}
+
+type compareNote struct {
+	Side string `json:"side"`
+	diagnostic
 }
 
 type movedJSON struct {
@@ -98,11 +113,11 @@ func compare(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	older, _, err := snapshot(oldDir)
+	older, oldNotes, err := snapshot(oldDir)
 	if err != nil {
 		return ExitFailed, err
 	}
-	newer, _, err := snapshot(newDir)
+	newer, newNotes, err := snapshot(newDir)
 	if err != nil {
 		return ExitFailed, err
 	}
@@ -117,6 +132,19 @@ func compare(o options, stdout io.Writer) (int, error) {
 		}
 	}
 	b.WriteString("# Comparison\n\n")
+	doc.Notes = []compareNote{}
+	for _, side := range []struct {
+		name  string
+		notes []diagnostic
+	}{{"old", oldNotes}, {"new", newNotes}} {
+		for _, n := range side.notes {
+			doc.Notes = append(doc.Notes, compareNote{side.name, n})
+			fmt.Fprintf(&b, "note: %s: %s, left out\n", side.name, n)
+		}
+	}
+	if len(doc.Notes) > 0 {
+		b.WriteString("\n")
+	}
 	section("New", len(c.New))
 	for _, p := range c.New {
 		b.WriteString(p + "\n")
@@ -224,7 +252,7 @@ func figures(o options, stdout io.Writer) (int, error) {
 	for _, c := range f.Changes {
 		doc.Changes = append(doc.Changes, changeJSON{c.Time.UTC().Format(time.RFC3339Nano), c.Docs, c.Events})
 	}
-	fmt.Fprintf(&b, "%d changes from %d verdicts; %d moves left out, since they are mechanical.\n", len(f.Changes), f.Verdicts, f.Moves)
+	fmt.Fprintf(&b, "%s from %s; moves left out, since they are mechanical: %d\n", plural(len(f.Changes), "change"), plural(f.Verdicts, "verdict"), f.Moves)
 	for _, s := range state.ChangeSignals {
 		list := f.Signals[s]
 		doc.Signals[s] = []figureJSON{}
