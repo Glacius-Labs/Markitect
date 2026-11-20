@@ -8,7 +8,7 @@ You triage the reports the message names, files in `.markitect/reports/` of the 
 
 For each report, read its place in the spec and its artifacts (`markitect-next show DOCUMENT`, `markitect-next topic DOCUMENT`) and the other reports, then sort it:
 
-- **Done,** when the message marks it as answered on this branch: Closing `YYYY-MM-DD: done`, with the answer below.
+- **Done,** when the message marks it as answered on this branch: Closing `YYYY-MM-DD: done`, with the answer below, and for an owner's choice the record the message gives: kind, area, proposals, recommendation, choice and comment.
 - **A duplicate** of an earlier report: Closing `YYYY-MM-DD: duplicate of NAME`, with why below.
 - **Nothing to do:** Closing `YYYY-MM-DD: nothing to do`, with the reason below.
 - **Valid:** Rating `impact LEVEL, likelihood LEVEL`, each LEVEL `low`, `medium` or `high`, and the switch in Actions:
