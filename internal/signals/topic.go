@@ -56,7 +56,7 @@ func (a *Analysis) Topic(name string) (*Topic, bool) {
 				t.Docs = append(t.Docs, d.Path)
 			}
 		}
-		if len(t.Docs) == 0 || strings.HasPrefix(folder, "..") {
+		if folder != "" && len(t.Docs) == 0 || strings.HasPrefix(folder, "..") {
 			return nil, false
 		}
 		t.Kind, t.Path = "folder", folder

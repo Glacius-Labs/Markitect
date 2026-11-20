@@ -94,7 +94,10 @@ func Analyze(spec *lang.Spec, refs References) *Analysis {
 			if list[i].Path != list[j].Path {
 				return list[i].Path < list[j].Path
 			}
-			return list[i].Line < list[j].Line
+			if list[i].Line != list[j].Line {
+				return list[i].Line < list[j].Line
+			}
+			return list[i].Detail < list[j].Detail
 		})
 		a.Findings[name] = list
 	}
@@ -166,7 +169,7 @@ func (a *Analysis) strong() {
 			}
 		}
 		a.add(Finding{Signal: StrongStatements, Path: st.Doc, Line: st.Line, Docs: append([]string{st.Doc}, subjects...), rank: float64(reach),
-			Detail: fmt.Sprintf("%s about %s, which %s refer to: %s", strings.Join(st.Strong, ", "), best, plural(reach, "document"), quoteText(st.Text))})
+			Detail: fmt.Sprintf("%s about %s, referred to by %s: %s", strings.Join(st.Strong, ", "), best, plural(reach, "document"), quoteText(st.Text))})
 	}
 }
 

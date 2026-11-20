@@ -99,7 +99,7 @@ func TestWeakAndStrong(t *testing.T) {
 	// The subject of the strong statement is what it links to; its reach is how
 	// many documents link to or mention the subject.
 	eq(t, findings(a, StrongStatements), []string{
-		`rules/loans.md:6: strong: every about places/README.md, which 3 documents refer to: "Every member returns books to the branches within three weeks."`,
+		`rules/loans.md:6: strong: every about places/README.md, referred to by 3 documents: "Every member returns books to the branches within three weeks."`,
 	})
 }
 
@@ -196,5 +196,29 @@ func TestReferences(t *testing.T) {
 	}
 	if err := ParseReferences("x", []byte("| a | 5–1 | 1–2 |\n"), refs); err == nil {
 		t.Error("a reversed range")
+	}
+}
+
+func TestTiesAreOrderedByDetail(t *testing.T) {
+	files := map[string]string{
+		"a.md":    "# A\n\nThe East Branch and the West Branch.\n",
+		"east.md": "# East Branch\n",
+		"west.md": "# West Branch\n",
+	}
+	first := strings.Join(findings(Analyze(spec(t, files), nil), UnlinkedMention), "\n")
+	for i := 0; i < 20; i++ {
+		if got := strings.Join(findings(Analyze(spec(t, files), nil), UnlinkedMention), "\n"); got != first {
+			t.Fatalf("run %d:\n%s\nfirst:\n%s", i, got, first)
+		}
+	}
+	if !strings.Contains(first, "East") || strings.Index(first, "East") > strings.Index(first, "West") {
+		t.Error(first)
+	}
+}
+
+func TestEmptySpec(t *testing.T) {
+	a := Analyze(spec(t, map[string]string{}), nil)
+	if topic, ok := a.Topic(""); !ok || len(topic.Docs) != 0 {
+		t.Error(topic, ok)
 	}
 }
