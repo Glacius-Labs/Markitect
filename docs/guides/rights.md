@@ -8,13 +8,13 @@ The write table ships with the tool. A step runs as one role, and its role may c
 
 | Role | May change |
 |---|---|
-| `builder` | Artifacts: any file outside the spec folder, `.markitect/`, the counter-check folder and the control files |
+| `builder` | Artifacts: any file outside the spec folder, `.markitect/`, the counter-check folder and the control files, and the commit of a nested repository |
 | `counter-checker` | Only files in the counter-check folder the settings name; nothing when they name none |
-| `reviewer` | Only `.markitect/state.jsonl` and `.markitect/history.jsonl`: every row it adds or changes has the source `mark`, and every line it adds to the history is a `verdict` event. No other file |
-| `architect` | The spec folder and `.markitect/ignore`; rows with the source `move` and `move` events; in reports, only a place that a `move` event of the step names in its `reports` |
-| `job` | The job itself, which the runner writes from an agent's answer: new reports whose source is a job or `intake`, the Prevention section of reports, and files in `.markitect/samples/` |
+| `reviewer` | Only `.markitect/state.jsonl` and `.markitect/history.jsonl`: every line it adds to the history is a `verdict` event, and every row it adds or changes has the source `mark` and a `verdict` event of the step on its document, with its verdict and its `inputs`. No other file |
+| `architect` | The spec folder and `.markitect/ignore`; `move` events, and rows with the source `move` that a move of the step [carried](#rows-and-events) from a row there was; in reports, only a place that a `move` event of the step names in its `reports` |
+| `job` | The job itself, which the runner writes from an agent's answer: new reports whose source is a job or `intake`, holding only Source, Place, Finding, Occurred or risk, Violated property and Prevention, since rating, actions and closing are triage's; the Prevention section of reports; and files in `.markitect/samples/` |
 | `triage` | In reports there were, only the Rating, Actions and Closing sections, a closing that names a duplicate included |
-| `owner` | A branch from a conversation: everything, the control files and new reports with the owner as source included, but never a row with the source `mark` and never a `verdict` event |
+| `owner` | A branch from a conversation: everything, the control files and new reports with the owner as source included, but never a row with the source `mark`, never a `verdict` event, and a row with the source `move` only as a move of the step [carried](#rows-and-events) it |
 | `reader`, `sampler`, `intake` | Nothing. The job writes the sampler's list of planted deviations and the intake's report |
 
 **Intake** is a job that reads a signal from outside isolated and writes only a report of fixed form ([intake](../concept/reports-and-actions.md#intake)). Its agent writes nothing; the job writes the report from its answer, with `intake` as the source, so the role `intake` has no rights and the step `job` writes its report.
@@ -23,13 +23,22 @@ The write table ships with the tool. A step runs as one role, and its role may c
 
 **The history is only appended to.** No role, the owner included, removes a line of it.
 
+**Case.** A path whose first part is `.markitect` in any case, a control file in any case and a file the CI patterns take in any case count as what they name, so that `.Markitect/settings.md`, another file on a system that tells case apart and the same on one that does not, is never an artifact.
+
+### Rows and events
+
+A row binds a verdict, so a row stands only with the event that explains it.
+
+- **A row with the source `mark`** needs a `verdict` event added in the same step on its document, with its verdict and with `inputs` equal to the [hash of its inputs](project-reference.md#the-history).
+- **A row with the source `move`** needs a `move` event added in the same step that carries it from a row of the state before, as `move` carries rows ([move and the state](project-reference.md#move-and-the-state)): its document and its `type:` and `link:` inputs at the paths the moves lead to; the same verdict, reason and evidence; and every hash as it was, but a `self`, `type:` or `link:` hash of a document a move rewrote, which matched that document's text before the step and matches it after. So a `fail` cannot turn into an `ok`, and a new document gets no row, by a move.
+
 **Narrowing.** A project narrows the table with lines `ROLE: PATTERN` in the settings' [Write table](reports.md#settings), written like the lines of a `.gitignore` file at the top of the project. A role with such lines may change only a file both the shipped table and its patterns allow: a pattern takes a file as `.gitignore` would exclude it, by itself or by a folder above it, and as there, a negation brings back no file whose folder a pattern takes. So `builder: src/*` with `builder: !src/vendor/` lets the builder change `src/loans.go` and not `src/vendor/lib.go`. A role without lines keeps the shipped table.
 
 ## The step check
 
 `markitect-next status --step ROLE --before DIR [--target DIR]` checks what a step of ROLE changed. The project after the step is the one the command works in, and DIR is the project as it was before the step, a folder with `.markitect/version` that the runner lays out, as for [`compare`](project-reference.md#compare); the tool uses no Git. It changes nothing.
 
-- **What it compares.** The files Git keeps of both projects: the files of the [walk](project-reference.md#the-walk) with what `.markitect/ignore` excludes, since that file says only what the project does not explain, and every file of `.markitect/`. What `.gitignore` excludes does not land and is not compared. A file is changed when it is new, gone, or its [hash](project-reference.md#hashing) differs, so CRLF and LF do not count. The state is compared by row, as the tool writes rows, the history by line, and a report by section.
+- **What it compares.** The files Git keeps of both projects: the files of the [walk](project-reference.md#the-walk) with what `.markitect/ignore` excludes, since that file says only what the project does not explain, and every file of `.markitect/`. What `.gitignore` excludes does not land and is not compared. A nested repository, one entry of the walk, counts by the commit its HEAD names, as Git records it: the hash in `.git/HEAD`, or the ref it names, resolved through a loose ref or `packed-refs`, in the Git folder a `.git` file names too, and in the common folder of a worktree. What is not committed in it does not land and does not count. A file is changed when it is new, gone, or its [hash](project-reference.md#hashing) differs, so CRLF and LF do not count. The state is compared by row, as the tool writes rows, the history by line, and a report by section.
 - **Where the table is read from.** The control files, the spec folder, the counter-check folder, the CI definition and the narrowing are read from `--target` when it is given, and otherwise from `--before`; never from the project after the step, so a step cannot widen its own rights.
 - **What it prints.** One line per change the table denies, `PATH: write.denied: ROLE may not …`, naming the row's document or the event for the state and the history, then `step ROLE: N changes the write table denies`. It exits 1 when there is any, 2 for an unknown role or settings with errors.
 

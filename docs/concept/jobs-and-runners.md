@@ -25,9 +25,9 @@ Each role runs as its own step, with its own allowed tools. The runner lays out 
 |---|---|
 | Builder | Artifacts |
 | Counter-checker | The counter-check folder the settings name |
-| Reviewer | Verdict rows and verdict events only, through `mark` |
+| Reviewer | Verdict rows only, each with its verdict event, through `mark` |
 | Architect | The spec, the ignore file, and the rows, events and report places that `move` writes |
-| The job itself | Reports with the job or intake as source, the prevention of reports, and results of control samples |
+| The job itself | Reports with the job or intake as source, without the rating, actions and closing of triage, the prevention of reports, and results of control samples |
 | Triage | Rating, actions and closing in reports |
 | Owner, on a branch from a conversation | What the conversation changes, such as the spec and artifacts, plus the control files and reports with the owner as source; never verdict rows |
 | Reader, sampler, intake | Nothing that lands; the job writes the sampler's list of planted deviations and the intake's report |

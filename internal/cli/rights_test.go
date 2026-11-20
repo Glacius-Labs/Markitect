@@ -240,3 +240,95 @@ func TestLandingCheck(t *testing.T) {
 		t.Error(code, out)
 	}
 }
+
+func TestMoveRowsMustComeFromAMove(t *testing.T) {
+	before, after := stepped(t)
+	verdict(t, before, "lending/return.md", "fail", "--file", "src/returns.go", "-m", "a book comes back late")
+	after = copyTree(t, before, false)
+	if code, _, errOut := run("move", "-C", after, "lending/borrow.md", "loans/borrow.md"); code != ExitOK {
+		t.Fatal(code, errOut)
+	}
+	allowed(t, "architect", before, after)
+	// A fail turned into ok, and a row for a new document, each with source
+	// move beside a real move.
+	state := read(t, after, ".markitect/state.jsonl")
+	state = strings.Replace(state, `"doc":"lending/return.md","verdict":"fail","source":"mark"`, `"doc":"lending/return.md","verdict":"ok","source":"move"`, 1)
+	write(t, after, "docs/spec/lending/n.md", "# N\n")
+	self := strings.SplitN(strings.SplitN(state, `"self":"`, 2)[1], `"`, 2)[0]
+	state += `{"doc":"lending/n.md","verdict":"ok","source":"move","inputs":{"self":"` + self + `"},"evidence":[],"reason":""}` + "\n"
+	write(t, after, ".markitect/state.jsonl", state)
+	denied(t, "architect", before, after,
+		".markitect/state.jsonl: architect may not write a row with source move that no move of the step carried from a row there was: lending/n.md",
+		".markitect/state.jsonl: architect may not write a row with source move that no move of the step carried from a row there was: lending/return.md")
+	// Without a move in the step, no row with source move.
+	before, after = stepped(t)
+	state = read(t, after, ".markitect/state.jsonl")
+	write(t, after, ".markitect/state.jsonl", strings.Replace(state, `"doc":"roles/member.md","verdict":"ok","source":"mark"`, `"doc":"roles/member.md","verdict":"ok","source":"move"`, 1))
+	denied(t, "owner", before, after, ".markitect/state.jsonl: owner may not write a row with source move that no move of the step carried from a row there was: roles/member.md")
+}
+
+func TestMarkRowsNeedAVerdictEvent(t *testing.T) {
+	before, after := stepped(t)
+	state := read(t, after, ".markitect/state.jsonl")
+	write(t, after, ".markitect/state.jsonl", strings.Replace(state, `"evidence":["src/member.go"]`, `"evidence":["src/member.go:1"]`, 1))
+	denied(t, "reviewer", before, after, ".markitect/state.jsonl: reviewer may not write a row with source mark without a verdict event of the step on it with its verdict and inputs: roles/member.md")
+	// A verdict event that names other inputs does not explain it either.
+	before, after = stepped(t)
+	verdict(t, after, "roles/member.md", "ok", "--file", "src/member.go", "-e", "src/member.go:1")
+	state = read(t, after, ".markitect/state.jsonl")
+	write(t, after, ".markitect/state.jsonl", strings.Replace(state, `"doc":"roles/member.md","verdict":"ok"`, `"doc":"roles/member.md","verdict":"fail"`, 1))
+	if code, msgs := stepCheck(t, "reviewer", before, after); code != ExitFound || len(msgs) != 1 {
+		t.Error(code, msgs)
+	}
+}
+
+func TestANewReportOfTheJobHoldsNoTriage(t *testing.T) {
+	before, after := stepped(t)
+	write(t, after, ".markitect/reports/slow-loans.md", lendingReport("job build reviewer, 2026-11-19", "src/loans.go", "none", "escalated\nFaster loans.", "")+"\n## Rating\nimpact low, likelihood low\n")
+	denied(t, "job", before, after, ".markitect/reports/slow-loans.md: job may not write actions, rating in a new report; triage sets them")
+}
+
+// repository makes a nested repository at dir/p whose HEAD names
+// refs/heads/main at commit.
+func repository(t *testing.T, dir, p, commit string) {
+	t.Helper()
+	for _, sub := range []string{"objects", "refs/heads"} {
+		if err := os.MkdirAll(filepath.Join(dir, filepath.FromSlash(p), ".git", filepath.FromSlash(sub)), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// An empty folder would not survive a copy of the project.
+	write(t, dir, p+"/.git/objects/pack/keep", "")
+	write(t, dir, p+"/.git/HEAD", "ref: refs/heads/main\n")
+	write(t, dir, p+"/.git/refs/heads/main", commit+"\n")
+	write(t, dir, p+"/lib.go", "package lib\n")
+}
+
+func TestNestedRepositoriesCountByTheirCommit(t *testing.T) {
+	_, after := stepped(t)
+	repository(t, after, "vendor/lib", strings.Repeat("a", 40))
+	write(t, after, ".markitect/ignore", ".gitignore\nnotes.txt\nvendor/\n")
+	before := copyTree(t, after, false)
+	// What is not committed in it does not land.
+	write(t, after, "vendor/lib/lib.go", "package lib\n\nfunc New() {}\n")
+	allowed(t, "reviewer", before, after)
+	// A new commit, loose or packed, is a change only the builder and the
+	// owner make.
+	write(t, after, "vendor/lib/.git/refs/heads/main", strings.Repeat("b", 40)+"\n")
+	denied(t, "reviewer", before, after, "vendor/lib: reviewer may not change the commit of a nested repository")
+	allowed(t, "builder", before, after)
+	remove(t, after, "vendor/lib/.git/refs/heads/main")
+	write(t, after, "vendor/lib/.git/packed-refs", "# pack-refs with: peeled\n"+strings.Repeat("c", 40)+" refs/heads/main\n")
+	denied(t, "architect", before, after, "vendor/lib: architect may not change the commit of a nested repository")
+}
+
+func TestControlFilesInAnyCase(t *testing.T) {
+	before, after := stepped(t)
+	write(t, after, ".Markitect/Settings.md", "# Settings\n")
+	write(t, after, ".GitHub/Workflows/ci.yml", "on: push\n")
+	code, msgs := stepCheck(t, "builder", before, after)
+	joined := strings.Join(msgs, "\n")
+	if code != ExitFound || len(msgs) != 2 || !strings.Contains(joined, "builder may not change a control file") || !strings.Contains(joined, "ci.yml: builder may not change a control file") {
+		t.Errorf("%d\n%s", code, joined)
+	}
+}

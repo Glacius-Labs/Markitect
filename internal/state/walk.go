@@ -170,36 +170,84 @@ func HashFile(fsys fs.FS, name string) (string, error) {
 // its own, as Git decides: its .git is a Git folder, or a file whose gitdir:
 // line names one, relative to the folder or absolute.
 func nestedRepository(fsys fs.FS, dir string) bool {
+	_, _, ok := gitDir(fsys, dir)
+	return ok
+}
+
+// gitDir finds the Git folder of a folder: its .git folder, or the folder
+// its .git file names with gitdir:, in the file system that holds it. ok is
+// false when it has none that is valid.
+func gitDir(fsys fs.FS, dir string) (fs.FS, string, bool) {
 	git := path.Join(dir, ".git")
 	info, err := fs.Stat(fsys, git)
 	switch {
 	case err != nil:
-		return false
+		return nil, "", false
 	case info.IsDir():
-		return gitFolder(fsys, git)
+		return fsys, git, gitFolder(fsys, git)
 	}
 	data, err := fs.ReadFile(fsys, git)
 	if err != nil {
-		return false
+		return nil, "", false
 	}
 	line, _, _ := strings.Cut(string(data), "\n")
 	target, ok := strings.CutPrefix(strings.TrimRight(line, "\r"), "gitdir: ")
 	if !ok || target == "" {
-		return false
+		return nil, "", false
 	}
 	target = filepath.ToSlash(target)
 	if !filepath.IsAbs(filepath.FromSlash(target)) && !strings.HasPrefix(target, "/") {
 		if inside := path.Join(dir, target); inside != ".." && !strings.HasPrefix(inside, "../") {
-			return gitFolder(fsys, inside)
+			return fsys, inside, gitFolder(fsys, inside)
 		}
 		target = path.Join(dir, target)
 	}
 	outside, ok := fsys.(OutsideFS)
 	if !ok {
-		return false
+		return nil, "", false
 	}
 	host, name, ok := outside.Outside(target)
-	return ok && gitFolder(host, name)
+	return host, name, ok && gitFolder(host, name)
+}
+
+// HeadCommit is the commit a nested repository's HEAD names, as Git records
+// it for the folder: the hash in HEAD, or the ref HEAD names resolved
+// through a loose ref or packed-refs, in its Git folder or the common
+// folder of a worktree. It is "" when the folder is no repository or HEAD
+// names a ref without a commit.
+func HeadCommit(fsys fs.FS, dir string) string {
+	host, git, ok := gitDir(fsys, dir)
+	if !ok {
+		return ""
+	}
+	common := git
+	if data, err := fs.ReadFile(host, path.Join(git, "commondir")); err == nil {
+		common = path.Join(git, filepath.ToSlash(strings.TrimSpace(string(data))))
+	}
+	head, err := fs.ReadFile(host, path.Join(git, "HEAD"))
+	if err != nil {
+		return ""
+	}
+	ref, isRef := strings.CutPrefix(strings.TrimSpace(string(head)), "ref:")
+	if !isRef {
+		return strings.TrimSpace(string(head))
+	}
+	ref = strings.TrimSpace(ref)
+	for _, d := range []string{git, common} {
+		if data, err := fs.ReadFile(host, path.Join(d, ref)); err == nil {
+			return strings.TrimSpace(string(data))
+		}
+	}
+	packed, err := fs.ReadFile(host, path.Join(common, "packed-refs"))
+	if err != nil {
+		return ""
+	}
+	for _, line := range strings.Split(string(packed), "\n") {
+		if hash, name, ok := strings.Cut(strings.TrimSpace(line), " "); ok && name == ref && !strings.HasPrefix(hash, "#") {
+			return hash
+		}
+	}
+	return ""
 }
 
 // validHead says whether a HEAD file is one Git accepts: "ref:" and a ref

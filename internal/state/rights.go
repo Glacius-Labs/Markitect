@@ -40,6 +40,7 @@ const (
 	kindSpec         = "spec"
 	kindCounterCheck = "counter-check"
 	kindArtifact     = "artifact"
+	kindRepository   = "repository"
 )
 
 // writers are the roles the shipped write table lets change a kind of file,
@@ -54,6 +55,7 @@ var writers = map[string][]string{
 	kindSpec:         {"architect"},
 	kindCounterCheck: {"counter-checker"},
 	kindArtifact:     {"builder"},
+	kindRepository:   {"builder"},
 }
 
 // nouns name each kind of file in a violation.
@@ -68,6 +70,7 @@ var nouns = map[string]string{
 	kindSpec:         "the spec",
 	kindCounterCheck: "the counter-check folder",
 	kindArtifact:     "an artifact",
+	kindRepository:   "the commit of a nested repository",
 }
 
 // rights is what the write table says for one step: the layout and settings
@@ -77,6 +80,7 @@ type rights struct {
 	spec          string
 	counterChecks string
 	ci            []pattern
+	repositories  map[string]bool
 	narrow        []pattern
 	narrowText    []string
 }
@@ -100,9 +104,9 @@ func CheckStep(role string, before, after, control *Project) ([]Violation, error
 			return nil, fmt.Errorf("the settings the write table is read from have errors: %s", d)
 		}
 	}
-	r := rights{role: role, spec: control.SpecFolder, ci: patterns(DefaultCI)}
+	r := rights{role: role, spec: control.SpecFolder, ci: lowerPatterns(DefaultCI), repositories: map[string]bool{}}
 	if s := f.Settings; s != nil {
-		r.counterChecks, r.ci = s.CounterChecks, patterns(s.CI)
+		r.counterChecks, r.ci = s.CounterChecks, lowerPatterns(s.CI)
 		for _, w := range s.WriteTable {
 			if w.Role == role {
 				r.narrowText = append(r.narrowText, w.Pattern)
@@ -110,11 +114,11 @@ func CheckStep(role string, before, after, control *Project) ([]Violation, error
 		}
 		r.narrow = patterns(r.narrowText)
 	}
-	was, err := trackedHashes(before.FS)
+	was, err := trackedHashes(before.FS, r.repositories)
 	if err != nil {
 		return nil, err
 	}
-	is, err := trackedHashes(after.FS)
+	is, err := trackedHashes(after.FS, r.repositories)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +158,7 @@ func CheckStep(role string, before, after, control *Project) ([]Violation, error
 		var msgs []string
 		switch kind {
 		case kindState:
-			msgs, err = stateRights(role, before.FS, after.FS)
+			msgs, err = stateRights(role, before, after)
 		case kindHistory:
 			msgs, err = historyRights(role, before.FS, after.FS)
 		case kindReport:
@@ -170,11 +174,19 @@ func CheckStep(role string, before, after, control *Project) ([]Violation, error
 	return out, nil
 }
 
-// kind is the kind of a file below the project folder.
+// kind is the kind of a file below the project folder. The control files,
+// .markitect/ and the CI definition are told apart in any case, so that a
+// name in another case, another file on a system that tells case apart and
+// the same on one that does not, is never an artifact.
 func (r rights) kind(p string) string {
+	first, _, _ := strings.Cut(p, "/")
 	switch {
-	case oneOf(p, ControlFiles) || matchesPath(r.ci, p):
+	case r.repositories[p]:
+		return kindRepository
+	case oneOfFold(p, ControlFiles) || matchesPath(r.ci, strings.ToLower(p)):
 		return kindControl
+	case strings.EqualFold(first, Dir) && first != Dir:
+		return kindMarkitect
 	case p == StateFile:
 		return kindState
 	case p == HistoryFile:
@@ -195,6 +207,24 @@ func (r rights) kind(p string) string {
 	return kindArtifact
 }
 
+func oneOfFold(s string, list []string) bool {
+	for _, x := range list {
+		if strings.EqualFold(s, x) {
+			return true
+		}
+	}
+	return false
+}
+
+// lowerPatterns parses patterns in lowercase, to match paths in lowercase.
+func lowerPatterns(lines []string) []pattern {
+	var lower []string
+	for _, l := range lines {
+		lower = append(lower, strings.ToLower(l))
+	}
+	return patterns(lower)
+}
+
 // patterns parses lines written like those of a .gitignore file at the top
 // of the project.
 func patterns(lines []string) []pattern {
@@ -213,14 +243,21 @@ func matchesPath(ps []pattern, p string) bool {
 	return lastMatch(ps, p, false)
 }
 
-// trackedHashes hashes every file Git keeps of the project at fsys.
-func trackedHashes(fsys fs.FS) (map[string]string, error) {
+// trackedHashes hashes every file Git keeps of the project at fsys. A
+// nested repository counts by the commit its HEAD names, as Git records it,
+// so that what is not committed in it does not count; it is added to repos.
+func trackedHashes(fsys fs.FS, repos map[string]bool) (map[string]string, error) {
 	files, err := TrackedFiles(fsys)
 	if err != nil {
 		return nil, err
 	}
 	out := map[string]string{}
 	for _, p := range files {
+		if isFolder(fsys, p) && nestedRepository(fsys, p) {
+			repos[p] = true
+			out[p] = Hash([]byte("a repository at " + HeadCommit(fsys, p) + "\n"))
+			continue
+		}
 		if out[p], err = HashFile(fsys, p); err != nil {
 			return nil, err
 		}
@@ -277,10 +314,13 @@ func lines(fsys fs.FS, name string) ([]string, error) {
 }
 
 // stateRights checks the rows a step added to the state: the reviewer's
-// rows have the source mark, the architect's move, and the owner writes no
-// row with the source mark. Rows are compared as the tool writes them, so a
-// rewritten file changes no row that stayed.
-func stateRights(role string, before, after fs.FS) ([]string, error) {
+// rows have the source mark, each with a verdict event of the step on its
+// document with its verdict and inputs; the architect's and the owner's the
+// source move, each carried by a move event of the step from a row there
+// was. Rows are compared as the tool writes them, so a rewritten file
+// changes no row that stayed.
+func stateRights(role string, beforeP, afterP *Project) ([]string, error) {
+	before, after := beforeP.FS, afterP.FS
 	canonical := func(fsys fs.FS) (map[string]Row, []string, error) {
 		ls, err := lines(fsys, StateFile)
 		if err != nil {
@@ -323,14 +363,148 @@ func stateRights(role string, before, after fs.FS) ([]string, error) {
 		}
 	}
 	sort.Strings(keys)
+	events, err := addedEvents(before, after)
+	if err != nil {
+		return nil, err
+	}
+	var old []Row
+	for _, r := range was {
+		old = append(old, r)
+	}
 	for _, k := range keys {
 		row := is[k]
-		allowed := row.Source == "mark" && role == "reviewer" || row.Source == "move" && (role == "architect" || role == "owner")
-		if !allowed {
+		switch {
+		case row.Source == "mark" && role == "reviewer":
+			if !verdictFor(row, events) {
+				out = append(out, fmt.Sprintf("%s may not write a row with source mark without a verdict event of the step on it with its verdict and inputs: %s", role, row.Doc))
+			}
+		case row.Source == "move" && (role == "architect" || role == "owner"):
+			if !carried(row, old, events, beforeP, afterP) {
+				out = append(out, fmt.Sprintf("%s may not write a row with source move that no move of the step carried from a row there was: %s", role, row.Doc))
+			}
+		default:
 			out = append(out, fmt.Sprintf("%s may not write a row with source %s: %s", role, row.Source, row.Doc))
 		}
 	}
 	return out, nil
+}
+
+// addedEvents are the events of the lines a step added to the history, in
+// order.
+func addedEvents(before, after fs.FS) ([]Event, error) {
+	was, err := lines(before, HistoryFile)
+	if err != nil {
+		return nil, err
+	}
+	is, err := lines(after, HistoryFile)
+	if err != nil {
+		return nil, err
+	}
+	had := map[string]bool{}
+	for _, l := range was {
+		had[l] = true
+	}
+	var added []string
+	for _, l := range is {
+		if !had[l] {
+			added = append(added, l)
+		}
+	}
+	events, _ := ParseHistory([]byte(strings.Join(added, "\n")))
+	return events, nil
+}
+
+// verdictFor says whether a verdict event names a row's document, verdict
+// and inputs.
+func verdictFor(row Row, events []Event) bool {
+	for _, e := range events {
+		if e.Type == EventVerdict && e.Doc == row.Doc && e.Verdict == row.Verdict && e.Inputs == InputsDigest(row.Inputs) {
+			return true
+		}
+	}
+	return false
+}
+
+// carried says whether a row with source move is what the moves of the
+// step make of a row there was, as MoveRows carries it: the same verdict,
+// reason and evidence, its document and its type: and link: inputs at the
+// paths the moves lead to, and every hash as it was, but a self, type: or
+// link: hash of a document a move rewrote, which matched its text before
+// and matches it after.
+func carried(row Row, old []Row, events []Event, before, after *Project) bool {
+	var moves []Event
+	rewritten := map[string]bool{}
+	for _, e := range events {
+		if e.Type == EventMove {
+			moves = append(moves, e)
+			rewritten[e.To] = true
+			for _, p := range e.Rewritten {
+				rewritten[p] = true
+			}
+		}
+	}
+	if len(moves) == 0 {
+		return false
+	}
+	lead := func(p string) string {
+		for _, m := range moves {
+			if p == m.From {
+				p = m.To
+			}
+		}
+		return p
+	}
+	back := func(p string) string {
+		for i := len(moves) - 1; i >= 0; i-- {
+			if p == moves[i].To {
+				p = moves[i].From
+			}
+		}
+		return p
+	}
+	text := func(p *Project, doc string) string {
+		if d, ok := p.Spec.Document(doc); ok {
+			return Hash(d.Source)
+		}
+		return ""
+	}
+	target := func(key, doc string) string {
+		switch {
+		case key == InputSelf:
+			return doc
+		case strings.HasPrefix(key, InputType):
+			return strings.TrimPrefix(key, InputType)
+		case strings.HasPrefix(key, InputLink):
+			return strings.TrimPrefix(key, InputLink)
+		}
+		return ""
+	}
+next:
+	for _, o := range old {
+		if lead(o.Doc) != row.Doc || o.Verdict != row.Verdict || o.Reason != row.Reason ||
+			strings.Join(o.Evidence, "\n") != strings.Join(row.Evidence, "\n") || len(o.Inputs) != len(row.Inputs) {
+			continue
+		}
+		for k, h := range o.Inputs {
+			key := k
+			if t := target(k, o.Doc); t != "" && k != InputSelf {
+				key = strings.TrimSuffix(k, t) + lead(t)
+			}
+			now, ok := row.Inputs[key]
+			if !ok {
+				continue next
+			}
+			if now == h {
+				continue
+			}
+			t := target(key, row.Doc)
+			if t == "" || !rewritten[t] || h != text(before, back(t)) || now != text(after, t) {
+				continue next
+			}
+		}
+		return true
+	}
+	return false
 }
 
 // historyRights checks the lines a step added to the history, which is only
@@ -451,6 +625,9 @@ func reportSource(d *lang.Document) string {
 	return strings.Fields(m[1])[0]
 }
 
+// jobSections are the sections a new report of the job may hold.
+var jobSections = []string{"source", "place", "finding", "occurred or risk", "violated property", "prevention"}
+
 // sectionsOf are the sections, by their headings in lowercase, each role
 // may change in a report it did not write.
 var sectionsOf = map[string][]string{
@@ -481,7 +658,19 @@ func reportRights(role, p string, before, after fs.FS, moved map[string]bool) ([
 	case was == nil:
 		source := reportSource(d)
 		switch {
-		case role == "job" && (source == "job" || source == "intake"), role == "owner" && source == "owner":
+		case role == "job" && (source == "job" || source == "intake"):
+			var extra []string
+			for k := range is {
+				if k != "" && !oneOf(k, jobSections) {
+					extra = append(extra, k)
+				}
+			}
+			if len(extra) == 0 {
+				return nil, nil
+			}
+			sort.Strings(extra)
+			return []string{fmt.Sprintf("job may not write %s in a new report; triage sets them", strings.Join(extra, ", "))}, nil
+		case role == "owner" && source == "owner":
 			return nil, nil
 		case role == "job" || role == "owner":
 			return []string{fmt.Sprintf("%s may not write a report whose source is not %s", role, map[string]string{"job": "a job or intake", "owner": "the owner"}[role])}, nil
