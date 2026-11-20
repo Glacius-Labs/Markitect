@@ -4,7 +4,7 @@ How the rebuilt tool `markitect-next` finds and sets up a project, what lies in 
 
 ## The project
 
-A project is a folder that holds `.markitect/`. Every command but `init` works in one: the folder `-C PROJECT` names, which must hold `.markitect/`, or else the nearest folder, from the working directory upward, that holds it. Without one, a command exits 2 and says that `init` makes one. The tool uses no Git to find it, and a folder that holds `.markitect/` is a project wherever it lies.
+A project is a folder that holds `.markitect/`. Every command but `init` and `version` works in one: the folder `-C PROJECT` names, which must hold `.markitect/`, or else the nearest folder, from the working directory upward, that holds it. Without one, a command exits 2 and says that `init` makes one. The tool uses no Git to find it, and a folder that holds `.markitect/` is a project wherever it lies.
 
 The tool reads a project through a file system rooted at its folder, the spec and `.markitect/` included, so that two projects, such as two states to compare, load the same way. It names a document by its path below the spec folder and any other file by its path below the project folder, with `/` on every system.
 
@@ -17,7 +17,7 @@ The tool reads a project through a file system rooted at its folder, the spec an
 | `.gitattributes` | `state.jsonl merge=union` and `history.jsonl merge=union`, so that Git keeps the lines of both sides of a merge |
 | `ignore` | Files the project does not explain, written like a `.gitignore` ([the walk](#the-walk)); empty at `init` |
 
-`version` and `spec` are read as one line each: a byte order mark, white space and the line end around it are dropped, so a checkout with CRLF reads the same. An empty file, a second line or a missing file stops every command but `init`. The spec folder is a relative path with `/` or `\`; it may not be empty, absolute, the project folder itself, outside it, in `.markitect/` or in a `.git` folder. A spec folder that does not exist stops every command but `init` and `apply`, which create it.
+`version` and `spec` are read as one line each: a byte order mark, white space and the line end around it are dropped, so a checkout with CRLF reads the same. An empty file, a second line or a missing file stops every command that reads it. The spec folder is a relative path with `/` or `\`; it may not be empty, absolute, the project folder itself, outside it, in `.markitect/` or in a `.git` folder. A spec folder that does not exist stops every command that reads the spec; `init` and `apply` create it.
 
 ## init
 
@@ -30,7 +30,7 @@ It writes nothing else: no `AGENTS.md`, no `CLAUDE.md`, nothing in `.claude/` an
 
 ## version
 
-`markitect-next version` prints the tool's version, `markitect-next 0.35.0`. In a project it adds the version the project pins, `the project pins 0.35.0`, or `the project pins 0.34.0, not this version` and exits 1 when the two differ. Outside a project it prints the tool's version alone and exits 0. With `--json`, it prints `version`, `pinned`, empty outside a project, and `matches`.
+`markitect-next version` prints the tool's version, `markitect-next 0.35.0`. It needs no project. In the project `-C` names, or the nearest one upward, it adds the version the project pins, `the project pins 0.35.0`, or `the project pins 0.34.0, not this version` and exits 1 when the two differ. Outside a project it prints the tool's version alone and exits 0. With `--json`, it prints `version`, `pinned`, empty outside a project, and `matches`.
 
 ## The walk
 

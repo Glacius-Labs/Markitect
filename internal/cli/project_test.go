@@ -211,7 +211,11 @@ func TestVersion(t *testing.T) {
 	if code, _, errOut := run("version", "-C", t.TempDir()); code != ExitFailed || !strings.Contains(errOut, "holds no .markitect/") {
 		t.Error(code, errOut)
 	}
-	// Outside any project, version prints the tool's version alone.
+}
+
+// TestOutsideAProject runs where no folder from the temporary folder upward
+// holds .markitect/, and is skipped elsewhere.
+func TestOutsideAProject(t *testing.T) {
 	outside := t.TempDir()
 	if _, found := findProject(outside, isProject); found {
 		t.Skip("a folder above the temporary folder holds .markitect/")

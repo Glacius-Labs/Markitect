@@ -80,7 +80,7 @@ A document reports each unresolved target once, at its first link: `[the archive
 
 ## Commands
 
-Every command works in a project and finds its spec through it: the folder `-C PROJECT` names, or the nearest folder from the working directory upward that holds `.markitect/` ([project reference](project-reference.md#the-project)). A `DOCUMENT`, `TYPE`, `OLD`, `NEW` or `PATH` is a path below the spec folder, with or without `.md`, with `/` or `\` between folders; a path that leaves the spec folder, is absolute or starts with a scheme names no document. Flags may stand anywhere, `-json` is the same as `--json`, and `--` ends the flags, so that a name starting with `-` can follow. `markitect-next help`, `-h` or `--help` prints the usage. Output paths are below the spec folder, with `/`.
+Every command but `init` and `version` works in a project and finds its spec through it: the folder `-C PROJECT` names, or the nearest folder from the working directory upward that holds `.markitect/` ([project reference](project-reference.md#the-project)). A `DOCUMENT`, `TYPE`, `OLD`, `NEW` or `PATH` is a path below the spec folder, with or without `.md`, with `/` or `\` between folders; a path that leaves the spec folder, is absolute or starts with a scheme names no document. Flags may stand anywhere, `-json` is the same as `--json`, and `--` ends the flags, so that a name starting with `-` can follow. `markitect-next help`, `-h` or `--help` prints the usage. Output paths are below the spec folder, with `/`.
 
 | Command | Does |
 |---|---|
@@ -95,7 +95,7 @@ Every command works in a project and finds its spec through it: the folder `-C P
 | `markitect-next questions` | The question catalogs of the library packages the spec has ([signals](signals.md#question-catalogs)) |
 | `markitect-next version` | The tool's version, and whether it is the one the project pins ([project reference](project-reference.md#version)) |
 
-**Exit codes.** 0 when all is well, 1 when `check` found something or `version` a project that pins another version, and 2 when the command could not run: an unknown command or flag, a wrong number of arguments, no project, a `.markitect/` that cannot be read, a spec folder that does not exist (`apply` creates it), an unknown document, a file that cannot be read, or a refused `new`, `move` or `apply`. A command that does not succeed changes nothing, also when writing fails partway, unless undoing fails as well, which it reports ([below](#commands-that-write)).
+**Exit codes.** 0 when all is well, 1 when `check` found something or `version` a project that pins another version, and 2 when the command could not run: an unknown command or flag, a wrong number of arguments, no project, a `.markitect/` that cannot be read, a spec folder that does not exist (`apply` creates it), an unknown document, a file that cannot be read, or a refused `init`, `new`, `move` or `apply`. A command that does not succeed changes nothing, also when writing fails partway, unless undoing fails as well, which it reports ([below](#commands-that-write)).
 
 ### Commands that read
 
