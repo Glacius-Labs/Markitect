@@ -2,16 +2,24 @@
 // with their title, type line, sections and links, loads a spec from a file
 // system and checks it.
 //
-// It reads only the file system it is handed and writes nothing. The rules it
-// implements are in docs/guides/language-reference.md.
+// It reads only the file system it is handed and writes nothing. Documents are
+// read as CommonMark with GitHub's extensions, as GitHub renders them. The
+// rules it implements are in docs/guides/language-reference.md.
 package lang
 
 import (
 	"bytes"
 	"path"
+	"sort"
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/ast"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/text"
+	"github.com/yuin/goldmark/util"
 )
 
 // Document is one Markdown file of a spec. Line numbers count from 1; 0 means
@@ -19,12 +27,13 @@ import (
 type Document struct {
 	// Path is the document's path below the spec folder, with forward slashes.
 	Path string
-	// Title is the text of the level-1 heading on the first line with content.
+	// Title is the text of the level-1 heading that is the document's first
+	// block.
 	Title     string
 	TitleLine int
 	// SecondTitleLine is the first further level-1 heading after the title.
 	SecondTitleLine int
-	// ContentLine is the first line with content, where the title belongs.
+	// ContentLine is the line of the first block, where the title belongs.
 	ContentLine int
 	// TypeLine is the line starting with "Type:" in the slot after the title.
 	TypeLine int
@@ -33,26 +42,20 @@ type Document struct {
 	// absent or is not exactly one link to a .md path.
 	TypeRaw  string
 	TypePath string
-	Sections []Section
-	Links    []Link
+	// StrayTypeLines are the other lines of text that start with "Type:".
+	StrayTypeLines []int
+	Sections       []Section
+	Links          []Link
 }
 
-// Section is a level-2 heading and the lines under it up to the next level-1
-// or level-2 heading.
+// Section is a level-2 heading at the top level of a document and the blocks
+// under it up to the next level-1 or level-2 heading.
 type Section struct {
 	Heading string
 	Line    int
-	Body    []string
-}
-
-// HasText reports whether the section holds a line with content.
-func (s Section) HasText() bool {
-	for _, l := range s.Body {
-		if trim(l) != "" {
-			return true
-		}
-	}
-	return false
+	// HasText is whether a block with a character other than white space
+	// stands under the heading.
+	HasText bool
 }
 
 // Link is a link from a document to a .md path.
@@ -88,11 +91,20 @@ type Declared struct {
 }
 
 // Declared returns the sections the document declares when it serves as a
-// type: each of its level-2 headings, without the "(optional)" marker.
+// type: each of its level-2 headings, without the "(optional)" marker. A name
+// declared more than once, in any case, is one section, optional only when
+// every declaration is.
 func (d *Document) Declared() []Declared {
 	out := make([]Declared, 0, len(d.Sections))
+next:
 	for _, s := range d.Sections {
 		name, optional := cutOptional(s.Heading)
+		for i := range out {
+			if strings.EqualFold(out[i].Name, name) {
+				out[i].Optional = out[i].Optional && optional
+				continue next
+			}
+		}
 		out = append(out, Declared{Name: name, Optional: optional})
 	}
 	return out
@@ -105,175 +117,175 @@ func cutOptional(heading string) (string, bool) {
 	if n < 0 || !strings.EqualFold(heading[n:], optionalMarker) {
 		return heading, false
 	}
-	return strings.TrimRightFunc(heading[:n], isSpace), true
+	return strings.TrimRightFunc(heading[:n], unicode.IsSpace), true
 }
 
-// Parse reads one document from its bytes. A leading byte order mark is
-// dropped, invalid UTF-8 is replaced, and lines end with LF, CRLF or CR.
+var markdown = goldmark.New(goldmark.WithExtensions(extension.GFM))
+
+const typePrefix = "Type:"
+
+// Parse reads one document from its bytes as CommonMark with GitHub's
+// extensions. A leading byte order mark is dropped, invalid UTF-8 is replaced,
+// and lines end with LF, CRLF or CR.
 func Parse(docPath string, src []byte) *Document {
-	text := strings.ToValidUTF8(string(bytes.TrimPrefix(src, []byte("\xef\xbb\xbf"))), string(utf8.RuneError))
-	doc := &Document{Path: docPath}
-	slot := 0        // 0: no content yet, 1: the title slot passed, 2: the type-line slot passed
-	sec := -1        // index of the current section
-	var fence string // the opening fence while inside a fenced code block
-	for i, line := range splitLines(text) {
-		n := i + 1
-		code := fence != ""
-		if code {
-			if s := trim(line); s != "" && strings.Trim(s, fence[:1]) == "" && len(s) >= len(fence) {
-				fence = ""
+	s := string(bytes.TrimPrefix(src, []byte("\xef\xbb\xbf")))
+	s = strings.ToValidUTF8(s, string(utf8.RuneError))
+	s = strings.ReplaceAll(strings.ReplaceAll(s, "\r\n", "\n"), "\r", "\n")
+	source := []byte(s)
+	p := &parser{doc: &Document{Path: docPath}, source: source, starts: lineStarts(source)}
+	p.read(markdown.Parser().Parse(text.NewReader(source)))
+	return p.doc
+}
+
+type parser struct {
+	doc       *Document
+	source    []byte
+	starts    []int // the offset of each line
+	typeLines map[int]bool
+}
+
+// line returns the line of a byte offset.
+func (p *parser) line(offset int) int { return sort.SearchInts(p.starts, offset+1) }
+
+func lineStarts(source []byte) []int {
+	starts := []int{0}
+	for i, c := range source {
+		if c == '\n' && i+1 < len(source) {
+			starts = append(starts, i+1)
+		}
+	}
+	return starts
+}
+
+func (p *parser) read(root ast.Node) {
+	d := p.doc
+	p.typeLines = map[int]bool{}
+	first := root.FirstChild()
+	if first != nil {
+		d.ContentLine = p.line(first.Pos())
+		if h, ok := first.(*ast.Heading); ok && h.Level == 1 {
+			if title := p.headingText(h); title != "" {
+				d.Title, d.TitleLine = title, d.ContentLine
 			}
-		} else if f := openingFence(line); f != "" {
-			fence, code = f, true
 		}
-		level, heading := 0, ""
-		if !code {
-			level, heading = parseHeading(line)
-		}
-		if trim(line) != "" {
-			switch slot {
-			case 0:
-				slot = 1
-				doc.ContentLine = n
-				if level == 1 {
-					doc.Title, doc.TitleLine = heading, n
-					continue
+	}
+	if d.TitleLine != 0 {
+		if para, ok := first.NextSibling().(*ast.Paragraph); ok && para.Lines().Len() > 0 {
+			seg := para.Lines().At(0)
+			if line := p.lineText(seg); strings.HasPrefix(line, typePrefix) {
+				d.TypeLine = p.line(seg.Start)
+				p.typeLines[d.TypeLine] = true
+				if raw, ok := soleLink(strings.TrimSpace(line[len(typePrefix):])); ok {
+					d.TypeRaw, d.TypePath = raw, resolve(d.Path, raw)
 				}
-			case 1:
-				slot = 2
-				if doc.TitleLine != 0 && !code && strings.HasPrefix(line, "Type:") {
-					doc.TypeLine = n
-					if dest, ok := soleLink(trim(line[len("Type:"):])); ok {
-						if raw, _, ok := localPath(dest); ok {
-							doc.TypeRaw, doc.TypePath = raw, resolve(docPath, raw)
-						}
-					}
-					continue
+			}
+		}
+	}
+	// Stray type lines first, in paragraphs and in the text of tight list items,
+	// so that their links are skipped below.
+	_ = ast.Walk(root, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+		if !entering || (n.Kind() != ast.KindParagraph && n.Kind() != ast.KindTextBlock) {
+			return ast.WalkContinue, nil
+		}
+		for i := 0; i < n.Lines().Len(); i++ {
+			seg := n.Lines().At(i)
+			if l := p.line(seg.Start); !p.typeLines[l] && strings.HasPrefix(p.lineText(seg), typePrefix) {
+				d.StrayTypeLines = append(d.StrayTypeLines, l)
+				p.typeLines[l] = true
+			}
+		}
+		return ast.WalkContinue, nil
+	})
+	section := ""
+	sec := -1
+	for n := root.FirstChild(); n != nil; n = n.NextSibling() {
+		if h, ok := n.(*ast.Heading); ok && h.Level <= 2 {
+			line := p.line(h.Pos())
+			if h.Level == 1 {
+				if n != first && d.SecondTitleLine == 0 {
+					d.SecondTitleLine = line
 				}
+				section, sec = "", -1
+			} else {
+				section = p.headingText(h)
+				d.Sections = append(d.Sections, Section{Heading: section, Line: line})
+				sec = len(d.Sections) - 1
 			}
+		} else if sec >= 0 && p.hasText(n) {
+			d.Sections[sec].HasText = true
 		}
-		switch {
-		case level == 1:
-			if doc.SecondTitleLine == 0 {
-				doc.SecondTitleLine = n
-			}
-			sec = -1
-		case level == 2:
-			doc.Sections = append(doc.Sections, Section{Heading: heading, Line: n})
-			sec = len(doc.Sections) - 1
-		case sec >= 0:
-			doc.Sections[sec].Body = append(doc.Sections[sec].Body, line)
-		}
-		if code {
-			continue
-		}
-		for _, m := range scanInline(line) {
-			if m.code || m.image {
-				continue
-			}
-			if raw, _, ok := localPath(m.dest); ok {
-				name := ""
-				if sec >= 0 {
-					name = doc.Sections[sec].Heading
-				}
-				doc.Links = append(doc.Links, Link{Target: resolve(docPath, raw), Raw: raw, Section: name, Line: n})
-			}
-		}
+		p.links(n, section)
 	}
-	return doc
 }
 
-// splitLines splits text at LF, CRLF and CR. A final line break ends the last
-// line rather than opening an empty one.
-func splitLines(text string) []string {
-	text = strings.ReplaceAll(text, "\r\n", "\n")
-	text = strings.ReplaceAll(text, "\r", "\n")
-	text = strings.TrimSuffix(text, "\n")
-	if text == "" {
-		return nil
+// hasText reports whether the source of a top-level block, up to the next
+// block, holds a character other than white space.
+func (p *parser) hasText(block ast.Node) bool {
+	start, end := p.starts[p.line(block.Pos())-1], len(p.source)
+	if next := block.NextSibling(); next != nil {
+		end = p.starts[p.line(next.Pos())-1]
 	}
-	return strings.Split(text, "\n")
+	return strings.TrimFunc(string(p.source[start:end]), unicode.IsSpace) != ""
 }
 
-// leadingSpaces returns how many spaces start s, or -1 when more than three do.
-func leadingSpaces(s string) int {
-	n := 0
-	for n < len(s) && s[n] == ' ' {
-		n++
-	}
-	if n > 3 {
-		return -1
-	}
-	return n
+// links collects the links to .md paths in a block, outside the type lines.
+func (p *parser) links(block ast.Node, section string) {
+	_ = ast.Walk(block, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+		link, ok := n.(*ast.Link)
+		if !ok || !entering {
+			return ast.WalkContinue, nil
+		}
+		line := p.line(link.Pos())
+		if raw, ok := localPath(string(link.Destination)); ok && !p.typeLines[line] {
+			p.doc.Links = append(p.doc.Links, Link{Target: resolve(p.doc.Path, raw), Raw: raw, Section: section, Line: line})
+		}
+		return ast.WalkContinue, nil
+	})
 }
 
-// openingFence returns the run of three or more backticks or tildes that
-// opens a fenced code block on this line, after at most three spaces.
-func openingFence(line string) string {
-	i := leadingSpaces(line)
-	if i < 0 || i >= len(line) || (line[i] != '`' && line[i] != '~') {
-		return ""
-	}
-	j := i
-	for j < len(line) && line[j] == line[i] {
-		j++
-	}
-	if j-i < 3 {
-		return ""
-	}
-	return line[i:j]
-}
-
-// parseHeading returns the level and text of an ATX heading: at most three
-// spaces, one to six #, at least one space or tab, then text that starts with
-// a non-space; trailing spaces and tabs are dropped. Level 0 means no heading.
-func parseHeading(line string) (int, string) {
-	i := leadingSpaces(line)
-	if i < 0 {
-		return 0, ""
-	}
-	j := i
-	for j < len(line) && line[j] == '#' {
-		j++
-	}
-	level := j - i
-	if level < 1 || level > 6 || j >= len(line) || (line[j] != ' ' && line[j] != '\t') {
-		return 0, ""
-	}
-	for j < len(line) && (line[j] == ' ' || line[j] == '\t') {
-		j++
-	}
-	r, _ := utf8.DecodeRuneInString(line[j:])
-	if j >= len(line) || isSpace(r) {
-		return 0, ""
-	}
-	return level, strings.TrimRight(line[j:], " \t")
-}
-
-// isSpace reports whether r is white space: Unicode white space and the
-// separators U+001C to U+001F.
-func isSpace(r rune) bool { return unicode.IsSpace(r) || r >= 0x1c && r <= 0x1f }
-
-func trim(s string) string { return strings.TrimFunc(s, isSpace) }
-
-// localPath returns the path and the #section of a link destination that
-// names a .md file; ok is false for a web address, mailto:, a bare #section
-// or any other file.
-func localPath(dest string) (raw, fragment string, ok bool) {
-	d := dest
-	if strings.HasPrefix(dest, "<") {
-		_, size := utf8.DecodeLastRuneInString(dest)
-		if len(dest)-size < 1 {
-			d = ""
-		} else {
-			d = dest[1 : len(dest)-size]
+// headingText returns a heading's text as written, its lines joined by a
+// space.
+func (p *parser) headingText(h *ast.Heading) string {
+	var parts []string
+	for i := 0; i < h.Lines().Len(); i++ {
+		seg := h.Lines().At(i)
+		if s := strings.TrimSpace(string(seg.Value(p.source))); s != "" {
+			parts = append(parts, s)
 		}
 	}
-	raw, _, _ = strings.Cut(d, "#")
-	if hasScheme(raw) || !strings.HasSuffix(strings.ToLower(unescape(raw)), ".md") {
-		return "", "", false
+	return strings.Join(parts, " ")
+}
+
+// lineText returns the text of a paragraph line without its line break and
+// leading white space.
+func (p *parser) lineText(seg text.Segment) string {
+	return strings.TrimLeftFunc(strings.TrimRight(string(seg.Value(p.source)), "\n"), unicode.IsSpace)
+}
+
+// soleLink returns the path of s when s is exactly one inline link, not an
+// image, to a .md path.
+func soleLink(s string) (string, bool) {
+	root := markdown.Parser().Parse(text.NewReader([]byte(s)))
+	para, ok := root.FirstChild().(*ast.Paragraph)
+	if !ok || para.NextSibling() != nil {
+		return "", false
 	}
-	return raw, d[len(raw):], true
+	link, ok := para.FirstChild().(*ast.Link)
+	if !ok || link.NextSibling() != nil {
+		return "", false
+	}
+	raw, ok := localPath(string(link.Destination))
+	return raw, ok
+}
+
+// localPath returns the path of a link destination that names a .md file;
+// ok is false for a web address, mailto:, a bare #section or any other file.
+func localPath(dest string) (string, bool) {
+	raw, _, _ := strings.Cut(dest, "#")
+	if hasScheme(raw) || !strings.HasSuffix(strings.ToLower(decode(raw)), ".md") {
+		return "", false
+	}
+	return raw, true
 }
 
 // hasScheme reports whether s starts with a URI scheme and a colon.
@@ -292,21 +304,24 @@ func hasScheme(s string) bool {
 	return false
 }
 
-// unescape decodes %XX sequences and leaves any other % as it is.
-func unescape(s string) string {
-	if !strings.Contains(s, "%") {
-		return s
+// decode turns a destination as written into a path: backslash escapes and
+// character references are resolved and %XX sequences decoded; any other % is
+// left as it is.
+func decode(s string) string {
+	b := util.ResolveEntityNames(util.ResolveNumericReferences(util.UnescapePunctuations([]byte(s))))
+	if !bytes.Contains(b, []byte("%")) {
+		return string(b)
 	}
-	var b []byte
-	for i := 0; i < len(s); i++ {
-		if s[i] == '%' && i+2 < len(s) && isHex(s[i+1]) && isHex(s[i+2]) {
-			b = append(b, unhex(s[i+1])<<4|unhex(s[i+2]))
+	var out []byte
+	for i := 0; i < len(b); i++ {
+		if b[i] == '%' && i+2 < len(b) && isHex(b[i+1]) && isHex(b[i+2]) {
+			out = append(out, unhex(b[i+1])<<4|unhex(b[i+2]))
 			i += 2
 			continue
 		}
-		b = append(b, s[i])
+		out = append(out, b[i])
 	}
-	return strings.ToValidUTF8(string(b), string(utf8.RuneError))
+	return strings.ToValidUTF8(string(out), string(utf8.RuneError))
 }
 
 func isHex(c byte) bool {
@@ -326,7 +341,7 @@ func unhex(c byte) byte {
 // resolve resolves a link path, as written in the document at src, to a path
 // below the spec folder.
 func resolve(src, raw string) string {
-	p := unescape(raw)
+	p := decode(raw)
 	if strings.HasPrefix(p, "/") {
 		return path.Clean(p)
 	}

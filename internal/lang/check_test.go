@@ -145,7 +145,7 @@ func TestTitle(t *testing.T) {
 		"four.md":       "    # Four\n",
 		"seven.md":      "####### Seven\n",
 		"empty.md":      "# \n",
-		"setext.md":     "Title\n=====\n",
+		"setext.md":     "Opening\nhours\n=====\n\n## Days\n---\nMonday\n",
 		"fenced.md":     "```\n# In code\n```\n",
 		"tab.md":        "#\tTab\n",
 		"closing.md":    "# Title #\n",
@@ -157,17 +157,24 @@ func TestTitle(t *testing.T) {
 		"fenced.md:1: title: missing level-1 title",
 		"four.md:1: title: missing level-1 title",
 		"no-space.md:1: title: missing level-1 title",
-		"setext.md:1: title: missing level-1 title",
 		"seven.md:1: title: missing level-1 title",
-		// The title line is not searched for links; a heading line is.
+		`title-link.md:1: link.unresolved: no document at "ghost.md"`,
 		`title-link.md:3: link.unresolved: no document at "ghost2.md"`,
 		"two.md:5: title: second level-1 heading",
 	)
 }
 
+func TestSetextHeadings(t *testing.T) {
+	d := Parse("hours.md", []byte("Opening\nhours\n=====\n\nThe week.\n\nDays\n----\nMonday\n"))
+	if d.Title != "Opening hours" || d.TitleLine != 1 || len(d.Sections) != 1 || d.Sections[0].Heading != "Days" || d.Sections[0].Line != 7 || !d.Sections[0].HasText {
+		t.Errorf("parsed %+v", d)
+	}
+}
+
 func TestTypeLine(t *testing.T) {
 	role := "# Role\n\nA role.\n\n## Duty\nWhat.\n"
 	bad := "type line must be exactly one link to a document"
+	stray := "a type line stands only on the first line after the title"
 	expect(t, checkFiles(t, map[string]string{
 		"role.md":     role,
 		"extra.md":    "# A\n\nType: [Role](role.md), see below\n\n## Duty\nx\n",
@@ -178,12 +185,15 @@ func TestTypeLine(t *testing.T) {
 		"angle.md":    "# A\n\nType: <role.md>\n",
 		"image.md":    "# A\n\nType: ![Role](role.md)\n",
 		"code.md":     "# A\n\nType: `[Role](role.md)`\n",
-		// Only the first line with content after the title is the type line, written
-		// exactly "Type:" at the start; elsewhere such a line is text with a link.
+		// The type line is the first line of the block after the title. "Type:" on any
+		// other line of text is an error, and its link counts only there; in code it is
+		// text, and "type:" in lower case is no type line.
 		"lower.md":    "# A\n\ntype: [Role](ghost.md)\n",
-		"indented.md": "# A\n\n Type: [Role](ghost.md)\n",
+		"indented.md": "# A\n\n Type: [Role](role.md)\n\n## Duty\nx\n",
 		"late.md":     "# A\n\ntext\nType: [Role](ghost.md)\n",
-		"fenced.md":   "# A\n\n```\nType: [Role](role.md)\n```\n",
+		"listed.md":   "# A\n\nType: [Role](role.md)\n\n## Duty\n- Type: [Role](ghost.md)\n",
+		"fenced.md":   "# A\n\n```\nType: [Role](role.md)\n```\n\n    Type: [Role](ghost.md)\n",
+		"spanned.md":  "# A\n\nText `Type: [Role](ghost.md)`\n",
 		"untitled.md": "Hello\nType: [Role](role.md)\n",
 		// The link of the type line is not reported again as a link.
 		"unresolved.md": "# A\n\nType: [Ghost](ghost-type.md)\n",
@@ -192,37 +202,42 @@ func TestTypeLine(t *testing.T) {
 		"code.md:3: type.line: "+bad,
 		"extra.md:3: type.line: "+bad,
 		"image.md:3: type.line: "+bad,
-		`indented.md:3: link.unresolved: no document at "ghost.md"`,
-		`late.md:4: link.unresolved: no document at "ghost.md"`,
+		"late.md:4: type.line: "+stray,
+		"listed.md:6: type.line: "+stray,
 		`lower.md:3: link.unresolved: no document at "ghost.md"`,
 		`unresolved.md:3: type.unresolved: no document at "ghost-type.md"`,
 		"untitled.md:1: title: missing level-1 title",
+		"untitled.md:2: type.line: "+stray,
 	)
 }
 
 func TestSections(t *testing.T) {
 	typ := "# Role\n\nA role.\n\n## Duty\nWhat.\n\n## Size ##\nS.\n"
+	// Closing # are no part of a heading.
 	expect(t, checkFiles(t, map[string]string{
 		"role.md": typ,
-		// A level-3 heading, code or a fence line is text of the section; the closing #
-		// of a heading belong to its text.
-		"h3.md":    "# A\n\nType: [Role](role.md)\n\n## Duty\n### Part\n## size ##\nz\n",
-		"fence.md": "# A\n\nType: [Role](role.md)\n\n## duty\n```\n```\n## SIZE ##\nz\n",
+		// A level-3 heading, a rule or an empty fenced block is text of the section.
+		"h3.md":    "# A\n\nType: [Role](role.md)\n\n## Duty\n### Part\n## size\nz\n",
+		"fence.md": "# A\n\nType: [Role](role.md)\n\n## duty\n```\n```\n## SIZE ##\n***\n",
+		// A heading in a list or quote is no section.
+		"nested.md": "# A\n\nType: [Role](role.md)\n\n## Duty\nx\n\n> ## Size\n> z\n",
 		// A level-1 heading ends the section before it.
 		"h1.md": "# A\n\nType: [Role](role.md)\n\n## Duty\n# Break\ntext\n## Size ##\nz\n",
 		// The first of two sections with the same heading counts.
 		"twice.md": "# A\n\nType: [Role](role.md)\n\n## Duty\n\n## Duty\nsecond\n## Size ##\nz\n",
 		// No-break space is white space.
 		"blank.md": "# A\n\nType: [Role](role.md)\n\n## Duty\n\u00a0\n## Size\nz\n",
+		// An HTML comment is text of its section.
+		"comment.md": "# A\n\nType: [Role](role.md)\n\n## Duty\n<!-- to do -->\n## Size\nz\n",
 		// Headings in code are no sections.
 		"code.md": "# A\n\nType: [Role](role.md)\n\n```\n## Duty\na sample\n```\n\n`## Size ##`\n",
 	}),
-		`blank.md:3: section.missing: missing section "Size ##" required by role.md`,
 		`blank.md:5: section.empty: empty section "Duty"`,
 		`code.md:3: section.missing: missing section "Duty" required by role.md`,
-		`code.md:3: section.missing: missing section "Size ##" required by role.md`,
+		`code.md:3: section.missing: missing section "Size" required by role.md`,
 		`h1.md:5: section.empty: empty section "Duty"`,
 		"h1.md:6: title: second level-1 heading",
+		`nested.md:3: section.missing: missing section "Size" required by role.md`,
 		`twice.md:5: section.empty: empty section "Duty"`,
 	)
 }
@@ -250,6 +265,23 @@ func TestOptionalSections(t *testing.T) {
 	}
 	d := Parse("reservation.md", []byte(reservation))
 	expect(t, []string{renderDeclared(d.Declared())}, "Copy, Pickup branch?, Reminder?, Expiry?")
+}
+
+func TestSectionDeclaredTwice(t *testing.T) {
+	// A section a type declares twice, in any case or once as optional, is one
+	// section: required unless every declaration is optional, and reported once.
+	loan := "# Loan\n\nOne copy lent.\n\n## Due\nThe date.\n\n## due (optional)\nAgain.\n\n## Note (optional)\nN.\n\n## NOTE (Optional)\nN.\n"
+	d := Parse("loan.md", []byte(loan))
+	expect(t, []string{renderDeclared(d.Declared())}, "Due, Note?")
+	expect(t, checkFiles(t, map[string]string{
+		"loan.md":    loan,
+		"missing.md": "# Loan 1\n\nType: [Loan](loan.md)\n\n## Note\n\n",
+		"empty.md":   "# Loan 2\n\nType: [Loan](loan.md)\n\n## Due\n\n",
+	}),
+		`empty.md:5: section.empty: empty section "Due"`,
+		`missing.md:3: section.missing: missing section "Due" required by loan.md`,
+		`missing.md:5: section.empty: empty section "Note"`,
+	)
 }
 
 func renderDeclared(ds []Declared) string {
@@ -286,13 +318,41 @@ func TestLinks(t *testing.T) {
 		`a.md:3: link.unresolved: no document at "%2e%2e/out.md"`,
 		`a.md:4: link.unresolved: no document at "B.md"`,
 		`a.md:4: link.unresolved: no document at "b.MD"`,
+		// A link holds no link: the inner one counts.
+		`a.md:5: link.unresolved: no document at "ghost-inner.md"`,
 		`a.md:6: link.unresolved: no document at "//x.md"`,
+		// ghost.md, ghost.md#x and ./ghost.md are one target, reported once.
 		`a.md:7: link.unresolved: no document at "ghost.md"`,
-		`a.md:7: link.unresolved: no document at "./ghost.md"`,
 		`a.md:8: link.unresolved: no document at "ghost-after.md"`,
 		`a.md:9: link.unresolved: no document at "ghost-tab.md"`,
 		`sub/c.md:3: link.unresolved: no document at "../../b.md"`,
 		`sub/c.md:3: link.unresolved: no document at "/sub/c.md"`,
+	)
+}
+
+func TestCommonMark(t *testing.T) {
+	expect(t, checkFiles(t, map[string]string{
+		"member.md": member,
+		// Three backticks with more backticks on the line open no fenced block.
+		"inline.md": "# Ada\n\nType: [Member](member.md)\n\n```card``` is inline code.\n\n## Card\nL-1\n\n[x](ghost-inline.md)\n",
+		// Indented code and a fence inside a list item are code.
+		"indented.md": "# A\n\nText.\n\n    [a](ghost-indented.md)\n\n- item\n\n  ```\n  [b](ghost-listed.md)\n  ```\n",
+		// A backslash escape, an HTML comment and raw HTML hold no link.
+		"escaped.md": "# A\n\n\\[a](ghost-escaped.md) and text <!-- [b](ghost-inline-comment.md) -->\n\n" +
+			"<!--\n[c](ghost-block-comment.md)\n-->\n\n<div>[d](ghost-html.md)</div>\n",
+		// <...> must close; a destination may hold escaped characters.
+		"angle.md": "# A\n\n[a](<ghost.mdx)\n\n[b](<open loans.md>) [c](open\\_loans.md)\n",
+		// Unmatched backticks are text, and the link after them counts.
+		"ticks.md": "# A\n\n``open [a](ghost-ticks.md) and `x` [b](ghost-ticks2.md)\n",
+		// A reference link counts at its own line.
+		"reference.md": "# A\n\nSee [the rules][rules].\n\n[rules]: ghost-ref.md\n",
+	}),
+		`angle.md:5: link.unresolved: no document at "open loans.md"`,
+		`angle.md:5: link.unresolved: no document at "open\_loans.md"`,
+		`inline.md:10: link.unresolved: no document at "ghost-inline.md"`,
+		`reference.md:3: link.unresolved: no document at "ghost-ref.md"`,
+		`ticks.md:3: link.unresolved: no document at "ghost-ticks.md"`,
+		`ticks.md:3: link.unresolved: no document at "ghost-ticks2.md"`,
 	)
 }
 
@@ -318,7 +378,7 @@ func TestParse(t *testing.T) {
 	if !reflect.DeepEqual(d.Links, want) {
 		t.Errorf("links %+v, want %+v", d.Links, want)
 	}
-	if len(d.Sections) != 1 || d.Sections[0].Line != 5 || !d.Sections[0].HasText() {
+	if len(d.Sections) != 1 || d.Sections[0].Line != 5 || !d.Sections[0].HasText {
 		t.Errorf("sections %+v", d.Sections)
 	}
 }

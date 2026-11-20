@@ -60,7 +60,7 @@ func TestCheckJSON(t *testing.T) {
 		"a.md":     "# A\n",
 		"sub/b.md": "# B\n\n[x](../ghost.md)\n",
 	})
-	for _, args := range [][]string{{"check", dir, "--json"}, {"check", "--json", dir}} {
+	for _, args := range [][]string{{"check", dir, "--json"}, {"check", "--json", dir}, {"check", "-json", "--", dir}} {
 		code, out, _ := run(args...)
 		var doc map[string]any
 		if err := json.Unmarshal([]byte(out), &doc); err != nil {
@@ -100,7 +100,9 @@ func TestUsage(t *testing.T) {
 			t.Errorf("%v: got %d %q %q", tc.args, code, out, errOut)
 		}
 	}
-	if code, out, _ := run("--help"); code != ExitOK || !strings.Contains(out, "markitect-next check SPECFOLDER") {
-		t.Errorf("help: %d %q", code, out)
+	for _, help := range []string{"help", "-h", "--help"} {
+		if code, out, _ := run(help); code != ExitOK || !strings.Contains(out, "markitect-next check SPECFOLDER") {
+			t.Errorf("%s: %d %q", help, code, out)
+		}
 	}
 }

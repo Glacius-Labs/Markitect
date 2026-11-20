@@ -120,18 +120,20 @@ func Check(s *Spec) []Diagnostic {
 				switch {
 				case !has && !want.Optional:
 					add(d.TypeLine, CodeSectionMissing, "missing section \"%s\" required by %s", want.Name, t.Path)
-				case has && !sec.HasText():
+				case has && !sec.HasText:
 					add(sec.Line, CodeSectionEmpty, "empty section \"%s\"", want.Name)
 				}
 			}
 		}
-		seen := map[[2]string]bool{}
+		for _, line := range d.StrayTypeLines {
+			add(line, CodeTypeLine, "a type line stands only on the first line after the title")
+		}
+		seen := map[string]bool{}
 		for _, l := range d.Links {
-			key := [2]string{l.Target, l.Raw}
-			if seen[key] {
+			if seen[l.Target] {
 				continue
 			}
-			seen[key] = true
+			seen[l.Target] = true
 			if _, ok := s.Document(l.Target); !ok {
 				add(l.Line, CodeLinkUnresolved, "no document at \"%s\"", l.Raw)
 			}
