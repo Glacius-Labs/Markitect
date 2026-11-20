@@ -50,6 +50,26 @@ complete
 - Charge one fee, whatever the delay.
 ```
 
+## Listing the reports
+
+`markitect-next reports` lists every report, so that a job or a briefing reads them without reading Markdown, and `--open` only the open ones. For each it prints its name and whether it is open, closed or escalated, then its source with the day, its place, `(gone)` after a place that is gone, occurred or risk, its violated property, its rating, its branches, a line per proposal for the owner, and its closing, each `(none)` when the report does not hold it. A last line counts them. What `check` finds in the reports is printed first, and the command then exits 1; a value that is not of its form is left out.
+
+```text
+late-fee: open, escalated
+  source: job read reader, 2026-11-18
+  place: docs/spec/lending/return.md
+  occurred or risk: risk
+  property: complete
+  rating: impact high, likelihood medium
+  branches: (none)
+  proposal: Charge a fee per day late.
+  proposal: Charge one fee, whatever the delay.
+  closing: (none)
+1 report, 1 open, 1 of them escalated
+```
+
+With `--json` it prints `errors`, with `file`, `line`, `code` and `message`, and `reports`, each with `name`, `path`, `source` (`owner`, `intake` or `job`), `job`, `role`, `day`, `place`, `place_gone`, `occurred`, `property`, `impact`, `likelihood`, `branches`, `escalated`, `proposals`, `open`, `closed_on`, `outcome` (`done`, `duplicate` or `nothing to do`) and `duplicate_of`, empty where the report holds nothing.
+
 ## Waiting on a report
 
 An open report whose violated property is not `none` and whose place is a document of the spec makes that document **waiting on report NAME** in [`status`](project-reference.md#status). It is then listed only as waiting, not as changed or suspect, and a `skip` note on it is left out; its neighbours are listed as before.

@@ -63,4 +63,4 @@ The tests and the counter-checks are the runner's part of the landing rule: the 
 
 ## How firm it is
 
-In CI the runner is a script no agent can change, which lays out the states out of every agent's reach: there the checks are a fact, and a required check a job cannot skip. In a session or a scheduled task the runner is Claude itself, which could lay out a state that is not the one before the step: there the checks make shortcuts visible and prove nothing ([where the check is a fact](../concept/jobs-and-runners.md#rights-come-from-the-steps)).
+The jobs are skills, so Claude lays out the state before each step, everywhere: the step check makes shortcuts visible and proves nothing. What is a fact in CI is the landing check and the tests, run by the workflow as a step of its own that no agent can change, and a required check a job cannot skip ([where the check is a fact](../concept/jobs-and-runners.md#rights-come-from-the-steps)).

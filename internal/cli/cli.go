@@ -59,6 +59,8 @@ const usage = `usage: markitect-next COMMAND ARGUMENTS [-C PROJECT] [--json]
                               and its reports that are new, closed or changed
   figures [--all]             the change signals computed from the history, and
                               the figures of the reports and control samples
+  reports [--open]            the reports with the values of their sections, or
+                              only the open ones
   settings                    the settings: the model per role, the counter-check
                               folder, the tests command, the cadence, the write
                               table and the CI definition
@@ -93,6 +95,7 @@ var commands = map[string]command{
 	"mark":      {2, 2, mark},
 	"compare":   {1, 2, compare},
 	"figures":   {0, 0, figures},
+	"reports":   {0, 0, reports},
 	"settings":  {0, 0, settings},
 }
 
@@ -115,18 +118,8 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		return ExitFailed
 	}
 	o, err := parse(args[1:])
-	switch {
-	case err != nil:
-	case len(o.positional) < c.min || len(o.positional) > c.max:
-		err = fmt.Errorf("wrong number of arguments\n\n%s", usage)
-	case o.specSet && name != "init":
-		err = errors.New("--spec is a flag of init")
-	case o.statusFlags && name != "status":
-		err = errors.New("--step, --before and --target are flags of status")
-	case o.step != "" && o.before == "" || o.before != "" && o.step == "":
-		err = errors.New("--step and --before go together")
-	case o.markFlags && name != "mark":
-		err = errors.New("--file, --check, -e and -m are flags of mark")
+	if err == nil {
+		err = validate(name, c, o)
 	}
 	code := ExitFailed
 	if err == nil {
@@ -151,11 +144,34 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	return code
 }
 
+// validate checks the parsed arguments against the command: the number of
+// positional arguments, and that each flag given is one of the command's.
+func validate(name string, c command, o options) error {
+	switch {
+	case len(o.positional) < c.min || len(o.positional) > c.max:
+		return fmt.Errorf("wrong number of arguments\n\n%s", usage)
+	case o.specSet && name != "init":
+		return errors.New("--spec is a flag of init")
+	case o.all && name != "topic" && name != "figures":
+		return errors.New("--all is a flag of topic and figures")
+	case o.open && name != "reports":
+		return errors.New("--open is a flag of reports")
+	case o.statusFlags && name != "status":
+		return errors.New("--step, --before and --target are flags of status")
+	case o.step != "" && o.before == "" || o.before != "" && o.step == "":
+		return errors.New("--step and --before go together")
+	case o.markFlags && name != "mark":
+		return errors.New("--file, --check, -e and -m are flags of mark")
+	}
+	return nil
+}
+
 // options are a command's flags and positional arguments. Flags may stand
 // anywhere; "--" ends them.
 type options struct {
 	json bool
 	all  bool
+	open bool
 	// dir is the project folder -C names, "" without the flag.
 	dir string
 	// spec is the spec folder --spec names, specSet whether it was given.
@@ -193,6 +209,8 @@ func parse(args []string) (options, error) {
 			o.json = true
 		case a == "--all" || a == "-all":
 			o.all = true
+		case a == "--open" || a == "-open":
+			o.open = true
 		case a == "-C":
 			if o.dir, err = value(a); err == nil && o.dir == "" {
 				err = errors.New("flag -C needs a folder")

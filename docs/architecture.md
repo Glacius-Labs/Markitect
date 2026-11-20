@@ -82,6 +82,7 @@ One Go module at the root, with `cmd/` and `internal/` below it.
 | `cmd/` | The Go entrypoints: `markitect`, the CLI that ships, and `markitect-next`, the rebuilt tool beside it |
 | `internal/` | The Go packages, including the standard Libraries (`internal/libraries`) and the skills and agents (`internal/skills`) that the binary embeds; the [code map](development/code-map.md) lists every package |
 | `plugin/` | The Claude Code plugin `markitect`, with its launcher, hooks and skill |
+| `plugin-next/` | The Claude Code plugin `markitect-next` of the rebuilt tool, with its skills and agents ([plugin](guides/plugin.md)) |
 | `tools/` | Independent tools that import no product code: the command smoke |
 | `scripts/` | Maintainer scripts: the documentation link check and the CI test and flake reports |
 | `docs/` | This documentation |

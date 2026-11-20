@@ -112,6 +112,7 @@ func TestUsage(t *testing.T) {
 		{[]string{"check", "-C", ""}, "flag -C needs a folder"},
 		{[]string{"check", "-C", dir, "--spec", "x"}, "--spec is a flag of init"},
 		{[]string{"init", "--spec"}, "flag --spec needs a value"},
+		{[]string{"status", "-C", dir, "--all"}, "--all is a flag of topic and figures"},
 		{[]string{"check", "-C", filepath.Join(dir, "missing")}, "not a folder"},
 		{[]string{"check", "-C", file}, "not a folder"},
 		{[]string{"check", "-C", specOf(dir)}, "holds no .markitect/version; markitect-next init makes one"},

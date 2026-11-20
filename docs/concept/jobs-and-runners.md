@@ -15,7 +15,7 @@
 
 The jobs are the factory's working instructions: for each job ([§8](the-factory.md#the-jobs)), which roles run in which order, with which task and which write area. They ship in the Claude Code plugin, not in the project, and they are the only part tied to a provider. A skill of the plugin is the entry with which a person starts a job in their own session. The briefing and explain are conversations, not jobs, and ship as skills too ([§10](overview.md)).
 
-**The way of a job is the same everywhere.** The runner fetches a commit into a fresh copy, calls each role as a step of its own, and records the state after each step. At the end there is a branch. The landing rule is a check outside every agent: `status` against the target branch, the tests and the counter-checks, and the write area of every step ([§8](the-factory.md#the-landing-rule)).
+**The way of a job is the same everywhere,** since every runner runs the job's skill. The session that runs it works on a branch of its own in a fresh copy, starts each role as an agent of its own, and lays out the state before each step for the step check. At the end there is a branch. The landing rule is a check outside the agents of the steps: `status` against the target branch, the tests and the counter-checks, and the write area of every step ([§8](the-factory.md#the-landing-rule)).
 
 ## Rights come from the steps
 
@@ -36,7 +36,7 @@ The write table ships with the tool, and a project may only narrow it in its set
 
 **Control files** are the write table, the settings, the version, the spec path, the learned rules and the CI definition, which the settings name. Only the owner changes them. The tool reads them from the target branch, not from the branch that wants to land, so a job cannot widen its own rights. A verdict row that did not come from the reviewer's step keeps the branch from landing.
 
-**Where the check is a fact.** In CI the runner is a script that no agent can change, and it records the states out of every agent's reach; there the check is a fact, and a required check that a job cannot skip. In a session or a scheduled task the runner is Claude itself; there the check makes shortcuts visible and proves nothing. Markitect guards against forgetting and shortcuts, and against a deliberate bypass only by making it visible.
+**Where the check is a fact.** In CI the runner is a script that no agent can change; there the check is a fact, and a required check that a job cannot skip. With skills, Claude lays out the states of the steps, so the step check makes shortcuts visible everywhere, and what is a fact in CI is the landing check and the tests, which the workflow runs as a step of its own. In a session or a scheduled task the runner is Claude itself; there the check makes shortcuts visible and proves nothing. Markitect guards against forgetting and shortcuts, and against a deliberate bypass only by making it visible.
 
 ## Runners
 
