@@ -15,7 +15,7 @@
 
 The jobs are the factory's working instructions: for each job ([§8](the-factory.md#the-jobs)), which roles run in which order, with which task and which write area. They ship in the Claude Code plugin, not in the project, and they are the only part tied to a provider. A skill of the plugin is the entry with which a person starts a job in their own session. The briefing and explain are conversations, not jobs, and ship as skills too ([§10](overview.md)).
 
-**The way of a job is the same everywhere.** The runner fetches a commit into a fresh copy, calls each role as a step of its own, and records the state after each step. At the end there is a branch. The landing rule is a check outside every agent: `status` against the target branch, the tests and the counter-checks, and the write area of every step ([§8](the-factory.md#the-landing-rule)).
+**The way of a job is the same everywhere,** since every runner runs the job's skill. The session that runs it works on a branch of its own in a fresh copy, starts each role as an agent of its own, and lays out the state before each step for the step check. At the end there is a branch. The landing rule is a check outside the agents of the steps: `status` against the target branch, the tests and the counter-checks, and the write area of every step ([§8](the-factory.md#the-landing-rule)).
 
 ## Rights come from the steps
 
