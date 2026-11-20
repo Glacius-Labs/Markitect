@@ -32,12 +32,42 @@ sha256() {
 	fi
 }
 
+# A development version of the plugin has no release binary. It starts the next
+# markitect on the PATH, a build from source, passing over its own folder and
+# the folders of the plugins that passed the call on to it, so that two
+# development plugins on the PATH do not call each other forever.
+fall_through() {
+	MARKITECT_PLUGIN_PASSED="${MARKITECT_PLUGIN_PASSED:-}:$here:"
+	export MARKITECT_PLUGIN_PASSED
+	old_ifs=$IFS
+	IFS=:
+	for dir in $PATH; do
+		IFS=$old_ifs
+		[ -n "$dir" ] || continue
+		real=$(cd "$dir" 2>/dev/null && pwd) || continue
+		case "$MARKITECT_PLUGIN_PASSED" in *":$real:"*) continue ;; esac
+		for name in markitect.exe markitect; do
+			if [ -f "$real/$name" ] && [ -x "$real/$name" ]; then
+				MARKITECT_PLUGIN=$version
+				export MARKITECT_PLUGIN
+				exec "$real/$name" "$@"
+			fi
+		done
+	done
+	IFS=$old_ifs
+	fail "a development plugin needs markitect built from source on the PATH, after the plugin's bin"
+}
+
 here=$(cd "$(dirname "$0")" && pwd) || fail "cannot find its own folder"
 root=$(dirname "$here")
 version=$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$root/.claude-plugin/plugin.json" | head -n 1)
 case "$version" in
 "" | *[!0-9A-Za-z.+-]*) fail "cannot read a version from $root/.claude-plugin/plugin.json" ;;
-*-dev) fail "this is the development version $version of the plugin, which has no release binary; build markitect from source and put it on the PATH" ;;
+*-dev)
+	# Nothing to fetch for the session-start hook.
+	[ -z "${MARKITECT_ENSURE_ONLY:-}" ] || exit 0
+	fall_through "$@"
+	;;
 esac
 tag="v$version"
 

@@ -8,7 +8,7 @@ With Markitect, people architect their project in a typed specification language
 
 ## The tool
 
-`markitect` is a command on the PATH of Claude Code's shell while this plugin is on: its launcher downloads the release binary of the plugin's own version on first use and checks it against the checksums of that release. A development version of the plugin has no release binary: its launcher refuses, and since the plugin's folder comes first on the PATH, a tool built from source is not reached by that name. Such a plugin cannot run the jobs; say so, and point to a released version of the plugin. `markitect help` lists the commands, and `markitect version` says whether the tool is the version the project pins.
+`markitect` is a command on the PATH of Claude Code's shell while this plugin is on: its launcher downloads the release binary of the plugin's own version on first use and checks it against the checksums of that release. A development version of the plugin has no release binary: its launcher starts the next `markitect` on the PATH instead, a build from source, `go install github.com/Glacius-Labs/Markitect/cmd/markitect@COMMIT` with the commit of the plugin. `markitect help` lists the commands, and `markitect version` says whether the tool is the version the project pins.
 
 ## How to begin
 

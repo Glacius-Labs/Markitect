@@ -353,12 +353,79 @@ func TestLauncherFindsTheDataFolderOfAnInstalledPlugin(t *testing.T) {
 	}
 }
 
-// A plugin folder of a development version has no release to fetch.
-func TestLauncherRefusesADevelopmentVersion(t *testing.T) {
-	root := testkit.TempDir(t)
+// pathWithoutMarkitect is the PATH of the test without the folders that hold a
+// markitect, so that a build installed on the machine does not answer.
+func pathWithoutMarkitect() string {
+	var kept []string
+	for _, dir := range filepath.SplitList(os.Getenv("PATH")) {
+		found := false
+		for _, name := range []string{"markitect", "markitect.exe"} {
+			if info, err := os.Stat(filepath.Join(dir, name)); err == nil && !info.IsDir() {
+				found = true
+			}
+		}
+		if !found {
+			kept = append(kept, dir)
+		}
+	}
+	return strings.Join(kept, string(os.PathListSeparator))
+}
+
+// devPlugin is a copy of the plugin with a development version, and its bin.
+func devPlugin(t *testing.T) (root, bin string) {
+	t.Helper()
+	root = filepath.Join(testkit.TempDir(t), "dev plugin")
 	pluginCopy(t, root, "0.16.0-dev")
-	out, code := launch(t, root, "http://unused.invalid", testkit.TempDir(t), nil)
-	if code != 2 || !strings.Contains(out, "development version 0.16.0-dev") {
+	return root, filepath.Join(root, "bin")
+}
+
+// A plugin folder of a development version has no release to fetch: it starts
+// the next markitect on the PATH, a build from source, with every argument,
+// passing over its own folder although the plugin's bin comes first.
+func TestDevelopmentLauncherStartsTheBuildOnThePath(t *testing.T) {
+	root, bin := devPlugin(t)
+	source := filepath.Join(testkit.TempDir(t), "go bin")
+	if err := os.MkdirAll(source, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(source, "markitect"), []byte("#!/bin/sh\necho \"from source: $* (plugin $MARKITECT_PLUGIN)\"\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	path := "PATH=" + strings.Join([]string{bin, source, pathWithoutMarkitect()}, string(os.PathListSeparator))
+	data := testkit.TempDir(t)
+	out, code := launch(t, root, "http://unused.invalid", data, []string{path}, "status", "--json", "two words")
+	if code != 0 || !strings.Contains(out, "from source: status --json two words (plugin 0.16.0-dev)") {
+		t.Fatalf("exit %d:\n%s", code, out)
+	}
+	if entries, _ := os.ReadDir(data); len(entries) != 0 {
+		t.Fatalf("a development plugin fetched %v", entries)
+	}
+	// PowerShell and cmd reach the same fall-through through markitect.cmd. The
+	// bash of Git for Windows puts HOME's bin folder on its PATH, so HOME is a
+	// folder of the test's own.
+	if runtime.GOOS == "windows" {
+		if _, err := exec.LookPath("git"); err == nil {
+			cmd := exec.Command("cmd", "/d", "/c", "markitect status")
+			cmd.Env = append(os.Environ(), path, "CLAUDE_PLUGIN_DATA="+data, "HOME="+testkit.TempDir(t))
+			if out, err := cmd.CombinedOutput(); err != nil || !strings.Contains(string(out), "from source: status (plugin 0.16.0-dev)") {
+				t.Fatalf("markitect.cmd: %v\n%s", err, out)
+			}
+		}
+	}
+	// The session-start hook has nothing to fetch and starts nothing.
+	if out, code := launch(t, root, "http://unused.invalid", data, []string{path, "MARKITECT_ENSURE_ONLY=1"}); code != 0 || out != "" {
+		t.Fatalf("ensure only: exit %d:\n%s", code, out)
+	}
+}
+
+// Without a build on the PATH, a development plugin says what it needs, also
+// when a second development plugin on the PATH would pass the call back.
+func TestDevelopmentLauncherWithoutABuildSaysSo(t *testing.T) {
+	root, bin := devPlugin(t)
+	_, other := devPlugin(t)
+	path := "PATH=" + strings.Join([]string{bin, other, pathWithoutMarkitect()}, string(os.PathListSeparator))
+	out, code := launch(t, root, "http://unused.invalid", testkit.TempDir(t), []string{path}, "version")
+	if code != 2 || !strings.Contains(out, "a development plugin needs markitect built from source on the PATH, after the plugin's bin") {
 		t.Fatalf("exit %d:\n%s", code, out)
 	}
 }
