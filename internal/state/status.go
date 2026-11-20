@@ -339,7 +339,14 @@ func (s *Status) judge(d *docState) error {
 	if r.Verdict == VerdictFail {
 		changes = append(changes, "fail: "+r.Reason)
 	}
-	d.entry = &Entry{Doc: d.path, Kind: kind, Changes: changes, LookAt: s.lookAt(d)}
+	look := s.lookAt(d)
+	// The files of the spec folder that changed or are new are worth a look.
+	for _, c := range changes {
+		if p, ok := strings.CutPrefix(c, InputAsset); ok && !strings.HasSuffix(p, " (gone)") && !strings.HasSuffix(p, " (dropped)") {
+			look = append(look, path.Join(s.project.SpecFolder, strings.TrimSuffix(p, " (new)")))
+		}
+	}
+	d.entry = &Entry{Doc: d.path, Kind: kind, Changes: changes, LookAt: look}
 	return nil
 }
 

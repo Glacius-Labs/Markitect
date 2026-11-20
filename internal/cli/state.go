@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -193,6 +194,9 @@ func mark(o options, stdout io.Writer) (int, error) {
 	if err := writeAtomic(filepath.Join(dir, filepath.FromSlash(state.StateFile)), state.FormatState(rows)); err != nil {
 		return ExitFailed, err
 	}
+	if err := appendHistory(dir, s.VerdictEvent(now(), doc, verdict).Line()); err != nil {
+		return ExitFailed, fmt.Errorf("the verdict is recorded, but its history event is not: %w; the same mark again adds it", err)
+	}
 	text := "marked " + doc + " " + verdict + "\n"
 	if !inSpec {
 		text = "removed the row of " + doc + ", which is gone\n"
@@ -239,4 +243,35 @@ func writeAtomic(file string, data []byte) error {
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
+}
+
+// now is the clock of the history; tests replace it.
+var now = func() time.Time { return time.Now().UTC() }
+
+// appendHistory appends one line to the history in one write, starting a
+// line of its own when the file does not end with one.
+func appendHistory(dir string, line []byte) error {
+	file := filepath.Join(dir, filepath.FromSlash(state.HistoryFile))
+	data, err := os.ReadFile(file)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+	f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(append(lineStart(data), line...))
+	if cerr := f.Close(); err == nil {
+		err = cerr
+	}
+	return err
+}
+
+// lineStart is what goes before a line appended to data: a line end when
+// data does not end with one.
+func lineStart(data []byte) []byte {
+	if len(data) > 0 && data[len(data)-1] != '\n' {
+		return []byte("\n")
+	}
+	return nil
 }

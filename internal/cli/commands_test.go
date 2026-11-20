@@ -92,7 +92,7 @@ func TestTable(t *testing.T) {
 }
 
 func TestNewAndMove(t *testing.T) {
-	dir := spec(t, branches)
+	dir := spec(t, movable())
 	code, out, _ := run("new", "-C", dir, "types/member", "members/alan", "Alan Turing")
 	if code != ExitOK || out != "created members/alan.md\n" {
 		t.Fatal(code, out)
@@ -104,6 +104,14 @@ func TestNewAndMove(t *testing.T) {
 	if code, out, errOut := run("new", "-C", dir, "types/member", "members/ada"); code != ExitFailed || out != "" || !strings.Contains(errOut, "already exists") {
 		t.Error(code, out, errOut)
 	}
+	// Its empty sections are errors, which stop a move.
+	if code, _, errOut := run("move", "-C", dir, "places/central", "places/main hall"); code != ExitFailed || !strings.Contains(errOut, "nothing is moved while the spec or the state has errors") {
+		t.Error(code, errOut)
+	}
+	if err := os.Remove(filepath.Join(specOf(dir), "members", "alan.md")); err != nil {
+		t.Fatal(err)
+	}
+	before = files(t, dir)
 	code, out, _ = run("move", "-C", dir, "places/central", "places/main hall")
 	if code != ExitOK || out != "moved places/central.md -> places/main hall.md\nchanged members/ada.md\nchanged members/grace.md\n" {
 		t.Fatal(code, out)
@@ -308,14 +316,14 @@ func TestFailureLeavesTheSpecAsItWas(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			steps := 0
 			fault = func(int) error { steps++; return nil }
-			if code, _, errOut := run(tc.args(spec(t, branches))...); code != ExitOK {
+			if code, _, errOut := run(tc.args(spec(t, movable()))...); code != ExitOK {
 				t.Fatal(errOut)
 			}
 			if steps < 4 {
 				t.Fatalf("only %d steps", steps)
 			}
 			for k := 1; k <= steps; k++ {
-				dir := spec(t, branches)
+				dir := spec(t, movable())
 				before := files(t, dir)
 				fault = func(step int) error {
 					if step == k {
@@ -350,7 +358,7 @@ func TestFailedUndoNamesWhatIsLeft(t *testing.T) {
 	args := func(dir string) []string { return []string{"move", "-C", dir, "places/central", "elsewhere/main hall"} }
 	steps := 0
 	fault = func(int) error { steps++; return nil }
-	run(args(spec(t, branches))...)
+	run(args(spec(t, movable()))...)
 	fault = func(step int) error {
 		if step == steps {
 			return errors.New("injected")
@@ -359,7 +367,7 @@ func TestFailedUndoNamesWhatIsLeft(t *testing.T) {
 	}
 	undoFault = func(int) error { return errors.New("undo refused") }
 	t.Cleanup(func() { fault, undoFault = nil, nil })
-	dir := spec(t, branches)
+	dir := spec(t, movable())
 	code, out, errOut := run(args(dir)...)
 	if code != ExitFailed || out != "" || !strings.Contains(errOut, "injected") || !strings.Contains(errOut, "undoing it failed: undo refused") {
 		t.Fatal(code, out, errOut)
@@ -456,4 +464,14 @@ func TestReferenceValuesCoverEveryType(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+// movable is the spec of members and branches without its broken link, since
+// move refuses while the spec has errors.
+func movable() map[string]string {
+	files := map[string]string{"members/gone.md": "# Gone\n"}
+	for p, text := range branches {
+		files[p] = text
+	}
+	return files
 }

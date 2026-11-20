@@ -166,7 +166,14 @@ func verdict(t *testing.T, dir, doc, v string, flags ...string) {
 // status lists nothing.
 func marked(t *testing.T) string {
 	t.Helper()
-	dir := project(t, lending)
+	return markedWith(t, lending)
+}
+
+// markedWith is a project of files, the lending project's documents and
+// code, with every document confirmed.
+func markedWith(t *testing.T, files map[string]string) string {
+	t.Helper()
+	dir := project(t, files)
 	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--check", "tests/loans_test.go", "-e", "tests/loans_test.go:3 (TestBorrow)")
 	verdict(t, dir, "lending/return.md", "ok", "--file", "src/returns.go", "-e", "src/returns.go:3")
 	verdict(t, dir, "roles/member.md", "ok", "--file", "src/member.go", "-e", "src/member.go")
