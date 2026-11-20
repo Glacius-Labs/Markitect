@@ -27,17 +27,16 @@ A gap or contradiction in the spec is no verdict: it is a report, and the docume
 
 | Entry | When | Who acts |
 |---|---|---|
-| **Changed** | The document's own text, one of its artifacts or its evidence moved, or it has no row yet | A builder realizes it, then a reviewer confirms it |
+| **Changed** | The document's own text, one of its artifacts or its evidence moved, it has no row yet, or its verdict is `fail` | A builder realizes or repairs it, then a reviewer confirms it |
 | **Suspect** | A document it links to, or one that links to it, changed, or its type changed | A reviewer judges whether the change means something here, mostly without a builder |
 | **Unexplained** | A file is mapped to no document and not ignored, a file of a document that is gone included | The reviewer maps it when it confirms, or it is removed or ignored |
-| **Failed** | The verdict is `fail` | A builder repairs it |
 | **Waiting on report X** | An open report concerns the document | Triage, or the owner when the report is escalated |
 
 Links count in both directions, as suspect links do in DOORS: a changed rule reaches what it links and what links to it. "Applies to" is an ordinary section, and there is no binding by place. A changed type makes its documents suspect; a new required section missing from them is already an error of `check`.
 
 **Every file is mapped or ignored.** Ignored means listed in `.gitignore` or in `.markitect/ignore`, written like a `.gitignore`. Anything else is unexplained and keeps `status` from being empty, so nothing grows in the project without a reason in the spec. During a build that is the normal state of a new file until the reviewer maps it. Only the architect and the owner write the ignore file ([§12](jobs-and-runners.md#rights-come-from-the-steps)).
 
-**`check` and `status` stay apart**, as `validate` and `plan` do. `check` checks only the spec; everything that compares spec and artifacts is in `status`. `status` gives no list while the spec has errors.
+**`check` and `status` stay apart**, as `validate` and `plan` do. `check` compares nothing with artifacts; everything that compares spec and artifacts is in `status`. `status` gives no list while the spec has errors.
 
 `status` exits 1 when it lists anything. Documents waiting on the owner are shown and do not make it fail. On the main branch, where every spec change lands with its realization ([§8](the-factory.md#the-landing-rule)), `status` in CI is a check for drift: a changed, suspect or unexplained entry there came past the jobs. Given the state of the target branch, `status` applies the landing rule; given the states before and after a step and its role, it checks the write table ([§11](the-tool.md)).
 

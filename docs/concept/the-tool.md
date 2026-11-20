@@ -14,7 +14,7 @@
 | `show DOCUMENT` | A document with its type, its sections, what it links to and what links to it with the section the link stands in, its artifacts, its counter-checks and its verdict; for a type, its documents |
 | `table TYPE` | Every document of a type as a table, one column per section |
 | `topics [TOPIC]` | A document, a type or a folder as one text with everything that belongs to it, and the signals that say where reading pays off ([§5](is-the-spec-good.md#the-spec-itself)) |
-| `status` | What is changed, suspect, unexplained, failed or waiting on a report ([§6](the-state.md#what-status-lists)). Given the state of the target branch, it applies the landing rule; given the states before and after a step and the step's role, it checks the write table ([§12](jobs-and-runners.md#rights-come-from-the-steps)) |
+| `status` | What is changed, suspect, unexplained or waiting on a report ([§6](the-state.md#what-status-lists)). Given the state of the target branch, it applies the landing rule; given the states before and after a step and the step's role, it checks the write table ([§12](jobs-and-runners.md#rights-come-from-the-steps)) |
 | `mark DOCUMENT@FINGERPRINT VERDICT` | Binds `ok`, `fail` or `skip`, with the artifacts and the evidence or the reason, to the state `status` showed ([§6](the-state.md#binding-a-verdict)) |
 | `diff OLD NEW` | Compares two states, each a folder with a spec, a state and reports: what is new, gone, changed or suspect, with the old and the new text ([§10](overview.md#comparing-two-states)) |
 | `figures` | The factory's figures ([below](#the-figures)) |

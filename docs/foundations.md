@@ -15,7 +15,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 | [Quality](#quality) | ISO/IEC 25010; the quality attribute scenario |
 | [Architecture](#architecture) | arc42; Views and Beyond; architecture decision records; ISO/IEC/IEEE 42010 |
 | [The state and `status`](#the-state-and-status) | Requirements traceability with suspect links; Go's test cache; Terraform's state, plan and drift, as an analogy |
-| [Verification](#verification) | The V-model and its traceability; independent verification; testing laboratories with control samples; checklists, as an analogy |
+| [Verification](#verification) | The V-model and its traceability; independent verification; testing laboratories and checklists, as analogies |
 | [Reports and actions](#reports-and-actions) | Nonconformity and corrective action in ISO 9001 |
 | [Jobs and landing](#jobs-and-landing) | CI with required checks; scheduled bots on branches of their own |
 | [The tool's conventions](#the-tools-conventions) | The output of compilers and linters |
@@ -112,10 +112,11 @@ This page says what Markitect builds on. For each of its solutions it names what
 **Taken.**
 
 - **The V-model**, as Automotive SPICE arranges it (VDA QMC 2023): what is wanted is stated before the code and traced in both directions, and on the right side tests are derived from each level before the code exists. Counter-checks take that side over: a counter-checker derives tests, or questions with expected answers, from the spec alone ([DEC-125](decisions.md#dec-125-trust-is-measured-not-granted)). Where a rule names modules, they are architecture tests in a tool such as ArchUnit.
-- **Independent verification:** the one who builds does not judge the result, as DO-178C asks for its higher levels (Jacklin 2012).
-- **A testing laboratory** monitors the validity of its results, among other ways with reference materials whose result is known (ISO/IEC 17025:2017). Control samples plant known deviations, and the reviewer's hit rate measures the check.
+- **Independent verification:** the one who builds does not judge the result.
 
 **Differs.** No person approves anything: trust comes only from facts that can turn out negative without anyone reading. The tests a builder writes are realizations; counter-checks are not, and the builder may not change them.
+
+**Analogy.** A testing laboratory is trusted because testing is apart from making and control samples with a known result run along. Control samples plant known deviations, and the reviewer's hit rate measures the check.
 
 **Analogy.** A surgical safety checklist lowers complications because a team that knows every step can still skip one (Haynes and others 2009). `status` is such a list, computed from the spec and the state instead of an agent's memory.
 
@@ -154,13 +155,12 @@ Each source is named as in the text above. ISO standards are cited by their numb
 **Standards**
 
 - ISO 9001:2015, *Quality management systems — Requirements*. Clause 10.2: nonconformity and corrective action.
-- ISO/IEC 17025:2017, *General requirements for the competence of testing and calibration laboratories*.
 - ISO/IEC 25010:2023, *Systems and software engineering — Systems and software Quality Requirements and Evaluation (SQuaRE) — Product quality model*. <https://www.iso.org/standard/78176.html>
 - ISO/IEC/IEEE 29148:2018, *Systems and software engineering — Life cycle processes — Requirements engineering*. <https://www.iso.org/standard/72089.html>
 - ISO/IEC/IEEE 42010:2022, *Software, systems and enterprise — Architecture description*. <https://www.iso.org/standard/74393.html>
 - OMG 2025: *OMG Systems Modeling Language (SysML), Version 2.0*. <https://www.omg.org/spec/SysML/2.0>
 - VDA QMC 2023: *Automotive SPICE Process Assessment / Reference Model*, version 4.0. <https://vda-qmc.de/en/automotive-spice/>
-- DO-178C: cited for its traceability and verification requirements through Jacklin 2012.
+- DO-178C: cited for its traceability requirements through Jacklin 2012.
 
 **Templates, tools and documentation**
 
