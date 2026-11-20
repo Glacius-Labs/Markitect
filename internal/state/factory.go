@@ -1,6 +1,7 @@
 package state
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -25,7 +26,6 @@ const (
 // the language.
 const (
 	CodeReportForm      = "report.form"
-	CodeReportPlace     = "report.place"
 	CodeReportDuplicate = "report.duplicate"
 	CodeSettingsForm    = "settings.form"
 	CodeSampleForm      = "sample.form"
@@ -57,10 +57,12 @@ type Report struct {
 	// Raised is the day of its source, as YYYY-MM-DD; By is "owner", "intake"
 	// or "job", with Job and Role for a job.
 	Raised, By, Job, Role string
-	// Place is the path below the project folder it concerns.
-	Place    string
-	Occurred string // "occurred" or "risk"
-	Property string
+	// Place is the path below the project folder it concerns; PlaceGone
+	// says that nothing is there now.
+	Place     string
+	PlaceGone bool
+	Occurred  string // "occurred" or "risk"
+	Property  string
 	// Impact and Likelihood are "low", "medium" or "high".
 	Impact, Likelihood string
 	Branches           []string
@@ -68,10 +70,10 @@ type Report struct {
 	// Closed says that it has a closing; ClosedOn is its day, Outcome one of
 	// ClosedDone, ClosedDuplicate and ClosedNothing, and DuplicateOf the name
 	// of the report it repeats.
-	Closed               bool
-	ClosedOn, Outcome    string
-	DuplicateOf          string
-	placeLine, closeLine int
+	Closed            bool
+	ClosedOn, Outcome string
+	DuplicateOf       string
+	closeLine         int
 }
 
 // Open says whether the report has no closing.
@@ -304,7 +306,6 @@ func (f *Factory) readReport(p *Project, d *lang.Document) *Report {
 		}
 	}
 	if vs, _ := values(d, "Place"); len(vs) > 0 {
-		r.placeLine = vs[0].Line
 		place, ok := placeOf(d, vs[0])
 		switch {
 		case !ok:
@@ -374,9 +375,7 @@ func (f *Factory) readReport(p *Project, d *lang.Document) *Report {
 			}
 		}
 	}
-	if r.Place != "" && r.Open() && !exists(p.FS, r.Place) {
-		f.add(d.Path, r.placeLine, CodeReportPlace, "place: %s does not exist; an open report concerns something there is", r.Place)
-	}
+	r.PlaceGone = r.Place != "" && !exists(p.FS, r.Place)
 	return r
 }
 
@@ -426,6 +425,75 @@ func placeOf(d *lang.Document, l lang.SourceLine) (string, bool) {
 		return "", false
 	}
 	return ProjectPath(text)
+}
+
+// MovePlaces rewrites the place of every report that names the document a
+// move took from from to to, both below the spec folder: a path keeps its
+// form, and a link takes the path to the new place relative to the report,
+// with its #section. It returns the reports' new texts. A path whose line
+// does not hold the clean path, or whose new path holds white space, and a
+// link whose new path would need quoting, stay as they are.
+func MovePlaces(p *Project, reports []*Report, from, to string) []File {
+	was, now := path.Join(p.SpecFolder, from), path.Join(p.SpecFolder, to)
+	var out []File
+	for _, r := range reports {
+		vs, _ := values(r.Doc, "Place")
+		if r.Place != was || len(vs) == 0 {
+			continue
+		}
+		src := r.Doc.Source
+		start, end := lineBounds(src, vs[0].Line)
+		var data []byte
+		if strings.HasPrefix(vs[0].Text, "[") {
+			target := relativeTo(path.Dir(r.Path), now)
+			for _, ref := range r.Doc.Paths {
+				if ref.Line != vs[0].Line || ref.Start < 0 || !ref.Angle && strings.ContainsAny(target, " ()<>") {
+					continue
+				}
+				data = splice(src, ref.Start, ref.End, target+ref.Fragment())
+			}
+		} else if i := strings.Index(string(src[start:end]), was); i >= 0 && !strings.ContainsAny(now, " \t") {
+			data = splice(src, start+i, start+i+len(was), now)
+		}
+		if data != nil {
+			out = append(out, File{Path: r.Path, Data: data})
+		}
+	}
+	return out
+}
+
+// lineBounds returns where a line, counted from 1, starts and ends in src.
+func lineBounds(src []byte, line int) (int, int) {
+	start := 0
+	for n := 1; n < line; n++ {
+		i := bytes.IndexByte(src[start:], '\n')
+		if i < 0 {
+			return len(src), len(src)
+		}
+		start += i + 1
+	}
+	end := bytes.IndexByte(src[start:], '\n')
+	if end < 0 {
+		return start, len(src)
+	}
+	return start, start + end
+}
+
+func splice(src []byte, start, end int, with string) []byte {
+	out := append([]byte(nil), src[:start]...)
+	out = append(out, with...)
+	return append(out, src[end:]...)
+}
+
+// relativeTo is the path to target from the folder dir, both below the
+// project folder.
+func relativeTo(dir, target string) string {
+	a, b := strings.Split(dir, "/"), strings.Split(target, "/")
+	i := 0
+	for i < len(a) && i < len(b)-1 && a[i] == b[i] {
+		i++
+	}
+	return strings.Repeat("../", len(a)-i) + strings.Join(b[i:], "/")
 }
 
 // SpecDoc is the document of the spec a report's place names, below the

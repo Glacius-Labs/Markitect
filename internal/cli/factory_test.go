@@ -107,44 +107,71 @@ func TestWaitingOnReports(t *testing.T) {
 	}
 }
 
-func TestMovingThePlaceOfAnOpenReport(t *testing.T) {
+func TestMoveRewritesThePlaceOfReports(t *testing.T) {
+	clock(t)
 	dir := marked(t)
-	write(t, dir, ".markitect/reports/late-fee.md", lendingReport("job read reader, 2026-11-18", "docs/spec/lending/return.md", "complete", "", ""))
-	// move does not rewrite the place of a report: the open report then
-	// names nothing, which check reports until it names the new path.
-	if code, _, errOut := run("move", "-C", dir, "lending/return.md", "lending/give-back.md"); code != ExitOK {
-		t.Fatal(code, errOut)
+	write(t, dir, ".markitect/reports/late-fee.md", lendingReport("job read reader, 2026-11-18", "- `docs/spec/lending/return.md`", "complete", "", ""))
+	write(t, dir, ".markitect/reports/fee-limit.md", strings.ReplaceAll(
+		lendingReport("owner, 2026-11-19", "[Return](../../docs/spec/lending/return.md#rule)", "consistent", "", "2026-11-20: nothing to do\nStated."), "\n", "\r\n"))
+	write(t, dir, ".markitect/reports/borrow-limit.md", lendingReport("owner, 2026-11-19", "docs/spec/lending/borrow.md", "consistent", "", ""))
+	code, out, errOut := run("move", "-C", dir, "lending/return.md", "loans/give-back.md")
+	if code != ExitOK || !strings.Contains(out, "changed .markitect/reports/fee-limit.md\nchanged .markitect/reports/late-fee.md\n") || strings.Contains(out, "borrow-limit") {
+		t.Fatal(code, out, errOut)
 	}
-	if _, errs, code := waitingOf(t, dir); code != ExitFound || len(errs) != 1 || errs[0].Code != state.CodeReportPlace {
-		t.Error(code, errs)
+	// A path keeps its form; a link takes the path relative to the report,
+	// with its section, and the line ends stay.
+	if got := read(t, dir, ".markitect/reports/late-fee.md"); !strings.Contains(got, "\n- `docs/spec/loans/give-back.md`\n") {
+		t.Error(got)
 	}
-	write(t, dir, ".markitect/reports/late-fee.md", lendingReport("job read reader, 2026-11-18", "docs/spec/lending/give-back.md", "complete", "", ""))
-	if waiting, _, _ := waitingOf(t, dir); len(waiting) != 1 || waiting[0].Doc != "lending/give-back.md" {
-		t.Errorf("%+v", waiting)
+	if got := read(t, dir, ".markitect/reports/fee-limit.md"); !strings.Contains(got, "\r\n[Return](../../docs/spec/loans/give-back.md#rule)\r\n") {
+		t.Error(got)
 	}
-	// A place names its path in its case, on every system.
-	write(t, dir, ".markitect/reports/late-fee.md", lendingReport("job read reader, 2026-11-18", "docs/spec/Lending/give-back.md", "complete", "", ""))
-	if _, errs, code := waitingOf(t, dir); code != ExitFound || len(errs) != 1 || errs[0].Code != state.CodeReportPlace {
-		t.Error(code, errs)
+	events := history(t, dir)
+	if last := events[len(events)-1]; last.Type != state.EventMove || !strings.Contains(strings.Join(last.Rewritten, " "), ".markitect/reports/late-fee.md") {
+		t.Errorf("%+v", last)
+	}
+	if waiting, errs, _ := waitingOf(t, dir); len(errs) != 0 || len(waiting) != 2 || waiting[1].Doc != "loans/give-back.md" {
+		t.Errorf("%+v %v", waiting, errs)
+	}
+}
+
+func TestAGonePlaceIsANote(t *testing.T) {
+	dir := marked(t)
+	// A build may delete the artifact a report names, and a place may be
+	// written in another case: neither blocks status or mark.
+	write(t, dir, ".markitect/reports/ghost.md", lendingReport("job build reviewer, 2026-11-18", "src/ghost.go", "none", "", ""))
+	write(t, dir, ".markitect/reports/late-fee.md", lendingReport("job read reader, 2026-11-18", "docs/spec/Lending/return.md", "complete", "", ""))
+	if code, out, _ := run("check", "-C", dir); code != ExitOK {
+		t.Error(code, out)
+	}
+	code, out, _ := run("status", "-C", dir)
+	if code != ExitOK || out != "note: report ghost: place gone: src/ghost.go\nnote: report late-fee: place gone: docs/spec/Lending/return.md\n0 changed, 0 suspect, 0 unexplained\n" {
+		t.Error(code, out)
+	}
+	verdict(t, dir, "roles/member.md", "ok", "--file", "src/member.go", "-e", "src/member.go")
+	// A closed report notes nothing.
+	write(t, dir, ".markitect/reports/ghost.md", lendingReport("job build reviewer, 2026-11-18", "src/ghost.go", "none", "", "2026-11-20: done\nRemoved."))
+	if _, out, _ := run("status", "-C", dir); strings.Contains(out, "ghost") {
+		t.Error(out)
 	}
 }
 
 func TestFactoryErrorsBlockStatusAndMark(t *testing.T) {
 	dir := marked(t)
-	write(t, dir, ".markitect/reports/ghost.md", lendingReport("job build reviewer, 2026-11-18", "src/ghost.go", "none", "", ""))
+	write(t, dir, ".markitect/reports/slow.md", lendingReport("job build reviewer, 2026-11-18", "src/loans.go", "slow", "", ""))
 	code, out, _ := run("check", "-C", dir)
-	if code != ExitFound || out != ".markitect/reports/ghost.md:7: report.place: place: src/ghost.go does not exist; an open report concerns something there is\n1 error in 4 documents, 1 report and 0 samples\n" {
+	if code != ExitFound || out != ".markitect/reports/slow.md:16: report.form: violated property: write one of necessary, complete, consistent, unambiguous and verifiable, structured, correct, none\n1 error in 4 documents, 1 report and 0 samples\n" {
 		t.Error(code, out)
 	}
 	_, errs, code := waitingOf(t, dir)
-	if code != ExitFound || len(errs) != 1 || errs[0].Code != state.CodeReportPlace {
+	if code != ExitFound || len(errs) != 1 || errs[0].Code != state.CodeReportForm {
 		t.Error(code, errs)
 	}
 	at := "roles/member.md@" + fingerprint(t, dir, "roles/member.md")
-	if code, _, errOut := run("mark", "-C", dir, at, "ok", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "report.place") {
+	if code, _, errOut := run("mark", "-C", dir, at, "ok", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "report.form") {
 		t.Error(code, errOut)
 	}
-	// move does not read the reports.
+	// move is not stopped by errors of the reports.
 	if code, _, errOut := run("move", "-C", dir, "roles/member.md", "roles/card-holder.md"); code != ExitOK {
 		t.Error(code, errOut)
 	}

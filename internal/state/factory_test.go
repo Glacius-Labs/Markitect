@@ -116,10 +116,8 @@ func TestReportFormErrors(t *testing.T) {
 	})
 	want := []string{
 		".markitect/reports/Late_Fee.md:01: report.form",
-		// The role, the place that is gone while the report is open, and
-		// every value not of its form.
+		// The role, and every value not of its form.
 		".markitect/reports/bad.md:04: report.form",
-		".markitect/reports/bad.md:07: report.place",
 		".markitect/reports/bad.md:13: report.form",
 		".markitect/reports/bad.md:16: report.form",
 		".markitect/reports/bad.md:19: report.form",
@@ -146,6 +144,46 @@ func TestReportFormErrors(t *testing.T) {
 		if d.Path == ".markitect/reports/early.md" && !strings.Contains(d.Message, "before it was raised") {
 			t.Error(d)
 		}
+	}
+}
+
+func TestPlaceGoneAndMovePlaces(t *testing.T) {
+	p, f := loadFactory(t, map[string]string{
+		".markitect/reports/gone.md":  report("owner, 2026-11-18", "src/fines.go", "x", "risk", "none"),
+		".markitect/reports/case.md":  report("owner, 2026-11-18", "docs/spec/Lending/return.md", "x", "risk", "none"),
+		".markitect/reports/plain.md": report("owner, 2026-11-18", "docs/spec/lending/return.md", "x", "risk", "complete"),
+		".markitect/reports/link.md":  report("owner, 2026-11-18", "- [Return](<../../docs/spec/lending/return.md>)", "x", "risk", "complete"),
+		".markitect/reports/dot.md":   report("owner, 2026-11-18", "./docs/spec/lending/return.md", "x", "risk", "complete"),
+	})
+	if got := diagnostics(f); len(got) != 0 {
+		t.Fatal(got)
+	}
+	var gone []string
+	for _, r := range f.Reports {
+		if r.PlaceGone {
+			gone = append(gone, r.Name)
+		}
+	}
+	if strings.Join(gone, " ") != "case gone" {
+		t.Error(gone)
+	}
+	var got []string
+	for _, file := range MovePlaces(p, f.Reports, "lending/return.md", "loans/give back.md") {
+		got = append(got, file.Path+": "+strings.Split(string(file.Data), "\n")[6])
+	}
+	// A path cannot take white space; a link in < and > can.
+	want := []string{".markitect/reports/link.md: - [Return](<../../docs/spec/loans/give back.md>)"}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Errorf("got\n%s", strings.Join(got, "\n"))
+	}
+	got = nil
+	for _, file := range MovePlaces(p, f.Reports, "lending/return.md", "loans/give-back.md") {
+		got = append(got, file.Path+": "+strings.Split(string(file.Data), "\n")[6])
+	}
+	want = []string{".markitect/reports/dot.md: ./docs/spec/loans/give-back.md", ".markitect/reports/link.md: - [Return](<../../docs/spec/loans/give-back.md>)",
+		".markitect/reports/plain.md: docs/spec/loans/give-back.md"}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Errorf("got\n%s", strings.Join(got, "\n"))
 	}
 }
 

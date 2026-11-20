@@ -90,7 +90,15 @@ func move(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	changes, err := carry(dir, w, m, rows)
+	f, err := factoryOf(w)
+	if err != nil {
+		return ExitFailed, err
+	}
+	places := state.MovePlaces(w.Project, f.Reports, m.From, m.To)
+	for _, p := range places {
+		m.Changed = append(m.Changed, p.Path)
+	}
+	changes, err := carry(dir, w, m, rows, places)
 	if err != nil {
 		return ExitFailed, err
 	}
@@ -138,9 +146,9 @@ func apply(o options, stdout io.Writer) (int, error) {
 }
 
 // carry turns a move's change set into one below the project folder that
-// also writes the state the move carries and appends the move to the
-// history.
-func carry(dir string, w *workspace, m edit.Moved, rows []state.Row) (edit.Changes, error) {
+// also writes the reports whose place it rewrote, the state the move carries
+// and the move appended to the history.
+func carry(dir string, w *workspace, m edit.Moved, rows []state.Row, places []state.File) (edit.Changes, error) {
 	rewritten := map[string]state.Text{}
 	for _, wr := range m.Changes.Writes {
 		old := wr.Path
@@ -158,6 +166,9 @@ func carry(dir string, w *workspace, m edit.Moved, rows []state.Row) (edit.Chang
 	}
 	for _, wr := range m.Changes.Writes {
 		c.Writes = append(c.Writes, edit.Write{Path: in(wr.Path), Data: wr.Data, Create: wr.Create})
+	}
+	for _, p := range places {
+		c.Writes = append(c.Writes, edit.Write{Path: p.Path, Data: p.Data})
 	}
 	return withHistory(dir, c, state.MoveRows(rows, m.From, m.To, rewritten),
 		state.Event{Time: now(), Type: state.EventMove, From: m.From, To: m.To, Rewritten: m.Changed})

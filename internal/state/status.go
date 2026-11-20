@@ -72,6 +72,10 @@ type Entry struct {
 	LookAt []string
 }
 
+// PlaceGone is an open report whose place is gone, by the report's name and
+// its place: a note, since a build or a move may take what a report names.
+type PlaceGone struct{ Report, Place string }
+
 // Note is a document that needs nothing but says something: a skip at its
 // current state.
 type Note struct {
@@ -98,9 +102,11 @@ type Status struct {
 	Unexplained      []string
 	Waiting          []Waiting
 	Notes            []Note
-	docs             map[string]*docState
-	folder           *Folder
-	project          *Project
+	// Gone are the open reports whose place is gone.
+	Gone    []PlaceGone
+	docs    map[string]*docState
+	folder  *Folder
+	project *Project
 	// files is the digest of every file of the walk outside the spec folder,
 	// computed once.
 	files string
@@ -134,14 +140,17 @@ func (s *Status) Lists() bool {
 	return n > 0
 }
 
-// Wait lists as waiting every document of the spec that an open report names
-// as its place, unless the report's violated property is none, which says
+// Wait notes the open reports whose place is gone, and lists as waiting
+// every document of the spec that an open report names as its place, unless the report's violated property is none, which says
 // that an artifact deviates from a spec that holds. Such a document leaves
 // the changed and suspect entries and the notes. reports should have no
 // errors of check.
 func (s *Status) Wait(reports []*Report) {
 	byDoc := map[string][]*Report{}
 	for _, r := range reports {
+		if r.Open() && r.PlaceGone {
+			s.Gone = append(s.Gone, PlaceGone{r.Name, r.Place})
+		}
 		if !r.Open() || r.Property == "" || r.Property == "none" {
 			continue
 		}

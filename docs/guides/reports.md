@@ -20,7 +20,11 @@ A report is a file `.markitect/reports/NAME.md`, one per report. Its sections ar
 | Actions | A line `branch NAME` for each branch that answers it, then optionally a line `escalated`, followed by the proposals for the owner as text, at least one line |
 | Closing | `YYYY-MM-DD: done`, `YYYY-MM-DD: duplicate of NAME` or `YYYY-MM-DD: nothing to do`, with an optional period, then the reason on the lines below. The day is not before the day it was raised |
 
-A report is **open** while it has no Closing section. The place names its path in the case it is written, on every system. `move` does not rewrite the place of a report: moving the place of an open report makes it an error of `check` until the report names the new path.
+A report is **open** while it has no Closing section.
+
+**A place that is gone.** A build may delete the artifact a report names, so a place need not exist. When the place of an open report is gone, `status` says so in a note, `note: report NAME: place gone: PLACE`, which changes neither its list nor its exit code. The place names its path in the case it is written, on every system: a place in another case is gone.
+
+**A place that moves.** `move` rewrites the place of every report that names the moved document, closed reports included: a path takes the new path, a link the new path relative to the report, with its `#section`. The rewritten reports are listed with the documents `move` changed and in the `rewritten` list of its event in the [history](project-reference.md#the-history). A path whose line does not hold the clean path, such as `./docs/spec/lending/return.md`, or whose new path holds white space, and a link whose new path would need `<` and `>`, stay as they are and then name a place that is gone.
 
 ```markdown
 # The fee for a late book
@@ -130,12 +134,11 @@ branch sample-2026-11-19
 
 ## What check reports
 
-`check` checks every file of `.markitect/reports/` and `.markitect/samples/` and the settings beside the spec. A file of either folder whose name starts with a dot, such as `.gitkeep`, is passed over. Each document is checked against its type as a document of the spec is ([language reference](language-reference.md#what-check-reports)): `title` for its title, `section.missing` at its title for a required section it lacks, and `section.empty` for a section it has that holds no text. It needs no type line, and links in it are not checked; the place of a report is. The diagnostics name the file below the project folder, such as `.markitect/reports/late-fee.md:7: report.place: …`.
+`check` checks every file of `.markitect/reports/` and `.markitect/samples/` and the settings beside the spec. A file of either folder whose name starts with a dot, such as `.gitkeep`, is passed over. Each document is checked against its type as a document of the spec is ([language reference](language-reference.md#what-check-reports)): `title` for its title, `section.missing` at its title for a required section it lacks, and `section.empty` for a section it has that holds no text. It needs no type line, and links in it are not checked. The diagnostics name the file below the project folder, such as `.markitect/reports/late-fee.md:13: report.form: …`.
 
 | Code | Reported when |
 |---|---|
 | `report.form` | A file of `.markitect/reports/` is no `NAME.md` with a NAME as above, or a value of a report is not of its form |
-| `report.place` | The place of an open report does not exist in the project |
 | `report.duplicate` | A closing says `duplicate of NAME`, and no other report has that name |
 | `settings.form` | A value of the settings is not of its form |
 | `sample.form` | A file of `.markitect/samples/` is no `NAME.md`, or a value of a sample is not of its form |

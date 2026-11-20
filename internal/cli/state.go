@@ -43,6 +43,9 @@ type statusDocument struct {
 	Unexplained []string      `json:"unexplained"`
 	Waiting     []waitingJSON `json:"waiting"`
 	Notes       []statusNote  `json:"notes"`
+	// PlaceGone are the open reports whose place is gone: notes, which do
+	// not change the exit code.
+	PlaceGone []placeGoneJSON `json:"place_gone"`
 	// History holds the lines of the history status cannot read: notes,
 	// which do not change the exit code.
 	History []diagnostic `json:"history"`
@@ -63,6 +66,11 @@ type waitingJSON struct {
 	Reports     []string `json:"reports"`
 	Escalated   bool     `json:"escalated"`
 	Changes     []string `json:"changes"`
+}
+
+type placeGoneJSON struct {
+	Report string `json:"report"`
+	Place  string `json:"place"`
 }
 
 type statusNote struct {
@@ -103,7 +111,7 @@ func status(o options, stdout io.Writer) (int, error) {
 		return ExitFailed, err
 	}
 	doc := statusDocument{header: newHeader("status"), Errors: blockers(w, f, problems),
-		Changed: []statusEntry{}, Suspect: []statusEntry{}, Unexplained: []string{}, Waiting: []waitingJSON{}, Notes: []statusNote{}, History: []diagnostic{}}
+		Changed: []statusEntry{}, Suspect: []statusEntry{}, Unexplained: []string{}, Waiting: []waitingJSON{}, Notes: []statusNote{}, PlaceGone: []placeGoneJSON{}, History: []diagnostic{}}
 	if len(doc.Errors) == 0 {
 		s.Wait(f.Reports)
 	}
@@ -161,6 +169,10 @@ func status(o options, stdout io.Writer) (int, error) {
 	for _, n := range s.Notes {
 		doc.Notes = append(doc.Notes, statusNote{n.Doc, n.Verdict, n.Reason})
 		fmt.Fprintf(&b, "note: %s: %s: %s\n", n.Doc, n.Verdict, n.Reason)
+	}
+	for _, g := range s.Gone {
+		doc.PlaceGone = append(doc.PlaceGone, placeGoneJSON{g.Report, g.Place})
+		fmt.Fprintf(&b, "note: report %s: place gone: %s\n", g.Report, g.Place)
 	}
 	fmt.Fprintf(&b, "%d changed, %d suspect, %d unexplained", len(s.Changed), len(s.Suspect), len(s.Unexplained))
 	if len(s.Waiting) > 0 {

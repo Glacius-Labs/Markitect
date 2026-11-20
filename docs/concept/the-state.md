@@ -36,7 +36,7 @@ Links count in both directions, as suspect links do in DOORS: a changed rule rea
 
 **Every file is mapped or ignored.** Ignored means listed in `.gitignore` or in `.markitect/ignore`, written like a `.gitignore`. Anything else is unexplained and keeps `status` from being empty, so nothing grows in the project without a reason in the spec. During a build that is the normal state of a new file until the reviewer maps it. Only the architect and the owner write the ignore file ([§12](jobs-and-runners.md#rights-come-from-the-steps)).
 
-**`check` and `status` stay apart**, as `validate` and `plan` do. `check` compares nothing with artifacts; everything that compares spec and artifacts is in `status`. `status` gives no list while the spec has errors.
+**`check` and `status` stay apart**, as `validate` and `plan` do. `check` compares nothing with artifacts; everything that compares spec and artifacts is in `status`. `status` gives no list while there are errors in the spec, the reports, the settings or the samples.
 
 `status` exits 1 when it lists anything. Documents waiting on the owner are shown and do not make it fail. On the main branch, where every spec change lands with its realization ([§8](the-factory.md#the-landing-rule)), `status` in CI is a check for drift: a changed, suspect or unexplained entry there came past the jobs. Given the state of the target branch, `status` applies the landing rule; given the states before and after a step and its role, it checks the write table ([§11](the-tool.md)).
 
