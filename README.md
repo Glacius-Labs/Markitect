@@ -41,7 +41,7 @@ Markitect gives the project that statement, and agents build to it.
 Markitect builds on Terraform's declared state, requirements traceability with suspect links, and quality management, and it works with Claude Code's own plugins, skills, subagents and scheduled tasks. The [vision](docs/vision.md#why-markitect-exists) gives the full reasoning.
 
 > [!IMPORTANT]
-> **Early access.** The tool and the plugin on Main are rebuilt to the current [concept](docs/concept/README.md), with tests, and no release of them exists yet: the latest release and the plugin in the marketplace are still the earlier 0.34.0. Until the first release, build the tool from source. The jobs have not run on a real project yet, and commands, files and skills may still change. Try it on a small project you can throw away, read the [limits](#limits), and tell us in [Issues](https://github.com/Glacius-Labs/Markitect/issues) what worked and what broke.
+> **Early access.** The tool and the plugin on Main are rebuilt to the current [concept](docs/concept/README.md), with tests, and no release of them exists yet: the latest release and the plugin in the marketplace are still the earlier 0.34.0. Until the first release, the tool runs from source in your terminal, and the plugin's jobs wait for that release, since a development plugin cannot start the tool ([install](#install)). The jobs have not run on a real project yet, and commands, files and skills may still change. Try it on a small project you can throw away, read the [limits](#limits), and tell us in [Issues](https://github.com/Glacius-Labs/Markitect/issues) what worked and what broke.
 
 ## Quick start
 
@@ -55,7 +55,10 @@ For a new project, make an empty folder, run `git init` in it, and then:
 
 1. **Set it up.** `markitect init` writes `.markitect/` and the spec folder, `docs/spec/`, and nothing else. It commits nothing.
 2. **Start the spec.** `markitect apply software` copies the template of a software project with the packages of types it needs; `markitect apply company` does the same for a company. `markitect check` then lists the empty sections: the work still to do.
-3. **Architect the project.** With the plugin on, run `/markitect-architect` in Claude Code. It walks the first design with you, area by area, asks what only you can know, and proposes the rest for you to accept.
+
+With a released plugin, Claude Code takes it from there:
+
+3. **Architect the project.** `/markitect-architect`, in a folder without `.markitect/`, runs `init` and `apply` itself. It walks the first design with you, area by area, asks what only you can know, and proposes the rest for you to accept.
 4. **Build it.** Name the command that runs your tests in the Tests section of `.markitect/settings.md`, then run `/markitect-build`. A counter-checker writes checks from the spec alone, a builder realizes what `markitect status` lists, and a fresh reviewer confirms each document, on a branch of the job's own. The branch lands only when `status` shows nothing new against the target and the tests pass.
 
 The [language reference](docs/guides/language-reference.md) lists every command, and [the plugin](docs/guides/plugin.md) every skill.
@@ -89,8 +92,10 @@ A member has at most five open loans.
 You change five to three. `markitect status` lists the rule as changed and every document that links to it, or that it links to, as suspect, such as borrowing:
 
 ```text
-changed: lending/loan-limit.md@3f9a1c07: self
-suspect: lending/borrow.md@5d0e9b11: link:lending/loan-limit.md
+changed: lending/loan-limit.md@327da543: self
+  look at: docs/spec/lending/loan-limit.md, src/loans.go, src/loans.go:3
+suspect: lending/borrow.md@f0861ccb: link:lending/loan-limit.md
+  look at: docs/spec/lending/borrow.md, src/loans.go, src/loans.go:3
 1 changed, 1 suspect, 0 unexplained
 ```
 
@@ -101,7 +106,7 @@ suspect: lending/borrow.md@5d0e9b11: link:lending/loan-limit.md
 Markitect needs Claude Code for its jobs; the tool runs anywhere Go runs, on Windows, Linux and macOS.
 
 - **From source,** as in the [quick start](#quick-start): `go install github.com/Glacius-Labs/Markitect/cmd/markitect@main`. Each project pins the tool's version in `.markitect/version`, and `markitect version` says whether the tool on your `PATH` is that version.
-- **The Claude Code plugin** in [`plugin/`](plugin/) brings the skills and agents, and from a release on the tool itself: its launcher downloads the binary of the plugin's version on first use and checks it against the release's checksums. Until the first release of the rebuilt tool, load the repository's `plugin/` folder as a local plugin and keep the tool you built ahead of the plugin's on the `PATH`; [the plugin](docs/guides/plugin.md#the-launcher) explains why.
+- **The Claude Code plugin** in [`plugin/`](plugin/) brings the skills and agents and the tool itself: its launcher downloads the binary of the plugin's version on first use and checks it against the release's checksums. The plugin on Main is a development version, which has no release binary: its launcher refuses, and since the plugin's folder comes first on the PATH of Claude Code's shell, it hides a tool built from source. So the plugin's jobs run once the rebuilt tool and plugin are released ([the plugin](docs/guides/plugin.md#the-launcher)).
 
 ## Status
 

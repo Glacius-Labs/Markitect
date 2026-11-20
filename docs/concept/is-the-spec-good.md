@@ -89,6 +89,5 @@ Three signals follow: repeated findings at the same place show a bad place; a re
 The properties say what a good spec is; a few habits keep a spec there as it grows, because links are what `status` follows ([§6](the-state.md#the-honest-limit)).
 
 - **Link what a document relies on, and only that.** A link reaches one step in both directions: a link the document does not need makes it suspect for changes it does not care about, and a missing one lets a change pass unseen. Link the smallest document that holds what is used, and a document whose title stands in the text without a link is a gap, which the signal "mention without a link" shows.
-- **One fact in one place, linked where it is used.** A page of values that every document links makes each change of one value reach every document; a value rule of the project's own, its format, range or unit, is a small document of its own, linked by the documents that use it. A wide change or a hotspot points at a fact that is scattered or mixed.
-- **No link only to help a reader find something.** Every link makes its two documents suspect for each other's changes.
-- **No general knowledge.** The executors know what a date, an amount or an email address is: a document that restates it is one more to confirm and keep true, and nobody relies on it.
+- **One fact in one place, linked where it is used** ([the writing rule](../vision.md#founding-intent)). When a fact stands in several places, they move apart with every change; a wide change or a hotspot points at a fact that is scattered or mixed.
+- **Only what is fixed.** What a date, an amount or an email address is, nobody relies on the spec for: a document that restates it is one more to confirm and keep true, and it is not necessary.
