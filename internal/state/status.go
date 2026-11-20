@@ -86,6 +86,9 @@ type Status struct {
 	docs             map[string]*docState
 	folder           *Folder
 	project          *Project
+	// files is the digest of every file of the walk outside the spec folder,
+	// computed once.
+	files string
 }
 
 // docState is one document as status sees it.
@@ -175,7 +178,7 @@ func Evaluate(p *Project, f *Folder, rows []Row) (*Status, error) {
 }
 
 // Fingerprints computes the fingerprint of every entry on the list. Evaluate
-// leaves them out, since they hash every unexplained file.
+// leaves them out, since they hash every file of the walk.
 func (s *Status) Fingerprints() error {
 	for _, list := range [][]Entry{s.Changed, s.Suspect} {
 		for i := range list {
@@ -413,9 +416,10 @@ const FingerprintLen = 8
 
 // fingerprint hashes what a verdict on the document will rest on, without
 // the evidence: its own inputs, the artifacts and counter-checks of the rows
-// taken as they are now, and for a changed document every unexplained file,
-// which the reviewer may map.
-func (s *Status) fingerprint(d *docState, changed bool) (string, error) {
+// taken as they are now, and the digest of every file of the walk outside the
+// spec folder. A mark changes only .markitect/, so marks leave one another's
+// fingerprints alone, and any edit of a project file changes them all.
+func (s *Status) fingerprint(d *docState) (string, error) {
 	var lines []string
 	for k, h := range d.current {
 		lines = append(lines, k+" "+h)
@@ -437,19 +441,37 @@ func (s *Status) fingerprint(d *docState, changed bool) (string, error) {
 			}
 		}
 	}
-	if changed {
-		for _, u := range s.Unexplained {
-			h, err := s.folder.hash(u)
-			if err != nil {
-				return "", err
-			}
-			lines = append(lines, "unexplained:"+u+" "+h)
-		}
+	files, err := s.filesDigest()
+	if err != nil {
+		return "", err
 	}
+	lines = append(lines, "files "+files)
 	sort.Strings(lines)
 	lines = compact(lines)
 	sum := sha256.Sum256([]byte(strings.Join(lines, "\n")))
 	return hex.EncodeToString(sum[:])[:FingerprintLen], nil
+}
+
+// filesDigest is the SHA-256 of the path and hash of every file of the walk
+// outside the spec folder, in path order.
+func (s *Status) filesDigest() (string, error) {
+	if s.files != "" {
+		return s.files, nil
+	}
+	var b strings.Builder
+	for _, file := range s.folder.Files {
+		if s.project.InSpec(file) {
+			continue
+		}
+		h, err := s.folder.hash(file)
+		if err != nil {
+			return "", err
+		}
+		b.WriteString(file + " " + h + "\n")
+	}
+	sum := sha256.Sum256([]byte(b.String()))
+	s.files = hex.EncodeToString(sum[:])
+	return s.files, nil
 }
 
 // compact drops repeated neighbours of a sorted list.

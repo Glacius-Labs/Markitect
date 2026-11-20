@@ -484,10 +484,9 @@ func TestStateAsATable(t *testing.T) {
 	}
 }
 
-// A mark that maps a file changes what is unexplained, and with it the
-// fingerprint of every other changed document: a second mark at the
-// fingerprint of the same status is refused.
-func TestMappingAFileMovesOtherFingerprints(t *testing.T) {
+// Marks change only .markitect/, so two marks in a row from one status both
+// hold, even when the first maps a file.
+func TestMarksFromOneStatus(t *testing.T) {
 	dir := project(t, lending)
 	l := statusOf(t, dir)
 	borrow, _ := l.entry("lending/borrow.md")
@@ -495,8 +494,33 @@ func TestMappingAFileMovesOtherFingerprints(t *testing.T) {
 	if code, _, errOut := run("mark", "-C", dir, "lending/borrow.md@"+borrow.Fingerprint, "ok", "--file", "src/loans.go", "-e", "src/loans.go"); code != ExitOK {
 		t.Fatal(errOut)
 	}
-	if code, _, errOut := run("mark", "-C", dir, "roles/member.md@"+member.Fingerprint, "ok", "--file", "src/member.go", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "is not the state now") {
+	if code, _, errOut := run("mark", "-C", dir, "roles/member.md@"+member.Fingerprint, "ok", "--file", "src/member.go", "-e", "src/member.go"); code != ExitOK {
 		t.Error(code, errOut)
+	}
+}
+
+// An edit of any project file after status, even an artifact of another
+// document, refuses the mark.
+func TestAnyEditAfterStatusRefuses(t *testing.T) {
+	dir := marked(t)
+	write(t, dir, "docs/spec/lending/borrow.md", read(t, dir, "docs/spec/lending/borrow.md")+"\nOne more rule.\n")
+	l := statusOf(t, dir)
+	borrow, _ := l.entry("lending/borrow.md")
+	member, _ := l.entry("roles/member.md")
+	write(t, dir, "src/returns.go", "package lending\n\nfunc Return() { late() }\n")
+	for _, args := range [][]string{
+		{"lending/borrow.md@" + borrow.Fingerprint, "ok", "--file", "src/loans.go", "-e", "src/loans.go"},
+		{"roles/member.md@" + member.Fingerprint, "ok", "--file", "src/member.go", "-e", "src/member.go"},
+	} {
+		if code, _, errOut := run(append([]string{"mark", "-C", dir}, args...)...); code != ExitFound || !strings.Contains(errOut, "is not the state now") {
+			t.Errorf("%v: %d %s", args, code, errOut)
+		}
+	}
+	// Edits inside the spec folder count through the document's own inputs.
+	fp := fingerprint(t, dir, "lending/return.md")
+	write(t, dir, "docs/spec/notes.txt", "a file of the spec folder that is no document")
+	if fingerprint(t, dir, "lending/return.md") != fp {
+		t.Error("a file of the spec folder that is no document changed the fingerprint")
 	}
 }
 

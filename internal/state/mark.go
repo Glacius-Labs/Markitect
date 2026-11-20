@@ -29,7 +29,7 @@ func (s *Status) Fingerprint(doc string) (string, bool, error) {
 	if !ok {
 		return "", false, nil
 	}
-	fp, err := s.fingerprint(d, d.entry != nil && d.entry.Kind == Changed)
+	fp, err := s.fingerprint(d)
 	return fp, true, err
 }
 
