@@ -17,16 +17,16 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// pluginDir is the Claude Code plugin of the rebuilt tool. Its skills and
+// pluginDir is the Claude Code plugin. Its skills and
 // agents name the tool's commands, and the guide describes them.
-const pluginDir = "../../plugin-next"
+const pluginDir = "../../plugin"
 
 var (
 	// toolWord is the word after the tool's name anywhere in a file, front
 	// matter and prose included: it must be a command.
-	toolWord = regexp.MustCompile(`markitect-next[ \t]+([A-Za-z][A-Za-z-]*)`)
+	toolWord = regexp.MustCompile(`markitect[ \t]+([A-Za-z][A-Za-z-]*)`)
 	// pluginName is a skill or an agent named with the plugin's scope.
-	pluginName = regexp.MustCompile(`markitect-next:([a-z0-9-]+)`)
+	pluginName = regexp.MustCompile(`markitect:([a-z0-9-]+)`)
 	codeSpan   = regexp.MustCompile("`([^`\n]+)`")
 	// relativeLink is the target of a Markdown link, which must lead to a
 	// file when it is relative.
@@ -36,7 +36,7 @@ var (
 	rootPath = regexp.MustCompile(`\$\{CLAUDE_PLUGIN_ROOT\}/([^\s` + "`" + `]+)`)
 	// invocation is the tool's name with what follows it in a piece of code,
 	// up to a shell separator.
-	invocation = regexp.MustCompile(`(?:^|[\s(])markitect-next((?:[ \t][^;|&>)\n]*)?)`)
+	invocation = regexp.MustCompile(`(?:^|[\s(])markitect((?:[ \t][^;|&>)\n]*)?)`)
 	agentTools = []string{"Read", "Write", "Edit", "Glob", "Grep", "Bash", "WebFetch"}
 	// jsonValue is a value of a command's JSON document, written
 	// COMMAND.KEY in a code span, such as settings.tests.
@@ -164,7 +164,7 @@ func TestPluginFrontMatter(t *testing.T) {
 	var manifest struct {
 		Name, Version, Description string
 	}
-	if err := json.Unmarshal(data, &manifest); err != nil || manifest.Name != "markitect-next" || manifest.Version == "" || manifest.Description == "" {
+	if err := json.Unmarshal(data, &manifest); err != nil || manifest.Name != "markitect" || manifest.Version == "" || manifest.Description == "" {
 		t.Errorf("plugin.json: %v, %+v", err, manifest)
 	}
 	skills, agents, _ := pluginFiles(t)
@@ -297,7 +297,7 @@ func TestPluginNamesOnlyWhatExists(t *testing.T) {
 		text := string(data)
 		for _, m := range toolWord.FindAllStringSubmatch(text, -1) {
 			if _, ok := commands[m[1]]; !ok && m[1] != "help" {
-				t.Errorf("%s: markitect-next has no command %q", path, m[1])
+				t.Errorf("%s: markitect has no command %q", path, m[1])
 			}
 		}
 		for _, m := range relativeLink.FindAllStringSubmatch(text, -1) {
@@ -335,7 +335,7 @@ func TestPluginNamesOnlyWhatExists(t *testing.T) {
 				lines++
 				c, ok := commands[args[0]]
 				if !ok {
-					t.Errorf("%s: `markitect-next%s`: no such command", path, m[1])
+					t.Errorf("%s: `markitect%s`: no such command", path, m[1])
 					continue
 				}
 				o, err := parse(args[1:])
@@ -352,7 +352,7 @@ func TestPluginNamesOnlyWhatExists(t *testing.T) {
 				}
 				if err != nil {
 					first, _, _ := strings.Cut(err.Error(), "\n")
-					t.Errorf("%s: `markitect-next%s`: %s", path, m[1], first)
+					t.Errorf("%s: `markitect%s`: %s", path, m[1], first)
 				}
 			}
 		}

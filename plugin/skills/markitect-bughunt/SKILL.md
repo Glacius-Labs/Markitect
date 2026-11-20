@@ -1,0 +1,10 @@
+---
+name: markitect-bughunt
+description: The bug-hunt job of a Markitect project. A fresh reviewer looks beyond what markitect status lists, reads the artifacts against the spec, and every bug it finds becomes a report for triage. It changes no artifact, no spec and no verdict. Use when the user or a runner asks for a bug hunt.
+---
+Run the bug-hunt job in the frame of a job, `${CLAUDE_PLUGIN_ROOT}/jobs.md`. The job is `bughunt`. The hunt changes no artifact, no spec and no verdict: it writes reports, and triage answers or escalates those on the spec on this branch, while the build job repairs the others when triage sends them to it.
+
+1. **Hunt.** Start `markitect:reviewer` with the task "Hunt bugs" and the folders or documents the user named, or the whole spec. `markitect table` lists every document with its artifacts.
+2. **Report.** Write the reports of its answer; those on the spec go through triage on this branch, as the frame says.
+
+Then land as the frame says.

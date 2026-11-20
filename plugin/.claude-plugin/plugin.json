@@ -1,12 +1,12 @@
 {
   "name": "markitect",
   "version": "0.35.0-dev",
-  "description": "Brings the markitect command and tells Claude Code what Markitect is, in every folder",
+  "description": "Brings the markitect command, and the jobs and reading entries of Markitect as skills and agents",
   "author": {
     "name": "Glacius Labs"
   },
   "homepage": "https://github.com/Glacius-Labs/Markitect",
   "repository": "https://github.com/Glacius-Labs/Markitect",
   "license": "Apache-2.0",
-  "keywords": ["markitect", "spec", "model"]
+  "keywords": ["markitect", "spec", "jobs"]
 }
