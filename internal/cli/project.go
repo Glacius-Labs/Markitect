@@ -100,6 +100,11 @@ func load(o options) (*workspace, error) {
 	if err != nil {
 		return nil, err
 	}
+	return loadDir(dir)
+}
+
+// loadDir loads the project at dir.
+func loadDir(dir string) (*workspace, error) {
 	p, err := state.Load(diskProject(dir))
 	if err != nil {
 		return nil, fmt.Errorf("the project %s: %w", dir, err)

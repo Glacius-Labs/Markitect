@@ -1,6 +1,6 @@
 # Project reference
 
-How the rebuilt tool `markitect-next` finds and sets up a project, what lies in `.markitect/`, which files of the project it sees, how it hashes them, the state with `status`, `mark` and `move`, and the history ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version), [DEC-097](../decisions.md#dec-097-markitect-uses-no-git)). [The project](../concept/jobs-and-runners.md#the-project) and [the state](../concept/the-state.md) in the concept say what they are for; this page says precisely what the tool does. [The language reference](language-reference.md) gives the commands that read and write the spec. The examples are a small lending library.
+How the rebuilt tool `markitect-next` finds and sets up a project, what lies in `.markitect/`, which files of the project it sees, how it hashes them, the state with `status`, `mark` and `move`, the history, and the comparison of two projects ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version), [DEC-097](../decisions.md#dec-097-markitect-uses-no-git)). [The project](../concept/jobs-and-runners.md#the-project) and [the state](../concept/the-state.md) in the concept say what they are for; this page says precisely what the tool does. [The language reference](language-reference.md) gives the commands that read and write the spec. The examples are a small lending library.
 
 ## The project
 
@@ -179,3 +179,34 @@ The other inputs stay: an artifact, a counter-check or a file of the spec folder
 `mark` writes the state and the history together, all or nothing: when the history cannot be written, the state is not written either, and `mark` exits 2.
 
 **Reading it.** Events are read in time order, the file's order among equal times; the time is the writing machine's clock. The change signals read the history in this order, so a machine whose clock is wrong can reorder events and shift what they show. A line that both sides of a merge hold is read once, a type the tool does not know is skipped, so new types need no format version, and a line that is not an event, without a time in RFC 3339 or a type, or a known event without its fields, is reported as `.markitect/history.jsonl:LINE: history.unreadable: MESSAGE` and skipped, without failing. `status` prints each such line as a note, `note: .markitect/history.jsonl:LINE: …`, which does not change its exit code, and with `--json` lists them in `history`.
+
+## compare
+
+`markitect-next compare OLD [NEW]` compares two projects, each a folder that holds `.markitect/version` and its spec ([DEC-131](../decisions.md#dec-131-the-tool-shows-claude-explains)). NEW is by default the project the command works in. The tool uses no Git: the runner or a skill lays out OLD, as a Git worktree or an export of a commit, preferably outside the project, or in a folder the project ignores, since NEW's walk would otherwise list its files as unexplained. `compare` carries "since I last looked", the preview of an idea, its branch against the main branch, and the development of the project. It reads both projects as `status` does and changes nothing. It names, each list sorted by path:
+
+| Section | Lists |
+|---|---|
+| **New** | The documents of NEW that OLD does not have and that no move brought |
+| **Gone** | The documents of OLD that NEW does not have and that no move took away |
+| **Moved** | The documents NEW's history moved from a path of OLD to a path of NEW, following several moves: `(links rewritten only)` when their text is what the moves alone make of it, and otherwise with the diff of their text |
+| **Rewritten** | The documents at the same path whose text differs only by the links NEW's moves rewrote: `(links rewritten only)` |
+| **Changed** | The documents at the same path whose text differs, with a unified diff of the old and the new text, three lines of context, CRLF read as LF. A last line without a line end is followed by `\ No newline at end of file`, so a change of only the last line end shows. Where both texts differ in so many lines that the differing middle holds more than four million pairs of lines, the diff is one hunk that removes all of that middle and adds the new one |
+| **Suspect** | The documents whose own text is the same while a document they link to, one that links to them, or their type, in either project, is new, gone, changed, or moved with a change of its own, or while a file of the spec folder they link changed: `link:PATH`, `type:PATH` or `asset:PATH` |
+| **Verdicts** | The documents of NEW whose verdict or artifacts, in the row `status` takes, differ from OLD's, a moved document against its row at the old path: `ok -> fail; artifacts src/returns.go -> src/returns.go`, with `(no row)` and `(none)` |
+| **Unexplained** | The files unexplained in NEW that were not unexplained in OLD |
+
+```text
+## Changed (1)
+
+lending/return.md
+--- docs/spec/lending/return.md
++++ docs/spec/lending/return.md
+@@ -1,4 +1,4 @@
+ # Return
+ A book is lent for a fixed time.
+-It comes back within three weeks.
++It comes back within four weeks.
+ A late book costs a fee.
+```
+
+**Mechanical rewrites.** `compare` replays on OLD's documents, as `move` computes them, the moves of NEW's history after the last event of OLD's history. A document whose text in NEW is what the replay makes of it is moved or rewritten, not changed, and makes no neighbour suspect, as `status` lists none of them. One whose text also changed otherwise is changed, with its diff, and makes its neighbours suspect. A move made without `move` leaves no event, and shows as a document gone and one new. A line of either project's state or history that `compare` cannot read is left out and printed first as a note, `note: old: .markitect/state.jsonl:LINE: …, left out`; with `--json`, `notes` holds them with `side`. Each section shows `(none)` when empty. `compare` exits 0 when nothing differs and 1 otherwise; notes do not change that. With `--json` it prints `new`, `gone`, `moved` with `from`, `to`, `diff` and `mechanical`, `rewritten`, `changed` with `doc` and `diff`, `suspect` with `doc` and `because`, `verdicts` with `doc`, `old_verdict`, `new_verdict`, `old_artifacts` and `new_artifacts`, `unexplained`, and `notes`. Reports join the comparison when step 4 brings them.

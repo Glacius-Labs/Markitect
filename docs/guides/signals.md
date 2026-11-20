@@ -9,6 +9,7 @@ How the rebuilt tool `markitect-next` shows where reading a spec pays off: the s
 | `markitect-next topic` | The signals of the whole spec. The text shows the first ten findings of each signal; `--all` shows every one, and `--json` always does |
 | `markitect-next topic TOPIC` | The topic view of a document, a type or a folder, with every finding |
 | `markitect-next questions` | The question catalogs of the library packages the spec has in `packages/` |
+| `markitect-next figures` | The signals of the spec's changes, computed from the history ([below](#the-change-signals)) |
 
 A finding reads `path:line: signal: detail`. With `--json`, `topic` prints `topic`, `topic_kind` (`spec`, `document`, `type` or `folder`), `documents`, `strong`, `linked_from` and `mentions` as lists of statements with `file`, `line`, `section` and `text`, and `signals`, each signal's list of findings with `file`, `line` and `detail`; for a type also `typed_documents`. `questions` prints `packages`, each with `package` and `questions`.
 
@@ -70,3 +71,31 @@ The reference values ship inside the tool, one file per package in the library, 
 ## Question catalogs
 
 Each package has a catalog of competency questions in the library, `questions/PACKAGE.md`: five to ten questions across documents that a spec built on that package should answer, generic and in English. `questions` prints the catalogs of the library packages the spec has. A template may bring a catalog of its own; the shipped templates rely on the catalogs of their packages. Answering them, each from the spec alone with a citation, is the work of a job, and a project's own questions beside the spec come with the layout of the project.
+
+## The change signals
+
+`markitect-next figures` computes the signals of [the spec's changes](../concept/is-the-spec-good.md#its-changes) from the history ([project reference](project-reference.md#the-history)), against the spec as it is. Like the signals of the spec itself, each is a list sorted strongest first, with the project's own reference beside it, and no threshold; the text shows the first ten findings of each, `--all` every one. The figures of reports and control samples join it when step 4 brings them.
+
+**A change.** A verdict event's document, together with the documents its `changed` list names, is one change, each document only when its text changed: when its `self` in the event differs from the last `self` the history recorded for it in any event, or it has none yet. A document waiting in the `changed` lists of several verdicts, one recorded `fail`, one whose artifact changed and one gone from the spec count in no change while their text stays. A document recorded gone, without a `self`, ends there: a later document at its path, new or moved there, is another document of its own. A verdict joins the change before it when it follows that change's last verdict within an hour and its documents are among those of the change's first verdict: a reviewer confirming the documents of one change one after the other makes one change, not several. A verdict an hour or more later, or one that names a document the change did not have, starts a new change. The history follows a document through its moves to its current path. `move` events are no changes, and the documents a move rewrote count only when a verdict names them.
+
+"Two changes or more" and "two times or more" below are what keeping on changing together and repeatedly being dragged mean, not a threshold to tune: once is no pattern.
+
+| Signal | Name | Lists | Strongest first |
+|---|---|---|---|
+| Wide change | `wide-change` | Every change, with its documents, beside the median and range of the project's changes | Most documents |
+| Change without a link | `unlinked-change` | Every pair of documents of the spec that changed together in two changes or more while no link joins them in either direction | Most changes together |
+| Dragged links | `dragged-links` | Every document of the spec whose changes came, two times or more, with changes of documents that link to it, with those documents | Most such changes |
+| Hotspot | `hotspot` | Every document of the spec that changed and that documents link to: how often it changed, how many link to it, and the product, beside the medians of both | Highest product |
+| Back and forth | `back-and-forth` | Every document whose text returned to an earlier version, by the hashes of its own verdicts and of the `changed` lists | Most returns |
+| Weakening | | Not computed: a strong statement gathering conditions shows only in its old and new text, which an agent reads from Git; the history holds hashes | |
+
+The time of an event is the clock of the machine that wrote it, so a wrong clock can reorder events and shift the changes.
+
+```text
+### hotspot (1)
+
+reference: changes per document: median 1; documents linking to one: median 0.5
+lending/return.md: changed 2 times × linked from 1 document = 2
+```
+
+With `--json`, `figures` prints `verdicts` and `moves`, the events read, `changes` with `time`, `docs` and `events`, `signals`, each signal's list with `docs`, `count` and `detail`, `reference` per signal, `weakening`, and `history`, the lines of the history it cannot read, which the text shows as notes. It exits 0.
