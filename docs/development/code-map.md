@@ -14,116 +14,23 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Layer | Meaning | May import | Packages |
 |---|---|---|---|
-| `spec` | The spec language over supplied bytes: Definitions, Kinds, links, visibility, cycles, manifest and lock. | nothing | 1 |
-| `assets` | Files built into the binary: the standard Libraries, the skills and the harness of the work. | nothing | 2 |
-| `harness` | harness.yaml at user and project level, resolved key by key, and the agents' front matter rendered from it. | nothing | 1 |
-| `domain` | Registry pages, ownership and file accounting over a compiled spec. | `spec` | 1 |
-| `project` | Loads and checks a project's Markitect folder from the files of a project folder. | `spec`, `assets`, `harness`, `domain` | 1 |
-| `service` | Questions about a loaded project: what it holds, what depends on what, and vet. | `spec`, `assets`, `domain`, `project` | 1 |
-| `run` | The record of what was verified, without Git: the inputs of each Definition, review.sum, the history history.jsonl, the inbox inbox.jsonl, status and mark. | `spec`, `assets`, `domain`, `project` | 1 |
-| `guard` | Which role may write what and start whom, the hook that holds it and its entries in a project's settings, over supplied bytes. | `project` | 1 |
-| `setup` | What Markitect writes into a project: its first files, the skills and the harness, the settings, the Git attributes, the ignore line and the lock. | `spec`, `assets`, `harness`, `project`, `guard` | 1 |
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `adapter` | Concrete project-folder, command-line and update adapters; no adapter imports another. | `spec`, `assets`, `harness`, `domain`, `project`, `service`, `run`, `guard`, `setup`, `build` | 3 |
-| `composition` | Constructs the command line with its adapters. | `spec`, `project`, `service`, `run`, `adapter` | 1 |
-| `command` | Thin entrypoints to product composition. | `composition` | 1 |
-| `language` | The spec language of the rebuilt tool over a supplied file system: documents, types, sections, links and check. | nothing | 1 |
-| `library` | The library built into the rebuilt tool: packages, templates and the types the tool owns, of reports, settings and control samples. | nothing | 1 |
-| `editing` | The change sets of the rebuilt tool's commands that write a spec: new, move and apply, over supplied file systems. | `language` | 1 |
-| `signals` | The statements of a spec, its signals and the topic view of the rebuilt tool, over a parsed spec. | `language` | 1 |
-| `state` | A project of the rebuilt tool over a supplied file system: the .markitect/ layout, the project loaded with its spec, the walk of its files, file hashes, the state with status, mark and move, the history, the reports, settings and control samples, the write table with the step and landing checks, the comparison of two projects and the figures. | `language`, `library`, `editing` | 1 |
-| `command-line` | The command line of the rebuilt tool: its arguments, the project it works in, init and version, the spec folder and the state it reads and writes, the lock of mark, and its text and JSON output. | `build`, `language`, `library`, `editing`, `signals`, `state` | 1 |
-| `entrypoint` | markitect-next, the rebuilt tool beside markitect until it replaces it. | `command-line` | 1 |
+| `language` | The spec language over a supplied file system: documents, types, sections, links and check. | nothing | 1 |
+| `library` | The library built into the tool: packages, templates and the types the tool owns, of reports, settings and control samples. | nothing | 1 |
+| `editing` | The change sets of the commands that write a spec: new, move and apply, over supplied file systems. | `language` | 1 |
+| `signals` | The statements of a spec, its signals and the topic view, over a parsed spec. | `language` | 1 |
+| `state` | A project over a supplied file system: the .markitect/ layout, the project loaded with its spec, the walk of its files, file hashes, the state with status, mark and move, the history, the reports, settings and control samples, the write table with the step and landing checks, the comparison of two projects and the figures. | `language`, `library`, `editing` | 1 |
+| `command-line` | The command line: its arguments, the project it works in, init, version and licenses, the spec folder and the state it reads and writes, the lock of mark, and its text and JSON output. | `build`, `language`, `library`, `editing`, `signals`, `state` | 1 |
+| `entrypoint` | The thin entrypoint of markitect. | `command-line` | 1 |
 | `maintenance` | The import gate and the code map, separate from product execution. | nothing | 1 |
 | `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 1 |
 | `standalone` | The command smoke. It imports no Markitect package, not even from tests. | nothing | 1 |
-
-## Exceptions
-
-| From | To | Files | Reason |
-|---|---|---|---|
-| `internal/run` | `internal/adapters/folder` | tests only | The record is tested on real folders. |
-
-## Spec language
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/spec` | Package spec compiles the spec from explicitly supplied Markdown files: Definitions with front matter, Packages as folders with an anchor, Libraries of Kinds, links by path, visibility and the Package dependency graph. | [docs/guides/spec-language.md#definitions](../guides/spec-language.md#definitions) |
-
-## Built-in files
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/libraries` | Package libraries holds the standard Libraries that ship inside the markitect binary, each a folder of Kind Definitions: std, the Kinds of a project's description. | [docs/guides/spec-language.md#kinds-and-libraries](../guides/spec-language.md#kinds-and-libraries) |
-| `internal/skills` | Package skills holds what ships inside the markitect binary for agents: the harness for Claude Code, which markitect init installs into a project. | [docs/guides/spec-language.md#commands](../guides/spec-language.md#commands) |
-
-## Harness configuration
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/harness` | Package harness is the configuration of the harness of the work (DEC-103): one file format, harness.yaml, at two levels. | [docs/guides/project-workflow.md#strategies-and-configuration](../guides/project-workflow.md#strategies-and-configuration) |
-
-## Realization record
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/realization` | Package realization checks the realization record beside the spec: one registry page per Package with the path patterns it owns and the files it realizes, and the ignore file. | [docs/guides/spec-language.md#the-realization-record](../guides/spec-language.md#the-realization-record) |
-
-## Project
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/project` | Package project loads a project's Markitect folder from a set of files, the project folder, and checks it as a whole: manifest, lock, Libraries, spec and registry. | [docs/guides/spec-language.md#the-projects-markitect-folder](../guides/spec-language.md#the-projects-markitect-folder) |
-
-## Analysis
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/analysis` | Package analysis answers questions about a loaded project without starting agents: who links to a Definition, the Package dependency graph, the views of list and doc, and the warnings and notes of vet, which analyse the spec's design like code. | [docs/guides/spec-language.md#vet-warnings-and-notes](../guides/spec-language.md#vet-warnings-and-notes) |
-
-## The record
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/run` | Package run is the record of what was verified (DEC-099): for each Definition, .markitect/review.sum holds the inputs at which a reviewer last verified it, modelled on Go's test cache. | [internal/run/README.md](../../internal/run/README.md) |
-
-## The agents' rights
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/guard` | Package guard holds the agents' rights: which role may write what and start whom, the hook that holds them before a tool call (DEC-100), and its entries in a project's Claude Code settings. | [internal/guard/README.md](../../internal/guard/README.md) |
-
-## Project setup
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/setup` | Package setup is what Markitect writes into a project: the first files of a new one, the harness with its agents rendered from the harness configuration, the hooks and the worktree base in Claude Code's settings, the record's Git attributes, the ignore line for Claude Code's worktrees and the lock. | [docs/guides/project-workflow.md#1-set-up-the-project](../guides/project-workflow.md#1-set-up-the-project) |
 
 ## Build data
 
 | Package | Summary | Owning document |
 |---|---|---|
 | `internal/buildinfo` | Package buildinfo owns the version of this build and the upstream license notices that `markitect version` and `markitect licenses` print. | [docs/architecture.md#distribution](../architecture.md#distribution) |
-
-## Adapters
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/adapters/cli` | Package cli is the markitect command line: install, update, init and tidy; check, vet, list and doc over the spec; status and mark over the record of what was verified (DEC-099); config over the harness configuration (DEC-103); the hook; version and licenses. | [docs/guides/spec-language.md#commands](../guides/spec-language.md#commands) |
-| `internal/adapters/folder` | Package folder reads and writes a project folder without Git (DEC-097): it walks the folder and skips what the project's .gitignore files exclude, read as plain text, nested ones included. | [internal/run/README.md#the-folder](../../internal/run/README.md#the-folder) |
-| `internal/adapters/upgrade` | Package upgrade finds the newest Markitect release, downloads the binary for this platform, checks it against the release's checksums and replaces the running executable. | [docs/guides/project-workflow.md#8-keep-it-current](../guides/project-workflow.md#8-keep-it-current) |
-
-## Composition
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/bootstrap` | Package bootstrap constructs the command line with its adapters: the project folder on disk, the record over it with its lock in the user's cache folder, and the releases update installs. | [docs/architecture.md#product-flow](../architecture.md#product-flow) |
-
-## Product commands
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `cmd/markitect` | Command markitect is the Markitect command line: install, update, init, tidy, check, vet, list, doc, status, mark, version and licenses. | [docs/guides/spec-language.md#commands](../guides/spec-language.md#commands) |
 
 ## Language
 
@@ -161,7 +68,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|
 | `internal/cli` | Package cli is the command line of the rebuilt tool, markitect-next: it parses the arguments, finds the project they work in, sets one up with init, reads its spec, prints what the language finds, as text or as JSON, and applies the changes of the commands that write. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
 
-## Rebuilt tool entrypoint
+## Entrypoint
 
 | Package | Summary | Owning document |
 |---|---|---|
@@ -177,7 +84,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/testkit` | Package testkit provides hermetic Git and file-system fixtures for tests. | [docs/architecture.md#layers](../architecture.md#layers) |
+| `internal/testkit` | Package testkit provides file-system fixtures for tests. | [docs/architecture.md#layers](../architecture.md#layers) |
 
 ## Standalone tools
 

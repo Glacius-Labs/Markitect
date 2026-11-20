@@ -1,3 +1,7 @@
+// Package testkit provides file-system fixtures for tests.
+//
+// Only test files may import it; the architecture import check enforces
+// this. It depends on the standard library alone.
 package testkit
 
 import (
