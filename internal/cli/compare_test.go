@@ -68,15 +68,17 @@ func TestCompare(t *testing.T) {
 	}
 	same(t, "new", doc.New, []string{"lending/fines.md"})
 	same(t, "gone", doc.Gone, []string{"lending/holds.md"})
-	if len(doc.Moved) != 1 || doc.Moved[0].From != "lending/borrow.md" || doc.Moved[0].To != "loans/borrow.md" ||
-		!strings.Contains(doc.Moved[0].Diff, "-![The flow](flow.png)\n+![The flow](../lending/flow.png)\n") {
+	// The move rewrote the moved document and the member's link to it, and
+	// nothing else: neither is changed, and neither makes a neighbour suspect.
+	if len(doc.Moved) != 1 || doc.Moved[0].From != "lending/borrow.md" || doc.Moved[0].To != "loans/borrow.md" || !doc.Moved[0].Mechanical || doc.Moved[0].Diff != "" {
 		t.Errorf("moved %+v", doc.Moved)
 	}
+	same(t, "rewritten", doc.Rewritten, []string{"roles/member.md"})
 	var changed []string
 	for _, c := range doc.Changed {
 		changed = append(changed, c.Doc)
 	}
-	same(t, "changed", changed, []string{"lending/return.md", "roles/member.md"})
+	same(t, "changed", changed, []string{"lending/return.md"})
 	if !strings.Contains(doc.Changed[0].Diff, "--- docs/spec/lending/return.md\n+++ docs/spec/lending/return.md\n@@ -3,4 +3,4 @@\n") ||
 		!strings.Contains(doc.Changed[0].Diff, "-A book comes back within three weeks.\n+A book comes back within four weeks.\n") {
 		t.Error(doc.Changed[0].Diff)
@@ -90,7 +92,7 @@ func TestCompare(t *testing.T) {
 	same(t, "unexplained", doc.Unexplained, []string{"src/fines.go"})
 	// The text says the same, and is the same at each run and with CRLF.
 	_, text, _ := run("compare", older, newer)
-	for _, part := range []string{"## New (1)\n\nlending/fines.md\n", "## Gone (1)\n\nlending/holds.md\n", "## Moved (1)\n\nlending/borrow.md -> loans/borrow.md\n--- docs/spec/lending/borrow.md\n+++ docs/spec/loans/borrow.md\n",
+	for _, part := range []string{"## New (1)\n\nlending/fines.md\n", "## Gone (1)\n\nlending/holds.md\n", "## Moved (1)\n\nlending/borrow.md -> loans/borrow.md (links rewritten only)\n", "## Rewritten (1)\n\nroles/member.md (links rewritten only)\n",
 		"## Suspect (1)\n\nlending/desk.md: link:lending/return.md\n", "## Verdicts (1)\n\nlending/return.md: ok -> fail; artifacts src/returns.go -> src/returns.go\n", "## Unexplained (1)\n\nsrc/fines.go\n"} {
 		if !strings.Contains(text, part) {
 			t.Errorf("missing %q in\n%s", part, text)
@@ -104,7 +106,7 @@ func TestCompare(t *testing.T) {
 	}
 	// A project against itself, or its CRLF copy, differs in nothing.
 	code, out, _ = run("compare", older, copyTree(t, older, true))
-	if code != ExitOK || strings.Count(out, "(none)") != 7 {
+	if code != ExitOK || strings.Count(out, "(none)") != 8 {
 		t.Error(code, out)
 	}
 	if code, _, errOut := run("compare", t.TempDir()); code != ExitFailed || !strings.Contains(errOut, "holds no .markitect/version") {
@@ -118,7 +120,7 @@ func TestFiguresOfTheLendingProject(t *testing.T) {
 	// The marks of the confirmed project are one change, the marks after
 	// the edits two more; the move is left out.
 	if code != ExitOK || !strings.HasPrefix(out, "# Figures from the history\n\n3 changes from 7 verdicts; moves left out, since they are mechanical: 1\n") ||
-		!strings.Contains(out, "\n### wide-change (3)\n\nreference: median 3, range 2–4 documents per change\n4 documents changed together at 2026-11-20T09:00:01Z") ||
+		!strings.Contains(out, "\n### wide-change (3)\n\nreference: median 2, range 2–4 documents per change\n4 documents changed together at 2026-11-20T09:00:01Z") ||
 		!strings.Contains(out, "\n### hotspot (3)\n\nreference: changes per document: median 1; documents linking to one: median 0.5\nlending/return.md: changed 2 times × linked from 1 document = 2\n") ||
 		!strings.HasSuffix(out, "\n### weakening\n\nnot computed: a strong statement gathering conditions shows only in its old and new text, which an agent reads from Git; the history holds hashes\n") {
 		t.Error(code, out)
@@ -148,9 +150,9 @@ func TestCompareAssetsAndNotes(t *testing.T) {
 	}
 }
 
-// A document recorded fail stays in the changed list of every later
-// verdict, and so counts in every later change.
-func TestFiguresCountALingeringFail(t *testing.T) {
+// Only a changed text counts: a document recorded fail stays in the changed
+// list of later verdicts, but counts in no later change while its text stays.
+func TestFiguresCountOnlyChangedText(t *testing.T) {
 	clock(t)
 	dir := marked(t)
 	verdict(t, dir, "roles/member.md", "fail", "--file", "src/member.go", "-m", "no card numbers yet")
@@ -158,17 +160,50 @@ func TestFiguresCountALingeringFail(t *testing.T) {
 	at := time.Date(2026, 11, 21, 9, 0, 0, 0, time.UTC)
 	now = func() time.Time { at = at.Add(2 * time.Hour); return at }
 	t.Cleanup(func() { now = saved })
+	// An edited artifact changes no text: no change.
 	write(t, dir, "src/returns.go", "package lending\n\nfunc Return() { late() }\n")
 	verdict(t, dir, "lending/return.md", "ok", "--file", "src/returns.go", "-e", "src/returns.go")
-	write(t, dir, "src/loans.go", "package lending\n\nfunc Borrow() { lend() }\n")
-	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--check", "tests/loans_test.go", "-e", "tests/loans_test.go")
+	write(t, dir, "docs/spec/lending/return.md", read(t, dir, "docs/spec/lending/return.md")+"\nA late book costs a fee.\n")
+	verdict(t, dir, "lending/return.md", "ok", "--file", "src/returns.go", "-e", "src/returns.go")
+	write(t, dir, "docs/spec/types/operation.md", read(t, dir, "docs/spec/types/operation.md")+"\nIt happens at the desk.\n")
+	verdict(t, dir, "types/operation.md", "ok", "-e", "docs/spec/types/operation.md")
 	_, out, _ := run("figures", "-C", dir, "--all")
 	for _, part := range []string{
-		"2 documents changed together at 2026-11-21T11:00:00Z (", "lending/return.md, roles/member.md\n",
-		"2 documents changed together at 2026-11-21T13:00:00Z (", "lending/borrow.md, roles/member.md\n",
+		"3 changes from 8 verdicts;",
+		"4 documents changed together at 2026-11-20T09:00:01Z (",
+		"1 document changed together at 2026-11-21T13:00:00Z (median 1, range 1–4 documents per change): lending/return.md\n",
+		"1 document changed together at 2026-11-21T15:00:00Z (median 1, range 1–4 documents per change): types/operation.md\n",
+		"roles/member.md: changed 1 time × linked from 1 document = 1\n",
 	} {
 		if !strings.Contains(out, part) {
 			t.Errorf("missing %q in\n%s", part, out)
 		}
 	}
+}
+
+// A document a move rewrote that also changed otherwise is changed, and
+// makes its neighbours suspect.
+func TestRewrittenAndChanged(t *testing.T) {
+	clock(t)
+	older := markedWith(t, withFlow())
+	newer := copyTree(t, older, false)
+	if code, _, errOut := run("move", "-C", newer, "lending/borrow.md", "loans/borrow.md"); code != ExitOK {
+		t.Fatal(errOut)
+	}
+	write(t, newer, "docs/spec/roles/member.md", read(t, newer, "docs/spec/roles/member.md")+"\nA member shows a card.\n")
+	write(t, newer, "docs/spec/loans/borrow.md", read(t, newer, "docs/spec/loans/borrow.md")+"\nFive books at most.\n")
+	code, out, _ := run("compare", older, newer, "--json")
+	var doc compareDocument
+	if err := json.Unmarshal([]byte(out), &doc); err != nil || code != ExitFound {
+		t.Fatal(code, out)
+	}
+	var changed []string
+	for _, c := range doc.Changed {
+		changed = append(changed, c.Doc)
+	}
+	same(t, "changed", changed, []string{"roles/member.md"})
+	if len(doc.Moved) != 1 || doc.Moved[0].Mechanical || !strings.Contains(doc.Moved[0].Diff, "+Five books at most.\n") {
+		t.Errorf("moved %+v", doc.Moved)
+	}
+	same(t, "rewritten", doc.Rewritten, []string{})
 }

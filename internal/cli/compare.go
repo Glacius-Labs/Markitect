@@ -6,8 +6,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"testing/fstest"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/edit"
+	"github.com/Glacius-Labs/Markitect/internal/lang"
 	"github.com/Glacius-Labs/Markitect/internal/state"
 )
 
@@ -59,6 +62,7 @@ type compareDocument struct {
 	New         []string      `json:"new"`
 	Gone        []string      `json:"gone"`
 	Moved       []movedJSON   `json:"moved"`
+	Rewritten   []string      `json:"rewritten"`
 	Changed     []changedJSON `json:"changed"`
 	Suspect     []suspectJSON `json:"suspect"`
 	Verdicts    []verdictJSON `json:"verdicts"`
@@ -74,9 +78,10 @@ type compareNote struct {
 }
 
 type movedJSON struct {
-	From string `json:"from"`
-	To   string `json:"to"`
-	Diff string `json:"diff"`
+	From       string `json:"from"`
+	To         string `json:"to"`
+	Diff       string `json:"diff"`
+	Mechanical bool   `json:"mechanical"`
 }
 
 type changedJSON struct {
@@ -121,8 +126,8 @@ func compare(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	c := state.Compare(older, newer)
-	doc := compareDocument{header: newHeader("compare"), New: nonNil(c.New), Gone: nonNil(c.Gone), Moved: []movedJSON{},
+	c := state.Compare(older, newer, replay(older, newer))
+	doc := compareDocument{header: newHeader("compare"), New: nonNil(c.New), Gone: nonNil(c.Gone), Moved: []movedJSON{}, Rewritten: nonNil(c.Rewritten),
 		Changed: []changedJSON{}, Suspect: []suspectJSON{}, Verdicts: []verdictJSON{}, Unexplained: nonNil(c.Unexplained)}
 	var b strings.Builder
 	section := func(title string, n int) {
@@ -157,8 +162,17 @@ func compare(o options, stdout io.Writer) (int, error) {
 	b.WriteString("\n")
 	section("Moved", len(c.Moved))
 	for _, m := range c.Moved {
-		doc.Moved = append(doc.Moved, movedJSON{m.From, m.To, m.Diff})
-		b.WriteString(m.From + " -> " + m.To + "\n" + m.Diff)
+		doc.Moved = append(doc.Moved, movedJSON{m.From, m.To, m.Diff, m.Mechanical})
+		if m.Mechanical {
+			b.WriteString(m.From + " -> " + m.To + " (links rewritten only)\n")
+		} else {
+			b.WriteString(m.From + " -> " + m.To + "\n" + m.Diff)
+		}
+	}
+	b.WriteString("\n")
+	section("Rewritten", len(c.Rewritten))
+	for _, p := range c.Rewritten {
+		b.WriteString(p + " (links rewritten only)\n")
 	}
 	b.WriteString("\n")
 	section("Changed", len(c.Changed))
@@ -270,4 +284,53 @@ func figures(o options, stdout io.Writer) (int, error) {
 	}
 	fmt.Fprintf(&b, "\n### weakening\n\n%s\n", state.Weakening)
 	return output(o, stdout, doc, b.String())
+}
+
+// replay makes, from the older project's documents, the texts the newer
+// project's moves after the older history's last event alone give the
+// documents they rewrote, by their paths in the newer project. It replays
+// each move as move computes it, and stops at one it cannot replay.
+func replay(older, newer *state.Snapshot) map[string][]byte {
+	var last time.Time
+	for _, e := range older.History {
+		if e.Time.After(last) {
+			last = e.Time
+		}
+	}
+	texts := map[string][]byte{}
+	for _, d := range older.Project.Spec.Documents {
+		texts[d.Path] = d.Source
+	}
+	rewritten := map[string]bool{}
+	for _, e := range newer.History {
+		if e.Type != state.EventMove || !e.Time.After(last) {
+			continue
+		}
+		fsys := fstest.MapFS{}
+		var docs []*lang.Document
+		for p, text := range texts {
+			fsys[p] = &fstest.MapFile{Data: text}
+			docs = append(docs, lang.Parse(p, text))
+		}
+		m, err := edit.MoveDocument(lang.NewSpec(docs), fsys, e.From, e.To)
+		if err != nil {
+			break
+		}
+		texts[m.To] = texts[m.From]
+		delete(texts, m.From)
+		if rewritten[m.From] {
+			delete(rewritten, m.From)
+			rewritten[m.To] = true
+		}
+		for _, w := range m.Changes.Writes {
+			texts[w.Path] = w.Data
+			rewritten[w.Path] = true
+		}
+		rewritten[m.To] = true
+	}
+	out := map[string][]byte{}
+	for p := range rewritten {
+		out[p] = texts[p]
+	}
+	return out
 }

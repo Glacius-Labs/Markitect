@@ -50,7 +50,9 @@ type Figures struct {
 // spec as it is.
 //
 // A change is the document of a verdict event and the documents its changed
-// list names. A verdict joins the change before it when it follows that
+// list names, each only when its text is not the one its own last verdict
+// saw: a document recorded fail, one whose artifact changed or one that is
+// gone counts in no change until its text changes. A verdict joins the change before it when it follows that
 // change's last verdict within CloseTime and its documents are among those
 // of the change's first verdict, as when a reviewer confirms the documents
 // of one change one after the other. Move events are no changes: the history
@@ -77,6 +79,8 @@ func ComputeFigures(spec *lang.Spec, events []Event) *Figures {
 	}
 	var changes []*open
 	selves := map[int][]string{}
+	// verdictSelf is the self of each document's last verdict.
+	verdictSelf := map[int]string{}
 	addSelf := func(i int, h string) {
 		if h != "" && (len(selves[i]) == 0 || selves[i][len(selves[i])-1] != h) {
 			selves[i] = append(selves[i], h)
@@ -92,11 +96,24 @@ func ComputeFigures(spec *lang.Spec, events []Event) *Figures {
 			paths[i] = e.To
 		case EventVerdict:
 			f.Verdicts++
-			set := map[int]bool{id(e.Doc): true}
-			addSelf(id(e.Doc), e.Self)
+			set := map[int]bool{}
+			// A document counts when its text is not the one its last
+			// verdict saw: a fail, an edited artifact or a gone document
+			// changed no text.
+			consider := func(doc, self string) {
+				i := id(doc)
+				addSelf(i, self)
+				if last, seen := verdictSelf[i]; self != "" && (!seen || last != self) {
+					set[i] = true
+				}
+			}
+			consider(e.Doc, e.Self)
 			for _, c := range e.Changed {
-				set[id(c.Doc)] = true
-				addSelf(id(c.Doc), c.Self)
+				consider(c.Doc, c.Self)
+			}
+			verdictSelf[id(e.Doc)] = e.Self
+			if len(set) == 0 {
+				continue
 			}
 			if n := len(changes); n > 0 {
 				ch := changes[n-1]
@@ -191,7 +208,7 @@ func (f *Figures) wide() {
 	var out []Figure
 	for _, c := range f.Changes {
 		out = append(out, Figure{Docs: c.Docs, Count: len(c.Docs),
-			Detail: fmt.Sprintf("%d documents changed together at %s (%s): %s", len(c.Docs), c.Time.UTC().Format(time.RFC3339), ref, strings.Join(c.Docs, ", "))})
+			Detail: fmt.Sprintf("%s changed together at %s (%s): %s", count(len(c.Docs), "document"), c.Time.UTC().Format(time.RFC3339), ref, strings.Join(c.Docs, ", "))})
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Count > out[j].Count })
 	f.Signals["wide-change"] = out

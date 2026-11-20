@@ -24,6 +24,9 @@ type Comparison struct {
 	// Moved are the documents the newer project's history moved from a path
 	// of the older one, with the diff of their text.
 	Moved []MovedDoc
+	// Rewritten are the documents at the same path whose text differs only
+	// by the links the newer project's moves rewrote.
+	Rewritten []string
 	// Changed are the documents at the same path whose text differs.
 	Changed []ChangedDoc
 	// Suspect are the documents whose own text is the same, while a document
@@ -39,7 +42,12 @@ type Comparison struct {
 }
 
 // MovedDoc is a document the history moved, and the diff of its text.
-type MovedDoc struct{ From, To, Diff string }
+// Mechanical says that its text differs only by the links the moves
+// rewrote; it then has no diff.
+type MovedDoc struct {
+	From, To, Diff string
+	Mechanical     bool
+}
 
 // ChangedDoc is a document whose text changed, and the diff.
 type ChangedDoc struct{ Doc, Diff string }
@@ -61,11 +69,15 @@ type VerdictChange struct {
 
 // Differs says whether the comparison found anything.
 func (c *Comparison) Differs() bool {
-	return len(c.New)+len(c.Gone)+len(c.Moved)+len(c.Changed)+len(c.Suspect)+len(c.Verdicts)+len(c.Unexplained) > 0
+	return len(c.New)+len(c.Gone)+len(c.Moved)+len(c.Rewritten)+len(c.Changed)+len(c.Suspect)+len(c.Verdicts)+len(c.Unexplained) > 0
 }
 
-// Compare compares an older project with a newer one.
-func Compare(older, newer *Snapshot) *Comparison {
+// Compare compares an older project with a newer one. replayed holds, by
+// their paths in the newer project, the texts the newer project's moves
+// alone make of the older project's documents they rewrote: a document
+// whose text is that is rewritten, not changed, and makes no neighbour
+// suspect.
+func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 	c := &Comparison{}
 	oldSpec, newSpec := older.Project.Spec, newer.Project.Spec
 	// Where each document of the older project went: its own path, or where
@@ -100,6 +112,10 @@ func Compare(older, newer *Snapshot) *Comparison {
 	for from, to := range movedTo {
 		movedFrom[to] = from
 	}
+	mechanical := func(n *lang.Document) bool {
+		text, ok := replayed[n.Path]
+		return ok && Hash(text) == Hash(n.Source)
+	}
 	touched := map[string]bool{}
 	for _, d := range oldSpec.Documents {
 		to, moved := movedTo[d.Path]
@@ -107,12 +123,19 @@ func Compare(older, newer *Snapshot) *Comparison {
 		switch {
 		case moved:
 			nd, _ := newSpec.Document(to)
+			if mechanical(nd) {
+				c.Moved = append(c.Moved, MovedDoc{From: d.Path, To: to, Mechanical: true})
+				continue
+			}
 			c.Moved = append(c.Moved, MovedDoc{From: d.Path, To: to, Diff: textDiff(older, newer, d, nd)})
 			touched[d.Path], touched[to] = true, true
 		case !same:
 			c.Gone = append(c.Gone, d.Path)
 			touched[d.Path] = true
-		case Hash(d.Source) != Hash(n.Source):
+		case Hash(d.Source) == Hash(n.Source):
+		case mechanical(n):
+			c.Rewritten = append(c.Rewritten, d.Path)
+		default:
 			c.Changed = append(c.Changed, ChangedDoc{Doc: d.Path, Diff: textDiff(older, newer, d, n)})
 			touched[d.Path] = true
 		}
@@ -151,7 +174,11 @@ func Compare(older, newer *Snapshot) *Comparison {
 			continue
 		}
 		var because []string
-		was, is := older.Status.assets(d.Path), newer.Status.assets(d.Path)
+		from := d.Path
+		if f, ok := movedFrom[d.Path]; ok {
+			from = f
+		}
+		was, is := older.Status.assets(from), newer.Status.assets(d.Path)
 		for k, h := range is {
 			if was[k] != h {
 				because = append(because, k)
@@ -208,6 +235,7 @@ func Compare(older, newer *Snapshot) *Comparison {
 	}
 	sort.Strings(c.New)
 	sort.Strings(c.Gone)
+	sort.Strings(c.Rewritten)
 	sort.Slice(c.Moved, func(i, j int) bool { return c.Moved[i].To < c.Moved[j].To })
 	sort.Slice(c.Changed, func(i, j int) bool { return c.Changed[i].Doc < c.Changed[j].Doc })
 	sort.Slice(c.Suspect, func(i, j int) bool { return c.Suspect[i].Doc < c.Suspect[j].Doc })
