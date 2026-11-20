@@ -59,6 +59,8 @@ const usage = `usage: markitect-next COMMAND ARGUMENTS [-C PROJECT] [--json]
                               and its reports that are new, closed or changed
   figures [--all]             the change signals computed from the history, and
                               the figures of the reports and control samples
+  reports [--open]            the reports with the values of their sections, or
+                              only the open ones
   settings                    the settings: the model per role, the counter-check
                               folder, the tests command, the cadence, the write
                               table and the CI definition
@@ -93,6 +95,7 @@ var commands = map[string]command{
 	"mark":      {2, 2, mark},
 	"compare":   {1, 2, compare},
 	"figures":   {0, 0, figures},
+	"reports":   {0, 0, reports},
 	"settings":  {0, 0, settings},
 }
 
@@ -151,6 +154,8 @@ func validate(name string, c command, o options) error {
 		return errors.New("--spec is a flag of init")
 	case o.all && name != "topic" && name != "figures":
 		return errors.New("--all is a flag of topic and figures")
+	case o.open && name != "reports":
+		return errors.New("--open is a flag of reports")
 	case o.statusFlags && name != "status":
 		return errors.New("--step, --before and --target are flags of status")
 	case o.step != "" && o.before == "" || o.before != "" && o.step == "":
@@ -166,6 +171,7 @@ func validate(name string, c command, o options) error {
 type options struct {
 	json bool
 	all  bool
+	open bool
 	// dir is the project folder -C names, "" without the flag.
 	dir string
 	// spec is the spec folder --spec names, specSet whether it was given.
@@ -203,6 +209,8 @@ func parse(args []string) (options, error) {
 			o.json = true
 		case a == "--all" || a == "-all":
 			o.all = true
+		case a == "--open" || a == "-open":
+			o.open = true
 		case a == "-C":
 			if o.dir, err = value(a); err == nil && o.dir == "" {
 				err = errors.New("flag -C needs a folder")

@@ -71,6 +71,9 @@ type Report struct {
 	Impact, Likelihood string
 	Branches           []string
 	Escalated          bool
+	// Proposals are the lines of Actions after escalated: the proposals for
+	// the owner, as text.
+	Proposals []string
 	// Closed says that it has a closing; ClosedOn is its day, Outcome one of
 	// ClosedDone, ClosedDuplicate and ClosedNothing, and DuplicateOf the name
 	// of the report it repeats.
@@ -351,11 +354,10 @@ func (f *Factory) readReport(p *Project, d *lang.Document) *Report {
 		}
 	}
 	if vs, _ := values(d, "Actions"); len(vs) > 0 {
-		proposals := 0
 		for _, l := range vs {
 			switch m := branchForm.FindStringSubmatch(l.Text); {
 			case r.Escalated:
-				proposals++
+				r.Proposals = append(r.Proposals, l.Text)
 			case l.Text == "escalated":
 				r.Escalated = true
 			case m != nil:
@@ -364,7 +366,7 @@ func (f *Factory) readReport(p *Project, d *lang.Document) *Report {
 				bad(l, "actions: write a line branch NAME per branch, or a line escalated followed by the proposals")
 			}
 		}
-		if r.Escalated && proposals == 0 {
+		if r.Escalated && len(r.Proposals) == 0 {
 			bad(vs[len(vs)-1], "actions: escalated is followed by the proposals for the owner")
 		}
 	}
