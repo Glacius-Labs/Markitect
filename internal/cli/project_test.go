@@ -178,7 +178,7 @@ func TestCommandsFindTheProjectUpward(t *testing.T) {
 	if code, out, _ := run("new", filepath.Join("..", "lending"), "loans"); code != ExitFailed || out != "" {
 		t.Error("a path below the working directory was taken for one below the spec folder", code, out)
 	}
-	if code, out, _ := run("show", "lending"); code != ExitOK || !strings.HasPrefix(out, "lending.md\n") {
+	if code, out, _ := run("show", "lending"); code != ExitOK || !strings.HasPrefix(out, "lending.md@") {
 		t.Error(code, out)
 	}
 	// A missing spec folder is named.

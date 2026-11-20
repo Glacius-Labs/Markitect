@@ -1,7 +1,8 @@
 // Package state is a project of the rebuilt tool, over a file system rooted
 // at the project folder: the layout of .markitect/, the project loaded with
 // its spec, the files of the project without what its ignore files exclude,
-// and the hash of a file. It reads only the file system it is handed, so that two projects,
+// the hash of a file, and the state: its rows, what status lists and the
+// rows a mark leaves. It reads only the file system it is handed, so that two projects,
 // such as two states to compare, load the same way.
 //
 // The rules are in docs/guides/project-reference.md.
@@ -129,6 +130,42 @@ type Project struct {
 	// FS is the project folder, SpecFS the spec folder in it.
 	FS, SpecFS fs.FS
 	Spec       *lang.Spec
+	// SpecAliases are further paths of the spec folder below the project
+	// folder, where a symbolic link or a junction on the way to it leads.
+	SpecAliases []string
+}
+
+// specFile is the path below the spec folder of a file of the walk that lies
+// in the spec folder or one of its aliases.
+func (p *Project) specFile(file string) (string, bool) {
+	for _, folder := range append([]string{p.SpecFolder}, p.SpecAliases...) {
+		if rest, ok := strings.CutPrefix(file, folder+"/"); ok {
+			return rest, true
+		}
+	}
+	return "", false
+}
+
+// isDocument says whether a file of the walk is a document of the spec, or
+// a link on the way to the spec folder: neither is unexplained, and both
+// count through the documents' own inputs.
+func (p *Project) isDocument(file string) bool {
+	if strings.HasPrefix(p.SpecFolder, file+"/") {
+		return true
+	}
+	_, ok := p.specFile(file)
+	return ok && lang.IsDocumentName(path.Base(file))
+}
+
+// InSpec says whether a file of the walk belongs to the spec folder: it lies
+// in it or in one of its aliases, or it is a link on the way to it.
+func (p *Project) InSpec(file string) bool {
+	for _, folder := range append([]string{p.SpecFolder}, p.SpecAliases...) {
+		if strings.HasPrefix(file, folder+"/") || file == folder || strings.HasPrefix(p.SpecFolder, file+"/") {
+			return true
+		}
+	}
+	return false
 }
 
 // Load reads the layout of the project at fsys and its spec, whose folder

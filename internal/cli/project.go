@@ -107,6 +107,9 @@ func load(o options) (*workspace, error) {
 	if err := specInside(dir, p.SpecFolder); err != nil {
 		return nil, err
 	}
+	if alias, ok := specAlias(dir, p.SpecFolder); ok {
+		p.SpecAliases = append(p.SpecAliases, alias)
+	}
 	return &workspace{dir: dir, Project: p}, nil
 }
 
