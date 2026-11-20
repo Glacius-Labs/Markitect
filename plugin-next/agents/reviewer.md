@@ -26,6 +26,6 @@ markitect-next mark lending/return.md@5d0e9b11 fail --file src/returns.go -m "a 
 - `--file` names each artifact that realizes the document, an unexplained file included where it does; `--check` each counter-check of it.
 - A document gone from the spec takes `ok` once nothing realizes it any more.
 
-When `mark` refuses because the fingerprint changed, take the document's fingerprint from `markitect-next status` or `markitect-next show DOCUMENT` again and judge it as it now is. Remove what your test runs leave behind: any changed file changes every fingerprint. Where the spec contradicts itself, or leaves open what someone relies on, bind no verdict for that document and report it.
+Where the spec contradicts itself, or leaves open what someone relies on, bind no verdict for that document and report it.
 
 Answer with your verdicts by document, what you could not judge and why, and each finding as a fenced `report` block with the sections Place, Finding, Occurred or risk and Violated property, after a title.

@@ -22,16 +22,18 @@ Claude Code names them with the plugin's scope: the agent `markitect-next:builde
 | `markitect-build` | Build | `counter-checker`, `builder`, `reviewer`, round after round | Counter-checks, artifacts, verdicts and reports |
 | `markitect-review` | Review: a spot check, or all documents | `reviewer` | Verdicts and reports; a new `fail` goes to the build job |
 | `markitect-control-sample` | Control sample | `sampler` and a fresh `reviewer` on a throwaway copy | Only `.markitect/samples/NAME.md` |
-| `markitect-bughunt` | Bug hunt | `reviewer`, hunting | Reports |
+| `markitect-bughunt` | Bug hunt | `reviewer`, hunting | Reports, and what triage answers on its branch |
 | `markitect-cleanup` | Cleanup | `builder`, then the build rounds | Artifacts with no change of behaviour |
 | `markitect-improve` | Improve | `builder`, then the build rounds | Artifacts changed only where the spec leaves them free, and reports |
-| `markitect-read` | Read and question | `reader` | Reports |
-| `markitect-triage` | Triage | `triage` | Rating, Actions and Closing of reports, then the job of each switch |
+| `markitect-read` | Read and question | `reader` | Reports, and what triage answers on its branch |
+| `markitect-triage` | Triage | `triage` | Rating, Actions and Closing of reports, and the answer of each switch on its branch |
 | `markitect-intake` | Intake | `intake`, which reads the signal isolated | One report with Source `intake` |
 | `markitect-briefing` | The briefing, a reading entry | None | Nothing |
 | `markitect-explain` | Explain, a reading entry | None | Nothing |
 
-A job runs as [`jobs.md`](../../plugin-next/jobs.md) says. The session works on a branch of the job's own, in a worktree outside the project folder, since a worktree inside it would be a file the project does not explain. Before each step it commits and lays out the before-state, a detached worktree at that commit; it starts the role's agent with the model `markitect-next settings --json` names for it; after the step it runs `markitect-next status --step ROLE --before BEFORE --target TARGETDIR` and commits. At the end it lands the branch by a merge when `markitect-next status --target TARGETDIR` exits 0, the `tests` command of the settings exits 0 and every step check passed. An open report on a document of the spec keeps the branch from landing until triage escalates it ([waiting on a report](reports.md#waiting-on-a-report)), so a job that writes one runs triage on its own branch before it builds on and before it lands. The session holds every loop, the three rounds without a shorter list of the build job included; no agent starts another.
+A job runs as [`jobs.md`](../../plugin-next/jobs.md) says. The session works on a branch of the job's own, in a worktree outside the project folder, since a worktree inside it would be a file the project does not explain. In a session, Claude Code asks before it writes outside the project. Before each step it commits and lays out the before-state, a detached worktree at that commit; it starts the role's agent with the model `markitect-next settings --json` names for it in `settings.models`; after the step it runs `markitect-next status --step ROLE --before BEFORE` and commits. The step check reads the write table from the before-state: the job's branch starts at the target's commit, and a step that changes a control file is denied and keeps the branch from landing. At the end the session lays out a checkout of the target and lands the branch by a merge when `markitect-next status --target TARGETDIR` exits 0, the command in `settings.tests` exits 0 and every step check passed.
+
+An open report on a document of the spec keeps the branch from landing unless it is escalated ([waiting on a report](reports.md#waiting-on-a-report)). So a job that writes one runs triage on its own branch before it builds on: an escalated report lands open and waits on the owner, and any other is answered on that branch and closed `done` there by triage, so that its closing lands with its answer. The owner's choice between proposals works the same way: it replaces `escalated` with the branch of the chosen proposal, and the report lands closed with the built change. The session holds every loop, the three rounds without a shorter list of the build job included; no agent starts another.
 
 **The last look** of the briefing lies in the reader's profile, `~/.markitect/next/last-look/ID/`, ID the project folder's real path with every character but letters and digits replaced by `-`: `seen/`, an export of the commit last seen, which `compare` reads as a project, `seen-commit`, and `next/` with `next-commit` while a briefing is shown. The 0.34.0 tool uses no path below `~/.markitect/next/`.
 
@@ -41,7 +43,7 @@ Agents write no file in `.markitect/`. What they find they give in their answer,
 
 - **A finding** is a fenced `report` block: a title, then the sections Place, Finding, Occurred or risk and Violated property in the [report form](reports.md#reports). The session writes it as `.markitect/reports/NAME.md` with the section Source, `job JOB ROLE, DAY`, or `intake, DAY` for intake, and checks it with `markitect-next check`. Rating, Actions and Closing are triage's.
 - **The planted deviations** of the sampler are a fenced `planted` block of lines `PATH: DEVIATION`, which the session writes into the sample's Planted section.
-- **The triage** agent writes the Rating, Actions and Closing sections into the reports itself, as its role may, and answers with the switch of each report.
+- **The triage** agent writes the Rating, Actions and Closing sections into the reports itself, as its role may, and answers with the switch of each report. Jobs and the briefing read reports through `markitect-next reports`, not from the files.
 
 ```report
 # The fee for a late book
@@ -59,7 +61,8 @@ complete
 
 In a session the runner is Claude itself ([where the check is a fact](../concept/jobs-and-runners.md#rights-come-from-the-steps)). So every check of the plugin makes shortcuts visible and proves nothing:
 
-- **The step check and the landing check** compare folders the session lays out and run where the session runs them. A session that lays out another before-state, or skips a check, is not stopped. In CI, where a script no agent can change runs them, they are a fact.
+- **The step check** compares folders that Claude lays out, in a session as in CI, so with skills it makes shortcuts visible everywhere and proves nothing. What is a fact in CI is the landing check and the tests, run by the workflow as a step of its own, outside every agent.
+- **The landing check** in a session runs where the session runs it; a session that skips it is not stopped.
 - **The agents' limits** are Claude Code's: an agent's `tools` and the session's permissions. Agents run with the rights of whoever runs them.
 - **A counter-checker reads no artifact** only as its task says: nothing checks what an agent reads.
 - **A control sample is blind** only as far as the reviewer is told nothing: `markitect-next status` in the copy lists the documents whose artifacts the sampler changed, and the harmless changes it makes beside the deviations are what keeps that list from naming the planted ones.
@@ -67,4 +70,4 @@ In a session the runner is Claude itself ([where the check is a fact](../concept
 
 ## The check of the plugin
 
-A test of the command line, `internal/cli/plugin_test.go`, reads every skill, every agent, `jobs.md` and this page. Every command line of `markitect-next` in their code must parse as the tool parses it, with a command the tool has and only that command's flags; every word after `markitect-next` must be a command; every skill or agent named with the plugin's scope must exist, and every relative link and every path below `${CLAUDE_PLUGIN_ROOT}` must lead to a file. It checks the front matter of each file, and that the plugin has an agent for each role of the tool and no other.
+A test of the command line, `internal/cli/plugin_test.go`, reads every skill, every agent, `jobs.md` and this page. It covers what stands in code spans and fenced blocks: every command and flag of `markitect-next` there must parse as the tool parses it, with a command the tool has and only that command's flags, a role of `--step` must be one of the tool's, and a template of `apply` one of the library's. A value of a command's JSON is written `COMMAND.KEY`, such as `settings.tests` or `status.waiting.counts`, and must be a key of that command's JSON document. Every word after `markitect-next` must be a command, every skill or agent named with the plugin's scope must exist, and every relative link and every path below `${CLAUDE_PLUGIN_ROOT}` must lead to a file. It checks the front matter of each file, and that the plugin has an agent for each role of the tool and no other. What the texts ask of an agent, it does not check.

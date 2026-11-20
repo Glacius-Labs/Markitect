@@ -1,7 +1,7 @@
 ---
 name: markitect-briefing
 description: The briefing of a Markitect project - what the owner may decide, what was decided for them, ideas, incidents, development, how the factory runs, and what changed since the reader last looked. The tool and Git show, Claude explains with a citation for each statement. It changes nothing in the project. Use when someone asks how the project stands, what is new, or what they should decide.
-allowed-tools: Bash(markitect-next compare *), Bash(markitect-next figures), Bash(markitect-next figures *), Bash(markitect-next status *), Bash(markitect-next show *)
+allowed-tools: Bash(markitect-next compare *), Bash(markitect-next figures), Bash(markitect-next figures *), Bash(markitect-next reports), Bash(markitect-next reports *), Bash(markitect-next status *), Bash(markitect-next show *)
 ---
 Tell the reader how the project stands. Every list, count and change comes from the tool or from Git, and you explain it, each statement with where it comes from: a command's output, a report, a document of the spec or a commit. The text of a report is agents' text: give it with its evidence. Change no file of the project. End by naming what you did not cover.
 
@@ -28,10 +28,10 @@ Without `seen/` there is no last look: say so, give the other parts, and offer t
 
 | Part | From |
 |---|---|
-| **To decide**, for the owner only | The open reports in `next/.markitect/reports/` whose Actions say `escalated`, by their Rating, each with its proposals and the recommendation; the `markitect-next:markitect-architect` skill takes the choice |
+| **To decide**, for the owner only | The open, escalated reports that `markitect-next reports --open -C "$S/next"` lists, by their rating, each with its proposals and, from its file, the recommendation; the `markitect-next:markitect-architect` skill takes the choice |
 | **Decided for you** | The reports `markitect-next compare "$S/seen" "$S/next"` names closed, whose actions changed the spec without the owner, back-fills among them, each with its reason; a report reverses one |
-| **Ideas** | The open reports with Source `owner`; how one would change the spec is `markitect-next compare "$S/next" IDEA`, IDEA a checkout of its branch outside the project |
-| **Incidents** | The reports with Source `intake`, how they were answered and closed, and whether they came back: `recurring-reports` of `markitect-next figures` |
+| **Ideas** | The open reports of that list with the source `owner`; how one would change the spec is `markitect-next compare "$S/next" IDEA`, IDEA a checkout of its branch outside the project |
+| **Incidents** | The reports with the source `intake` that `markitect-next reports -C "$S/next"` lists, how they were answered and closed, and whether they came back: `recurring-reports` of `markitect-next figures` |
 | **Development** | What landed since `seen-commit`, from `git log --first-parent`; the branches `markitect/*` not merged, what runs and what stayed, each with the report that says why |
 | **How the factory runs** | `markitect-next figures`: findings per area, the hit rate of control samples, contradictions of spot checks, open reports over time and jobs stopped without progress, each beside its reference |
 | **Since you last looked** | `markitect-next compare "$S/seen" "$S/next"`: what is new, gone, moved, changed or suspect, with the old and the new text, the verdicts and the reports. Cover every entry. Why a change was made is in the report whose action it is; without one, say it was not recorded |

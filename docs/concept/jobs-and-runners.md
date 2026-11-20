@@ -36,7 +36,7 @@ The write table ships with the tool, and a project may only narrow it in its set
 
 **Control files** are the write table, the settings, the version, the spec path, the learned rules and the CI definition, which the settings name. Only the owner changes them. The tool reads them from the target branch, not from the branch that wants to land, so a job cannot widen its own rights. A verdict row that did not come from the reviewer's step keeps the branch from landing.
 
-**Where the check is a fact.** In CI the runner is a script that no agent can change, and it records the states out of every agent's reach; there the check is a fact, and a required check that a job cannot skip. In a session or a scheduled task the runner is Claude itself; there the check makes shortcuts visible and proves nothing. Markitect guards against forgetting and shortcuts, and against a deliberate bypass only by making it visible.
+**Where the check is a fact.** In CI the runner is a script that no agent can change; there the check is a fact, and a required check that a job cannot skip. With skills, Claude lays out the states of the steps, so the step check makes shortcuts visible everywhere, and what is a fact in CI is the landing check and the tests, which the workflow runs as a step of its own. In a session or a scheduled task the runner is Claude itself; there the check makes shortcuts visible and proves nothing. Markitect guards against forgetting and shortcuts, and against a deliberate bypass only by making it visible.
 
 ## Runners
 

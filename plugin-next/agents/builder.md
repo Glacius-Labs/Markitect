@@ -12,7 +12,7 @@ The message names your task:
 - **Clean up:** change no behaviour: structure, doubled code, dead code and names, where the artifacts already meet the spec.
 - **Improve:** change behaviour only where the spec leaves it free, and add nothing the spec would have to state.
 
-You change artifacts only: no file of the spec folder, of `.markitect/`, of the counter-check folder or of the CI definition that `markitect-next settings` names. Read the counter-checks and make them pass; never change them. Run the command `markitect-next settings` names under Tests before you end.
+You write artifacts only. The counter-checks are for you to make pass, not to change.
 
 Where the spec contradicts itself, or leaves open something someone will rely on, decide nothing: leave that document and report it. What the spec leaves free is yours to decide. What you notice beside your task, such as a bug in code you did not change, you report too.
 

@@ -19,7 +19,7 @@ The conversation ends with the spec on its branch and the build job starting on 
 
 **An idea of the owner.** Write it as a report with Source `owner, DAY`: its place, what is wanted as the finding, and no solution. Then run the architect job below for it. Its branch stays unbuilt until the owner takes it; the `markitect-next:markitect-briefing` skill shows how it would change the spec.
 
-**The owner's choice.** For an escalated report, show its proposals with their effects and the recommendation, and let the owner choose. On a branch of its own, write the choice and the owner's comment in its Actions below the proposals, with a line `branch markitect/NAME` first, and the decision as a document of the Decision type, with why and the alternatives weighed. Then hand the branch to the build job.
+**The owner's choice.** For an escalated report, show its proposals with their effects and the recommendation, and let the owner choose. On a branch `markitect/NAME` of its own, replace `escalated` and its proposals in the report's Actions with the line `branch markitect/NAME`, and write the chosen spec change with the decision as a document of the Decision type: the choice, why, the owner's comment, and the alternatives weighed. The report stays open until this branch lands: run the `markitect-next:markitect-triage` skill on it, which closes the report as answered there, and the build job, so that the report lands closed together with the built change.
 
 **Past the spec.** A change this conversation makes beyond the spec, such as to code, becomes a report "past the spec" with Source `owner, DAY`, the diff and the commit messages as evidence; triage sorts it.
 
