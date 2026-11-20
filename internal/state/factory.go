@@ -374,12 +374,35 @@ func (f *Factory) readReport(p *Project, d *lang.Document) *Report {
 			}
 		}
 	}
-	if r.Place != "" && r.Open() {
-		if _, err := fs.Stat(p.FS, r.Place); err != nil {
-			f.add(d.Path, r.placeLine, CodeReportPlace, "place: %s does not exist; an open report concerns something there is", r.Place)
-		}
+	if r.Place != "" && r.Open() && !exists(p.FS, r.Place) {
+		f.add(d.Path, r.placeLine, CodeReportPlace, "place: %s does not exist; an open report concerns something there is", r.Place)
 	}
 	return r
+}
+
+// exists says whether a path names a file or a folder of the project, each
+// of its parts in the case it is written, so that a place reads the same on
+// a file system that ignores case as on one that does not.
+func exists(fsys fs.FS, p string) bool {
+	dir := "."
+	for _, part := range strings.Split(p, "/") {
+		entries, err := fs.ReadDir(fsys, dir)
+		if err != nil {
+			return false
+		}
+		found := false
+		for _, e := range entries {
+			if e.Name() == part {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+		dir = path.Join(dir, part)
+	}
+	return true
 }
 
 // placeOf reads a place: a Markdown link, resolved relative to the report,

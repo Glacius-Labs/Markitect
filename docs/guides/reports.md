@@ -20,7 +20,7 @@ A report is a file `.markitect/reports/NAME.md`, one per report. Its sections ar
 | Actions | A line `branch NAME` for each branch that answers it, then optionally a line `escalated`, followed by the proposals for the owner as text, at least one line |
 | Closing | `YYYY-MM-DD: done`, `YYYY-MM-DD: duplicate of NAME` or `YYYY-MM-DD: nothing to do`, with an optional period, then the reason on the lines below. The day is not before the day it was raised |
 
-A report is **open** while it has no Closing section.
+A report is **open** while it has no Closing section. The place names its path in the case it is written, on every system. `move` does not rewrite the place of a report: moving the place of an open report makes it an error of `check` until the report names the new path.
 
 ```markdown
 # The fee for a late book

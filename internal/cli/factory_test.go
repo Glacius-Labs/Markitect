@@ -68,9 +68,10 @@ func TestWaitingOnReports(t *testing.T) {
 	if len(l.Changed) != 0 || len(waiting) != 1 || strings.Join(waiting[0].Changes, " ") != "self" || len(waiting[0].Fingerprint) != 8 {
 		t.Errorf("%v %+v", l.summary(), waiting)
 	}
-	// Its neighbours are suspect as before.
-	if _, kind := l.entry("lending/borrow.md"); kind != "" {
-		t.Errorf("borrow is %s", kind)
+	// A verdict event leaves it out of the documents listed as changed.
+	verdict(t, dir, "roles/member.md", "ok", "--file", "src/member.go", "-e", "src/member.go")
+	if events := history(t, dir); len(events[len(events)-1].Changed) != 0 {
+		t.Errorf("%+v", events[len(events)-1])
 	}
 	// Escalated, it waits on the owner, which does not make status fail.
 	write(t, dir, ".markitect/reports/late-fee.md", lendingReport("job read reader, 2026-11-18", place, "complete", "escalated\nCharge per day.\nCharge once.", ""))
@@ -93,6 +94,38 @@ func TestWaitingOnReports(t *testing.T) {
 	}
 	if l := statusOf(t, dir); strings.Join(l.summary(), " ") != "changed lending/return.md: self" {
 		t.Error(l.summary())
+	}
+	// The neighbours of a waiting document are listed as before.
+	write(t, dir, ".markitect/reports/card.md", lendingReport("owner, 2026-11-20", "docs/spec/roles/member.md", "correct", "", ""))
+	write(t, dir, "docs/spec/roles/member.md", "# Member\n\nA card holder with a library card.\n")
+	l = statusOf(t, dir)
+	if e, kind := l.entry("lending/borrow.md"); kind != "suspect" || strings.Join(e.Changes, " ") != "link:roles/member.md" {
+		t.Errorf("%v", l.summary())
+	}
+	if _, kind := l.entry("roles/member.md"); kind != "" {
+		t.Errorf("member is %s", kind)
+	}
+}
+
+func TestMovingThePlaceOfAnOpenReport(t *testing.T) {
+	dir := marked(t)
+	write(t, dir, ".markitect/reports/late-fee.md", lendingReport("job read reader, 2026-11-18", "docs/spec/lending/return.md", "complete", "", ""))
+	// move does not rewrite the place of a report: the open report then
+	// names nothing, which check reports until it names the new path.
+	if code, _, errOut := run("move", "-C", dir, "lending/return.md", "lending/give-back.md"); code != ExitOK {
+		t.Fatal(code, errOut)
+	}
+	if _, errs, code := waitingOf(t, dir); code != ExitFound || len(errs) != 1 || errs[0].Code != state.CodeReportPlace {
+		t.Error(code, errs)
+	}
+	write(t, dir, ".markitect/reports/late-fee.md", lendingReport("job read reader, 2026-11-18", "docs/spec/lending/give-back.md", "complete", "", ""))
+	if waiting, _, _ := waitingOf(t, dir); len(waiting) != 1 || waiting[0].Doc != "lending/give-back.md" {
+		t.Errorf("%+v", waiting)
+	}
+	// A place names its path in its case, on every system.
+	write(t, dir, ".markitect/reports/late-fee.md", lendingReport("job read reader, 2026-11-18", "docs/spec/Lending/give-back.md", "complete", "", ""))
+	if _, errs, code := waitingOf(t, dir); code != ExitFound || len(errs) != 1 || errs[0].Code != state.CodeReportPlace {
+		t.Error(code, errs)
 	}
 }
 

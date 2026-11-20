@@ -234,6 +234,9 @@ func mark(o options, stdout io.Writer) (int, error) {
 	if f.Settings != nil {
 		checkFolder = f.Settings.CounterChecks
 	}
+	// The verdict event names what status lists as changed, which a waiting
+	// document is not.
+	s.Wait(f.Reports)
 	_, inSpec := w.Spec.Document(doc)
 	if verdict == state.VerdictOK && inSpec && len(o.evidence) == 0 {
 		return ExitFailed, errors.New("ok needs evidence with -e")
