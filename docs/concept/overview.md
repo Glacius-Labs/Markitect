@@ -42,7 +42,7 @@ Explain answers the whole, an area, a document or a question, only from the spec
 
 ## Comparing two states
 
-`markitect diff` compares two folders, each with a spec, a state and reports, and names what is new, gone, changed or suspect, with the old and the new text. The tool uses no Git; the runner or the skill lays out the other state. The comparison carries three things: "since I last looked", the seen state against now; the preview of an idea, its branch against the main branch; and the development in the briefing.
+The comparison of two states, a command of the tool, compares two folders, each with a spec, a state and reports, and names what is new, gone, changed or suspect, with the old and the new text. The tool uses no Git; the runner or the skill lays out the other state. The comparison carries three things: "since I last looked", the seen state against now; the preview of an idea, its branch against the main branch; and the development in the briefing.
 
 A reader's last look is personal. It is a copy in their profile under `~/.markitect/`, outside the project and outside any one client.
 

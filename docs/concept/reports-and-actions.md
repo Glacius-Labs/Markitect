@@ -21,10 +21,10 @@ A report is a document of the language in `.markitect/reports/`, one file per re
 | Violated property | One of the five properties, or correct ([§5](is-the-spec-good.md#what-is-built-and-the-questions-raised)) | The job |
 | Rating | Impact and likelihood | Triage |
 | Actions | The branch that answers it, or the proposals for the owner | Triage |
-| Prevention | The fixed question or counter-check the action adds | Triage |
+| Prevention | The fixed question or counter-check the action adds | The job that does the action |
 | Closing | How it was closed, and why | Triage |
 
-Agents report in their answer, as they give a verdict, and the job writes the file, so no builder or reviewer needs to write in `.markitect/`. The source "owner" is set only by a conversation, never by a job. Reports are work, so they are not part of the spec. A document with an open report about it is built no further, and `status` shows it as waiting on that report.
+Agents report in their answer, as they give a verdict, and the job writes the file, so no builder or reviewer needs to write in `.markitect/`. The source "owner" is set only by a conversation, never by a job. Reports are work, so they are not part of the spec. A report about a gap or a contradiction in the spec stops building at the document it concerns until it is settled, and `status` shows that document as waiting on the report. Any other report, such as a bug report, blocks nothing: its action repairs the document.
 
 ## Intake
 
@@ -66,4 +66,4 @@ A decision made in passing, in any session, is caught by its effect, not by reco
   - **It fills a gap,** where the spec says nothing: an architect job writes the back-fill, as a Decision with the reason taken from the commits where it was a choice; the counter-checker derives counter-checks from the new text, the reviewer confirms, and only then does the branch land.
   - **It contradicts the spec,** where a document says otherwise or earlier counter-checks fail: a new decision for the owner, to keep it and change the spec, or to have the build job revert it.
 
-So no slip silently becomes intent. Like drift in Terraform, a change is imported or reverted. A back-fill appears under "decided for you", and a report reverses it. The work of the architect is that of a first spec of an existing project, for one diff. A decision that changes no file, a no or a trade-off, leaves no drift: only the conversation that makes it records it, by changing the spec.
+So no slip silently becomes intent. Loosely like drift in Terraform, a change is kept by changing the spec, or reverted. A back-fill appears under "decided for you", and a report reverses it. The work of the architect is that of a first spec of an existing project, for one diff. A decision that changes no file, a no or a trade-off, leaves no drift: only the conversation that makes it records it, by changing the spec.

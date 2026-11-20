@@ -13,7 +13,7 @@ Terraform makes infrastructure match a configuration, keeps a state of what exis
 | `validate` | `check` | Is the spec correct in itself? |
 | `plan` | `status` | What moved since the last confirmation? |
 | `apply` | The build job | A builder realizes, a reviewer confirms ([§8](the-factory.md)) |
-| Drift, imported or reverted | A change past the spec | Back-filled into the spec or reverted ([§9](reports-and-actions.md#a-change-past-the-spec)) |
+| Drift, kept by changing the configuration or reverted | A change past the spec | Back-filled into the spec or reverted ([§9](reports-and-actions.md#a-change-past-the-spec)) |
 | The command line, pipeline definitions and the services that run them | The tool, the jobs and the runners | Computing, saying what each job does, and running it ([§11](the-tool.md), [§12](jobs-and-runners.md)) |
 | `required_version` | The version in the project | Every runner uses the same tool |
 

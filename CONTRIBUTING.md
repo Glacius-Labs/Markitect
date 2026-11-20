@@ -6,7 +6,7 @@ Markitect is a small Go tool with a Claude Code plugin, developed as an ordinary
 
 1. **Start clean.** Work in a worktree of your own, from the current `origin/main`, on a branch with a prefix such as `dev/`, `fix/` or `docs/`. Check the folder, the branch and the base commit before you write. Never use `git stash`: it is shared by every worktree. Set work aside with a commit instead.
 2. **Find the owner.** Each Go package has one row in the [code map](docs/development/code-map.md) with the page that owns its behavior, and each topic has one page ([below](#where-things-go)). Change the behavior, its tests and its page together.
-3. **Keep it simple.** Choose the clean design even when it is more work, add no aliases or compatibility paths, and delete what is obsolete together with its tests and pages ([DEC-032](docs/decisions.md#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)). Fix a failure in how agents work with Markitect in the tool contract, not with more prompt text ([DEC-051](docs/decisions.md#dec-051-agents-get-tasks-not-process)).
+3. **Keep it simple.** Choose the clean design even when it is more work, add no aliases or compatibility paths, and delete what is obsolete together with its tests and pages ([DEC-139](docs/decisions.md#dec-139-quality-simplicity-and-stability-over-effort-and-compatibility)). Fix a failure in how agents work with Markitect in the tool contract, not with more prompt text ([DEC-141](docs/decisions.md#dec-141-agents-get-tasks-not-process)).
 4. **Work in parallel only apart.** Several sessions may work at once when their files do not overlap. Shared files, such as `go.mod`, the [architecture rule table](internal/tooling/architecture/rules.go) and generated pages, have one writer at a time.
 
 Product code and tests that handle a project's `.markitect/` folder use fixtures, never this repository's own files.
@@ -39,6 +39,8 @@ Product code and tests that handle a project's `.markitect/` folder use fixtures
 | Where Main is and what comes next | [Roadmap](docs/roadmap.md) |
 | Where earlier concepts and records are | [History](docs/history.md) |
 | How Markitect is developed | This page |
+
+The guides and the internal READMEs describe the 0.34.0 tool until the rebuild reaches them; the concept owns the target.
 
 **Rules for documentation.**
 

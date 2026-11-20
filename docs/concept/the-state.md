@@ -30,7 +30,7 @@ A gap or contradiction in the spec is no verdict: it is a report, and the docume
 | **Changed** | The document's own text, one of its artifacts or its evidence moved, it has no row yet, or its verdict is `fail` | A builder realizes or repairs it, then a reviewer confirms it |
 | **Suspect** | A document it links to, or one that links to it, changed, or its type changed | A reviewer judges whether the change means something here, mostly without a builder |
 | **Unexplained** | A file is mapped to no document and not ignored, a file of a document that is gone included | The reviewer maps it when it confirms, or it is removed or ignored |
-| **Waiting on report X** | An open report concerns the document | Triage, or the owner when the report is escalated |
+| **Waiting on report X** | An open report about a gap or a contradiction in the spec concerns the document | Triage, or the owner when the report is escalated |
 
 Links count in both directions, as suspect links do in DOORS: a changed rule reaches what it links and what links to it. "Applies to" is an ordinary section, and there is no binding by place. A changed type makes its documents suspect; a new required section missing from them is already an error of `check`.
 

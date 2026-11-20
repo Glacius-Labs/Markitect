@@ -30,7 +30,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 ## A typed, declarative specification language
 
-**Analogy.** A statically typed language reports a contradiction when it compiles, a dynamically typed one only when the program runs into it. A declarative language states what should hold and leaves how to an executor, as SQL leaves the plan to the database and Terraform the steps to its providers. TLA+ (Lamport) and Alloy (Jackson) are specification languages: formal, and never executed. The spec borrows all three images ([DEC-119](decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)): it is typed, it is declarative with an agent as its executor, and nothing in it is executed. `markitect check` is the type checker, and a borrowed idea, not a guarantee ([DEC-003](decisions.md#dec-003-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)).
+**Analogy.** A statically typed language reports a contradiction when it compiles, a dynamically typed one only when the program runs into it. A declarative language states what should hold and leaves how to an executor, as SQL leaves the plan to the database and Terraform the steps to its providers. TLA+ (Lamport) and Alloy (Jackson) are specification languages: formal, and never executed. The spec borrows all three images ([DEC-119](decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)): it is typed, it is declarative with an agent as its executor, and nothing in it is executed. `markitect check` is the type checker, and a borrowed idea, not a guarantee ([DEC-138](decisions.md#dec-138-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)).
 
 **Taken.** Types and their instances, as classes and objects: a type declares the sections of its documents, and a checker enforces them ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-packages-and-templates)).
 
@@ -99,7 +99,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 - **Suspect links** (IBM DOORS Next): a change to either end of a link makes it suspect until someone confirms it. A change makes the documents linked to it in both directions suspect, and a reviewer's verdict clears them ([DEC-124](decisions.md#dec-124-a-state-maps-each-document-to-its-artifacts-and-status-is-the-plan)).
 - **Go's test cache** (Go documentation): a result is kept with the inputs it depended on and reused while they are unchanged. The state keeps each verdict with the hashes of what it rests on.
 
-**Analogy.** Terraform keeps a state of what exists beside its configuration, shows in a plan what would change, and, when the real infrastructure drifted, imports the change into the configuration or reverts it. The spec is the configuration, the state maps artifacts to documents, `status` is the plan, and a change past the spec is back-filled or reverted ([DEC-130](decisions.md#dec-130-a-change-past-the-spec-is-back-filled)).
+**Analogy.** Terraform keeps a state of what exists beside its configuration and shows in a plan what would change, drift included. One then changes the configuration to keep a drifted resource, or applies it to revert the drift, and `import` adopts a resource Terraform does not manage yet. Loosely, the spec is the configuration, the state maps artifacts to documents, `status` is the plan, and a change past the spec is back-filled or reverted ([DEC-130](decisions.md#dec-130-a-change-past-the-spec-is-back-filled)).
 
 **Differs.**
 
@@ -111,7 +111,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 **Taken.**
 
-- **The V-model**, as Automotive SPICE arranges it (VDA QMC 2023): what is wanted is stated before the code and traced in both directions, and on the right side tests are derived from each level before the code exists. Counter-checks take that side over: a counter-checker derives tests, or questions with expected answers, from the spec alone ([DEC-125](decisions.md#dec-125-trust-is-measured-not-granted)). Where a rule names modules, they are architecture tests in a tool such as ArchUnit.
+- **The V-model:** what is wanted is stated before the code and traced in both directions, and each level on the left side is paired with a level of verification on the right. Counter-checks take that pairing over: a counter-checker derives tests, or questions with expected answers, from the spec alone ([DEC-125](decisions.md#dec-125-trust-is-measured-not-granted)). Where a rule names modules, they are architecture tests in a tool such as ArchUnit.
 - **Independent verification:** the one who builds does not judge the result.
 
 **Differs.** No person approves anything: trust comes only from facts that can turn out negative without anyone reading. The tests a builder writes are realizations; counter-checks are not, and the builder may not change them.
@@ -128,13 +128,15 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 ## Jobs and landing
 
-**Taken.** Continuous integration with required checks: a pull request merges when its checks are green, and a check defined on the target branch cannot be skipped by the change. Dependency bots work on a schedule, each on a branch of its own. Every job of Markitect ends with a branch that lands by one rule ([DEC-127](decisions.md#dec-127-one-landing-rule-and-a-spec-change-lands-with-its-realization)).
+**Taken.** Continuous integration with required checks: a pull request merges when its checks are green. Dependency bots work on a schedule, each on a branch of its own. Every job of Markitect ends with a branch that lands by one rule ([DEC-127](decisions.md#dec-127-one-landing-rule-and-a-spec-change-lands-with-its-realization)).
+
+**Differs.** A check that runs from the branch that wants to land can be changed by that branch. So the runner must take the check and the write table from the target branch, for example as a protected required check that does not run the branch's own definition of it ([DEC-132](decisions.md#dec-132-markitect-is-a-tool-jobs-and-runners)).
 
 **Analogy.** Terraform runs the same command line everywhere, with a version the project fixes, while services and CI jobs run it on pull requests. Markitect's tool, jobs and runners are cut the same way ([DEC-132](decisions.md#dec-132-markitect-is-a-tool-jobs-and-runners)).
 
 ## The tool's conventions
 
-**Taken.** A diagnostic reads `file:line: code: message`, as compilers and linters print it; exit code 0 means all is well, 1 that something was found and 2 that the command could not run; and `--json` prints one document for scripts. Commands are named after what they do ([DEC-096](decisions.md#dec-096-the-tool-computes-and-checks-a-runner-acts)).
+**Taken.** A diagnostic reads `file:line: code: message`, as compilers and linters print it; exit code 0 means all is well, 1 that something was found and 2 that the command could not run; and `--json` prints one document for scripts. Commands are named after what they do ([DEC-142](decisions.md#dec-142-the-tool-computes-and-checks-a-runner-acts)).
 
 ## Related practice
 
@@ -142,7 +144,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 ## Weighed and not taken
 
-- **An ontology language or SysML v2 as the form of the spec,** and front matter with typed fields. RDF with OWL and SHACL, SysML v2 and TypeScript were weighed. Markdown is what people and agents already write, and the simplest form read like a handbook and caught everything mechanical ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-packages-and-templates)).
+- **An ontology language or SysML v2 as the form of the spec,** and front matter with typed fields. RDF with OWL and SHACL, SysML v2 and TypeScript were weighed. Markdown is what people and agents already write ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-packages-and-templates)).
 - **A module layer** with rules on the direction of links, visibility and binding by place, as programming languages have. Folders carry no rules, and a rule names what it applies to by links ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-packages-and-templates)).
 - **Architecture metrics of the spec,** such as coupling, cohesion and abstractness, and fixed thresholds. They measure structure, not whether a spec serves its purpose ([DEC-123](decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)).
 - **Attributes per requirement**, such as priority, risk, owner and history, which requirements standards keep. They describe the work, not the system, and the spec states only the system as it should be.

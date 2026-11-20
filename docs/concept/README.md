@@ -2,7 +2,7 @@
 
 **You architect the project in a typed, declarative specification language in Markdown. Jobs realize it, check it and measure how well the checking works; the tool computes what is built and verified; and you are asked only for the decisions that are yours.**
 
-This page is the one description of the product, and the target that Main builds ([DEC-098](../decisions.md#dec-098-one-concept-describes-the-product)). The [decisions](../decisions.md) list what it rests on, the [roadmap](../roadmap.md) the next steps, and the [vision](../vision.md) why.
+This page is the one description of the product, and the target that Main builds ([DEC-140](../decisions.md#dec-140-one-concept-describes-the-product)). The [decisions](../decisions.md) list what it rests on, the [roadmap](../roadmap.md) the next steps, and the [vision](../vision.md) why.
 
 ## The aim
 

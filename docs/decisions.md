@@ -4,7 +4,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 - This page lists only what holds. A decision changes only through a new decision: it takes the next free number, and the entries it replaces leave the page in the same change. Git keeps every earlier wording.
 - Only the product owner adds or changes a decision. An agent's proposal enters as an open question and stays one until the owner decides.
-- Do not reopen a decision without new evidence. With such evidence, add an open question that cites it and leave the decision as it is. Each newer decision names in "Reopen when" the evidence that would reopen it.
+- Do not reopen a decision without new evidence. With such evidence, add an open question that cites it and leave the decision as it is.
 - An entry keeps its ID, and the IDs it absorbed keep an anchor on it, unless the anchor names a retired design.
 - If another page differs from a decision, the decision holds: correct the page.
 
@@ -14,9 +14,9 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 ### DEC-119 People architect their project in a typed, declarative specification language
 
-- People design, define and model their project in Markdown: what its concepts are and mean, how they relate, its interfaces, structure, rules and way of working. Architect is a role that the owner and an agent fill together: the agent drafts, analyses and proposes, and the owner decides.
+- People design, define and model their project in Markdown: what its concepts are and mean, how they relate, its interfaces, structure, rules and way of working. Architect is a role that the owner and an agent fill together: the agent drafts, analyses and proposes, and settles what follows from earlier decisions; the owner makes the new decisions ([DEC-129](#dec-129-the-owner-makes-only-new-decisions-and-the-system-learns-which)).
 - The spec is a typed, declarative specification language in Markdown. It works like declarative programming, with an agent as the executor: it states what should hold, not how to get there, and agents make the project match it, as Terraform makes infrastructure match its configuration.
-- It is a specification language, as TLA+ and Alloy are, and nothing in it is executed. Its structure is formal and checked by a tool; its content is prose that an agent interprets. It is never a programming language: there the result follows from the text, and here only the structure is checked ([DEC-003](#dec-003-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)).
+- It is a specification language, as TLA+ and Alloy are, and nothing in it is executed. Its structure is formal and checked by a tool; its content is prose that an agent interprets. It is never a programming language: there the result follows from the text, and here only the structure is checked ([DEC-138](#dec-138-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)).
 - Code has always been a precise description for a limited but diligent executor. An AI executor is intelligent, but it still has to be told what is meant and what holds, or it guesses. So documentation takes the place of code as what people work on. What matters in code stays as relevant there: consistency, cleanliness, an overview without reading the code, and knowing what should be as against what is.
 - An agent can be wrong, so every result is checked and recorded ([DEC-125](#dec-125-trust-is-measured-not-granted)).
 - Reopen when readers repeatedly take the image to mean that Markitect executes the spec.
@@ -28,17 +28,17 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - People maintain the spec. Agents realize it in code, tests, configuration and documentation, and verify the result. The tool computes and checks, so that the delegated work can be trusted.
 - Judge Markitect as a way of developing software, not as a linter or a context tool. Removing delegated realization as scope creep contradicts this decision.
 
-<a id="cpt-001-trust-comes-from-structure"></a><a id="cpt-001-federalism"></a>
+<a id="dec-002-trust-is-measured-against-todays-practice"></a><a id="cpt-001-trust-comes-from-structure"></a><a id="cpt-001-federalism"></a>
 
-### DEC-002 Trust is measured against today's practice
+### DEC-137 Trust is measured against today's practice
 
 - The baseline is common practice: an agent implements a task, another AI reviews the pull request, and the human approval is often given almost blind. Markitect aims to earn more trust than that, not compiler-grade guarantees.
 - Trust comes from structure, not from infallible agents: separate roles with bounded rights, a list computed from the spec rather than from memory, a check of every document against the spec, and measurements of how well that check works ([DEC-125](#dec-125-trust-is-measured-not-granted)). The [vision](vision.md#where-trust-comes-from) lists the mechanisms.
 - Claims read "more reliable than the baseline", never "correct". Use the smallest process that earns the trust: more report fields or completeness declarations do not by themselves make work more correct. A control sample measures the checker and leaves the work as it is.
 
-<a id="dec-003-the-compiler-is-a-borrowed-concept"></a><a id="cpt-003-two-parts-of-the-promise"></a>
+<a id="dec-003-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart"></a><a id="dec-003-the-compiler-is-a-borrowed-concept"></a><a id="cpt-003-two-parts-of-the-promise"></a>
 
-### DEC-003 The compiler is a borrowed idea, and two claims stay apart
+### DEC-138 The compiler is a borrowed idea, and two claims stay apart
 
 - The spec's structure is checked deterministically: titles, types, sections and links. Meaning is judged by agents. Markitect claims no semantic guarantee for what agents build.
 - Two claims stay apart. *Nothing in the spec's scope is overlooked* can be computed from links and the mapping of every file; dependencies in code that no link states are a known gap. *Everything is realized correctly* can only be supported by evidence: a fresh reviewer, counter-checks, the project's tests and `check`.
@@ -59,9 +59,9 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - All four can turn out negative without anyone reading. Being proven unlocks the conduits that wait for it ([DEC-136](#dec-136-later-ideas-wait-as-conduits-with-a-trigger)). The [concept](concept/what-is-shown.md) says what is shown and what is not.
 - Reopen when the figures hold but the outside owner no longer runs the project through Markitect.
 
-<a id="dec-014-compatibility-does-not-drive-decisions"></a><a id="dec-016-a-clean-stable-testable-main-and-uniform-structure-first"></a><a id="dec-038-learn-through-complete-workflows"></a>
+<a id="dec-032-quality-simplicity-and-stability-over-effort-and-compatibility"></a><a id="dec-014-compatibility-does-not-drive-decisions"></a><a id="dec-016-a-clean-stable-testable-main-and-uniform-structure-first"></a><a id="dec-038-learn-through-complete-workflows"></a>
 
-### DEC-032 Quality, simplicity and stability over effort and compatibility
+### DEC-139 Quality, simplicity and stability over effort and compatibility
 
 - Clean architecture, simplicity and stability come first. Effort is no criterion, and neither is compatibility with old versions while Markitect is early. Compatibility counts from the first project that is not the owner's. Released files stay immutable; that is a fact, not a promise of support.
 - Choose the clean design even when it is more work. Add no aliases, adapters or legacy paths. Delete what is obsolete, source, tests and documents together.
@@ -69,7 +69,9 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - Simpler is more robust, and simplicity is earned through insight. Markitect works with Claude Code's own features rather than building machinery around them.
 - A substantial redesign names the new observation behind it and the result that would show it is better, and asks first whether a mechanism is needed at all or something simpler would do.
 
-### DEC-098 One concept describes the product
+<a id="dec-098-one-concept-describes-the-product"></a>
+
+### DEC-140 One concept describes the product
 
 - The [concept](concept/README.md) is the single description of the product and the target that Main builds: the spec, a tool that checks it and computes what is built and verified, the jobs that realize and check it, and the runners that start them.
 - Earlier concepts are kept on archive branches ([history](history.md)), not on Main.
@@ -86,11 +88,11 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - `check` checks titles, types, missing or empty sections and links that point to no document. What the language does not catch, contradictions between values, gaps and wrong values, a reader finds. Value forms and check rules are left out on purpose; something new joins only when a real project needs it.
 - An agent writes the structure, sections and links; it is not derived from the prose.
 - Writing rule, not checked: every fact stands in exactly one place, and everywhere else links to it.
-- An ontology language, a modelling language and front matter with fields were weighed. None was chosen: Markdown is what people and agents already write, and the simplest form read like a handbook and caught everything mechanical.
+- An ontology language, a modelling language and front matter with fields were weighed. None was chosen: Markdown is what people and agents already write.
 - The [language](concept/the-language.md) page describes it.
 - Reopen when a project repeatedly shows errors that a value form or check rule would have caught and the reviewer misses; when a software project shows a layer break that a reviewer misses and direction rules would have caught, or changes measurably reach wider without modules; when projects change their package copies so much that taking a newer package from the library is no longer possible and that does harm; or when an audit shows that agents' documents contradict their own prose more often than before.
 
-<a id="dec-079-the-spec-is-as-explicit-as-good-documentation"></a>
+<a id="dec-079-the-spec-is-as-explicit-as-good-documentation"></a><a id="dec-063-the-spec-is-the-authority-and-its-defects-go-to-the-owner"></a>
 
 ### DEC-122 The spec declares what is fixed, like an interface
 
@@ -112,11 +114,11 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - Every number is shown against the reference value of its type, which ships with the package, and against the rest of the project. Reference values come from proven specs; a proven spec is one the owner names as a reference.
 - Question catalogs ship with packages and templates. A project's own questions lie beside the spec, not in it. An answered question from use becomes a fixed question, and a general one can move into the package.
 - The [quality](concept/is-the-spec-good.md) page describes it.
-- Reopen when findings repeatedly show something bad that falls under none of the five properties or correctness, or the property is not assigned reliably; when a signal or a reference value shows almost only false alarms on real specs, or reference values differ so much between projects that none carries; or when answers stay unreliable despite citations, or a catalog grows without ever finding anything.
+- Reopen when findings repeatedly show something bad that falls under none of the five properties or correctness, the property is not assigned reliably, or nobody reads the evaluation; when a signal of the spec itself shows almost only false alarms on real specs; when a change signal never points at a real finding over a series of changes on a real project; when reference values show almost only false alarms, or differ so much between projects that none carries; or when answers stay unreliable despite citations, or a catalog grows without ever finding anything.
 
 ## State and trust
 
-<a id="dec-006-every-file-is-accounted-for"></a><a id="dec-006-every-file-is-covered-or-explicitly-ignored"></a><a id="dec-099-a-record-of-what-was-verified"></a>
+<a id="dec-006-every-file-is-accounted-for"></a><a id="dec-006-every-file-is-covered-or-explicitly-ignored"></a><a id="dec-099-a-record-of-what-was-verified"></a><a id="cpt-002-tests-are-the-projects-and-they-are-realizations-too"></a><a id="cpt-002-tests-are-realizations-too"></a><a id="dec-034-removed-intent-removes-its-realization"></a>
 
 ### DEC-124 A state maps each document to its artifacts, and `status` is the plan
 
@@ -129,7 +131,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - At each confirmation the history records, as hashes, which documents were changed at that moment, so that the change signals of [DEC-123](#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources) can be computed. What a statement said before comes from Git, read by an agent. `move` rewrites every link to a moved document, carries its row in the state, and records a mechanical event in the history.
 - The tests a builder writes are realizations, so a green one is evidence, not proof.
 - The [state](concept/the-state.md) page describes it.
-- Reopen when reviewers repeatedly name a document's artifacts incompletely and it shows late, so the builder maps them again, in the same state; when suspect entries make the list so long that reviewers confirm them unread, so only links in certain sections count; when new documents are repeatedly not reached because a rule lists what it applies to, so the tool reads "Applies to"; when unexplained files are almost only files nobody wants to explain, which then go into the ignore file; or when a change signal needs more text than the hashes give and an agent cannot read it reliably from Git.
+- Reopen when reviewers keep reading the same artifact for many small documents and that costs more than one verdict for the whole; when reviewers repeatedly name a document's artifacts incompletely and it shows late, so the builder maps them again, in the same state; when suspect entries make the list so long that reviewers confirm them unread, so only links in certain sections count; when new documents are repeatedly not reached because a rule lists what it applies to, so the tool reads "Applies to"; when unexplained files are almost only files nobody wants to explain, which then go into the ignore file; or when a change signal needs more text than the hashes give and an agent cannot read it reliably from Git.
 
 ### DEC-125 Trust is measured, not granted
 
@@ -143,7 +145,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - The model per role is a setting, not a principle: by default a smaller model for the builder and the reviewer and a larger one for the roles on the spec. Control samples and counter-checks show whether another model catches more.
 - The roles are architect, builder, reviewer, reader, counter-checker and sampler.
 - The [trust](concept/trust.md) page describes it.
-- Reopen when nobody reads the measured figures or they change nothing in the work; when planted deviations are recognizable as artificial and so always found, or the runs cost more than the figure is worth; when counter-checks repeatedly derive what the spec does not say, which is then a signal about the spec, not a reason to drop them; when spot checks never contradict although reports show errors in confirmed documents; when architecture tests are repeatedly so weak that control samples with broken dependencies pass, which calls for observing the imports; or when deviations do not shrink over many runs, or runs change the same places back and forth.
+- Reopen when nobody reads the measured figures or they change nothing in the work; when reports repeatedly show late that the spec said something other than was meant, which gives the second half a building block of its own, never an approval; when the figures per model diverge clearly, which adjusts the default, not the principle; when planted deviations are recognizable as artificial and so always found, or the runs cost more than the figure is worth; when counter-checks repeatedly derive what the spec does not say, which is then a signal about the spec, not a reason to drop them; when spot checks never contradict although reports show errors in confirmed documents; when architecture tests are repeatedly so weak that control samples with broken dependencies pass, which calls for observing the imports; or when deviations do not shrink over many runs, or runs change the same places back and forth.
 
 ## The factory
 
@@ -170,18 +172,22 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - The history holds only facts: verdicts with their hashes, moves, and nothing about how a job ran. How a job ran is in its branch and its reports.
 - Reopen when reports repeatedly trace back to branches that landed by the rule and still made something worse, which calls for another condition, not an approval; when parallel branches with spec changes contradict each other so often that merges regularly fail, or the owner repeatedly wants to see on the main branch what is not built yet; or when a signal must know which verdicts belonged to one job and that does not follow from time and branch.
 
+<a id="dec-084-continuous-change-triggers-become-findings-or-model-proposals-autonomy-grows-in-steps"></a>
+
 ### DEC-128 Reports and actions hold everything that needs a change
 
 - Every signal that a change is needed becomes a report: an idea of the owner, a bug report, an incident, a customer's wish, a log, a finding of a job, or a problem with the spec itself. A report says what is wrong or wanted, with evidence, and proposes no solution.
 - A report is a document of the language in `.markitect/reports/`, of a report type the tool owns, with the sections source, place, finding with evidence, occurred or risk, rating, violated property, actions, prevention and closing. `check` checks its form.
-- Agents report in their answer, and the job writes the file. Only triage adds rating, actions and closing. The source "owner" is set only by a conversation.
+- Agents report in their answer, and the job writes the file. Triage adds only rating, actions and closing; the job that does the action writes its prevention. The source "owner" is set only by a conversation.
 - Outside signals pass through intake: a job that reads them isolated and writes a report of fixed form. Their raw text never reaches an agent that may change something.
 - Triage sorts each report: valid, a duplicate, which counts as a repetition of the earlier one, or needing nothing, with the reason. It rates by impact and likelihood. Then the switch: where the spec already says what is right, a build job repairs; where the answer follows from what was decided, an architect job changes the spec and the build job realizes it on the same branch; where a new decision is needed, the report escalates to the owner ([DEC-129](#dec-129-the-owner-makes-only-new-decisions-and-the-system-learns-which)).
 - An action is a branch, and the report points to it. Every action includes its prevention: a fixed question or a counter-check, so that the same gap shows earlier next time.
 - A report is closed when its action has landed, or with the reason why nothing is done. A report that recurs at the same place shows that the action did not work.
-- Reports are work, not part of the spec. A document with an open report about it is built no further and waits; `status` shows it as waiting on that report.
+- Reports are work, not part of the spec. A report about a gap or a contradiction in the spec stops building at the document it concerns until it is settled, and `status` shows that document as waiting on the report. Any other report, such as a bug report, blocks nothing: its action repairs the document.
 - The [reports](concept/reports-and-actions.md) page describes it.
 - Reopen when agents repeatedly miss the form of reports and triage cannot sort them reliably, or a project must keep its reports in a ticket system, which brings an adapter and keeps the form; or when prevention piles up questions and counter-checks that never find anything again, which then go.
+
+<a id="dec-084-continuous-work-runs-outside-the-tool-and-autonomy-grows-in-steps"></a>
 
 ### DEC-129 The owner makes only new decisions, and the system learns which
 
@@ -195,14 +201,14 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 - A change past the spec shows in `status` as changed documents or unexplained files, on a branch before it lands or on the main branch after a direct push. Where it came from decides what follows.
 - From a job, the build job brings the artifacts back to the spec.
-- From a conversation, by a person or by Claude for them, it becomes a report "past the spec", with the diff and the commit messages as evidence. Triage sorts it. Where it fills a gap, an architect job writes the back-fill, as a Decision with the reason from the commits where it was a choice; counter-checks are derived from the new text and the reviewer confirms before it lands. Where it contradicts the spec, it is a new decision for the owner: keep it and change the spec, or have the build job revert it. Like drift in Terraform, it is imported or reverted.
+- From a conversation, by a person or by Claude for them, it becomes a report "past the spec", with the diff and the commit messages as evidence. Triage sorts it. Where it fills a gap, an architect job writes the back-fill, as a Decision with the reason from the commits where it was a choice; counter-checks are derived from the new text and the reviewer confirms before it lands. Where it contradicts the spec, it is a new decision for the owner: keep it and change the spec, or have the build job revert it. Loosely like drift in Terraform, it is kept by changing the spec, or reverted.
 - A back-fill shows under "decided for you", and a report reverses it.
 - A decision that changes no file is recorded only by the conversation that makes it, by changing the spec. Nothing records chats.
 - Reopen when spot checks or later reports repeatedly find back-fills that recorded an error as intent, or the owner reverses back-fills. Then every gap from a conversation goes to the owner as a choice.
 
-<a id="dec-051-agents-get-tasks-the-orchestrator-owns-the-process"></a>
+<a id="dec-051-agents-get-tasks-not-process"></a><a id="dec-051-agents-get-tasks-the-orchestrator-owns-the-process"></a>
 
-### DEC-051 Agents get tasks, not process
+### DEC-141 Agents get tasks, not process
 
 - An agent gets a clear task and an answer format. Order, limits, acceptance and routing to the owner are not explained to agents in prompt text.
 - A failure in how agents work with Markitect is fixed in the tool contract, not with more prompt text. Since the tool steers no process, the agents' own files hold their task and answer format, and skills hold no steps an agent must remember.
@@ -224,7 +230,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 <a id="dec-096-markitect-computes-and-checks-a-driver-acts"></a><a id="dec-096-the-tool-computes-and-checks-a-driver-acts"></a>
 
-### DEC-096 The tool computes and checks; a runner acts
+### DEC-142 The tool computes and checks; a runner acts
 
 - The `markitect` program checks and analyses the spec, says what is to verify, and binds verdicts. It starts no agent, keeps no run open, imposes no order, counts no rounds and keeps no state between commands outside the project.
 - Who starts which job and role, when and how often is the runner's, and so is every Git step. A runner may not change the tool, the state's inputs or the write table.
@@ -240,10 +246,10 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 - Markitect has three parts, as Terraform has its command line, its pipeline definitions and the services that run them. **The tool** computes and checks. **The jobs** say for each job which roles run in which order, with which task and write area; they are the only part tied to a provider and ship in the Claude Code plugin. **The runners** are where a job runs, the user's choice: their own session, a scheduled task of the desktop app, a cloud task or CI. Markitect ships an entry for each.
 - The tool writes only what it computes or binds: `mark` and `move`. What a job reports is a file of fixed form that the tool checks: reports and the results of control samples. The tool computes the factory's figures from the history, the reports and the control samples.
-- Rights come from a job's steps. Each role runs as its own step with its own allowed tools. The runner records the state before and after each step, and the tool checks each change against the write table, by file and by row of the state and the history: the builder writes artifacts; the counter-checker the counter-check folder the settings name; the reviewer only verdict rows; the architect the spec, the ignore file and move rows; the job itself reports and control samples with the job as source; triage only rating, actions and closing in reports; and the owner, on a branch from a conversation, also the control files and reports with the owner as source. The write table ships with the tool, and a project may only narrow it.
+- Rights come from a job's steps. Each role runs as its own step with its own allowed tools. The runner records the state before and after each step, and the tool checks each change against the write table, by file and by row of the state and the history: the builder writes artifacts; the counter-checker the counter-check folder the settings name; the reviewer only verdict rows; the architect the spec, the ignore file and move rows; the job itself reports and control samples with the job as source; triage only rating, actions and closing in reports; and the owner, on a branch from a conversation, what the conversation changes, such as the spec and artifacts, plus the control files and reports with the owner as source, but never verdict rows. The write table ships with the tool, and a project may only narrow it.
 - The control files are the write table, the settings, the version, the spec path, the learned rules and the CI definition. The tool reads them from the target branch, not from the branch that wants to land.
 - The check is a fact only in CI, where the runner is a script no agent can change. In a session the runner is Claude, and the check makes shortcuts visible without proving anything.
-- The commands are `init`, `apply`, `new`, `move`, `check`, `show`, `table`, `topics`, `status`, `mark`, `diff`, `figures`, `version` and `licenses`.
+- The commands are `init`, `apply`, `new`, `move`, `check`, `show`, `table`, `status`, `mark`, `version` and `licenses`, and commands for the topic view, the comparison of two states and the factory figures, whose names the build fixes.
 - The [tool](concept/the-tool.md) and [jobs and runners](concept/jobs-and-runners.md) pages describe them.
 - Reopen when the same job does different things on two runners because a runner has to do more than fetch a commit, call the steps, lay out the states for each step and hand over a branch, which moves the extra into the jobs; when a figure of the factory holds only if the tool binds something a file does not keep, which gets a command after the pattern of `mark`; or when a runner cannot call roles as separate steps, or shortcuts in sessions repeatedly show only at landing and cost much work, which brings back a guard at the moment of writing for that runner, beside the check at landing.
 

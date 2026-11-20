@@ -1,6 +1,6 @@
 # The tool
 
-**The `markitect` program computes and checks; a runner acts** ([DEC-096](../decisions.md#dec-096-the-tool-computes-and-checks-a-runner-acts)). It checks the spec, computes the state and what is to verify, binds verdicts and computes the factory's figures. It starts no agent, keeps no run open, imposes no order, counts no rounds and keeps no state between commands outside the project. It uses no Git ([DEC-097](../decisions.md#dec-097-markitect-uses-no-git)): it reads the project by walking its folder, skipping what the project's `.gitignore` files exclude, and the runner makes every Git step. So it does not know where it runs, and gives the same answer in a session and in CI.
+**The `markitect` program computes and checks; a runner acts** ([DEC-142](../decisions.md#dec-142-the-tool-computes-and-checks-a-runner-acts)). It checks the spec, computes the state and what is to verify, binds verdicts and computes the factory's figures. It starts no agent, keeps no run open, imposes no order, counts no rounds and keeps no state between commands outside the project. It uses no Git ([DEC-097](../decisions.md#dec-097-markitect-uses-no-git)): it reads the project by walking its folder, skipping what the project's `.gitignore` files exclude, and the runner makes every Git step. So it does not know where it runs, and gives the same answer in a session and in CI.
 
 ## Commands
 
@@ -13,13 +13,15 @@
 | `check` | Checks the spec: titles, types, sections and links ([§3](the-language.md#what-check-catches)). It checks the form of reports and of the results of control samples against their types, and the settings |
 | `show DOCUMENT` | A document with its type, its sections, what it links to and what links to it with the section the link stands in, its artifacts, its counter-checks and its verdict; for a type, its documents |
 | `table TYPE` | Every document of a type as a table, one column per section |
-| `topics [TOPIC]` | A document, a type or a folder as one text with everything that belongs to it, and the signals that say where reading pays off ([§5](is-the-spec-good.md#the-spec-itself)) |
+| The topic view | A document, a type or a folder as one text with everything that belongs to it, and the signals that say where reading pays off ([§5](is-the-spec-good.md#the-spec-itself)) |
 | `status` | What is changed, suspect, unexplained or waiting on a report ([§6](the-state.md#what-status-lists)). Given the state of the target branch, it applies the landing rule; given the states before and after a step and the step's role, it checks the write table ([§12](jobs-and-runners.md#rights-come-from-the-steps)) |
 | `mark DOCUMENT@FINGERPRINT VERDICT` | Binds `ok`, `fail` or `skip`, with the artifacts and the evidence or the reason, to the state `status` showed ([§6](the-state.md#binding-a-verdict)) |
-| `diff OLD NEW` | Compares two states, each a folder with a spec, a state and reports: what is new, gone, changed or suspect, with the old and the new text ([§10](overview.md#comparing-two-states)) |
-| `figures` | The factory's figures ([below](#the-figures)) |
+| The comparison of two states | Compares two states, each a folder with a spec, a state and reports: what is new, gone, changed or suspect, with the old and the new text ([§10](overview.md#comparing-two-states)) |
+| The factory figures | The factory's figures ([below](#the-figures)) |
 | `version` | The tool's version, and whether it is the one the project pins |
 | `licenses` | The third-party notices |
+
+The build fixes the names of the commands for the topic view, the comparison and the figures.
 
 **What the tool writes.** Of the state and the history it writes only what it binds: `mark` a verdict row and its history entry, `move` the moved row and its history entry. `init`, `apply`, `new` and `move` write documents on request. What a job reports, reports and the results of control samples, are files of fixed form that the job writes and `check` checks ([DEC-132](../decisions.md#dec-132-markitect-is-a-tool-jobs-and-runners)). There is no command to report, to start or end a run, or to steer anything.
 

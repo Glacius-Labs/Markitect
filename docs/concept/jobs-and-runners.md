@@ -29,7 +29,7 @@ Each role runs as its own step, with its own allowed tools. The runner lays out 
 | Architect | The spec, the ignore file and the rows that `move` writes |
 | The job itself | Reports and results of control samples, with the job as source |
 | Triage | Rating, actions and closing in reports |
-| Owner, on a branch from a conversation | All of the above, the control files, and reports with the owner as source |
+| Owner, on a branch from a conversation | What the conversation changes, such as the spec and artifacts, plus the control files and reports with the owner as source; never verdict rows |
 | Reader, sampler | Nothing that lands, but the sampler's list of planted deviations, which the job writes |
 
 The write table ships with the tool, and a project may only narrow it in its settings.
@@ -62,7 +62,7 @@ A project holds two things of Markitect's ([DEC-133](../decisions.md#dec-133-the
 
 `init` writes nothing else: no `AGENTS.md`, no `CLAUDE.md`, nothing in `.claude/`, no line in `.gitignore`. A session learns from the plugin that a folder with `.markitect/` has a spec. What a runner needs, such as a CI definition, belongs to the user like any other CI.
 
-**Settings** exist only in the project, since a job in CI has no user profile: the model and effort per role, the cadence of the jobs, the counter-check folder, and a narrower write table. They are a file the user or Claude edits and `check` checks.
+**Settings** exist only in the project, since a job in CI has no user profile: the model per role, the cadence of the jobs, the counter-check folder, and a narrower write table. They are a file the user or Claude edits and `check` checks.
 
 **The version is pinned in the project,** and every runner uses it, since the state is hashes the tool computes and two versions could disagree. In Claude Code the plugin fetches the tool in the version the project names; elsewhere a setup step fetches the same version from the release. A newer version is taken by changing the version line, as with any other dependency. A release publishes the tool for Linux, macOS and Windows with checksums ([releasing](../releasing.md)).
 

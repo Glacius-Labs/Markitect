@@ -34,7 +34,7 @@ Four steps, as a person who reviews a spec would take them:
 3. **Read.** A person or an agent judges the meaning against the five properties. Only a reader sees whether something is right.
 4. **Question.** One asks the spec questions that a spec of its kind must answer, and sees how well it does. This is the one means that checks completeness on the spec itself.
 
-**The topic view.** A topic is a document, a type or a folder. `markitect topics` shows it as one text with everything that belongs to it: what links to it, with the section the link stands in; the rules that hold for it, also through the README of a folder; and the places that name it without a link. The strong statements about the topic come first, since the single cases are checked against them. A table per type, `markitect table`, shows a column with the same value everywhere: that fact belongs a level higher.
+**The topic view.** A topic is a document, a type or a folder. The topic view shows it as one text with everything that belongs to it: what links to it, with the section the link stands in; the rules that hold for it, also through the README of a folder; and the places that name it without a link. The strong statements about the topic come first, since the single cases are checked against them. A table per type, `markitect table`, shows a column with the same value everywhere: that fact belongs a level higher.
 
 **Signals** say where reading pays off. They have no fixed thresholds and give no warnings; each counts occurrences or compares with the rest of the spec, and the output is a sorted list for the whole spec or a topic. The reader decides.
 
