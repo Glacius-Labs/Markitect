@@ -159,6 +159,14 @@ func carry(dir string, w *workspace, m edit.Moved, rows []state.Row) (edit.Chang
 	for _, wr := range m.Changes.Writes {
 		c.Writes = append(c.Writes, edit.Write{Path: in(wr.Path), Data: wr.Data, Create: wr.Create})
 	}
+	return withHistory(dir, c, state.MoveRows(rows, m.From, m.To, rewritten),
+		state.Event{Time: now(), Type: state.EventMove, From: m.From, To: m.To, Rewritten: m.Changed})
+}
+
+// withHistory adds to a change set the state, rewritten from rows when the
+// project has a state or rows, and the history with one more event, so that
+// both are written with the rest or not at all.
+func withHistory(dir string, c edit.Changes, rows []state.Row, event state.Event) (edit.Changes, error) {
 	existing := func(name string) ([]byte, bool, error) {
 		data, err := os.ReadFile(filepath.Join(dir, filepath.FromSlash(name)))
 		if errors.Is(err, fs.ErrNotExist) {
@@ -171,13 +179,12 @@ func carry(dir string, w *workspace, m edit.Moved, rows []state.Row) (edit.Chang
 		return c, err
 	}
 	if hasState || len(rows) > 0 {
-		c.Writes = append(c.Writes, edit.Write{Path: state.StateFile, Data: state.FormatState(state.MoveRows(rows, m.From, m.To, rewritten)), Create: !hasState})
+		c.Writes = append(c.Writes, edit.Write{Path: state.StateFile, Data: state.FormatState(rows), Create: !hasState})
 	}
 	history, hasHistory, err := existing(state.HistoryFile)
 	if err != nil {
 		return c, err
 	}
-	event := state.Event{Time: now(), Type: state.EventMove, From: m.From, To: m.To, Rewritten: m.Changed}
 	data := append(append(history, lineStart(history)...), event.Line()...)
 	c.Writes = append(c.Writes, edit.Write{Path: state.HistoryFile, Data: data, Create: !hasHistory})
 	return c, nil

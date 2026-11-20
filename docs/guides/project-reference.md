@@ -168,7 +168,7 @@ The other inputs stay: an artifact, a counter-check or a file of the spec folder
 
 | Type | Fields | Written |
 |---|---|---|
-| `verdict` | `doc`, `verdict`, `self`, the hash of the document's text, absent for a document that is gone, and `changed`: every other document `status` lists as changed at that moment, each with `doc` and its `self`, the whole list | By `mark`, right after it writes the state, under the same lock, in one write that appends a line |
+| `verdict` | `doc`, `verdict`, `self`, the hash of the document's text, absent for a document that is gone, and `changed`: every other document `status` lists as changed at that moment, each with `doc` and its `self`, the whole list | By `mark`, in one change set with the state, under the lock |
 | `move` | `from`, `to`, and `rewritten`, the documents whose links `move` rewrote, by their paths after the move | By `move`, in the change set of the move |
 
 ```text
@@ -176,6 +176,6 @@ The other inputs stay: an artifact, a counter-check or a file of the spec folder
 {"time":"2026-11-20T09:00:05Z","type":"move","from":"lending/borrow.md","to":"loans/borrow.md","rewritten":["loans/borrow.md","roles/member.md"]}
 ```
 
-When the history cannot be written after the state was, `mark` says that the verdict is recorded and the event is not, and exits 2; the same mark again adds it.
+`mark` writes the state and the history together, all or nothing: when the history cannot be written, the state is not written either, and `mark` exits 2.
 
-**Reading it.** Events are read in time order, the file's order among equal times; the time is the writing machine's clock. A line that both sides of a merge hold is read once, a type the tool does not know is skipped, so new types need no format version, and a line that is not an event, without a time in RFC 3339 or a type, or a known event without its fields, is reported as `.markitect/history.jsonl:LINE: history.unreadable: MESSAGE` and skipped, without failing.
+**Reading it.** Events are read in time order, the file's order among equal times; the time is the writing machine's clock. The change signals read the history in this order, so a machine whose clock is wrong can reorder events and shift what they show. A line that both sides of a merge hold is read once, a type the tool does not know is skipped, so new types need no format version, and a line that is not an event, without a time in RFC 3339 or a type, or a known event without its fields, is reported as `.markitect/history.jsonl:LINE: history.unreadable: MESSAGE` and skipped, without failing. `status` prints each such line as a note, `note: .markitect/history.jsonl:LINE: …`, which does not change its exit code, and with `--json` lists them in `history`.

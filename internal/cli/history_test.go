@@ -161,9 +161,9 @@ func TestJoinedHistoriesReadAsOne(t *testing.T) {
 func TestFailedMoveChangesNothing(t *testing.T) {
 	args := func(dir string) []string { return []string{"move", "-C", dir, "lending/borrow.md", "loans/borrow.md"} }
 	steps := 0
-	fault = func(int) error { steps++; return nil }
 	t.Cleanup(func() { fault = nil })
 	dir := markedWith(t, withFlow())
+	fault = func(int) error { steps++; return nil }
 	if code, _, errOut := run(args(dir)...); code != ExitOK {
 		t.Fatal(errOut)
 	}
@@ -218,4 +218,46 @@ func TestLookAtNamesChangedAssets(t *testing.T) {
 	write(t, dir, "docs/spec/lending/flow.png", "\x89PNG new flow")
 	e, _ := statusOf(t, dir).entry("lending/borrow.md")
 	same(t, "where to look", e.LookAt, []string{"docs/spec/lending/borrow.md", "src/loans.go", "tests/loans_test.go", "tests/loans_test.go:3", "docs/spec/lending/flow.png"})
+}
+
+// mark writes the state and the history together: when the history cannot
+// be written, neither is.
+func TestMarkWritesStateAndHistoryTogether(t *testing.T) {
+	dir := marked(t)
+	fp := fingerprint(t, dir, "roles/member.md")
+	file := filepath.Join(dir, filepath.FromSlash(state.HistoryFile))
+	if err := os.Chmod(file, 0o444); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chmod(file, 0o644) })
+	if f, err := os.OpenFile(file, os.O_WRONLY, 0); err == nil {
+		f.Close()
+		t.Skip("the file system lets this user write a read-only file")
+	}
+	stateBefore, historyBefore := read(t, dir, state.StateFile), read(t, dir, state.HistoryFile)
+	code, out, errOut := run("mark", "-C", dir, "roles/member.md@"+fp, "skip", "--file", "src/member.go", "-m", "no members yet")
+	if code != ExitFailed || out != "" || !strings.Contains(errOut, "history.jsonl: cannot be written") {
+		t.Error(code, out, errOut)
+	}
+	if read(t, dir, state.StateFile) != stateBefore || read(t, dir, state.HistoryFile) != historyBefore {
+		t.Error("a failed mark wrote the state or the history")
+	}
+}
+
+// status names a line of the history it cannot read as a note.
+func TestStatusNotesUnreadableHistory(t *testing.T) {
+	dir := marked(t)
+	write(t, dir, state.HistoryFile, read(t, dir, state.HistoryFile)+"not json\n")
+	code, out, _ := run("status", "-C", dir)
+	if code != ExitOK || !strings.HasPrefix(out, "note: .markitect/history.jsonl:5: history.unreadable: ") ||
+		!strings.HasSuffix(out, "0 changed, 0 suspect, 0 unexplained\n") {
+		t.Error(code, out)
+	}
+	_, out, _ = run("status", "-C", dir, "--json")
+	var doc struct {
+		History []diagnostic `json:"history"`
+	}
+	if err := json.Unmarshal([]byte(out), &doc); err != nil || len(doc.History) != 1 || doc.History[0].Code != "history.unreadable" {
+		t.Error(out)
+	}
 }
