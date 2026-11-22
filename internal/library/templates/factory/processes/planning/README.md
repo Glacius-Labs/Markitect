@@ -17,7 +17,7 @@ A person takes a node of the plan to work out: the spec as a whole, an Area, a f
 9. [Finish](finish.md)
 
 ## Result
-The target picture stands right and fits every level above; the plan is on `main`; the story is `ready`, and a change to a standing spec lies on the branch of the story that realizes it. "Planned through" means: the spec stands right.
+The target of the planned level stands right and fits every level above; the plan is on `main`; the story is `ready`, and a change to a standing spec lies on the branch of the story that realizes it. "Planned through" means: the spec stands right.
 
 ## Responsible
 The person who plans and gives the go: usually the owner of the Area, a [Developer](../../roles/developer.md), and an [Admin](../../roles/admin.md) for the spec as a whole and for the Areas their class has an Admin plan.

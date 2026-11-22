@@ -1,9 +1,9 @@
 # Feature
 
-An idea we want to build, with its own target picture, below one Area of the plan. It has an end: its acceptance. Ownership lies with the feature; its stories are what gets carried out. Take it for anything one person can take and work out on their own. Do not take it for work without a feature: bugs, maintenance and smell analyses are [stories](story.md) of the Area's standing feature `housekeeping`. Its document lies in `.markitect/plan/`, in a folder of its own below its Area's folder, beside its stories. Once it is accepted, what lasts of its target picture stands in the product part of the spec.
+An idea we want to build, with its own target picture, below one Area of the plan. It has an end: its acceptance. Ownership lies with the feature; its stories are what gets carried out. Take it for anything one person can take and work out on their own. Do not take it for work without a feature: bugs, maintenance and smell analyses are [stories](story.md) of the Area's standing feature `housekeeping`. Its document lies in `.markitect/plan/`, in a folder of its own below its Area's folder, beside its stories. What lasts of its target picture reaches the spec through its stories' Target changes.
 
 ## State
-On the first line one of `open`, `in progress`, `acceptance`, `done`: `open` until someone claims it, `in progress` once claimed, `acceptance` when its stories are accepted and it waits to be accepted as a whole, `done` when it is accepted. Example: `in progress`.
+On the first line one of `open`, `in progress`, `acceptance`, `done`: `open` until someone claims it, `in progress` once claimed, `acceptance` when its stories are all `done` and it waits to be accepted as a whole, `done` when it is accepted. Example: `in progress`.
 
 ## Owner
 The person who owns it, as a link, or `none` while it is open. Claiming the feature is writing yourself here on `main` before you start. Example: `[Ada](../../../../docs/spec/factory/people/ada.md)`.

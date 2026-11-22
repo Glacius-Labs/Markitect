@@ -5,6 +5,7 @@ Nothing in the way of working is forbidden. Every role and every agent has a usu
 - [The usual way](usual-way.md)
 - [The levels](levels.md)
 - [What is critical](critical.md)
+- [The repository settings grant the usual](repository-settings.md)
 - [The course of a deviation](course.md)
 - [Agents that do not ask](agents-that-do-not-ask.md)
 

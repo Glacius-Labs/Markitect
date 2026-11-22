@@ -14,7 +14,7 @@ The Housekeeper turns the [circle](../processes/circle/README.md) once a day. It
 5. Start [Builders](build.md) for the stories in `ready` that belong to the person who started the run, whose predecessors are all `done` and whose priority is `normal` or higher ([when a story starts](../rules/plan/when-a-story-starts.md)); start [Analysts](analyze.md) for smell stories of priority `normal` or higher, by priority.
 6. Lay a short report into the context: what is new, what is critical, what was started; it lists everything you started, so that runs without a report of their own are covered too.
 
-Every agent keeps its checkpoint; when a run breaks off, the next one catches up. Whoever drops something that obviously hurries may run the Housekeeper again at once. It asks nobody at a deviation ([agents that do not ask](../rules/deviations/agents-that-do-not-ask.md)).
+Every agent keeps its checkpoint; when a run breaks off, the next one catches up. It asks nobody at a deviation ([agents that do not ask](../rules/deviations/agents-that-do-not-ask.md)).
 
 ## Started by
 A person, or a routine. [Norman](norman.md) offers to start it when today's briefing is missing.

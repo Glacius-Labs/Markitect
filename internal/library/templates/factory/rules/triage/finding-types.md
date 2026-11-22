@@ -6,7 +6,7 @@ Type: [Rule](../../../../packages/core/rule.md)
 [Finding](../../../../packages/factory/finding.md), [the Triager](../../agents/triage.md), [the Recorder](../../agents/record.md)
 
 ## Rule
-Every finding carries one of nine types, ordered by what it points at. The type decides its folder and its usual response; there is no separate check whether something may enter the plan without a decision.
+Every finding carries one of nine types, ordered by what it points at. The type decides its usual response, and its folder, with one exception: a Requirement or Question whose answer follows from what is decided goes to `ready`, the second of [the three exits](three-exits.md). There is no separate check whether something may enter the plan without a decision.
 
 | Points at | Type | Means | Folder | Usual response |
 |---|---|---|---|---|
