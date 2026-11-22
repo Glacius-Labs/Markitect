@@ -15,7 +15,7 @@ The concept rests on a few results of real runs, each run once and on the tool o
 
 ## When Markitect counts as proven
 
-First the lab test: two clean passes in a row over the eight change steps of the 5× Makerspace project, every step reaching the main branch with its spec change and its realization together, confirmed, and every hidden case passing. Then the field test: a project that is not the owner's runs four weeks in the circle with real work in CI, and four figures from the tool and Git hold ([DEC-120](../decisions.md#dec-120-how-markitect-is-judged-and-when-it-is-proven)):
+First the lab test: two clean passes in a row over the eight change steps of the 5× Makerspace project, every step reaching the main branch with its spec change and its realization together, confirmed, and every hidden case passing. Then the field test: a project run by people who do not develop Markitect runs four weeks in the circle with real work in CI, and four figures hold; how each is computed is settled with the runs that bring control samples and spot checks ([DEC-120](../decisions.md#dec-120-how-markitect-is-judged-and-when-it-is-proven)):
 
 | Figure | Holds when |
 |---|---|

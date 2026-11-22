@@ -48,8 +48,8 @@ Markitect has three parts ([DEC-148](../decisions.md#dec-148-markitect-is-a-tool
 | **Report** | What an agent or observer writes about one run or session |
 | **Finding** | One thing that deserves attention, without a solution |
 | **Briefing** | What reaches people: short, ordered by importance |
-| **Plan, plan item** | The tree of the work, Area, Feature, Story and Task, and one node of it |
-| **Area, class** | An area of planning, with an owner and an optional class; and what a group of Areas is and which rules hold for it |
+| **Plan, plan item** | The tree of the work, rooted in the Areas of the spec: Feature, Story and Task; and a Feature or a Story of it, whose documents lie in `.markitect/plan/` |
+| **Area, class** | An area of planning, a document of the spec in its `factory` part, with an owner and an optional class; and what a group of Areas is and which rules hold for it |
 | **Target picture** | The section of a Feature or a Story that says what should hold once it is done |
 | **Person, role** | Someone on the team; and Admin, Developer or QA, each with its usual way of working |
 | **Agent** | A fresh session that runs exactly one skill |

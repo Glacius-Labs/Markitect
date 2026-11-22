@@ -1,6 +1,6 @@
 # Trust
 
-**Trust is measured, not granted** ([DEC-125](../decisions.md#dec-125-trust-is-measured-not-granted)). Nobody approves the agents' work, and no trust comes from a person looking through it. A mechanism counts only when it delivers a fact that can turn out negative without anyone reading: a run, a figure, a deviation. Another agent's opinion is no such fact.
+**Trust is measured, not granted** ([DEC-125](../decisions.md#dec-125-trust-is-measured-not-granted)). Nobody approves the agents' work, and no trust comes from a person looking through it. A mechanism counts only when it delivers a fact that can turn out negative without anyone reading: a run, a figure, a difference between artifact and spec. Another agent's opinion is no such fact.
 
 The image is a testing laboratory. Nobody there looks at every result. People trust it because testing is apart from making, because control samples with a known result run along, and because the results hold up in use.
 
@@ -9,7 +9,7 @@ The image is a testing laboratory. Nobody there looks at every result. People tr
 | Production | The builder realizes a story |
 | Testing, apart from production | A fresh reviewer checks and confirms with evidence |
 | A test procedure derived from the standard, not from the maker | Counter-checks, derived from the spec alone |
-| A control sample with a known result | Planted deviations the reviewer must find |
+| A control sample with a known result | Planted errors the reviewer must find |
 | Use and complaints | Findings from use, and the observers that keep watching |
 
 ## Two halves
@@ -36,7 +36,7 @@ A counter-checker derives checks from the spec alone, before the builder starts 
 
 ## Control samples
 
-A sampler copies the artifacts into a throwaway copy and plants known deviations from the spec in it, in code as in handbooks, and notes which and where. The reviewer checks the copy as usual, without knowing what was planted. The list of planted deviations and the reviewer's verdicts are kept in the run's context; the copy never lands. The hit rate computed from the two is the measured answer to "what is an `ok` worth?". It measures the checker and leaves the work as it is.
+A sampler copies the artifacts into a throwaway copy and plants known errors, differences from the spec, in it, in code as in handbooks, and notes which and where. The reviewer checks the copy as usual, without knowing what was planted. The list of planted errors and the reviewer's verdicts are kept in the run's context; the copy never lands. The hit rate computed from the two is the measured answer to "what is an `ok` worth?". It measures the checker and leaves the work as it is.
 
 ## Spot checks and full reviews
 
@@ -44,7 +44,7 @@ A spot check checks confirmed documents again at random, with a fresh reviewer. 
 
 ## Convergence over time
 
-Observers watch the project on a schedule, and every finding goes through the same circle ([§8](the-circle.md)). A single run may leave errors; the measure is that deviations shrink over time. Regular work could also converge on what the agents misread, and then everything looks calm. Control samples show whether the reviewer finds what it should, and counter-checks whether builder and reviewer share a misreading. `status`, the findings and these figures show whether the project converges ([§10](overview.md)).
+Observers watch the project on a schedule, and every finding goes through the same circle ([§8](the-circle.md)). A single run may leave errors; the measure is that the differences between artifacts and spec shrink over time. Regular work could also converge on what the agents misread, and then everything looks calm. Control samples show whether the reviewer finds what it should, and counter-checks whether builder and reviewer share a misreading. `status`, the findings and these figures show whether the project converges ([§10](overview.md)).
 
 ## Who checks
 
@@ -54,7 +54,7 @@ Observers watch the project on a schedule, and every finding goes through the sa
 | **Builder** | Realizes a story on its branch | Artifacts, on the branch that carries the story's spec change |
 | **Reviewer** | Checks the build in rounds, returns `comments`, and confirms with evidence | Nothing that was built; it writes `confirm` |
 | **Counter-checker**, later | Derives counter-checks from the spec | Its checks, never the artifacts |
-| **Sampler**, later | Plants deviations in a throwaway copy | Nothing that lands but the list |
+| **Sampler**, later | Plants errors in a throwaway copy | Nothing that lands but the list |
 
 The model of each agent stands at its Agent document in the spec ([§12](the-project.md)): by default a smaller model for the builder and the reviewer, and a larger one for the agents on the spec, which is little text that everything else follows from. Control samples and counter-checks show whether another model catches more.
 
@@ -68,7 +68,7 @@ Markitect guards against forgetting, which is what has been seen, and against a 
 | Every document is confirmed at the state it is in | The state's hashes, and `confirm` binding a verdict to the fingerprint the reviewer read | Firm for one step of links in both directions and for every file; the code's imports are not followed |
 | Nothing grows without a reason | Every file mapped or ignored, else unexplained | Shown by `status`; an entry becomes a finding |
 | Work outside the usual way is seen | Deviations noted by the agent at hand, and an observer of what happened on the main branch ([§8](the-circle.md#deviations)) | Shown, not prevented |
-| The reviewer finds deviations | Control samples | Measured, as a hit rate, once they run |
+| The reviewer finds differences from the spec | Control samples | Measured, as a hit rate, once they run |
 | Builder and reviewer do not share a misreading | Counter-checks from the spec alone | Good where the spec states what it means, once they run |
 | Confirmed rows can be relied on | Spot checks | Measured, as a rate of contradictions, once they run |
 | The spec says what was meant | Findings from use | Shown late, not prevented |

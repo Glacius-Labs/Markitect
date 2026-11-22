@@ -2,7 +2,7 @@
 
 **Around the spec, a team works in one circle, with roles, findings and a plan** ([DEC-143](../decisions.md#dec-143-the-way-of-working-is-a-circle-for-a-team-with-roles-findings-and-a-plan)). People work on the spec, the target; agents bring it into the artifacts; and what shows up on the way flows back through one entry. People's attention is the currency, so one question runs through everything: does this need a person?
 
-This page summarizes the way of working. It stands in the spec of each project, in its `factory` part, and the `factory` template ships it as a standard that the project changes like any other part ([DEC-147](../decisions.md#dec-147-the-way-of-working-stands-in-the-spec-and-skills-realize-it)). The template, with every type and step, is described with the [library](../guides/library.md).
+This page summarizes the way of working. It stands in the spec of each project, in its `factory` part, and the `factory` template ships it as a standard that the project changes like any other part ([DEC-147](../decisions.md#dec-147-the-way-of-working-stands-in-the-spec-and-skills-realize-it)). The template itself holds every type and step in detail; it ships in the tool's [library](../guides/library.md).
 
 | Station | What happens | Who |
 |---|---|---|

@@ -21,7 +21,7 @@ A failure in how agents work is fixed in the `factory` part of the spec and the 
 | 7. Counter-checks, control samples and spot checks | The counter-checker and the sampler, as runs, and spot checks of confirmed documents ([trust](concept/trust.md)) | A control sample gives a hit rate, and counter-checks fail where the artifacts differ from the spec |
 | 8. The blast radius | What a story's spec change reaches, computed by the tool with `compare` and attached to the story | The blast radius of a story names the documents and artifacts its change reaches |
 | 9. The lab test | The 5× Makerspace project's eight change steps, with their hidden cases, which are kept at [`b8fd2c94`](https://github.com/Glacius-Labs/Markitect/tree/b8fd2c94722af066ba4ff6337aeba0459cb804ec/tools) ([DEC-120](decisions.md#dec-120-how-markitect-is-judged-and-when-it-is-proven)) | Two clean passes in a row: every step reaches the main branch with its spec change and its realization together, confirmed, and every hidden case passes |
-| 10. The proof | A project that is not the owner's, in the circle with real work in CI | Four weeks in which the four figures of [DEC-120](decisions.md#dec-120-how-markitect-is-judged-and-when-it-is-proven) hold: work, convergence, checking and no rescue |
+| 10. The proof | A project run by people who do not develop Markitect, in the circle with real work in CI | Four weeks in which the four figures of [DEC-120](decisions.md#dec-120-how-markitect-is-judged-and-when-it-is-proven) hold: work, convergence, checking and no rescue |
 
 ## Conduits
 

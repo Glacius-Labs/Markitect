@@ -116,7 +116,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 **Differs.** No person approves anything: trust comes only from facts that can turn out negative without anyone reading. The tests a builder writes are realizations; counter-checks are not, and the builder may not change them.
 
-**Analogy.** A testing laboratory is trusted because testing is apart from making and control samples with a known result run along. Control samples plant known deviations, and the reviewer's hit rate measures the check.
+**Analogy.** A testing laboratory is trusted because testing is apart from making and control samples with a known result run along. Control samples plant known errors, and the reviewer's hit rate measures the check.
 
 **Analogy.** A surgical safety checklist lowers complications because a team that knows every step can still skip one (Haynes and others 2009). `status` is such a list, computed from the spec and the state instead of an agent's memory.
 
