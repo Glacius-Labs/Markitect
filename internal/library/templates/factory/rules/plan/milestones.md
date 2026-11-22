@@ -17,6 +17,6 @@ A milestone is a step after which something on `main` is different that interest
 | Smell analysis finished | story to `done`, claim released | the Analyst |
 | Build aborted | story back to `draft`, claim released; a report in the context, linked from the story | the Builder |
 | Story accepted | story to `done`, claim released | the session of whoever accepts |
-| Last story of a feature done | feature to `acceptance` | the session that sets that story `done` |
+| Last story of a feature done | feature to `acceptance`; never the standing feature `housekeeping`, which has no end | the session that sets that story `done`: the Builder, the Analyst or whoever accepts |
 | Feature accepted | feature to `done` | the session of whoever accepts |
 | Housekeeper's run finished | new findings, recorded decisions, briefings | the Housekeeper |
