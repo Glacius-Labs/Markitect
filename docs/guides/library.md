@@ -1,6 +1,6 @@
 # Library
 
-The library built into the tool `markitect`: the packages of types, the templates that `apply` copies into a spec, the types the tool owns, and per package its reference values and question catalog ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version)). It ships in the tool's version. A spec owns the copy `apply` makes and may change it. [The language reference](language-reference.md) gives the rules of the language and the commands. The reference values, `references/PACKAGE.md`, and the question catalogs, `questions/PACKAGE.md`, are read by the tool and never copied; [signals](signals.md) describes them.
+The library built into the tool `markitect`: the packages of types, the templates that `apply` copies into a spec, the types the tool owns, and per package its reference values and question catalog ([where Main is](../roadmap.md#where-main-is)). It ships in the tool's version. A spec owns the copy `apply` makes and may change it. [The language reference](language-reference.md) gives the rules of the language and the commands. The reference values, `references/PACKAGE.md`, and the question catalogs, `questions/PACKAGE.md`, are read by the tool and never copied; [signals](signals.md) describes them.
 
 ## Packages
 
@@ -74,7 +74,7 @@ After `apply`, `check` reports nothing but `section.empty`: that list is the wor
 
 Three types belong to the tool, since it reads their sections: the report type, `report.md`, the settings type, `settings.md`, and the sample type, `sample.md`. They lie outside `packages/`, so `apply` never copies them, and a spec does not hold them. Their documents lie in `.markitect/` and name no type: the folder says which type they are of. `check` checks them against these types and the forms of their values ([reports, settings and control samples](reports.md)).
 
-**The report type.** A report is a document of this type in `.markitect/reports/` ([reports and actions](../concept/reports-and-actions.md#the-report)).
+**The report type.** A report is a document of this type in `.markitect/reports/` ([where Main is](../roadmap.md#where-main-is)).
 
 | Section | Holds |
 |---|---|
@@ -90,7 +90,7 @@ Three types belong to the tool, since it reads their sections: the report type, 
 
 The first five are required, since the job that writes a report knows them. Rating, actions and closing are optional because triage adds them later, and prevention because the job that does the action adds it.
 
-**The settings type.** The settings are a document of this type, `.markitect/settings.md` ([jobs and runners](../concept/jobs-and-runners.md#the-project)). Every section is optional.
+**The settings type.** The settings are a document of this type, `.markitect/settings.md` ([where Main is](../roadmap.md#where-main-is)). Every section is optional.
 
 | Section | Holds |
 |---|---|

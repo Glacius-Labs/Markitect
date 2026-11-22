@@ -12,7 +12,7 @@
 
 A document should hold a part of its own when that part has facts of its own, is needed by several documents, changes at its own pace, or has a rule of its own. It should not for a value only that document relies on, or the spec falls apart into tiny documents. The type decides: where its section asks for a link, every document links.
 
-**Not in the list.** *Correct*, whether the spec says what is meant, no reader can judge without the owner; it shows only in use. *Ranked* is a priority, which is work. *Traceable* is the state's ([§6](the-state.md)). *Modifiable* is in consistent and structured. Coupling, cohesion, abstractness and link density are no measures: folders carry no rules, a folder sorted by kind is not worse, and a high fan-in is natural for a role everyone names.
+**Not in the list.** *Correct*, whether the spec says what is meant, no reader can judge without the people who decide; it shows only in use. *Ranked* is a priority, which is work. *Traceable* is the state's ([§6](the-state.md)). *Modifiable* is in consistent and structured. Coupling, cohesion, abstractness and link density are no measures: folders carry no rules, a folder sorted by kind is not worse, and a high fan-in is natural for a role everyone names.
 
 ## Four sources
 
@@ -22,8 +22,8 @@ No source suffices alone, and the spec shows what is missing only as far as one 
 |---|---|---|
 | **The spec itself** | Necessary, consistent, unambiguous, structured; complete as far as the questions reach | Check, show, read and question, below |
 | **Its changes** | Consistent, structured, unambiguous | Six signals from the history ([below](#its-changes)) |
-| **What is built from it** | Complete, unambiguous, consistent, verifiable, necessary, and correct | Findings of builders, reviewers and counter-checks, and the owner looking at a result |
-| **The questions it raises** | Complete, unambiguous, consistent, structured | Reports ([§9](reports-and-actions.md)) |
+| **What is built from it** | Complete, unambiguous, consistent, verifiable, necessary, and correct | Findings of builders, reviewers and counter-checks, and a person looking at a result |
+| **The questions it raises** | Complete, unambiguous, consistent, structured | Findings ([§9](the-work.md)) |
 
 ## The spec itself
 
@@ -49,9 +49,9 @@ Four steps, as a person who reviews a spec would take them:
 | | **Scattered rules:** one thing in many conditional or restricting statements across many documents, which belongs in one place | Structured, consistent |
 | Connections | **Mention without a link:** a document's title in another's text, unlinked | Consistent, structured |
 
-**Two references for every number** ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)). A value is shown beside the reference value of its type, which ships with the package, and beside the rest of the project: "documents of this type usually have 200 to 400 characters; all of yours do, and this one has 900". Both are needed: when every document of a project is too long, nothing stands out within it. Reference values come from proven specs, those the owner names as a reference, and improve with each version of the package. Until there are enough, the package's values hold.
+**Two references for every number** ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)). A value is shown beside the reference value of its type, which ships with the package, and beside the rest of the project: "documents of this type usually have 200 to 400 characters; all of yours do, and this one has 900". Both are needed: when every document of a project is too long, nothing stands out within it. Reference values come from proven specs, those named as a reference by the people who answer for them, and improve with each version of the package. Until there are enough, the package's values hold.
 
-**Competency questions.** A spec is as good as it answers the questions it exists for. Valuable are questions across documents: "who may do this alone?", "what happens when someone fails to show up twice?". Each answer comes only from the spec, with a citation, and is rated answered, only inferred, two answers or not answered; anything without a citation is "not stated". The share of cleanly answered questions measures the spec by its purpose. Catalogs ship with packages and templates; a project's own questions lie beside the spec, not in it, as tests lie beside code. An answered question from use becomes a fixed question, a general one may move into the package, and a question stays while it finds something or the owner wants to keep it.
+**Competency questions.** A spec is as good as it answers the questions it exists for. Valuable are questions across documents: "who may do this alone?", "what happens when someone fails to show up twice?". Each answer comes only from the spec, with a citation, and is rated answered, only inferred, two answers or not answered; anything without a citation is "not stated". The share of cleanly answered questions measures the spec by its purpose. Catalogs ship with packages and templates; a project's own questions lie beside the spec, not in it, as tests lie beside code. An answered question from use becomes a fixed question, a general one may move into the package, and a question stays while it finds something or people want to keep it.
 
 ## Its changes
 
@@ -80,9 +80,9 @@ Every finding names its place and the property it violates:
 | The reviewer cannot say yes or no to a statement | Not verifiable | Verifiable |
 | Nobody realizes or relies on a statement | Superfluous | Necessary |
 | An answer was found only in an unexpected place | Misplaced | Structured |
-| The owner sees the result and says it was not meant so | Wrongly stated | Correct |
+| A person sees the result and says it was not meant so | Wrongly stated | Correct |
 
-Three signals follow: repeated findings at the same place show a bad place; a report closed without a change of the spec leaves the spec incomplete there; and each answered question becomes a fixed question. These findings are also the touchstone for everything above: whether the signals pointed at these places beforehand, whether a reference spec is really proven, and whether a project converges, with fewer findings per area over time.
+Three signals follow: repeated findings at the same place show a bad place; a finding closed without a change of the spec leaves the spec incomplete there; and each answered question becomes a fixed question. These findings are also the touchstone for everything above: whether the signals pointed at these places beforehand, whether a reference spec is really proven, and whether a project converges, with fewer findings per part over time.
 
 ## Writing it well
 

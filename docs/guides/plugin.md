@@ -1,6 +1,6 @@
 # The plugin
 
-The `markitect` command, and the jobs and reading entries of Markitect as a Claude Code plugin: skills that a session runs and agents it starts, one per role ([DEC-132](../decisions.md#dec-132-markitect-is-a-tool-jobs-and-runners), [DEC-141](../decisions.md#dec-141-agents-get-tasks-not-process)). [Jobs and runners](../concept/jobs-and-runners.md#jobs) and [the factory](../concept/the-factory.md#the-jobs) in the concept say what the jobs are for; this page says what the plugin holds, how it brings the tool and how firm its checks are. The examples are a small lending library.
+The `markitect` command, and the jobs and reading entries of Markitect as a Claude Code plugin: skills that a session runs and agents it starts, one per role ([where Main is](../roadmap.md#where-main-is)). [Where Main is](../roadmap.md#where-main-is) says how the plugin relates to the concept; this page says what the plugin holds, how it brings the tool and how firm its checks are. The examples are a small lending library.
 
 ## What it holds
 
@@ -77,7 +77,7 @@ complete
 
 ## How firm it is
 
-In a session the runner is Claude itself ([where the check is a fact](../concept/jobs-and-runners.md#rights-come-from-the-steps)). So every check of the plugin makes shortcuts visible and proves nothing:
+In a session the runner is Claude itself ([where Main is](../roadmap.md#where-main-is)). So every check of the plugin makes shortcuts visible and proves nothing:
 
 - **The step check** compares folders that Claude lays out, in a session as in CI, so with skills it makes shortcuts visible everywhere and proves nothing. What is a fact in CI is the landing check and the tests, run by the workflow as a step of its own, outside every agent.
 - **The landing check** in a session runs where the session runs it; a session that skips it is not stopped.

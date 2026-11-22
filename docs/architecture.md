@@ -1,6 +1,6 @@
 # Architecture
 
-How the source is composed, where each responsibility lives and which contracts hold between the packages. Main builds the [concept](concept/README.md). The tool checks and analyses a project's spec, computes from the state what is changed, suspect or unexplained, binds verdicts, and checks the steps and the landing of a job; it starts no agent, steers no work and uses no Git ([DEC-132](decisions.md#dec-132-markitect-is-a-tool-jobs-and-runners), [DEC-097](decisions.md#dec-097-markitect-uses-no-git)). The jobs are skills and agents of the [plugin](guides/plugin.md), run by a session or a runner.
+How the source is composed, where each responsibility lives and which contracts hold between the packages. Main builds the [concept](concept/README.md). The tool checks and analyses a project's spec, computes from the state what is changed, suspect or unexplained, binds verdicts, and checks the steps and the landing of a job; it starts no agent, steers no work and uses no Git ([DEC-097](decisions.md#dec-097-markitect-uses-no-git); [where Main is](roadmap.md#where-main-is)). The jobs are skills and agents of the [plugin](guides/plugin.md), run by a session or a runner.
 
 This page owns the package contracts and the repository layout. The [language reference](guides/language-reference.md) owns the language and the commands, the [project reference](guides/project-reference.md) the project and its state; the [code map](development/code-map.md) lists every package with its owning document.
 

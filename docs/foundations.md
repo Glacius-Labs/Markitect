@@ -1,6 +1,6 @@
 # Foundations
 
-This page says what Markitect builds on. For each of its solutions it names what is taken, the source it comes from and where Markitect departs from it on purpose. The [vision](vision.md) says why Markitect exists, the [concept](concept/README.md) describes the product, and the [decisions](decisions.md) record what holds. Where a solution only borrows an image, such as Terraform or the compiler, the page calls it an analogy: the idea helps to explain, and no method is taken over. Every source the page names is listed, with a reference a reader can check, at the [end of the page](#sources). The page uses Markitect's own words, such as document, type, package, state and report; the [concept](concept/what-markitect-is.md#words) defines them.
+This page says what Markitect builds on. For each of its solutions it names what is taken, the source it comes from and where Markitect departs from it on purpose. The [vision](vision.md) says why Markitect exists, the [concept](concept/README.md) describes the product, and the [decisions](decisions.md) record what holds. Where a solution only borrows an image, such as Terraform or the compiler, the page calls it an analogy: the idea helps to explain, and no method is taken over. Every source the page names is listed, with a reference a reader can check, at the [end of the page](#sources). The page uses Markitect's own words, such as document, type, package, state and finding; the [concept](concept/what-markitect-is.md#words) defines them.
 
 ## At a glance
 
@@ -16,8 +16,8 @@ This page says what Markitect builds on. For each of its solutions it names what
 | [Architecture](#architecture) | arc42; Views and Beyond; architecture decision records; ISO/IEC/IEEE 42010 |
 | [The state and `status`](#the-state-and-status) | Requirements traceability with suspect links; Go's test cache; Terraform's state, plan and drift, as an analogy |
 | [Verification](#verification) | The V-model and its traceability; independent verification; testing laboratories and checklists, as analogies |
-| [Reports and actions](#reports-and-actions) | Nonconformity and corrective action in ISO 9001 |
-| [Jobs and landing](#jobs-and-landing) | CI with required checks; scheduled bots on branches of their own |
+| [Findings and the circle](#findings-and-the-circle) | Nonconformity and corrective action in ISO 9001 |
+| [The way of working in the spec](#the-way-of-working-in-the-spec) | Conway's law; Terraform's command line and modules, as an analogy |
 | [The tool's conventions](#the-tools-conventions) | The output of compilers and linters |
 
 [Related practice](#related-practice) says how Markitect differs from spec-driven development, and [weighed and not taken](#weighed-and-not-taken) what was considered and left out.
@@ -60,8 +60,8 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 **Taken.**
 
-- **Goals, environment and system** (Meyer 2022): a description says what the system is for, what holds in the world around it and what the system does. The software package sorts them into Purpose, Context and the areas of the system.
-- **The world is not ours to decide** (Zave and Jackson 1997; Meyer 2022): what is imposed is a constraint, and what is taken for granted so that the system can be simpler is an assumption, with who ensures it. Both stand in Context. What the owner chooses is a rule.
+- **Goals, environment and system** (Meyer 2022): a description says what the system is for, what holds in the world around it and what the system does. The software package sorts them into Purpose, Context and the chapters of the system.
+- **The world is not ours to decide** (Zave and Jackson 1997; Meyer 2022): what is imposed is a constraint, and what is taken for granted so that the system can be simpler is an assumption, with who ensures it. Both stand in Context. What the project chooses is a rule.
 
 **Differs.** Meyer's fourth book, the Project, describes the work: roles, schedule, tasks and risks. The spec leaves out the work that changes it, and keeps what should hold: the processes an operation runs and the way of working of a project.
 
@@ -81,7 +81,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 **Taken.**
 
-- **arc42** (Starke and Hruschka): what its sections on cross-cutting concepts, building blocks, deployment and decisions describe is stated in the Architecture area.
+- **arc42** (Starke and Hruschka): what its sections on cross-cutting concepts, building blocks, deployment and decisions describe is stated in the `architecture` part of the spec.
 - **Views and Beyond** (Clements and others 2010): the state is the implementation allocation, which files realize which document.
 - **Architecture decision records** (Nygard 2011; MADR): a decision is one choice with its reason and the alternatives it rejected.
 
@@ -99,7 +99,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 - **Suspect links** (IBM DOORS Next): a change to either end of a link makes it suspect until someone confirms it. A change makes the documents linked to it in both directions suspect, and a reviewer's verdict clears them ([DEC-124](decisions.md#dec-124-a-state-maps-each-document-to-its-artifacts-and-status-is-the-plan)).
 - **Go's test cache** (Go documentation): a result is kept with the inputs it depended on and reused while they are unchanged. The state keeps each verdict with the hashes of what it rests on.
 
-**Analogy.** Terraform keeps a state of what exists beside its configuration and shows in a plan what would change, drift included. One then changes the configuration to keep a drifted resource, or applies it to revert the drift, and `import` adopts a resource Terraform does not manage yet. Loosely, the spec is the configuration, the state maps artifacts to documents, `status` is the plan, and a change past the spec is back-filled or reverted ([DEC-130](decisions.md#dec-130-a-change-past-the-spec-is-back-filled)).
+**Analogy.** Terraform keeps a state of what exists beside its configuration and shows in a plan what would change, drift included. One then changes the configuration to keep a drifted resource, or applies it to revert the drift, and `import` adopts a resource Terraform does not manage yet. Loosely, the spec is the configuration, the state maps artifacts to documents, `status` is the plan, and a change past the spec shows in `status` and becomes a finding ([DEC-146](decisions.md#dec-146-a-spec-change-lands-with-its-realization-and-status-only-shows)).
 
 **Differs.**
 
@@ -120,19 +120,19 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 **Analogy.** A surgical safety checklist lowers complications because a team that knows every step can still skip one (Haynes and others 2009). `status` is such a list, computed from the spec and the state instead of an agent's memory.
 
-## Reports and actions
+## Findings and the circle
 
-**Taken.** ISO 9001:2015, clause 10.2, handles a nonconformity in a loop: react to it, find its cause, take a corrective action, and review whether the action worked. Every signal that a change is needed becomes a report; triage sorts and rates it; an action on a branch answers it with its prevention; and a report that recurs at the same place shows that the action did not work ([DEC-128](decisions.md#dec-128-reports-and-actions-hold-everything-that-needs-a-change)).
+**Taken.** ISO 9001:2015, clause 10.2, handles a nonconformity in a loop: react to it, find its cause, take a corrective action, and review whether the action worked. What anyone notices lands as a report; triage makes it a finding and files it; a plan item answers it; and a finding that recurs is bundled into a new finding one level higher, where the cause may lie ([DEC-144](decisions.md#dec-144-reports-findings-and-plan-items-hold-the-work)).
 
-**Differs.** There are no approvals. The owner is asked only for new decisions, as a choice between prepared proposals, and the system learns which kinds of decision the owner hands over ([DEC-129](decisions.md#dec-129-the-owner-makes-only-new-decisions-and-the-system-learns-which)).
+**Differs.** There are no approvals. People decide what is new in conversation, and what follows from what was decided is recorded without a question and shown in the briefing ([DEC-145](decisions.md#dec-145-triage-has-three-exits-and-what-follows-from-what-was-decided-is-recorded-without-a-question)).
 
-## Jobs and landing
+## The way of working in the spec
 
-**Taken.** Continuous integration with required checks: a pull request merges when its checks are green. Dependency bots work on a schedule, each on a branch of its own. Every job of Markitect ends with a branch that lands by one rule ([DEC-127](decisions.md#dec-127-one-landing-rule-and-a-spec-change-lands-with-its-realization)).
+**Taken.** Conway's law (Conway 1968): a system's structure mirrors the communication structure of the organization that builds it. Areas of planning usually follow the architecture, since both divide what is as independent as possible.
 
-**Differs.** A check that runs from the branch that wants to land can be changed by that branch. So the runner must take the check and the write table from the target branch, for example as a protected required check that does not run the branch's own definition of it ([DEC-132](decisions.md#dec-132-markitect-is-a-tool-jobs-and-runners)).
+**Differs.** Areas need not follow the architecture: one may plan differently from how the system is built. And the way of working is no process document beside the project: it stands in the spec, and the skills that realize it are artifacts, confirmed against it like code ([DEC-147](decisions.md#dec-147-the-way-of-working-stands-in-the-spec-and-skills-realize-it)).
 
-**Analogy.** Terraform runs the same command line everywhere, with a version the project fixes, while services and CI jobs run it on pull requests. Markitect's tool, jobs and runners are cut the same way ([DEC-132](decisions.md#dec-132-markitect-is-a-tool-jobs-and-runners)).
+**Analogy.** Terraform runs the same command line everywhere, with a version the project fixes, and copies modules from a registry into the configuration. Markitect's tool, its templates and the skills of its standard are cut the same way ([DEC-148](decisions.md#dec-148-markitect-is-a-tool-a-spec-with-templates-and-skills)).
 
 ## The tool's conventions
 
@@ -182,6 +182,7 @@ Each source is named as in the text above. ISO standards are cited by their numb
 
 - Bass, L., Clements, P., Kazman, R. *Software Architecture in Practice*, 2nd ed. Addison-Wesley, 2003. ISBN 0-321-15495-9.
 - Clements, P., Bachmann, F., Bass, L., Garlan, D., Ivers, J., Little, R., Merson, P., Nord, R., Stafford, J. *Documenting Software Architectures: Views and Beyond*, 2nd ed. Addison-Wesley, 2010. ISBN 978-0-321-55268-6.
+- Conway, M. E. How Do Committees Invent? *Datamation* 14(4), 1968, 28–31.
 - Gotel, O., Finkelstein, A. An Analysis of the Requirements Traceability Problem. *Proceedings of the First International Conference on Requirements Engineering*, IEEE, 1994, 94–101. doi:[10.1109/ICRE.1994.292398](https://doi.org/10.1109/ICRE.1994.292398)
 - Grüninger, M., Fox, M. S. Methodology for the Design and Evaluation of Ontologies. *Workshop on Basic Ontological Issues in Knowledge Sharing*, IJCAI-95, Montreal, 1995.
 - Haynes, A. B., and others. A Surgical Safety Checklist to Reduce Morbidity and Mortality in a Global Population. *New England Journal of Medicine* 360(5), 2009, 491–499. doi:[10.1056/NEJMsa0810119](https://doi.org/10.1056/NEJMsa0810119)

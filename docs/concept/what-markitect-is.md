@@ -1,6 +1,8 @@
 # What Markitect is
 
-**The spec is a typed, declarative specification language in Markdown** ([DEC-119](../decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)). It works like declarative programming, with an agent as the executor: it states what should hold, not how to get there, and agents make the project match it. It is a specification language as TLA+ and Alloy are, and nothing in it is executed. Its structure is formal and checked by the tool; its content is prose that an agent interprets. Because an agent can be wrong, every result is checked, and how well the checking works is measured ([§7](trust.md)).
+**The spec is a typed, declarative specification language in Markdown** ([DEC-119](../decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)). It works like declarative programming, with an agent as the executor: it states what should hold, not how to get there, and agents make the project match it. It is a specification language as TLA+ and Alloy are, and nothing in it is executed. Its structure is formal and checked by the tool; its content is prose that an agent interprets. Because an agent can be wrong, every result is checked ([§7](trust.md)).
+
+The spec describes the whole project, its way of working included. Around it, a team works in one circle of observing, triage, briefing, recording and work ([§8](the-circle.md)), and skills realize that way of working as code realizes the product.
 
 ## Terraform is the image
 
@@ -12,48 +14,53 @@ Terraform makes infrastructure match a configuration, keeps a state of what exis
 | State | The state in `.markitect/` | Which artifacts realize which document, and their hashes at the last confirmation ([§6](the-state.md)) |
 | `validate` | `check` | Is the spec correct in itself? |
 | `plan` | `status` | What moved since the last confirmation? |
-| `apply` | The build job | A builder realizes, a reviewer confirms ([§8](the-factory.md)) |
-| Drift, kept by changing the configuration or reverted | A change past the spec | Back-filled into the spec or reverted ([§9](reports-and-actions.md#a-change-past-the-spec)) |
-| The command line, pipeline definitions and the services that run them | The tool, the jobs and the runners | Computing, saying what each job does, and running it ([§11](the-tool.md), [§12](jobs-and-runners.md)) |
-| `required_version` | The version in the project | Every runner uses the same tool |
+| `apply` | Building a story | A builder realizes, a reviewer confirms ([§8](the-circle.md)) |
+| Drift | A change past the spec | `status` shows it, and it becomes a finding ([§9](the-work.md)) |
+| Modules from the registry | Packages and templates from the library | Copied into the spec, which owns its copy ([§3](the-language.md)) |
+| `required_version` | The version in the project | Everyone uses the same tool |
 
 A compiler would be the other image. Terraform fits better, because the work is reconciling what should be with what is, not translating one into the other. For readers without a developer's background, `status` is a checklist, computed instead of remembered: a team that knows every step can still skip one.
 
 ## The parts
 
+Markitect has three parts ([DEC-148](../decisions.md#dec-148-markitect-is-a-tool-a-spec-with-templates-and-skills)).
+
 | Part | What it is | Tied to a provider? |
 |---|---|---|
-| **Spec** | A folder of Markdown documents in the project, by default `docs/spec/` ([§3](the-language.md)) | No |
-| **Tool** | One program, `markitect`. It checks the spec, computes the state and what is to verify, binds verdicts and computes the factory's figures. It starts no agent and uses no Git ([§11](the-tool.md)) | No |
-| **Jobs** | For each job, which roles run in which order, with which task and write area. They ship in the Claude Code plugin ([§12](jobs-and-runners.md)) | Yes |
-| **Runners** | Where a job runs: the user's own session, a scheduled task, a cloud task or CI. The user chooses ([§12](jobs-and-runners.md)) | Each runner is its own |
+| **Tool** | One program, `markitect`. It checks the spec and the documents of the work, computes the state and what is to verify, and binds verdicts. It starts no agent, steers nothing and uses no Git ([§11](the-tool.md)) | No |
+| **Spec with templates** | A folder of Markdown documents in the project, by default `docs/spec/`, started from four templates; the `factory` template holds the way of working as a standard ([§3](the-language.md), [§4](what-goes-in-a-spec.md)) | No |
+| **Skills** | One per agent, built from the `factory` part of the spec and lying in the repository as its artifacts ([§12](the-project.md)) | No: they hold for Claude Code and Codex alike |
 
 ## Words
 
 | Word | Meaning |
 |---|---|
-| **Spec** | The one description of the project that has authority over its artifacts |
+| **Spec** | The one description of the project that has authority over its artifacts: the target |
 | **Document, type** | One Markdown file of the spec, and a document whose sections are the template of other documents |
-| **Package, template** | A folder of types, such as `software`; and a folder of documents with empty sections, applied to start an area |
-| **Area** | A folder of the spec with a README of an area type, whose sections are its table of contents |
-| **Artifact** | Any file that comes from the spec: code, tests, configuration, a handbook |
-| **State** | One row per document in `.markitect/`: its artifacts, its counter-checks, its verdict and the hashes at its last confirmation |
+| **Package, template** | A folder of types, such as `software`; and a folder of documents with empty sections, applied to start a part of the spec |
+| **Part** | A folder of the spec, with a README as its table of contents |
+| **Artifact** | Any file that comes from the spec: code, tests, configuration, a handbook, a skill. The artifacts are what is |
+| **State** | One row per document in `.markitect/`: its artifacts, its verdict and the hashes at its last confirmation |
 | **History** | The facts recorded at each confirmation and move, as hashes, in `.markitect/` |
-| **Report, action** | A signal that a change is needed, as a document in `.markitect/reports/`; and the branch that answers it |
-| **Conversation, job** | Work with the owner; and every other run, from a commit to a branch, with nobody asked |
-| **Runner** | Whatever starts a job and makes the Git steps |
-| **Owner** | The person who owns the project and its spec: decides intent and makes the new decisions that are not handed over |
-| **Architect, builder, reviewer** | The roles that write the spec, realize it, and confirm the realization |
-| **Reader, counter-checker, sampler** | The roles that read and question the spec, derive checks from it alone, and plant known deviations in a throwaway copy |
-| **Counter-check** | A test or a question with an expected answer, derived from the spec alone |
-| **Control sample, spot check** | A run that measures how much the reviewer finds; and a fresh check of confirmed documents at random |
-| **Landing rule** | The one rule that decides whether a job's branch lands |
-| **Write table, control files** | What each role may write; and the files that steer the jobs, read from the target branch |
+| **The way of working, factory** | How the team works, and the part of the spec and the template that hold it |
+| **The circle** | The stations of the way of working: Observe, Triage, Briefing, Record, Work |
+| **Context** | The folder of everything that happened: reports and dropped material |
+| **Report** | What an agent or observer writes about one run or session |
+| **Finding** | One thing that deserves attention, without a solution |
+| **Briefing** | What reaches people: short, ordered by importance |
+| **Plan, plan item** | The tree of the work, Area, Feature, Story and Task, and one node of it |
+| **Area, class** | An area of planning, with an owner and an optional class; and what a group of Areas is and which rules hold for it |
+| **Target picture** | The section of a Feature or a Story that says what should hold once it is done |
+| **Person, role** | Someone on the team; and Admin, Developer or QA, each with its usual way of working |
+| **Agent** | A fresh session that runs exactly one skill |
+| **Deviation** | Work outside the usual way of working, with a level; nothing is forbidden |
+| **`confirm`** | What the reviewer writes: a verdict with its artifacts and evidence, bound to the state it read |
+| **Counter-check, control sample, spot check** | A check derived from the spec alone; a run that measures how much the reviewer finds; a fresh check of confirmed documents. They come later, with the runs ([§7](trust.md)) |
 
 ## Authority
 
-Where an artifact differs from the spec, the artifact is wrong: code, tests, documentation, pipelines and configuration alike ([DEC-122](../decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)). A project rule found outside the spec, in configuration or agent instructions, belongs in it. The roles that build never change the spec, and the architect writes no code. Where the spec leaves open something someone will rely on, nothing is guessed: it becomes a report ([§9](reports-and-actions.md)).
+Where an artifact differs from the spec, the artifact is wrong: code, tests, documentation, pipelines, configuration and skills alike ([DEC-122](../decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)). A project rule found outside the spec, in configuration or agent instructions, belongs in it. Where the spec leaves open something someone will rely on, nothing is guessed: it becomes a finding ([§9](the-work.md)).
 
 ## Removing Markitect leaves an ordinary repository
 
-Nothing of Markitect stands in an artifact or in the spec: no comment in code, no line in a handbook, no front matter. The spec is ordinary documentation, and everything else of Markitect lies in `.markitect/`. Deleting `.markitect/` and the plugin leaves a repository with its documentation, code and tests, the counter-checks included ([DEC-133](../decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version)).
+Nothing of Markitect stands in an artifact or in the spec: no comment in code, no line in a handbook, no front matter. The spec is ordinary documentation, the skills are ordinary skills of the project, and everything else of Markitect lies in `.markitect/`. Deleting `.markitect/` and the tool leaves a repository with its documentation, code, tests and skills ([DEC-149](../decisions.md#dec-149-markitect-holds-the-work-and-init-lays-out-templates-and-skills)).

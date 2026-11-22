@@ -1,6 +1,6 @@
 # Markitect agent entrypoint
 
-With Markitect, people architect their project in a typed, declarative specification language in Markdown ([DEC-119](docs/decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)). They maintain one spec of it. The `markitect` tool checks it and computes what is built and verified; jobs, started by a runner the user chooses, realize it and check it.
+With Markitect, people architect their project in a typed, declarative specification language in Markdown ([DEC-119](docs/decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)). They maintain one spec of it, its way of working included: a circle for a team, which skills in the repository realize. The `markitect` tool checks the spec and computes what is built and verified; it steers nothing. The tool and the plugin on Main still implement the previous concept until the [roadmap](docs/roadmap.md#where-main-is) replaces them.
 
 **Before you assess or change the product's direction,** read, in this order:
 
@@ -13,8 +13,8 @@ With Markitect, people architect their project in a typed, declarative specifica
 **Easy to miss:**
 
 - Markitect itself has no spec. `.markitect/` in code and tests belongs to a target project and is handled with fixtures.
-- Fix a failure in how agents work with Markitect in the tool contract, not with more prompt text ([DEC-141](docs/decisions.md#dec-141-agents-get-tasks-not-process)).
-- `/markitect-architect`, `/markitect-build`, `/markitect-review`, `/markitect-bughunt`, `/markitect-cleanup`, `/markitect-improve`, `/markitect-control-sample`, `/markitect-read`, `/markitect-triage` and `/markitect-intake` start real agents: run them only on a committed test project, bounded, as CONTRIBUTING says.
+- A failure in how agents work with Markitect is fixed in the way of working, the `factory` template, and the skill built from it, not with prompt text beside them ([DEC-147](docs/decisions.md#dec-147-the-way-of-working-stands-in-the-spec-and-skills-realize-it)).
+- `/markitect-architect`, `/markitect-build`, `/markitect-review`, `/markitect-bughunt`, `/markitect-cleanup`, `/markitect-improve`, `/markitect-control-sample`, `/markitect-read`, `/markitect-triage` and `/markitect-intake` are the current plugin's and start real agents: run them only on a committed test project, bounded, as CONTRIBUTING says.
 - Documentation is in English and describes only the current state, with one concept and no quotes.
 
 [CONTRIBUTING](CONTRIBUTING.md#where-things-go) names the page for every topic, and the [roadmap](docs/roadmap.md) the current steps.

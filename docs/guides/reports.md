@@ -1,6 +1,6 @@
 # Reports, settings and control samples
 
-The files of fixed form that the tool `markitect` reads beside the spec, the state and the history: the reports in `.markitect/reports/`, the settings in `.markitect/settings.md` and the results of control samples in `.markitect/samples/` ([DEC-128](../decisions.md#dec-128-reports-and-actions-hold-everything-that-needs-a-change), [DEC-132](../decisions.md#dec-132-markitect-is-a-tool-jobs-and-runners)). Each is a document of the language, of a type the tool owns ([library](library.md#the-types-the-tool-owns)), and holds values of fixed form that `check` checks and the tool reads: the waiting entries of `status`, the counter-check folder of `mark`, the figures of the factory and the reports of `compare`. [Reports and actions](../concept/reports-and-actions.md), [trust](../concept/trust.md) and [jobs and runners](../concept/jobs-and-runners.md#the-project) in the concept say what they are for; this page says precisely what the tool reads. The examples are a small lending library.
+The files of fixed form that the tool `markitect` reads beside the spec, the state and the history: the reports in `.markitect/reports/`, the settings in `.markitect/settings.md` and the results of control samples in `.markitect/samples/` ([where Main is](../roadmap.md#where-main-is)). Each is a document of the language, of a type the tool owns ([library](library.md#the-types-the-tool-owns)), and holds values of fixed form that `check` checks and the tool reads: the waiting entries of `status`, the counter-check folder of `mark`, the figures of the factory and the reports of `compare`. [Where Main is](../roadmap.md#where-main-is) says how they relate to the concept; this page says precisely what the tool reads. The examples are a small lending library.
 
 ## Values
 
@@ -184,7 +184,7 @@ branch sample-2026-11-19
 
 ## The figures of the factory
 
-`markitect figures` prints, after the [change signals](signals.md#the-change-signals), the figures of how the factory runs ([the tool](../concept/the-tool.md#the-figures)), each with the project's own reference beside it. They read no clock: the same files give the same figures anywhere. A value that is not of its form counts for nothing, and what `check` finds in the files is printed first as a note.
+`markitect figures` prints, after the [change signals](signals.md#the-change-signals), the figures of how the factory runs ([where Main is](../roadmap.md#where-main-is)), each with the project's own reference beside it. They read no clock: the same files give the same figures anywhere. A value that is not of its form counts for nothing, and what `check` finds in the files is printed first as a note.
 
 | Figure | Name | Lists |
 |---|---|---|
