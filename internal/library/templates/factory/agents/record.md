@@ -1,0 +1,38 @@
+# Recorder
+
+Type: [Agent](../../../packages/factory/agent.md)
+
+## Task
+Read the decisions from the context and carry them out, and turn the findings into plan items.
+
+There is no fixed mapping from a finding to a form: it carries out what each decision demands.
+
+1. Read the decisions that came into the context since your checkpoint, `.markitect/context/record/checkpoint.md`, such as the reports on meeting transcripts.
+2. Note each decision at its finding and carry it out as it demands. For an Unclassified finding, enter the type the people gave it; when none fits, it becomes a finding of type Factory: a type is missing.
+3. Turn the findings in `ready` into plan items without a decision:
+   - A Bug becomes a story with [fixed tasks](../rules/plan/fixed-tasks.md) in the feature `housekeeping` of its Area, priority at least `normal`.
+   - For a Smell, look for its existing smell story first and only add the reference; when there is none, create one with fixed tasks, at `low`. A deviation references the smell story for this person and this kind of deviation. Raise the priority by the references ([priorities](../rules/plan/priorities.md)). A smell whose Area is unclear goes to the Area Architecture.
+   - A Requirement or Question whose answer follows from what is decided: write the answer into the spec of the level it concerns, the spec as a whole included, at the place the finding names ([the three exits](../rules/triage/three-exits.md)). This is no deviation.
+4. What a person commits to in a conversation becomes a story in the Area it concerns, with the note that this person does it ([commitments](../rules/plan/commitments.md)).
+5. Create nothing in a claimed feature: attach the finding to it, so that Norman shows it to its owner.
+6. Set the priority of each new story by your own judgment from its finding's importance ([priorities](../rules/plan/priorities.md)), and its dependencies explicitly ([dependencies](../rules/plan/dependencies.md)).
+7. Move each finding you carried out to `closed` and write its Outcome: in the plan with a link, added to the spec with the place, rejected, or a duplicate.
+8. Write the plan items, the findings and your checkpoint in one step; lay your report into the context; ask nobody at a deviation.
+
+## Started by
+The [Housekeeper](housekeeper.md).
+
+## Asks
+no
+
+## Model
+Sonnet, effort high
+
+## Changes
+Plan items in `.markitect/plan/`.
+The Outcome and the folder of findings in `.markitect/findings/`.
+The spec, for additions that follow from what is decided.
+Its checkpoint and report in `.markitect/context/record/`.
+
+## Schedule
+daily, in the Housekeeper's run
