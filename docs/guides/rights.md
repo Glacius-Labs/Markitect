@@ -1,6 +1,6 @@
 # Rights and landing
 
-What each role of a job may change, how the tool `markitect` checks a step against it, and how it checks whether a branch lands ([DEC-127](../decisions.md#dec-127-one-landing-rule-and-a-spec-change-lands-with-its-realization), [DEC-132](../decisions.md#dec-132-markitect-is-a-tool-jobs-and-runners)). [Rights come from the steps](../concept/jobs-and-runners.md#rights-come-from-the-steps) and [the landing rule](../concept/the-factory.md#the-landing-rule) in the concept say what they are for; this page says precisely what the tool checks. The examples are a small lending library.
+What each role of a job may change, how the tool `markitect` checks a step against it, and how it checks whether a branch lands ([where Main is](../roadmap.md#where-main-is)). [Where Main is](../roadmap.md#where-main-is) says how they relate to the concept; this page says precisely what the tool checks. The examples are a small lending library.
 
 ## The write table
 
@@ -17,7 +17,7 @@ The write table ships with the tool. A step runs as one role, and its role may c
 | `owner` | A branch from a conversation: everything, the control files and new reports with the owner as source included, but never a row with the source `mark`, never a `verdict` event, and a row with the source `move` only as a move of the step [carried](#rows-and-events) it |
 | `reader`, `sampler`, `intake` | Nothing. The job writes the sampler's list of planted deviations and the intake's report |
 
-**Intake** is a job that reads a signal from outside isolated and writes only a report of fixed form ([intake](../concept/reports-and-actions.md#intake)). Its agent writes nothing; the job writes the report from its answer, with `intake` as the source, so the role `intake` has no rights and the step `job` writes its report.
+**Intake** is a job that reads a signal from outside isolated and writes only a report of fixed form ([where Main is](../roadmap.md#where-main-is)). Its agent writes nothing; the job writes the report from its answer, with `intake` as the source, so the role `intake` has no rights and the step `job` writes its report.
 
 **Control files** are `.markitect/version`, `.markitect/spec`, `.markitect/settings.md`, `.markitect/.gitattributes`, `.markitect/rules.md`, which holds the rules learned of the owner's decisions, and the CI definition: the files the [settings' CI section](reports.md#settings) names, by default `.github/workflows/`. Only the owner changes them. Any other file of `.markitect/`, outside `reports/` and `samples/`, is the owner's too.
 
@@ -63,4 +63,4 @@ The tests and the counter-checks are the runner's part of the landing rule: the 
 
 ## How firm it is
 
-The jobs are skills, so Claude lays out the state before each step, everywhere: the step check makes shortcuts visible and proves nothing. What is a fact in CI is the landing check and the tests, run by the workflow as a step of its own that no agent can change, and a required check a job cannot skip ([where the check is a fact](../concept/jobs-and-runners.md#rights-come-from-the-steps)).
+The jobs are skills, so Claude lays out the state before each step, everywhere: the step check makes shortcuts visible and proves nothing. What is a fact in CI is the landing check and the tests, run by the workflow as a step of its own that no agent can change, and a required check a job cannot skip ([where Main is](../roadmap.md#where-main-is)).

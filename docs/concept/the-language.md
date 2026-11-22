@@ -11,7 +11,7 @@ A spec is a folder, by default `docs/spec/`, and every `.md` file in it, at any 
 - **Sections.** Each level-2 heading `## …` opens a section.
 - **Links.** A link is an ordinary Markdown link with a relative path to a `.md` file, `[Member](../roles/member.md)`, optionally with a section, `[Member](../roles/member.md#who-counts)`. Every such link must point to a document of the spec. Web addresses, `mailto:` and a bare `#section` are not checked, and links in code are text.
 
-A link is no import. It says that one document concerns another, and a change at either end makes the other suspect ([§6](the-state.md)). No section means anything special to the tool.
+A link is no import. It says that one document concerns another, and a change at either end makes the other suspect ([§6](the-state.md)). A link from a document of the work into the spec makes nothing in the spec suspect. No section means anything special to the tool.
 
 ## Types
 
@@ -53,15 +53,19 @@ Where a type says that a section holds a link to something, each document links 
 
 ## Packages and templates
 
-- **A package** is a folder of types, such as `core` (concept, decision, goal, role, rule, term), `software` or `company`. A type in one package may link to types of another.
-- **A template** is a folder of documents that name their types by links into the packages and leave their sections empty. Every folder of a template is a template too, so a template applies at any level: a whole project, one area of the domain, or a field such as fire protection.
+- **A package** is a folder of types, such as `core` (concept, decision, goal, role, rule, term), `software`, `company` or `factory`. A type in one package may link to types of another.
+- **A template** is a folder of documents that name their types by links into the packages and leave their sections empty. Every folder of a template is a template too, so a template applies at any level: a whole project, one part of the domain, or a field such as fire protection. Its README says what the part is for and how to fill it.
 - **`apply`** copies a template into the spec, together with every package its documents need. A package the spec already has is never overwritten: the spec owns its copy and may change it. After `apply`, `check` lists the empty sections, and that list is the work still to do.
 
-The library of packages and templates, the type of a report, the reference values and the question catalogs ship inside the tool, in its version ([§12](jobs-and-runners.md#the-project)).
+Each type says before its sections what it is and when to use it, and under each section what belongs there, with an example. The library of packages and templates, the reference values and the question catalogs ship inside the tool, in its version ([§12](the-project.md)).
 
-## Areas
+## Values
 
-An area is a folder of the spec with a README whose type is an area type. The sections of the area type are its table of contents, each linking to the README of an area below or to the documents it holds. For a software project the areas are Purpose, Context, Domain, Interfaces, Quality and Architecture ([§4](what-goes-in-a-spec.md)). A rule for one module links that module's README in a section such as "Applies to".
+A value, such as the state of a story or the owner of an Area, stands in the first line of its section, `## State` with `ready` under it. There are no lines in the head but the type line. So plan items, findings and reports are written in the same language as the spec, and `check` checks them like any document ([§9](the-work.md)).
+
+## Parts
+
+A part of the spec is a folder with a README, which is its table of contents: each entry links the README of a part below or a document the part holds. A rule for one module links that module's README in a section such as "Applies to".
 
 ## The writing rule
 

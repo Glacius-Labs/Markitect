@@ -6,7 +6,7 @@ Markitect is a small Go tool with a Claude Code plugin, developed as an ordinary
 
 1. **Start clean.** Work in a worktree of your own, from the current `origin/main`, on a branch with a prefix such as `dev/`, `fix/` or `docs/`. Check the folder, the branch and the base commit before you write. Never use `git stash`: it is shared by every worktree. Set work aside with a commit instead.
 2. **Find the owner.** Each Go package has one row in the [code map](docs/development/code-map.md) with the page that owns its behavior, and each topic has one page ([below](#where-things-go)). Change the behavior, its tests and its page together.
-3. **Keep it simple.** Choose the clean design even when it is more work, add no aliases or compatibility paths, and delete what is obsolete together with its tests and pages ([DEC-139](docs/decisions.md#dec-139-quality-simplicity-and-stability-over-effort-and-compatibility)). Fix a failure in how agents work with Markitect in the tool contract, not with more prompt text ([DEC-141](docs/decisions.md#dec-141-agents-get-tasks-not-process)).
+3. **Keep it simple.** Choose the clean design even when it is more work, add no aliases or compatibility paths, and delete what is obsolete together with its tests and pages ([DEC-139](docs/decisions.md#dec-139-quality-simplicity-and-stability-over-effort-and-compatibility)). Fix a failure in how agents work with Markitect in the way of working, the `factory` template, and the skill built from it, not with prompt text beside them ([DEC-147](docs/decisions.md#dec-147-the-way-of-working-stands-in-the-spec-and-skills-realize-it)).
 4. **Work in parallel only apart.** Several sessions may work at once when their files do not overlap. Shared files, such as `go.mod`, the [architecture rule table](internal/tooling/architecture/rules.go) and generated pages, have one writer at a time.
 
 Product code and tests that handle a project's `.markitect/` folder use fixtures, never this repository's own files.
@@ -33,9 +33,9 @@ Product code and tests that handle a project's `.markitect/` folder use fixtures
 | The library built into the tool: packages, templates and the types the tool owns | [Library](docs/guides/library.md) |
 | The signals, the topic view, reference values, question catalogs and change signals | [Signals](docs/guides/signals.md) |
 | The project: finding it, `init`, the `.markitect/` layout, the walk of its files, their hashes, the state with `status`, `mark` and `move`, the history and `compare` | [Project reference](docs/guides/project-reference.md) |
-| The reports, settings and results of control samples: their value forms, what `check` finds in them, waiting entries and the figures of the factory | [Reports, settings and control samples](docs/guides/reports.md) |
-| The write table, the step check and the landing check | [Rights and landing](docs/guides/rights.md) |
-| The plugin: its skills and agents, the frame of a job, the answer form, the launcher and how firm its checks are | [The plugin](docs/guides/plugin.md) |
+| The reports, settings and results of control samples of the tool as built: their value forms, what `check` finds in them, waiting entries and the figures of the factory | [Reports, settings and control samples](docs/guides/reports.md) |
+| The write table, the step check and the landing check of the tool as built | [Rights and landing](docs/guides/rights.md) |
+| The plugin as built: its skills and agents, the frame of a job, the answer form, the launcher and how firm its checks are | [The plugin](docs/guides/plugin.md) |
 | What makes a good spec, and how to write one | [Is the spec good?](docs/concept/is-the-spec-good.md) |
 | Packages, layers and the repository layout | [Architecture](docs/architecture.md) and the generated [code map](docs/development/code-map.md) |
 | Releases | [Releasing](docs/releasing.md) |
@@ -91,9 +91,9 @@ Local checks and the independent review are the basis for a merge, and CI is opt
 2. **Get one independent review of the complete diff,** by someone who did not write it: a person, or a fresh agent that has not seen your reasoning. Fix what it finds, and review again if the fixes are substantial.
 3. **Merge the reviewed head:** with a merge commit and the head matched, `gh pr merge NUMBER --merge --match-head-commit SHA`, without bypassing branch protection. Then read Main back.
 
-**Real agent runs.** The skills `/markitect-architect`, `/markitect-build`, `/markitect-review`, `/markitect-bughunt`, `/markitect-cleanup`, `/markitect-improve`, `/markitect-control-sample`, `/markitect-read`, `/markitect-triage` and `/markitect-intake` start real agents. Run them only on a committed test project, in your own Claude Code session or a worktree of that project. Before a run, name the project and its source commit, the limits, when to abort and the cleanup; after it, report what happened, failures included, in the PR it informs. The tool's commands start no agent and run anywhere.
+**Real agent runs.** The skills of the current plugin, `/markitect-architect`, `/markitect-build`, `/markitect-review`, `/markitect-bughunt`, `/markitect-cleanup`, `/markitect-improve`, `/markitect-control-sample`, `/markitect-read`, `/markitect-triage` and `/markitect-intake` start real agents. Run them only on a committed test project, in your own Claude Code session or a worktree of that project. Before a run, name the project and its source commit, the limits, when to abort and the cleanup; after it, report what happened, failures included, in the PR it informs. The tool's commands start no agent and run anywhere.
 
-**Releases** follow [Releasing](docs/releasing.md) ([DEC-133](docs/decisions.md#dec-133-the-project-holds-only-the-spec-and-markitect-and-pins-its-version)). There is no deployment.
+**Releases** follow [Releasing](docs/releasing.md) ([DEC-149](docs/decisions.md#dec-149-markitect-holds-the-work-and-init-lays-out-templates-and-skills)). There is no deployment.
 
 ## Reporting
 
