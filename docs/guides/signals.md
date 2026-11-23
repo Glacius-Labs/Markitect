@@ -6,12 +6,11 @@ How the tool `markitect` shows where reading a spec pays off: the statements it 
 
 | Command | Does |
 |---|---|
-| `markitect topic` | The signals of the whole spec. The text shows the first ten findings of each signal; `--all` shows every one, and `--json` always does |
+| `markitect topic` | The signals of the whole spec, and after them the change signals of its history ([below](#the-change-signals)). The text shows the first ten findings of each signal; `--all` shows every one, and `--json` always does |
 | `markitect topic TOPIC` | The topic view of a document, a type or a folder, with every finding |
 | `markitect questions` | The question catalogs of the library packages the spec has in `packages/` |
-| `markitect figures` | The signals of the spec's changes, computed from the history ([below](#the-change-signals)) |
 
-A finding reads `path:line: signal: detail`. With `--json`, `topic` prints `topic`, `topic_kind` (`spec`, `document`, `type` or `folder`), `documents`, `strong`, `linked_from` and `mentions` as lists of statements with `file`, `line`, `section` and `text`, and `signals`, each signal's list of findings with `file`, `line` and `detail`; for a type also `typed_documents`. `questions` prints `packages`, each with `package` and `questions`.
+A finding reads `path:line: signal: detail`. With `--json`, `topic` prints `topic`, `topic_kind` (`spec`, `document`, `type` or `folder`), `documents`, `strong`, `linked_from` and `mentions` as lists of statements with `file`, `line`, `section` and `text`, and `signals`, each signal's list of findings with `file`, `line` and `detail`; for a type also `typed_documents`, and for the whole spec also `change_signals`. `questions` prints `packages`, each with `package` and `questions`.
 
 ## Statements
 
@@ -74,7 +73,7 @@ Each package has a catalog of competency questions in the library, `questions/PA
 
 ## The change signals
 
-`markitect figures` computes the signals of [the spec's changes](../concept/is-the-spec-good.md#its-changes) from the history ([project reference](project-reference.md#the-history)), against the spec as it is. Like the signals of the spec itself, each is a list sorted strongest first, with the project's own reference beside it, and no threshold; the text shows the first ten findings of each, `--all` every one. The figures of the factory, from the reports, the control samples and the history, follow them.
+`markitect topic` without a topic ends with the signals of [the spec's changes](../concept/is-the-spec-good.md#its-changes), computed from the history ([project reference](project-reference.md#the-history)) against the spec as it is, under the heading `# Change signals of the history`. A topic view shows none. Like the signals of the spec itself, each is a list sorted strongest first, with the project's own reference beside it, and no threshold; the text shows the first ten findings of each, `--all` every one. The unreadable lines of the history stand first as notes.
 
 **A change.** A verdict event's document, together with the documents its `changed` list names, is one change, each document only when its text changed: when its `self` in the event differs from the last `self` the history recorded for it in any event, or it has none yet. A document waiting in the `changed` lists of several verdicts, one recorded `fail`, one whose artifact changed and one gone from the spec count in no change while their text stays. A document recorded gone, without a `self`, ends there: a later document at its path, new or moved there, is another document of its own. A verdict joins the change before it when it follows that change's last verdict within an hour and its documents are among those of the change's first verdict: a reviewer confirming the documents of one change one after the other makes one change, not several. A verdict an hour or more later, or one that names a document the change did not have, starts a new change. The history follows a document through its moves to its current path. `move` events are no changes, and the documents a move rewrote count only when a verdict names them.
 
@@ -92,10 +91,11 @@ Each package has a catalog of competency questions in the library, `questions/PA
 The time of an event is the clock of the machine that wrote it, so a wrong clock can reorder events and shift the changes.
 
 ```text
-### hotspot (1)
+### hotspot (7)
 
-reference: changes per document: median 1; documents linking to one: median 0.5
-lending/return.md: changed 2 times × linked from 1 document = 2
+reference: changes per document: median 1; documents linking to one: median 1
+packages/core/rule.md: changed 1 time × linked from 3 documents = 3
+packages/core/concept.md: changed 1 time × linked from 2 documents = 2
 ```
 
-With `--json`, `figures` prints `verdicts` and `moves`, the events read, `changes` with `time`, `docs` and `events`, `signals`, each signal's list with `docs`, `count` and `detail`, `reference` per signal, `weakening`, and `history`, the lines of the history it cannot read, which the text shows as notes. It exits 0.
+The example shows the first lines of one signal. With `--json`, `topic` of the whole spec holds `change_signals` with `verdicts` and `moves`, the events read, `changes` with `time`, `docs` and `events`, `signals`, each signal's list with `docs`, `count` and `detail`, `reference` per signal, `weakening`, and `history`, the lines of the history it cannot read, which the text shows as notes.

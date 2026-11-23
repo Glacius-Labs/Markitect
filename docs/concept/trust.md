@@ -64,7 +64,7 @@ Markitect guards against forgetting, which is what has been seen, and against a 
 
 | What people want | What secures it | How firm |
 |---|---|---|
-| The spec is correct in itself before it is built | `status` gives no list while `check` finds errors | Firm |
+| The spec is correct in itself before it is built | `status` gives no list while `check` finds errors in the spec | Firm |
 | Every document is confirmed at the state it is in | The state's hashes, and `confirm` binding a verdict to the fingerprint the reviewer read | Firm for one step of links in both directions and for every file; the code's imports are not followed |
 | Nothing grows without a reason | Every file mapped or ignored, else unexplained | Shown by `status`; an entry becomes a finding |
 | Work outside the usual way is seen | Deviations noted by the agent at hand, and an observer of what happened on the main branch ([§8](the-circle.md#deviations)) | Shown, not prevented |

@@ -23,7 +23,7 @@ The mapping stands nowhere else: not in the artifact, not in the spec. The build
 
 A gap or contradiction in the spec is no verdict: it is a finding ([§9](the-work.md)).
 
-The documents of the work in `.markitect/`, plan items, findings, reports and briefings, are not documents of the spec and have no row. A link from them into the spec makes nothing in the spec suspect.
+The documents of the work in `.markitect/`, plan items, findings, reports and briefings, are not documents of the spec and have no row. A link from them into the spec makes nothing in the spec suspect, and `move` rewrites those links when it moves the document they name ([moving a document](#moving-a-document)).
 
 ## What `status` lists
 
@@ -39,7 +39,7 @@ Links count in both directions, as suspect links do in DOORS: a changed rule rea
 
 **Every file is mapped or ignored.** Ignored means listed in `.gitignore` or in `.markitect/ignore`, written like a `.gitignore`. Anything else is unexplained and keeps `status` from being empty, so nothing grows in the project without a reason in the spec. During a build that is the normal state of a new file until the reviewer maps it.
 
-**`check` and `status` stay apart**, as `validate` and `plan` do. `check` compares nothing with artifacts; everything that compares spec and artifacts is in `status`. `status` gives no list while there are errors in the spec or in the documents of the work.
+**`check` and `status` stay apart**, as `validate` and `plan` do. `check` compares nothing with artifacts; everything that compares spec and artifacts is in `status`. `status` gives no list while there are errors in the spec or in the state; errors in the documents of the work block nothing, and `check` reports them.
 
 **`status` only shows** ([DEC-146](../decisions.md#dec-146-a-spec-change-lands-with-its-realization-and-status-only-shows)). Its exit code follows the tool's convention, and nothing uses it as a gate, in CI neither. Since every spec change reaches the main branch with its realization ([§8](the-circle.md#building)), an entry there came past the way of working: a change past the spec, an unexplained file or changed evidence. It becomes a finding like any other observation. In an existing project whose files nobody has mapped yet, `status` shows them all as unexplained; that is expected, and it makes no finding until a run of its own has mapped them.
 
@@ -51,7 +51,7 @@ The reviewer changes nothing that was built; `confirm` is the one thing it write
 
 ## Moving a document
 
-A document is known by its path. `markitect move` moves it, rewrites every link to it in the spec, the type lines included, and the relative links inside it, and carries its row in the state to the new path. The documents whose links it rewrote changed only mechanically: `move` computes their hashes anew, records the move in the history, and puts none of them on the list.
+A document is known by its path. `markitect move` moves it, rewrites every link to it in the spec and in the documents of the work, the type lines included, and the relative links inside it, and carries its row in the state to the new path. The documents whose links it rewrote changed only mechanically: `move` computes their hashes anew, records the move in the history, and puts none of them on the list.
 
 ## The history
 
