@@ -79,12 +79,17 @@ func (d diagnostic) String() string {
 }
 
 // pathFilter says which entries of status the paths on its command line
-// name. A path names a document of the spec, with or without .md, or a file
-// or a folder of the project, below the project folder; an entry is shown
-// when it is that document or file, or lies below that folder.
+// name. A path names a document of the spec, with or without .md, or a folder
+// of the spec, below the spec folder; or a file or a folder of the project,
+// below the project folder. An entry is shown when it is that document or
+// file, or lies below that folder. A name that is both a folder of the spec
+// and a path of the project shows both readings. .markitect/ is a folder of
+// the project like any other: it holds no document of the spec and no file
+// that status lists, so it shows nothing.
 type pathFilter struct {
 	specFolder string
 	docs       []string // paths below the spec folder, with .md
+	folders    []string // folders below the spec folder
 	paths      []string // paths below the project folder
 }
 
@@ -107,6 +112,16 @@ func newPathFilter(w *workspace, s *state.Status, args []string) (*pathFilter, e
 				f.paths = append(f.paths, p)
 				known = true
 			}
+			// A folder of the spec: documents lie below it, or it is a folder
+			// on disk below the spec folder.
+			inFolder := false
+			for _, d := range w.Spec.Documents {
+				inFolder = inFolder || strings.HasPrefix(d.Path, p+"/")
+			}
+			if info, err := os.Stat(filepath.Join(w.specDir(), filepath.FromSlash(p))); err == nil && info.IsDir() || inFolder {
+				f.folders = append(f.folders, p)
+				known = true
+			}
 		}
 		if !known {
 			return nil, fmt.Errorf("unknown path: %s", arg)
@@ -123,6 +138,11 @@ func (f *pathFilter) doc(doc string) bool {
 	}
 	for _, d := range f.docs {
 		if d == doc {
+			return true
+		}
+	}
+	for _, folder := range f.folders {
+		if strings.HasPrefix(doc, folder+"/") {
 			return true
 		}
 	}

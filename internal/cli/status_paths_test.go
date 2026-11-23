@@ -112,18 +112,24 @@ func TestStatusForPaths(t *testing.T) {
 		want []string
 		code int
 	}{
-		"a document":                     {[]string{"lending/borrow"}, []string{"changed lending/borrow.md: self"}, ExitFound},
-		"a document with .md":            {[]string{"lending/borrow.md"}, []string{"changed lending/borrow.md: self"}, ExitFound},
-		"a document by its project path": {[]string{"docs/spec/lending/borrow.md"}, []string{"changed lending/borrow.md: self"}, ExitFound},
-		"a document that is suspect":     {[]string{"roles/member"}, []string{"suspect roles/member.md: link:lending/borrow.md"}, ExitFound},
-		"a document that is clean":       {[]string{"types/operation"}, nil, ExitOK},
-		"a folder of the spec":           {[]string{"docs/spec/lending"}, []string{"changed lending/borrow.md: self"}, ExitFound},
-		"a folder with a slash":          {[]string{"docs/spec/lending/"}, []string{"changed lending/borrow.md: self"}, ExitFound},
-		"the spec folder":                {[]string{"docs/spec"}, all[:2], ExitFound},
-		"a folder of the project":        {[]string{"src"}, []string{"unexplained src/fines.go"}, ExitFound},
-		"a file":                         {[]string{"tests/new_test.go"}, []string{"unexplained tests/new_test.go"}, ExitFound},
-		"a file that is mapped":          {[]string{"src/loans.go"}, nil, ExitOK},
-		"several":                        {[]string{"roles/member", "src", "lending/borrow.md"}, []string{"changed lending/borrow.md: self", "suspect roles/member.md: link:lending/borrow.md", "unexplained src/fines.go"}, ExitFound},
+		"a document":                                  {[]string{"lending/borrow"}, []string{"changed lending/borrow.md: self"}, ExitFound},
+		"a document with .md":                         {[]string{"lending/borrow.md"}, []string{"changed lending/borrow.md: self"}, ExitFound},
+		"a document by its project path":              {[]string{"docs/spec/lending/borrow.md"}, []string{"changed lending/borrow.md: self"}, ExitFound},
+		"a document that is suspect":                  {[]string{"roles/member"}, []string{"suspect roles/member.md: link:lending/borrow.md"}, ExitFound},
+		"a document that is clean":                    {[]string{"types/operation"}, nil, ExitOK},
+		"a folder of the spec":                        {[]string{"docs/spec/lending"}, []string{"changed lending/borrow.md: self"}, ExitFound},
+		"a folder of the spec, relative to it":        {[]string{"lending"}, []string{"changed lending/borrow.md: self"}, ExitFound},
+		"a folder of the spec with a slash":           {[]string{"lending/"}, []string{"changed lending/borrow.md: self"}, ExitFound},
+		"a folder of the spec that holds a suspect":   {[]string{"roles"}, []string{"suspect roles/member.md: link:lending/borrow.md"}, ExitFound},
+		"a folder of the spec with nothing listed":    {[]string{"types"}, nil, ExitOK},
+		"the folder of the work":                      {[]string{".markitect"}, nil, ExitOK},
+		"a folder of the spec and one of the project": {[]string{"lending", "src"}, []string{"changed lending/borrow.md: self", "unexplained src/fines.go"}, ExitFound},
+		"a folder with a slash":                       {[]string{"docs/spec/lending/"}, []string{"changed lending/borrow.md: self"}, ExitFound},
+		"the spec folder":                             {[]string{"docs/spec"}, all[:2], ExitFound},
+		"a folder of the project":                     {[]string{"src"}, []string{"unexplained src/fines.go"}, ExitFound},
+		"a file":                                      {[]string{"tests/new_test.go"}, []string{"unexplained tests/new_test.go"}, ExitFound},
+		"a file that is mapped":                       {[]string{"src/loans.go"}, nil, ExitOK},
+		"several":                                     {[]string{"roles/member", "src", "lending/borrow.md"}, []string{"changed lending/borrow.md: self", "suspect roles/member.md: link:lending/borrow.md", "unexplained src/fines.go"}, ExitFound},
 	} {
 		t.Run(name, func(t *testing.T) {
 			l := statusOf2(t, dir, tc.args...)
