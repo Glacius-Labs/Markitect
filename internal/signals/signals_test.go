@@ -98,7 +98,7 @@ func TestWeakAndStrong(t *testing.T) {
 		`rules/fees.md:6: weak: 1 (conditions if): "If a book is late at East, a fee is due."`,
 	})
 	// The subject of the strong statement is what it links to; its reach is how
-	// many documents link to or mention the subject.
+	// many documents link to or name the subject.
 	eq(t, findings(a, StrongStatements), []string{
 		`rules/loans.md:6: strong: every about places/README.md, referred to by 3 documents: "Every member returns books to the branches within three weeks."`,
 	})
@@ -142,9 +142,9 @@ func TestStructureSignals(t *testing.T) {
 		"places/central.md:1: scattered-rules: conditional or restricting statements in 2 other documents refer to it: members/alan.md, rules/loans.md",
 		"places/east.md:1: scattered-rules: conditional or restricting statements in 1 other document refer to it: rules/fees.md",
 	})
-	// Alan links the Central Library elsewhere, so only the East Branch is an unlinked mention.
-	eq(t, findings(a, UnlinkedMention), []string{
-		`members/alan.md:11: unlinked-mention: "East Branch" (places/east.md) 1 time, never linked`,
+	// Alan links the Central Library elsewhere, so only the East Branch is an unlinked name.
+	eq(t, findings(a, UnlinkedName), []string{
+		`members/alan.md:11: unlinked-name: "East Branch" (places/east.md) 1 time, never linked`,
 	})
 }
 
@@ -154,20 +154,20 @@ func TestTopic(t *testing.T) {
 	if !ok || topic.Kind != "document" {
 		t.Fatal(topic)
 	}
-	var linked, strong, mentions []string
+	var linked, strong, named []string
 	for _, st := range topic.LinkedFrom {
 		linked = append(linked, st.Doc+":"+strconv.Itoa(st.Line))
 	}
 	for _, st := range topic.Strong {
 		strong = append(strong, st.Doc+":"+strconv.Itoa(st.Line))
 	}
-	for _, st := range topic.Mentions {
-		mentions = append(mentions, st.Doc+":"+strconv.Itoa(st.Line))
+	for _, st := range topic.Named {
+		named = append(named, st.Doc+":"+strconv.Itoa(st.Line))
 	}
 	// The link to places/README.md counts, so the rule for every branch shows.
 	eq(t, linked, []string{"members/ada.md:11", "members/grace.md:9", "rules/fees.md:6", "rules/loans.md:6"})
 	eq(t, strong, []string{"rules/loans.md:6"})
-	eq(t, mentions, []string{"members/alan.md:11"})
+	eq(t, named, []string{"members/alan.md:11"})
 	if len(topic.Findings[ScatteredRules]) != 1 || len(topic.Findings[LinkGroup]) != 1 {
 		t.Error(topic.Findings)
 	}
@@ -208,9 +208,9 @@ func TestTiesAreOrderedByDetail(t *testing.T) {
 		"east.md": "# East Branch\n",
 		"west.md": "# West Branch\n",
 	}
-	first := strings.Join(findings(Analyze(spec(t, files), nil), UnlinkedMention), "\n")
+	first := strings.Join(findings(Analyze(spec(t, files), nil), UnlinkedName), "\n")
 	for i := 0; i < 20; i++ {
-		if got := strings.Join(findings(Analyze(spec(t, files), nil), UnlinkedMention), "\n"); got != first {
+		if got := strings.Join(findings(Analyze(spec(t, files), nil), UnlinkedName), "\n"); got != first {
 			t.Fatalf("run %d:\n%s\nfirst:\n%s", i, got, first)
 		}
 	}

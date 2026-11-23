@@ -70,7 +70,8 @@ func (s *Spec) ChainSections(t *Document) []ChainSection {
 }
 
 // IsType reports whether d is a type: a document that another document names
-// in its type line or its extends line, or one whose extends line is a link.
+// in its type line, its extends line or a property type line, or one whose
+// extends line is a link or that has a property type line. A README is none.
 func (s *Spec) IsType(d *Document) bool { return s.types[d.Path] }
 
 // Objects returns the documents whose type is t or a type that extends t,

@@ -18,7 +18,10 @@ type Spec struct {
 
 // NewSpec indexes documents by path and sorts them. A type line or an extends
 // line that names a README names no type: the document keeps the line and
-// HeadReadme holds the path.
+// HeadReadme holds the path. A type is a document that a type line, an extends
+// line or a property type line names, that has an extends line or that has a
+// property type line; a README is none, and the property type lines of a
+// document with a type line are errors that name nothing.
 func NewSpec(docs []*Document) *Spec {
 	s := &Spec{Documents: append([]*Document(nil), docs...), byPath: make(map[string]*Document, len(docs)), types: map[string]bool{}, modules: map[string]bool{}}
 	sort.SliceStable(s.Documents, func(i, j int) bool { return s.Documents[i].Path < s.Documents[j].Path })
@@ -38,6 +41,19 @@ func NewSpec(docs []*Document) *Spec {
 		}
 		if d.HasExtends() {
 			s.types[d.Path] = true
+		}
+		if d.holdsProperties() {
+			for _, sec := range d.Sections {
+				if sec.Property.Kind == "" {
+					continue
+				}
+				s.types[d.Path] = true
+				for _, r := range sec.Property.Refs {
+					if !isReadmeDocument(s, r.Target) {
+						s.types[r.Target] = true
+					}
+				}
+			}
 		}
 	}
 	return s
@@ -170,6 +186,7 @@ func Check(s *Spec) []Diagnostic {
 				break
 			}
 			out = append(out, s.checkSections(d, t, d.TypeLine)...)
+			out = append(out, s.checkProperties(d, t)...)
 		}
 		for _, line := range d.StrayTypeLines {
 			if d.ExtendsLine != 0 && d.inHead(line) {
@@ -179,6 +196,8 @@ func Check(s *Spec) []Diagnostic {
 			}
 		}
 		out = append(out, s.checkExtends(d)...)
+		out = append(out, s.checkPropertyLines(d)...)
+		out = append(out, s.checkRetyped(d)...)
 		out = append(out, s.checkReadmeType(d)...)
 		out = append(out, checkPatterns(d)...)
 		out = append(out, s.checkInternal(d, shown)...)
@@ -193,6 +212,7 @@ func Check(s *Spec) []Diagnostic {
 			}
 		}
 	}
+	out = append(out, s.checkModuleCycles()...)
 	sort.SliceStable(out, func(i, j int) bool {
 		if out[i].Path != out[j].Path {
 			return out[i].Path < out[j].Path

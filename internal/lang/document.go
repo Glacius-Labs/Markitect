@@ -1,7 +1,8 @@
 // Package lang is the spec language over supplied files: it parses documents,
-// with their title, type or extends line, sections and links, loads a spec from
-// a file system, resolves the sections of a type through its chain of base
-// types and checks it.
+// with their title, type or extends line, sections, the property type lines of
+// the sections and links, loads a spec from a file system, resolves the sections
+// and the property types of a type through its chain of base types and checks
+// it, the dependencies between its modules included.
 //
 // It reads only the file system it is handed and writes nothing. Documents are
 // read as CommonMark with GitHub's extensions, as GitHub renders them. The
@@ -44,7 +45,8 @@ type Document struct {
 	// absent or is not exactly one link to a .md path.
 	TypeRaw  string
 	TypePath string
-	// StrayTypeLines are the other lines of text that start with "Type:".
+	// StrayTypeLines are the other lines of text that start with "Type:", but for
+	// the property type lines of the sections.
 	StrayTypeLines []int
 	// ExtendsLine is the line starting with "Extends:" in the slot after the
 	// title, where an object has its type line; a document has one of the two.
@@ -72,12 +74,13 @@ type Document struct {
 	// line belongs; both are 0 when that block is no paragraph.
 	HeadFirst, HeadLast int
 	Sections            []Section
-	// Links are the links to .md paths outside type and extends lines.
+	// Links are the links to .md paths outside type, extends and property type
+	// lines.
 	Links []Link
 	// CodeSpans are the code spans of the text, in order, outside code blocks.
 	CodeSpans []CodeSpan
-	// Refs are all destinations of links to .md paths, type and extends lines,
-	// footnotes and link reference definitions included, with their place in
+	// Refs are all destinations of links to .md paths, type, extends and property
+	// type lines, footnotes and link reference definitions included, with their place in
 	// Source.
 	Refs []Ref
 	// Texts are the stretches of prose, in order.
@@ -97,6 +100,40 @@ type Section struct {
 	// First is the first line of text under the heading that shows something,
 	// as plain text.
 	First string
+	// FirstLine is the line of the source that holds First, 0 without text.
+	FirstLine int
+	// Property is the property type line of the section, zero without one.
+	Property PropertyLine
+}
+
+// The kinds of a property type line.
+const (
+	// PropertyRefs is a line of links: the property refers to documents of
+	// these types.
+	PropertyRefs = "refs"
+	// PropertyValues is a line of code spans: the property is one of these
+	// fixed values.
+	PropertyValues = "values"
+)
+
+// PropertyLine is the line starting with "Type:" that stands first under a
+// level-2 heading, when the block there is a paragraph. Line is 0 without one.
+type PropertyLine struct {
+	Line int
+	// Kind is PropertyRefs or PropertyValues, and "" when the line is neither
+	// links nor code spans separated by commas: it is then read without a type.
+	Kind string
+	// Refs are the links of a PropertyRefs line, in order.
+	Refs []PropertyRef
+	// Values are the code spans of a PropertyValues line, in order.
+	Values []string
+}
+
+// PropertyRef is one link of a property type line.
+type PropertyRef struct {
+	// Raw is the path as written, without its #section, and Target that path
+	// resolved below the spec folder.
+	Raw, Target string
 }
 
 // ReadmeHead is a type line or an extends line of a README.
@@ -125,7 +162,10 @@ type Link struct {
 	Raw string
 	// Section is the heading of the section the link stands in, or "".
 	Section string
-	Line    int
+	// SectionLine is the line of the heading of that section, 0 for a link
+	// before the first section.
+	SectionLine int
+	Line        int
 }
 
 // HasType reports whether the document names a type with a valid type line.
@@ -211,8 +251,13 @@ type parser struct {
 	source []byte // the normalized text
 	orig   []int  // the offset in Document.Source of each offset of source
 	starts []int  // the offset of each line
-	// headLines are the lines of type lines and extends lines, placed or not.
+	// headLines are the lines of type lines, extends lines and property type
+	// lines, placed or not.
 	headLines map[int]bool
+	// properties are the property type lines by the line of their heading.
+	properties map[int]PropertyLine
+	// sectionLine is the line of the heading of the section being read.
+	sectionLine int
 }
 
 // line returns the line of a byte offset.
@@ -231,6 +276,7 @@ func lineStarts(source []byte) []int {
 func (p *parser) read(root ast.Node) {
 	d := p.doc
 	p.headLines = map[int]bool{}
+	p.readProperties(root)
 	first := nextBlock(root.FirstChild())
 	if first != nil {
 		d.ContentLine = p.line(first.Pos())
@@ -260,7 +306,7 @@ func (p *parser) read(root ast.Node) {
 			}
 		}
 	}
-	// Stray type and extends lines first, in paragraphs and in the text of tight
+	// Property type lines and stray type and extends lines first, in paragraphs and in the text of tight
 	// list items, so that their links are skipped below.
 	_ = ast.Walk(root, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		if !entering || (n.Kind() != ast.KindParagraph && n.Kind() != ast.KindTextBlock) {
@@ -287,7 +333,7 @@ func (p *parser) read(root ast.Node) {
 	sec := -1
 	for n := root.FirstChild(); n != nil; n = n.NextSibling() {
 		if !isBlock(n) {
-			p.links(n, "")
+			p.links(n, "", 0)
 			continue
 		}
 		if h, ok := n.(*ast.Heading); ok && h.Level <= 2 {
@@ -296,19 +342,22 @@ func (p *parser) read(root ast.Node) {
 				if n != first && d.SecondTitleLine == 0 {
 					d.SecondTitleLine = line
 				}
-				section, sec = "", -1
+				section, sec, p.sectionLine = "", -1, 0
 			} else {
 				section = p.headingText(h)
-				d.Sections = append(d.Sections, Section{Heading: section, Line: line})
-				sec = len(d.Sections) - 1
+				d.Sections = append(d.Sections, Section{Heading: section, Line: line, Property: p.properties[line]})
+				sec, p.sectionLine = len(d.Sections)-1, line
 			}
 		} else if sec >= 0 && p.hasText(n) {
 			d.Sections[sec].HasText = true
 			if d.Sections[sec].First == "" {
 				d.Sections[sec].First = p.firstLine(n)
+				if d.Sections[sec].First != "" {
+					d.Sections[sec].FirstLine = p.firstTextLine(n)
+				}
 			}
 		}
-		p.links(n, section)
+		p.links(n, section, p.sectionLine)
 		p.codeSpans(n, section)
 		p.texts(n, section)
 	}
@@ -401,7 +450,7 @@ func visible(s string) bool {
 
 // links collects the links to .md paths in a block, outside the type and
 // extends lines.
-func (p *parser) links(block ast.Node, section string) {
+func (p *parser) links(block ast.Node, section string, sectionLine int) {
 	_ = ast.Walk(block, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		link, ok := n.(*ast.Link)
 		if !ok || !entering {
@@ -409,7 +458,7 @@ func (p *parser) links(block ast.Node, section string) {
 		}
 		line := p.line(link.Pos())
 		if raw, ok := localPath(string(link.Destination)); ok && !p.headLines[line] {
-			p.doc.Links = append(p.doc.Links, Link{Target: resolve(p.doc.Path, raw), Raw: raw, Section: section, Line: line})
+			p.doc.Links = append(p.doc.Links, Link{Target: resolve(p.doc.Path, raw), Raw: raw, Section: section, SectionLine: sectionLine, Line: line})
 		}
 		return ast.WalkContinue, nil
 	})
@@ -423,23 +472,33 @@ func (p *parser) codeSpans(block ast.Node, section string) {
 		if !ok || !entering {
 			return ast.WalkContinue, nil
 		}
-		var b strings.Builder
 		line := 0
 		for c := span.FirstChild(); c != nil; c = c.NextSibling() {
 			if t, ok := c.(*ast.Text); ok {
-				if line == 0 {
-					line = p.line(t.Segment.Start)
-				}
-				b.Write(t.Segment.Value(p.source))
+				line = p.line(t.Segment.Start)
+				break
 			}
 		}
-		code := strings.ReplaceAll(b.String(), "\n", " ")
-		if len(code) > 1 && code[0] == ' ' && code[len(code)-1] == ' ' && strings.Trim(code, " ") != "" {
-			code = code[1 : len(code)-1]
-		}
-		p.doc.CodeSpans = append(p.doc.CodeSpans, CodeSpan{Text: code, Section: section, Line: max(line, 1)})
+		p.doc.CodeSpans = append(p.doc.CodeSpans, CodeSpan{Text: codeText(span, p.source), Section: section, Line: max(line, 1)})
 		return ast.WalkSkipChildren, nil
 	})
+}
+
+// codeText returns the code of a code span as it shows: line breaks as spaces,
+// one space at each end dropped when both ends have one and the code is not
+// all spaces.
+func codeText(span *ast.CodeSpan, source []byte) string {
+	var b strings.Builder
+	for c := span.FirstChild(); c != nil; c = c.NextSibling() {
+		if t, ok := c.(*ast.Text); ok {
+			b.Write(t.Segment.Value(source))
+		}
+	}
+	code := strings.ReplaceAll(b.String(), "\n", " ")
+	if len(code) > 1 && code[0] == ' ' && code[len(code)-1] == ' ' && strings.Trim(code, " ") != "" {
+		code = code[1 : len(code)-1]
+	}
+	return code
 }
 
 // headingText returns a heading's text as written, its lines joined by a

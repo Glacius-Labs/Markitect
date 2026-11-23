@@ -35,7 +35,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/lang` | Package lang is the spec language over supplied files: it parses documents, with their title, type or extends line, sections and links, loads a spec from a file system, resolves the sections of a type through its chain of base types and checks it. | [docs/guides/language-reference.md#documents](../guides/language-reference.md#documents) |
+| `internal/lang` | Package lang is the spec language over supplied files: it parses documents, with their title, type or extends line, sections, the property type lines of the sections and links, loads a spec from a file system, resolves the sections and the property types of a type through its chain of base types and checks it, the dependencies between its modules included. | [docs/guides/language-reference.md#documents](../guides/language-reference.md#documents) |
 
 ## Library
 

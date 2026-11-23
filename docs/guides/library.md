@@ -17,6 +17,8 @@ The library is the folder [`internal/library/`](../../internal/library/) of Mark
 
 A role describes the usual way of working, not a permission: *Does not* names what the role usually leaves to another.
 
+No type of `core` has a property type line, so every property holds text and a link in it is a mention, also where a section's description asks for a link, as Rule's *Responsible* does. A spec that wants such a link checked as a reference gives its copy a property type line ([language reference](language-reference.md#properties-and-their-types)).
+
 The tool knows the module as the folder `core` directly below the spec folder: there `questions` finds its catalog and `topic` its reference values ([signals](signals.md)). A copy placed elsewhere works as types like any others, without them.
 
 Until a new default is designed, `core` is the whole default: types for a software project, a business or a way of working are a project's own ([roadmap](../roadmap.md#next)).

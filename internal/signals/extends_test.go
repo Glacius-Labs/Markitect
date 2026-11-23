@@ -29,9 +29,9 @@ func TestDerivedTypesAreTypes(t *testing.T) {
 		"types/artifact.md|Something a team makes.",
 		"types/website.md|A site people open.",
 	})
-	// The titles of types are no mentions: neither of the base nor of a type
+	// The titles of types are named by no one: neither of the base nor of a type
 	// that extends it.
-	eq(t, a.Mentions[0], []string(nil))
+	eq(t, a.Named[0], []string(nil))
 }
 
 func TestTopicOfDerivedTypes(t *testing.T) {

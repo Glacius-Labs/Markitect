@@ -221,8 +221,8 @@ func (s *Spec) checkReadmeType(d *Document) []Diagnostic {
 	return nil
 }
 
-// checkInternal reports every link of d, in text, on its type line or on its
-// extends line, that reaches what the README of a module does not show to the
+// checkInternal reports every link of d, in text, on its type line, on its
+// extends line or on a property type line, that reaches what the README of a module does not show to the
 // documents outside it. A document inside a module may link to everything of
 // that module and of the modules above it.
 //
@@ -287,8 +287,28 @@ func (s *Spec) checkInternal(d *Document, shown map[string]map[string]bool) []Di
 	case d.HeadReadme != "":
 		check(d.HeadReadme, max(d.TypeLine, d.ExtendsLine))
 	}
+	// The links of the text and the links of the property type lines, in the
+	// order of their lines.
+	type step struct {
+		target string
+		line   int
+	}
+	var steps []step
 	for _, l := range d.Links {
-		check(l.Target, l.Line)
+		steps = append(steps, step{l.Target, l.Line})
+	}
+	if d.holdsProperties() {
+		for _, sec := range d.Sections {
+			for _, r := range sec.Property.Refs {
+				steps = append(steps, step{r.Target, sec.Property.Line})
+			}
+		}
+	}
+	if len(steps) > len(d.Links) {
+		sort.SliceStable(steps, func(i, j int) bool { return steps[i].line < steps[j].line })
+	}
+	for _, st := range steps {
+		check(st.target, st.line)
 	}
 	return out
 }

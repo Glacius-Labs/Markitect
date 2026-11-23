@@ -43,7 +43,7 @@ type topicDocument struct {
 	Documents  []string                 `json:"documents"`
 	Strong     []statementJSON          `json:"strong"`
 	LinkedFrom []statementJSON          `json:"linked_from"`
-	Mentions   []statementJSON          `json:"mentions"`
+	Named      []statementJSON          `json:"named"`
 	Signals    map[string][]findingJSON `json:"signals"`
 	Typed      []string                 `json:"typed_documents,omitempty"`
 }
@@ -84,7 +84,7 @@ func topic(o options, stdout io.Writer) (int, error) {
 		t.Kind, t.Path = "spec", ""
 	}
 	doc := topicDocument{header: newHeader("topic"), Topic: t.Path, TopicKind: t.Kind, Documents: t.Docs,
-		Strong: statementsJSON(t.Strong), LinkedFrom: statementsJSON(t.LinkedFrom), Mentions: statementsJSON(t.Mentions),
+		Strong: statementsJSON(t.Strong), LinkedFrom: statementsJSON(t.LinkedFrom), Named: statementsJSON(t.Named),
 		Signals: map[string][]findingJSON{}, Typed: t.Documents}
 	for _, s := range signals.Names {
 		doc.Signals[s] = []findingJSON{}
@@ -136,7 +136,7 @@ func topicText(spec *lang.Spec, t *signals.Topic, all bool) string {
 			}
 		}
 		statements("Linked from", t.LinkedFrom, true)
-		statements("Mentioned without a link", t.Mentions, false)
+		statements("Named without a link", t.Named, false)
 		b.WriteString("\n## Signals\n")
 	} else {
 		fmt.Fprintf(&b, "# Signals of the spec\n")

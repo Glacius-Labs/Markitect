@@ -421,7 +421,7 @@ func TestParse(t *testing.T) {
 	if d.Title != "Ada" || d.TitleLine != 1 || d.TypeLine != 3 || d.TypeRaw != "../types/member.md" || d.TypePath != "types/member.md" {
 		t.Errorf("parsed %+v", d)
 	}
-	want := []Link{{Target: "cards/a b.md", Raw: "../cards/a%20b.md", Section: "Card", Line: 6}}
+	want := []Link{{Target: "cards/a b.md", Raw: "../cards/a%20b.md", Section: "Card", SectionLine: 5, Line: 6}}
 	if !reflect.DeepEqual(d.Links, want) {
 		t.Errorf("links %+v, want %+v", d.Links, want)
 	}

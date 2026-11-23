@@ -32,7 +32,10 @@ Markitect is three things ([DEC-154](../decisions.md#dec-154-markitect-is-a-lang
 | Word | Meaning |
 |---|---|
 | **Spec** | The one description of the project that has authority over its artifacts: the target |
-| **Document, type** | One Markdown file of the spec, and a document that declares the sections of other documents |
+| **Document, type, object** | One Markdown file of the spec; a document that declares the properties of other documents, as a class does; and a document that names a type in its type line, as an object of it |
+| **Property** | A section that a type declares, with its type: text, references to objects of a type, or fixed values |
+| **Reference, mention** | A link in a reference property of an object; and a link anywhere else in the text, a type's own description under a reference property included, which says only that one document concerns another |
+| **Dependency, cycle** | What a module has on another when one of its documents names a type there in a type line, an extends line or a property type line, or has a reference to a document there; and a chain of dependencies that comes back to its start, which the language forbids |
 | **Module** | A folder of the spec that holds a document directly, with a README that says what it is for and what it shows to other modules |
 | **Public, internal** | What a module's README lists under `Contents`, which other modules may link; and everything else in the module |
 | **Default** | What ships with Markitect: today the module `core`, with its reference values and question catalog |
