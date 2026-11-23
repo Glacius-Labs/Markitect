@@ -10,7 +10,7 @@
 | **Unambiguous and verifiable** | Two readers understand the same, and a checker can say yes or no. Every statement is as strong as possible: general and without exceptions. A real exception is a statement of its own, not a clause | Each statement | "Only for simple cases": who decides what is simple? A quality without a measure |
 | **Structured** | One thing per document. Each fact stands in its section and on the level it holds for. What has facts of its own, or is needed by several, is a document of its own that others link | Each document | Facts in the text before the first section; general planning rules inside one task |
 
-Something deserves a document of its own when it has facts of its own, is needed by several documents, changes at its own pace, or has a rule of its own. A value that only one document relies on does not, or the spec falls apart into tiny documents. The type decides: where its section asks for a link, every document links.
+Something deserves a document of its own when it has facts of its own, is needed by several documents, changes at its own pace, or has a rule of its own. A value that only one document relies on does not, or the spec falls apart into tiny documents. The type decides: where a property is a reference, every object links ([§3](the-language.md#types)).
 
 **Not in the list.** *Correct*, whether the spec says what is meant, no reader can judge without the people who decide; it shows only in use. *Ranked* is a priority, which is work. *Traceable*, which artifact realizes which statement, is the project's way of working. *Modifiable* is in consistent and structured. Coupling, cohesion, abstractness and link density are no measures: a module only groups and shows, a module sorted by kind is not worse, and a high fan-in is natural for a role everyone names.
 
@@ -29,7 +29,7 @@ No source suffices alone, and the spec shows what is missing only as far as one 
 
 Four steps, as a person who reviews a spec would take them:
 
-1. **Check.** `check` finds what is technically wrong: titles, types, missing or empty sections, dead links and links into what a module keeps internal ([§3](the-language.md#what-check-catches)). The type works as a checklist.
+1. **Check.** `check` finds what is technically wrong: titles, types, missing or empty sections, references and values that do not fit their property, dead links, links into what a module keeps internal and cycles between modules ([§3](the-language.md#what-check-catches)). The type works as a checklist.
 2. **Show.** The tool judges nothing; it gathers what has to be compared and says where reading pays off.
 3. **Read.** A person or an agent judges the meaning against the five properties. Only a reader sees whether something is right.
 4. **Question.** One asks the spec questions that a spec of its kind must answer, and sees how well it does. This is the one means that checks completeness on the spec itself.
@@ -44,12 +44,12 @@ Four steps, as a person who reviews a spec would take them:
 | | **Strong statements:** "every", "never", "only", against which a reader holds the single cases | Consistent |
 | | **Complexity of a statement:** words, terms and conditions per statement | Unambiguous, structured |
 | Structure | **Size:** statements of a document against documents of the same type | Structured |
-| | **Text before the first section** of a typed document, where a fact usually sits in the wrong place or the type lacks a section | Structured |
+| | **Text before the first section** of an object, where a fact usually sits in the wrong place or the type lacks a section | Structured |
 | | **A recurring group of links:** the same three or more links in the same section of many documents | Structured: a missing group |
 | | **Scattered rules:** one thing in many conditional or restricting statements across many documents, which belongs in one place | Structured, consistent |
 | Connections | **Mention without a link:** a document's title in another's text, unlinked | Consistent, structured |
 
-**Two references for every number** ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)). A value is shown beside the reference value of its type, which ships with the default for its types, and beside the rest of the project: "documents of this type usually have 200 to 400 characters; all of yours do, and this one has 900". Both are needed: when every document of a project is too long, nothing stands out within it. Reference values come from proven specs, those named as a reference by the people who answer for them, and improve with each version of the default. Until there are enough, the default's first values hold.
+**Two reference points for every number** ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)). A value is shown beside the reference value of its type, which ships with the default for its types, and beside the rest of the project: "documents of this type usually have 200 to 400 characters; all of yours do, and this one has 900". Both are needed: when every document of a project is too long, nothing stands out within it. Reference values come from proven specs, those named as a reference by the people who answer for them, and improve with each version of the default. Until there are enough, the default's first values hold.
 
 **Competency questions.** A spec is as good as it answers the questions it exists for. Valuable are questions across documents: "who may do this alone?", "what happens when someone fails to show up twice?". Each answer comes only from the spec, with a citation, and is rated answered, only inferred, two answers or not answered; anything without a citation is "not stated". The share of cleanly answered questions measures the spec by its purpose. Catalogs ship with the default; a project's own questions lie beside the spec, not in it, as tests lie beside code. An answered question from use becomes a fixed question, a general one may move into the default, and a question stays while it finds something or people want to keep it.
 
@@ -60,7 +60,7 @@ A good link catches a change: when each fact stands in one place, only that plac
 | Signal | Usually means | Points at |
 |---|---|---|
 | **Wide change:** one change touches far more documents than usual | A fact stands in several places | Consistent |
-| **Change without a link:** two documents keep changing together with no link between them | A hidden dependency, a doubled fact or a missing concept | Consistent, structured |
+| **Change without a link:** two documents keep changing together with no link between them | A connection the spec does not state, a doubled fact or a missing concept | Consistent, structured |
 | **Dragged links:** a document changes, and those that link to it change with it | They repeat its content instead of linking | Consistent |
 | **Hotspot:** often changed and much linked | Stable and changing facts are mixed and belong apart | Structured |
 | **Back and forth:** a statement changes and changes back | Something is not decided; a decision with its reason is missing | Unambiguous |

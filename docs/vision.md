@@ -29,7 +29,7 @@ Markitect expects people's work to move from writing code to architecture: desig
 
 **The approach: lighter and simpler.** Markitect works with the coding agents' own features rather than against them: a project's way of working uses skills in the repository and `AGENTS.md`, which Claude Code and Codex share, subagents, and scheduled and cloud tasks. The tool starts no agent, steers no work and writes nothing. The simpler version is the more robust one, and simplicity is earned through insight ([DEC-139](decisions.md#dec-139-quality-simplicity-and-stability-over-effort-and-compatibility)).
 
-**The honest limit.** `check` sees structure only. An empty `check` says that the spec is sound in its titles, types, sections and links, not that it says what was meant, and not that the project realizes it. Prose that names a document without linking it is a gap that no check sees; a signal shows such mentions.
+**The honest limit.** `check` sees structure only. An empty `check` says that the spec is sound in its titles, types, sections and links, not that it says what was meant, and not that the project realizes it. Prose that names a document without linking it is a gap that no check sees; a signal shows such places.
 
 ## Why Markitect exists
 
@@ -69,15 +69,17 @@ How a project checks its results, and measures that checking, is its way of work
 
 **Code is a description.** Code has always been a precise description for an extremely limited but diligent executor. With AI the executor is intelligent, but it still has to be told what is meant and what holds; otherwise it guesses, and may do what nobody wanted. So documentation takes the place of code: it is what people work on. Markitect makes its authors express themselves cleanly: define what they mean and what holds, and connect those statements meaningfully.
 
-**The answer is a typed, declarative specification language.** Whether documentation is consistent shows only at run time: a contradiction surfaces when an agent or a person stumbles over it while working. Dynamically typed programming languages have the same problem. Statically typed ones such as Go and C# are valued because a compiler reports such errors early, and the author has to say explicitly what is meant. So the spec gets a small type system of its own: a type says which sections its documents have, and a tool checks titles, types, sections and links. And like a declarative language, the spec says what should hold and leaves how to an executor; here the executor is an agent, so the result is checked, not guaranteed.
+**The answer is a typed, declarative specification language.** Whether documentation is consistent shows only at run time: a contradiction surfaces when an agent or a person stumbles over it while working. Dynamically typed programming languages have the same problem. Statically typed ones such as Go and C# are valued because a compiler reports such errors early, and the author has to say explicitly what is meant. So the spec gets a small type system of its own: a type says which properties its objects have, and a tool checks titles, types, sections and links. And like a declarative language, the spec says what should hold and leaves how to an executor; here the executor is an agent, so the result is checked, not guaranteed.
 
 | In a typed, declarative language | In a Markitect spec |
 | --- | --- |
-| type, class | type: a document that declares the sections of its documents |
-| object, declaration | document |
+| type, class | type: a document that declares the properties of its objects |
+| object | a document that names its type in its type line |
+| property, with its type | a section a type declares, with a property type line that makes it hold references or fixed values, or none for text |
 | the body | the prose of a section: what holds, which agents realize |
-| reference | an ordinary Markdown link |
+| reference | a Markdown link in a reference property, to an object of the named type; any other link in the text is a mention |
 | package, with exported and internal names | module: a folder whose README shows what other modules may link |
+| imports without a cycle | dependencies of modules, which follow from type lines, extends lines and references and never form a cycle |
 | standard library | the default's module `core`, copied into the spec, which owns its copy |
 | type checker, `validate` | `markitect check`: structure only, never meaning |
 
@@ -109,7 +111,7 @@ A real change of intent changes the spec first. When intent is unchanged, a bug 
 
 Target outcomes, each to be validated; none is an established result.
 
-- Nothing in the spec's scope is silently forgotten: what a change reaches follows from the spec's links, not from an agent's memory. Unlinked mentions are known gaps.
+- Nothing in the spec's scope is silently forgotten: what a change reaches follows from the spec's links, not from an agent's memory. A title named without a link is a known gap.
 - Rules are applied where they matter.
 - The repository stays consistent, contradiction-free, uniform and clean through many changes, so cleanups and refactorings become dependable.
 - Software becomes understandable: the spec states what the system does and should do, and people can reason over it without reading the code.

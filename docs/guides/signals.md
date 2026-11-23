@@ -34,29 +34,29 @@ Markers are English words and phrases, matched as whole words without regard to 
 
 ## The eight signals
 
-Each signal is a list sorted strongest first; equal ones stand in path and line order. A document *refers to* another when one of its statements links to it, or names it by its title, as the last row and the paragraph after the table describe.
+Each signal is a list sorted strongest first; equal ones stand in path and line order. A statement *concerns* a document when it links to it, a reference and a mention alike, or names it by its title, as the last row and the paragraph after the table describe.
 
 | Signal | Name | Lists | Strongest first |
 |---|---|---|---|
 | Weak statements | `weak` | Every statement with conditions or vague words, with the words found | Most conditions and vague words |
 | Strong statements | `strong` | Every statement with strong words. Its subject is what it links to or names, or its own document when it does neither | Most documents that link to or name its subject |
-| Complexity of a statement | `complexity` | Every statement with its words, beside the project's median and maximum and the reference of its document's type, its terms, the documents it links to, and its conditions | Most words, then conditions, then terms |
-| Size | `size` | Every document with a type: its statements, beside the median, range and number of documents of exactly the same type, not of its base, and the type's reference | Highest ratio to the median of its type |
-| Text before the first section | `text-before-sections` | Every document with a type that has statements before its first section, after the type line, with their number | Most statements |
+| Complexity of a statement | `complexity` | Every statement with its words, beside the project's median and maximum and the reference value of its document's type, its terms, the documents it links to, and its conditions | Most words, then conditions, then terms |
+| Size | `size` | Every object: its statements, beside the median, range and number of objects of exactly the same type, not of its base, and the type's reference value | Highest ratio to the median of its type |
+| Text before the first section | `text-before-sections` | Every object that has statements before its first section, after the type line, with their number | Most statements |
 | Recurring link group | `link-group` | The same three or more link targets under the same section heading, compared without regard to case, in two or more documents. The groups are the intersections of the sections' targets, of any number of documents, so a group shared by many is found even where each pair shares more. Only the largest group with the same documents is listed | Most documents, then most links |
-| Scattered rules | `scattered-rules` | Every document that conditional or restricting statements of other documents refer to, with those documents. A statement is restricting when it holds one of the strong words only, never, must not, no one, nobody or none, or "not" followed by "alone" within three words | Most other documents |
-| Mention without a link | `unlinked-mention` | Every pair of a document and another document whose title stands in its statements while it has no link to it anywhere, the type line included | Most mentions |
+| Scattered rules | `scattered-rules` | Every document that conditional or restricting statements of other documents concern, with those documents. A statement is restricting when it holds one of the strong words only, never, must not, no one, nobody or none, or "not" followed by "alone" within three words | Most other documents |
+| Mention without a link | `unlinked-mention` | Every pair of a document and another document whose title stands in its statements while it has no link to it anywhere, the type line included | Most statements that name it |
 
-**Mention without a link.** A title is found as whole words, without regard to case; at each word the longest title counts. One-word titles shorter than four letters do not count, nor do the titles of types, which stand in prose as ordinary words, such as "the role". A document does not mention itself.
+**Mention without a link.** A mention is a link in text ([language reference](language-reference.md#properties-and-their-types)), and this signal lists the places where a title stands in the text and the link is missing. A title is found as whole words, without regard to case; at each word the longest title counts. One-word titles shorter than four letters do not count, nor do the titles of types, which stand in prose as ordinary words, such as "the role". A document does not name itself.
 
-**Two references.** Where a signal shows a number, it shows the project's values beside it, and the reference value of the document's type when the type is a type of the default's module: `core/rule.md`, directly below the spec folder, matches `core`'s `rule`. A project's own types have no reference value and show only the project's values.
+**Two reference points.** Where a signal shows a number, it shows the project's values beside it, and the reference value of the document's type when the type is a type of the default's module: `core/rule.md`, directly below the spec folder, matches `core`'s `rule`. A project's own types have no reference value and show only the project's values.
 
 ## The topic view
 
-A topic is a document, a type ([language reference](language-reference.md#types-and-the-type-line)), or a folder below the spec folder. `topic` prints one text:
+A topic is a document, a type ([language reference](language-reference.md#types-objects-and-properties)), or a folder below the spec folder. `topic` prints one text:
 
 1. **Strong statements about it** from other documents: those that link to it or name it. They come first, since the single cases are read against them.
-2. **The topic itself:** a document's text; a type's text and its documents, those of the types that extend it included, as the [`table`](language-reference.md#commands-that-read); a folder's documents in path order, its README among them.
+2. **The topic itself:** a document's text; a type's text and its objects, those of the types that extend it included, as the [`table`](language-reference.md#commands-that-read); a folder's documents in path order, its README among them.
 3. **Linked from:** every statement of another document that links to it, with its section. A link outside a statement, such as one in a heading, does not appear here; `show` lists it.
 4. **Mentioned without a link:** every statement of another document that names it while that document has no link to it.
 5. **Signals:** every finding that concerns a document of the topic.

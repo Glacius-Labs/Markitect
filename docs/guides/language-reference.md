@@ -8,7 +8,7 @@ A spec is a folder. Every file in it, at any depth, whose name ends in `.md` in 
 
 - **Path.** A document is known by its path below the spec folder, with forward slashes, such as `lending/borrow.md`. Paths are compared exactly, case included, on every system.
 - **Text.** A document is read as UTF-8. A leading byte order mark is dropped, and bytes that are not UTF-8 are replaced. Lines end with LF, CRLF or CR, and are numbered from 1.
-- **Markdown.** A document is read as [CommonMark](https://spec.commonmark.org/) with GitHub's extensions, tables, task lists, strikethrough, autolinks and footnotes, as GitHub renders it. So code is what CommonMark calls code: fenced and indented code blocks, also inside lists, and code spans. Nothing in code or in raw HTML, comments included, is a heading, a type line, an extends line or a link, and a character escaped with a backslash is text.
+- **Markdown.** A document is read as [CommonMark](https://spec.commonmark.org/) with GitHub's extensions, tables, task lists, strikethrough, autolinks and footnotes, as GitHub renders it. So code is what CommonMark calls code: fenced and indented code blocks, also inside lists, and code spans. Nothing in code or in raw HTML, comments included, is a heading, a type line, an extends line, a property type line or a link, and a character escaped with a backslash is text.
 
 ## Title and sections
 
@@ -27,9 +27,9 @@ A link counts when its destination, without its `#section` and after decoding, e
 - **Sections.** A link with a section, `[Card](members/ada.md#card)`, points to the document; the section is not checked.
 - **Every counted link must point to a document of the spec**, by its exact path, and to one that is shown across the boundaries of modules ([below](#visibility)).
 
-## Types and the type line
+## Types, objects and properties
 
-A **type** is a document that another document names in its type line or its extends line, or a document with an extends line that is one link, whether or not its target exists ([below](#extending-a-type)); nothing else marks it. Its text before the first section says what the type is, and its level-2 headings declare the sections of its documents.
+A **type** is a document that another document names in its type line, its extends line or a property type line, a document with an extends line that is one link, whether or not its target exists ([below](#extending-a-type)), or a document with a well-formed property type line ([below](#properties-and-their-types)); nothing else marks it. Its text before the first section says what the type is, and each of its level-2 headings declares a **property** of its objects ([DEC-157](../decisions.md#dec-157-a-property-names-its-type-and-modules-depend-on-each-other-without-a-cycle)).
 
 ```markdown
 # Loan
@@ -37,19 +37,26 @@ A **type** is a document that another document names in its type line or its ext
 One copy lent to one member.
 
 ## Borrower
-The member, as a link to a member.
+Type: [Member](member.md)
+
+The member who holds the copy.
 
 ## Due
 The date the copy is due back.
+
+## State
+Type: `open`, `returned`, `overdue`
+
+Where the loan stands.
 
 ## Renewals (optional)
 How often the loan was renewed.
 ```
 
-- **Optional.** A heading that ends with `(optional)`, in any case, declares an optional section. Its name is the heading without the marker and the white space before it: `Renewals`. Every other declared section is required.
-- **Declared twice.** A name declared more than once, in any case, is one section. It is optional only when every declaration is.
+- **Optional.** A heading that ends with `(optional)`, in any case, declares an optional property. Its name is the heading without the marker and the white space before it: `Renewals`. Every other property is required.
+- **Declared twice.** A name declared more than once, in any case, is one property. It is optional only when every declaration is, and its type is that of the first heading of that name.
 
-The **type line** is the first line of the block right after the title, when that block is a paragraph and the line starts with exactly `Type:`. What follows `Type:`, without surrounding white space, is exactly one inline link that counts as a link above, with an optional title and `#section`. Any other line of text that starts with `Type:`, also in a list or in a document without a title, is a misplaced type line; a line in code is not. The links of a type line, placed or misplaced, are checked only as the type.
+The **type line** is the first line of the block right after the title, when that block is a paragraph and the line starts with exactly `Type:`. What follows `Type:`, without surrounding white space, is exactly one inline link that counts as a link above, with an optional title and `#section`. A document with a type line is an **object** of the type it names. Any other line of text that starts with `Type:`, also in a list or in a document without a title, is a misplaced type line, unless it is a property type line in its place ([below](#properties-and-their-types)); a line in code is not. The links of a type line, placed or misplaced, are checked only as the type.
 
 ```markdown
 # Loan 4711
@@ -61,9 +68,24 @@ Type: [Loan](../types/loan.md)
 
 ## Due
 1 March
+
+## State
+open
 ```
 
-A document with a type has each required section of its type as a level-2 heading of its own, in any order. A heading matches a declared section when the two are equal without regard to case, by Unicode simple case folding; when the document has two such headings, the first counts. An optional section is written without the marker, `## Renewals`, or left out. Every declared section the document has, required or optional, has text. The document may add sections of its own.
+An object has each required property of its type as a level-2 heading of its own, in any order. A heading matches a property when the two are equal without regard to case, by Unicode simple case folding; when the object has two such headings, the first counts. An optional property is written without the marker, `## Renewals`, or left out. Every section of a property the object has, required or optional, has text, and holds a value of the property's type ([below](#properties-and-their-types)). The object may add sections of its own, which hold text.
+
+### Properties and their types
+
+A property names its type with a **property type line**: the first line of the first block after the property's level-2 heading in the type, when that block is a paragraph and the line starts with exactly `Type:`. What follows `Type:` is inline links separated by commas, or code spans separated by commas, and nothing else. Any other line there, one that mixes links and code spans or holds a blank code span included, is `property.line`: it gives the property no type, so the section holds text, and it does not make its document a type. A `Type:` line anywhere else stays what it was: in the type line's place a type line, elsewhere a misplaced type line.
+
+- **Text.** A property without a property type line holds text. A link in its section is a **mention**: it says that one document concerns another, and the tool checks it as a link and nothing more.
+- **References.** A property type line of links makes a **reference property**, and each link names a type. In an object, every counted link in the property's section is a **reference** and points to an object of a named type or of a type derived from one; several links in the line mean that it may be an object of any one of them. A web address, or any other link that does not count, is no reference. The section holds any number of references. A reference to a document of another kind is `reference.type`, once for each wrong target in the section, at its first link. A reference that points to no document is only `link.unresolved`, and one into what a module keeps internal is `link.internal`, as for any link.
+- **Fixed values.** A property type line of code spans makes a fixed-values property: the text of each code span is one value. The first line of the section in an object, read as plain text as [`table`](#commands-that-read) reads it, is one of the values, compared exactly, case included, so `` `offered` `` and `offered` are the same value; otherwise it is `property.value`.
+- **Where it stands.** A property type line stands only in a type. In an object, a type that has a type line of its own included, and in a README, it is `property.line` and is not read further.
+- **Its links.** Each link of a property type line counts as a link above, with an optional title and `#section`, and must point to a document, which is a type by that alone: one that points to no document is `property.unresolved`, and one that names a README is `readme.type`. It passes the boundaries of modules as every link does ([visibility](#visibility)).
+
+A property that sometimes holds a reference and sometimes something else has no form: it is a sign that the property should be cut more cleanly.
 
 ### Extending a type
 
@@ -83,12 +105,13 @@ How often the loan was renewed.
 How often it may be renewed.
 ```
 
-- **One of the two lines.** A document has a type line or an extends line, never both. When both stand in the first block after the title, the first of them counts and the second is an error. A document with an extends line is a type and is never checked as a document of its base, so a type that no document names yet is not mistaken for one. `Type:` passes nothing on: a type that has a type line of its own, as a document of another type, inherits none of its sections.
-- **The chain.** A type's chain is the type, its base, its base's base and so on. The sections of a type are those declared along its chain. A section declared at more than one level, in any case, is one section, as one declared twice in a type is: required when any level requires it, and described by the most derived level that declares it. The sections stand in chain order: the base's first, then what each derived type adds.
-- **Never looser.** A derived type may describe a section of its base more precisely or make an optional one required, `## Renewals` above. It never marks optional a section that a type up its chain requires.
-- **No cycle.** A chain that comes back to itself is an error at each type in the cycle; a type whose chain only leads into a cycle is not. A document of such a type is checked against the sections its chain collects before it would loop.
+- **One of the two lines.** A document has a type line or an extends line, never both. When both stand in the first block after the title, the first of them counts and the second is an error. A document with an extends line is a type and is never checked as an object of its base, so a type that has no object yet is not mistaken for one. The type line passes nothing on: a type that has a type line of its own, as an object of another type, inherits none of its properties.
+- **The chain.** A type's chain is the type, its base, its base's base and so on. The properties of a type are those declared along its chain. A property declared at more than one level, in any case, is one property, as one declared twice in a type is: required when any level requires it, and described by the most derived level that declares it. The properties stand in chain order: the base's first, then what each derived type adds.
+- **Never looser.** A derived type may describe a property of its base more precisely or make an optional one required, `## Renewals` above. It never marks optional a property that a type up its chain requires.
+- **Same type.** A derived type never gives an inherited property another type; that is `property.retyped`. Types are compared as sets, so the same types or values in another order are the same type. The derived type's line then counts for its own objects all the same. Declared again without a property type line, the property keeps the type it inherits.
+- **No cycle.** A chain that comes back to itself is an error at each type in the cycle; a type whose chain only leads into a cycle is not. An object of such a type is checked against the properties its chain collects before it would loop.
 
-A document of a derived type has each required section of the type's chain, and every declared section of the chain it has has text, by the rules above. A document of `Renewable loan` needs `Borrower`, `Due`, `Renewals` and `Limit`.
+An object of a derived type has each required property of the type's chain, and every property of the chain it has has text and a value of its type, by the rules above. An object of `Renewable loan` needs `Borrower`, `Due`, `State`, `Renewals` and `Limit`.
 
 ## Modules
 
@@ -102,7 +125,7 @@ A **module** is a folder of the spec that holds a document directly, as a file o
 
 A README is a document, read and checked by the rules above, with a form of its own:
 
-- **No type line and no extends line.** Either line in a README is `readme.type`, and the README is read without it: a README is never a document of a type and never a type, and `show` prints `Type: (none)` for it. A type line or an extends line of another document that names a README is `readme.type` as well.
+- **No type line and no extends line.** Either line in a README is `readme.type`, and the README is read without it: a README is never an object and never a type, and `show` prints `Type: (none)` for it. A type line or an extends line of another document that names a README is `readme.type` as well. A property type line in a README is `property.line`.
 - **Text before the first section** says what the module is for.
 - **`Responsible`**, optional, names the role that answers for the module, as a link; without it, the role of the module above answers. **`Realized in`**, optional, says where in the project the module is built. `check` checks neither.
 - **`Contents`** is every section of the README whose level-2 heading is `Contents`, without regard to case; when there are two, the links of both count. `Contents` is not required, and a README without it shows nothing but itself.
@@ -130,7 +153,7 @@ The loan service and its database.
 
 ### Visibility
 
-Every counted link passes the boundaries of modules by one rule: a link from a document A to a document B passes when **every module that holds B but not A shows the way to B**, that is, lists under `Contents` either B itself, when B lies in that module's folder, or else the README of the module directly below it that holds B. A module's own README is always shown. A link that does not pass is `link.internal`. The rule holds for the type line and the extends line as for every other link, so a type that other modules name stands in the `Contents` of its module, and of every module above it that the naming document lies outside.
+Every counted link passes the boundaries of modules by one rule: a link from a document A to a document B passes when **every module that holds B but not A shows the way to B**, that is, lists under `Contents` either B itself, when B lies in that module's folder, or else the README of the module directly below it that holds B. A module's own README is always shown. A link that does not pass is `link.internal`. The rule holds for the type line, the extends line and the property type line as for every other link, so a type that other modules name stands in the `Contents` of its module, and of every module above it that the naming document lies outside.
 
 With the README above, `lending/fines/README.md` showing `late.md`, and a further document `lending/loan-limit.md` that `Contents` does not list:
 
@@ -146,26 +169,51 @@ With the README above, `lending/fines/README.md` showing `late.md`, and a furthe
 
 A module that holds both documents is never asked, so the spec folder, when it is a module, never hides anything. A link that points to no document is `link.unresolved`, not `link.internal`.
 
+### Dependencies and cycles
+
+Modules do not depend on each other in a cycle ([DEC-157](../decisions.md#dec-157-a-property-names-its-type-and-modules-depend-on-each-other-without-a-cycle)). A document belongs to the module whose folder holds it directly. A module A has a **dependency** on another module B when:
+
+- an object in A has a type line that names a type in B;
+- a type in A has an extends line that names a type in B;
+- a type in A has a property type line with a link to a type in B; or
+- an object in A has a reference, a link in a reference property, to a document in B.
+
+A link from a module to itself is no dependency. A parent module and a module below it count like any two: a link downward and a link upward between them make a cycle, although visibility lets the module below link what is internal to the one above. A mention never counts, and neither does any link of a README, `Contents` and `Responsible` included. A link that points to no document makes no dependency, and neither does a README named in a property type line; a link that is `link.internal` or `reference.type` makes one all the same.
+
+A **cycle** is a chain of dependencies that leads from a module back to itself. `check` reports `module.cycle` once for each group of modules that all reach each other by dependencies, with one shortest cycle in the group as a chain of modules and, for each step, one link that causes it. The diagnostic stands at the link of the first step:
+
+```text
+a/x.md:6: module.cycle: module cycle a -> b -> a: a/x.md:6 refers to b/y.md, b/y.md:6 refers to a/x.md
+```
+
+A module is named by its folder below the spec folder, such as `lending/fines`, and the spec folder as `(spec folder)`.
+
 ## What check reports
 
 | Code | Reported when | At line |
 |---|---|---|
 | `title` | The first block is not a level-1 heading with text: `missing level-1 title`. Otherwise, a further level-1 heading: `second level-1 heading` | The first block, or 1 for a document without blocks; the first further level-1 heading |
-| `type.line` | The type line is not exactly one counted link: `type line must be exactly one link to a document`. A misplaced type line: `a type line stands only on the first line after the title`. A type line after an extends line in the first block: `a document has a type line or an extends line, not both` | That line |
+| `type.line` | The type line is not exactly one counted link: `type line must be exactly one link to a document`. A misplaced type line, one that is neither in the type line's place nor a property type line: `a type line stands only on the first line after the title`. A type line after an extends line in the first block: `a document has a type line or an extends line, not both` | That line |
 | `type.unresolved` | The type line's link points to no document: `no document at "PATH"`. Its sections are then not checked | The type line |
 | `extends.line` | The extends line is not exactly one counted link: `extends line must be exactly one link to a document`. A misplaced extends line: `an extends line stands only on the first line after the title`. An extends line after a type line in the first block: `a document has a type line or an extends line, not both`. The document is then read as without that line | That line |
 | `extends.unresolved` | The extends line's link points to no document: `no document at "PATH"` | The extends line |
 | `extends.cycle` | The chain comes back to itself: `the chain of extends lines comes back to itself`, once at each type in the cycle; a type that only leads into a cycle reports nothing | The extends line |
-| `extends.loosens` | A derived type marks optional a section that a type up its chain requires: `section "NAME" is required by TYPEPATH`, the nearest type up its chain that requires it | The derived type's heading of that section |
-| `section.missing` | A required section of the type's chain is missing: `missing section "NAME" required by TYPEPATH`, the most derived type of the chain that requires it | The type line |
-| `section.empty` | A declared section of the type's chain that the document has holds no text: `empty section "NAME"` | The document's heading of that section |
+| `extends.loosens` | A derived type marks optional a property that a type up its chain requires: `section "NAME" is required by TYPEPATH`, the nearest type up its chain that requires it | The derived type's heading of that property |
+| `property.line` | A property type line is not inline links or code spans separated by commas, mixes the two or holds a blank code span: `property type line must be links to documents or code spans, separated by commas`. In a README: `a README has no property type line`. In an object: `a document with a type line has no property type line` | That line |
+| `property.unresolved` | A link of a property type line points to no document: `no document at "PATH"`, with the path as written | That line |
+| `property.retyped` | A derived type declares an inherited property with a property type line that gives it another type: `property "NAME" is TYPE in TYPEPATH, not TYPE`, where TYPE is `text`, `a reference to` the types' paths or `one of` the values, and TYPEPATH the type up the chain that declares the property | The derived type's property type line |
+| `section.missing` | A required property of the type's chain has no section in the object: `missing section "NAME" required by TYPEPATH`, the most derived type of the chain that requires it | The type line |
+| `section.empty` | The section of a property of the type's chain that the object has holds no text: `empty section "NAME"` | The object's heading of that section |
+| `reference.type` | A reference in an object points to a document that is no object of a type its property names, or of a type derived from one: `section "NAME" refers to documents of TYPEPATH or a type that extends it, but "PATH" is a document of OTHERPATH`, with several types `documents of one of TYPEPATH, TYPEPATH or a type that extends one of them`; for a target that is no object the end reads `is a type`, `is a README` or `is a document without a type`. Once for each wrong target in a section | The target's first link in the section |
+| `property.value` | The first line of a fixed-values section in an object is none of the values: ``the first line of section "NAME" is "TEXT", not one of `A`, `B` `` | That line |
 | `link.unresolved` | A counted link points to no document: `no document at "PATH"`, with the path as written, without its section | The link's first line |
-| `link.internal` | A counted link, the type line's and the extends line's included, points to a document of a module that does not show the way to it ([visibility](#visibility)): `"PATH" is internal to MODULE: MODULE/README.md does not list it under Contents`, for the first module of the way that does not show its step, or `… does not list MODULE/BELOW/README.md under Contents` when that step is the README of a module below; when a module on the way has no README, `"PATH" is internal to MODULE: BELOW has no README.md`, where BELOW is that module, MODULE itself or one below it. PATH is the target below the spec folder | The link's first line |
+| `link.internal` | A counted link, those of the type line, the extends line and a property type line included, points to a document of a module that does not show the way to it ([visibility](#visibility)): `"PATH" is internal to MODULE: MODULE/README.md does not list it under Contents`, for the first module of the way that does not show its step, or `… does not list MODULE/BELOW/README.md under Contents` when that step is the README of a module below; when a module on the way has no README, `"PATH" is internal to MODULE: BELOW has no README.md`, where BELOW is that module, MODULE itself or one below it. PATH is the target below the spec folder | The link's first line |
 | `module.readme` | A folder that holds a document directly has no `README.md`: `the folder FOLDER holds documents and has no README.md`, or for the spec folder `the spec folder holds documents and has no README.md`. Once per folder | Line 1 of the README's path, such as `shop/README.md:1` or `README.md:1` |
+| `module.cycle` | Modules depend on each other in a cycle ([dependencies and cycles](#dependencies-and-cycles)): `module cycle MODULE -> MODULE -> MODULE: PATH:LINE refers to PATH, ...`, once per group of modules that all reach each other, with one shortest cycle and one link per step | The link of the first step |
 | `readme.pattern` | A code span in a README's `Contents` without `/` is no valid pattern: `bad pattern "TEXT": a pattern uses the wildcards *, ? and [a-z]` | The code span's line |
 | `readme.type` | A README has a type line or an extends line: `a README has no type line` or `a README has no extends line`, once for each line it has. A type line or an extends line names a README: `"PATH" is a README, which is no type` | That line |
 
-A document reports each unresolved or internal target once, at its first link, where its type line or extends line comes first: `[the archive](archive.md)`, `[its rules](archive.md#rules)` and `[again](./archive.md)` are one report. Each declared section is reported at most once, and a document at most one `title`. The diagnostics are sorted by path, then by line.
+A document reports each unresolved or internal target once, at its first link, where its type line or extends line comes first: `[the archive](archive.md)`, `[its rules](archive.md#rules)` and `[again](./archive.md)` are one report. Each property is reported at most once, and a document at most one `title`. The diagnostics are sorted by path, then by line.
 
 ## Commands
 
@@ -175,8 +223,8 @@ A flag may stand anywhere, before the command as well, as in `markitect -C PROJE
 
 | Group | Command | Does |
 |---|---|---|
-| Look | `markitect show DOCUMENT` | The document's title, its type or, for a derived type, its base, its sections (a type's those of its whole chain, with their `(optional)` marker and, for an inherited one, the type that declares it), the documents it links to, the documents that link to it with the section each link stands in, and for a type the types that extend it and its documents, those of the types that extend it included |
-| | `markitect table [TYPE]` | Every document of the type and of every type that extends it as a Markdown table: the title, then one column per section of the type's chain. Without a type, every document with its type and title |
+| Look | `markitect show DOCUMENT` | The document's title, its type or, for a derived type, its base, its sections (a type's those of its whole chain, with their `(optional)` marker, each property's type and, for an inherited one, the type that declares it), the documents it links to, the documents that link to it with the section each link stands in, and for a type the types that extend it and its objects, those of the types that extend it included |
+| | `markitect table [TYPE]` | Every object of the type and of every type that extends it as a Markdown table: the title, then one column per section of the type's chain. Without a type, every document with its type and title |
 | | `markitect topic [TOPIC] [--all]` | The signals of the spec, or the topic view of a document, a type or a folder ([signals](signals.md)) |
 | | `markitect questions` | The question catalog of the default's module `core`, when the spec has it ([signals](signals.md#question-catalogs)) |
 | | `markitect diff OLD [NEW]` | What is new, gone or changed in the spec of NEW, by default this project, against the project OLD, with a diff for what changed ([project reference](project-reference.md#diff)) |
@@ -198,9 +246,9 @@ roles/member.md:5: section.empty: empty section "Does"
 2 errors in 9 documents
 ```
 
-**`show`** prints the document's path, `Title:`, `Type:` (the type's path, `(none)`, `(invalid line)` for a type line that is not one link, or the path with `(missing)`), or for a document with an extends line `Extends:` (the base's path, or the path with `(missing)`), then the lists `Sections:`, `Extended by:`, the types that extend it directly, sorted, only for a type that has some, `Links to:`, with `(missing)` after a path that names no document, and `Linked from:`, each `(none)` when empty, and `Documents:` only for a type that has some, with the documents of the types that extend it, directly or further down. A derived type's `Sections:` are those of its whole chain in chain order, an optional one with its marker and an inherited one with the type that declares it: `Borrower (from types/loan.md)`. A section the derived type declares again is its own and stands in its base's place. `Links to:` holds each path once; `Linked from:` holds one entry per linking document and section, `path (Section)`, or the bare path for a link that stands before any section, so a document that links from two sections appears twice. Both are sorted without regard to case.
+**`show`** prints the document's path, `Title:`, `Type:` (the type's path, `(none)`, `(invalid line)` for a type line that is not one link, or the path with `(missing)`), or for a document with an extends line `Extends:` (the base's path, or the path with `(missing)`), then the lists `Sections:`, `Extended by:`, the types that extend it directly, sorted, only for a type that has some, `Links to:`, with `(missing)` after a path that names no document, and `Linked from:`, each `(none)` when empty, and `Documents:` only for a type that has some objects, with the objects of the types that extend it, directly or further down. A derived type's `Sections:` are those of its whole chain in chain order, an optional one with its marker and an inherited one with the type that declares it: `Due (from types/loan.md)`. A section the derived type declares again is its own and stands in its base's place. On a type, a property with a type shows it after a colon, `Borrower (from types/loan.md): reference to types/member.md` or ``State (from types/loan.md): one of `open`, `returned`, `overdue` ``, with several types separated by commas and `(missing)` after a path that names no document; a text property shows nothing more. `Links to:` holds each path once; `Linked from:` holds one entry per linking document and section, `path (Section)`, or the bare path for a link that stands before any section, so a document that links from two sections appears twice. Both are sorted without regard to case.
 
-**`table`** prints a row per document of the type and of every type that extends it, directly or further down, in path order, with one column per section of the type's own chain. A cell holds the first line of the section's text as plain text: markup, list markers, HTML tags and comments are dropped, and links, reference links and images show as their text. A section that starts with code shows its first code line, one that starts with a table its first row, cells separated by ` | `. `|` is escaped, and a cell is empty when the section has no text or the document leaves an optional section out. A row's title is the document's title, or its path. Without a type, `table` prints every document of the spec in path order as `| Document | Type | Title |`: its path, the path of its type line's type, empty without one, as for a derived type, and its title.
+**`table`** prints a row per object of the type and of every type that extends it, directly or further down, in path order, with one column per section of the type's own chain. A cell holds the first line of the section's text as plain text: markup, list markers, HTML tags and comments are dropped, and links, reference links and images show as their text. A section that starts with code shows its first code line, one that starts with a table its first row, cells separated by ` | `. `|` is escaped, and a cell is empty when the section has no text or the object leaves an optional property out. A row's title is the document's title, or its path. Without a type, `table` prints every document of the spec in path order as `| Document | Type | Title |`: its path, the path of its type line's type, empty without one, as for a derived type, and its title.
 
 ### JSON
 
@@ -209,7 +257,7 @@ With `--json`, every command prints one document that starts with `format_versio
 | Kind | Fields |
 |---|---|
 | `check` | `documents`, the number of documents of the spec, and `diagnostics`, a list, empty when nothing is found, of objects with `file`, `line`, `code` and `message` |
-| `show` | `path`, `title`, `type`, `type_state` (`none`, `invalid`, `missing` or `ok`), `extends` and `extends_state` (`missing` or `ok`) for a document with an extends line, whose `type` is then empty and `type_state` `none`, `sections` with `heading`, the marker included, and `declared_by` for an inherited one, `extended_by`, `links_to` with `path` and `missing`, `linked_from` with `path` and `section`, and `documents`; an empty `section`, `extends`, `extends_state`, `declared_by` or `extended_by` and a `missing` that is false are left out |
+| `show` | `path`, `title`, `type`, `type_state` (`none`, `invalid`, `missing` or `ok`), `extends` and `extends_state` (`missing` or `ok`) for a document with an extends line, whose `type` is then empty and `type_state` `none`, `sections` with `heading`, the marker included, `declared_by` for an inherited one, and `references`, objects with `path` and `missing`, for a reference property or `values` for a fixed-values property, both left out for text, `extended_by`, `links_to` with `path` and `missing`, `linked_from` with `path` and `section`, and `documents`; an empty `section`, `extends`, `extends_state`, `declared_by` or `extended_by` and a `missing` that is false are left out |
 | `table` | `type`, `columns`, and `rows` with `path`, `title` and `cells`; without a type, `type` is empty and the one column is `Type` |
 | `version`, `diff` | As the [project reference](project-reference.md) says |
 | `licenses` | `notices` |

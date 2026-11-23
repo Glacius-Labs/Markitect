@@ -7,7 +7,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 | Markitect's solution | Builds on |
 |---|---|
 | [The spec in the repository](#the-spec-in-the-repository) | Docs as code; Parnas and Clements on documenting the end state |
-| [A typed, declarative specification language](#a-typed-declarative-specification-language) | Static typing, declarative languages and specification languages such as TLA+ and Alloy, as analogies; classes and objects; Go's packages and internal folders |
+| [A typed, declarative specification language](#a-typed-declarative-specification-language) | Static typing, declarative languages and specification languages such as TLA+ and Alloy, as analogies; classes, objects and typed properties; Go's packages and internal folders; Martin's acyclic dependencies principle |
 | [The spec as an interface](#the-spec-as-an-interface) | Parnas's information hiding |
 | [Designing a good spec](#designing-a-good-spec) | ISO/IEC/IEEE 29148; competency questions; Tornhill's hotspots and change coupling |
 | [Purpose, world and system](#purpose-world-and-system) | Meyer's Handbook of Requirements and Business Analysis; Zave and Jackson |
@@ -29,9 +29,9 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 **Analogy.** A statically typed language reports a contradiction when it compiles, a dynamically typed one only when the program runs into it. A declarative language states what should hold and leaves how to an executor, as SQL leaves the plan to the database and Terraform the steps to its providers. TLA+ (Lamport) and Alloy (Jackson) are specification languages: formal, and never executed. The spec borrows all three images ([DEC-119](decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)): it is typed, it is declarative with an agent as its executor, and nothing in it is executed. `markitect check` is the type checker, and a borrowed idea, not a guarantee ([DEC-138](decisions.md#dec-138-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)).
 
-**Taken.** Types and their instances, as classes and objects: a type declares the sections of its documents, and a checker enforces them ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-and-modules)). A type extends another as a class extends its base class, and inherits its sections ([DEC-155](decisions.md#dec-155-a-type-extends-another-with-a-line-of-its-own)). A module shows some of what it holds and keeps the rest internal, as a Go package exports some names, and inside it everything may use what is internal to the modules above it, as Go's internal folders allow ([DEC-156](decisions.md#dec-156-a-module-is-a-folder-and-its-readme-says-what-it-shows)).
+**Taken.** Types and their instances, as classes and objects: a type declares the properties of its objects, and a checker enforces them ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-and-modules)). A property names its type, as the property of a class does: a property typed by a class holds references to objects of that class or of a class derived from it, and an enumeration fixes the values a property may take ([DEC-157](decisions.md#dec-157-a-property-names-its-type-and-modules-depend-on-each-other-without-a-cycle)). A type extends another as a class extends its base class, and inherits its properties without changing their types ([DEC-155](decisions.md#dec-155-a-type-extends-another-with-a-line-of-its-own)). A module shows some of what it holds and keeps the rest internal, as a Go package exports some names, and inside it everything may use what is internal to the modules above it, as Go's internal folders allow ([DEC-156](decisions.md#dec-156-a-module-is-a-folder-and-its-readme-says-what-it-shows)). Modules do not depend on each other in a cycle, after the acyclic dependencies principle (Martin 2002), as Go forbids a package to import itself, directly or indirectly.
 
-**Differs.** Only the structure is formal. A module shows whole documents, by links in its README, not names marked in each document. The content is prose that an agent interprets, so the result is checked, not derived. A type declares sections only, with no value forms or check rules, and everything stays plain Markdown with ordinary links.
+**Differs.** Only the structure is formal. A module shows whole documents, by links in its README, not names marked in each document, and declares no imports: its dependencies follow from type lines, extends lines and references, and a mention never counts. The content is prose that an agent interprets, so the result is checked, not derived. A property holds text, references or fixed values, with no other value forms and no check rules, and everything stays plain Markdown with ordinary links.
 
 ## The spec as an interface
 
@@ -104,7 +104,8 @@ This page says what Markitect builds on. For each of its solutions it names what
 ## Weighed and not taken
 
 - **An ontology language or SysML v2 as the form of the spec,** and front matter with typed fields. RDF with OWL and SHACL, SysML v2 and TypeScript were weighed. Markdown is what people and agents already write ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-and-modules)).
-- **Rules on the direction of links** between modules, as layered architectures have. A module only groups and shows, and a rule names what it applies to by links ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-and-modules)).
+- **Rules on layers** between modules, as layered architectures have, beyond the rule that forbids a cycle. A module only groups and shows, and a rule names what it applies to by links ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-and-modules)).
+- **Declared imports** between modules, as Go's import declarations. They would state again what type lines, extends lines and references already say ([DEC-157](decisions.md#dec-157-a-property-names-its-type-and-modules-depend-on-each-other-without-a-cycle)).
 - **Architecture metrics of the spec,** such as coupling, cohesion and abstractness, and fixed thresholds. They measure structure, not whether a spec serves its purpose ([DEC-123](decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)).
 - **Attributes per requirement**, such as priority, risk, owner and history, which requirements standards keep. They describe the work, not the system, and the spec states only the system as it should be.
 - **Views as declared things.** A declared view states the same facts twice ([DEC-131](decisions.md#dec-131-the-tool-shows-claude-explains)).
@@ -127,6 +128,7 @@ Each source is named as in the text above. ISO standards are cited by their numb
 - Terraform documentation: *Modules*, <https://developer.hashicorp.com/terraform/language/modules>.
 - Go 1.4 release notes, *Internal packages*. <https://go.dev/doc/go1.4#internalpackages>
 - The Go Programming Language Specification, *Exported identifiers*. <https://go.dev/ref/spec#Exported_identifiers>
+- The Go Programming Language Specification, *Import declarations*. <https://go.dev/ref/spec#Import_declarations>
 - TLA+, by Leslie Lamport. <https://lamport.azurewebsites.net/tla/tla.html>
 - Alloy, by Daniel Jackson and others. <https://alloytools.org/>
 - Write the Docs, *Docs as Code*. <https://www.writethedocs.org/guide/docs-as-code/>
@@ -138,6 +140,7 @@ Each source is named as in the text above. ISO standards are cited by their numb
 - Bass, L., Clements, P., Kazman, R. *Software Architecture in Practice*, 2nd ed. Addison-Wesley, 2003. ISBN 0-321-15495-9.
 - Clements, P., Bachmann, F., Bass, L., Garlan, D., Ivers, J., Little, R., Merson, P., Nord, R., Stafford, J. *Documenting Software Architectures: Views and Beyond*, 2nd ed. Addison-Wesley, 2010. ISBN 978-0-321-55268-6.
 - Grüninger, M., Fox, M. S. Methodology for the Design and Evaluation of Ontologies. *Workshop on Basic Ontological Issues in Knowledge Sharing*, IJCAI-95, Montreal, 1995.
+- Martin, R. C. *Agile Software Development, Principles, Patterns, and Practices*. Prentice Hall, 2002. ISBN 0-13-597444-5.
 - Meyer, B. Applying "Design by Contract". *IEEE Computer* 25(10), 1992, 40–51. doi:[10.1109/2.161279](https://doi.org/10.1109/2.161279)
 - Meyer, B. *Object-Oriented Software Construction*, 2nd ed. Prentice Hall, 1997. ISBN 978-0-13-629155-8.
 - Meyer, B. *Handbook of Requirements and Business Analysis*. Springer, 2022. doi:[10.1007/978-3-031-06739-6](https://doi.org/10.1007/978-3-031-06739-6)
