@@ -34,10 +34,10 @@ The [Housekeeper](housekeeper.md), for each observer that is due.
 no
 
 ## Model
-as the observer's document says
+as the observer says
 
 ## Changes
 The observer's reports and its checkpoint in `.markitect/context/observe-NAME/`.
 
 ## Schedule
-as the observer's document says, in the Housekeeper's run
+as the observer says, in the Housekeeper's run

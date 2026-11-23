@@ -1,6 +1,6 @@
 # Report
 
-The report of one session or run of an agent: what it did and what struck it. Every agent writes one per session or run into its folder `.markitect/context/AGENT/`, named like its Agent document, named by date, time and subject, such as `2026-11-24-1432-renew-a-loan.md`; an agent without a subject, such as an observer or the Triager, leaves the subject out. A run of an observer that observed nothing writes no report, only its checkpoint, so the context holds no "all well". A report is information: it demands nothing and stays unchanged. Take it for every session and run. Do not take it for a finding: the Triager makes findings from reports.
+The report of one session or run of an agent: what it did and what struck it. Every agent writes one per session or run into its folder `.markitect/context/AGENT/`, which bears its Agent document's name; the report is named by date, time and subject, such as `2026-11-24-1432-renew-a-loan.md`; an agent without a subject, such as an observer or the Triager, leaves the subject out. A run of an observer that observed nothing writes no report, only its checkpoint, so the context holds no "all well". A report is information: it demands nothing and stays unchanged. Take it for every session and run. Do not take it for a finding: the Triager makes findings from reports.
 
 ## Started by
 Who started the session or run: a person, `Norman`, `Housekeeper` or `routine`; for an agent that another agent started, such as a Reviewer, that agent. Example: `Housekeeper`.

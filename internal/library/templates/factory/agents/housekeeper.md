@@ -10,7 +10,7 @@ The Housekeeper turns the [circle](../processes/circle/README.md) once a day. It
 1. Run the [observers](../observers/README.md) that are due, as the [checkpoints](../rules/work/checkpoints.md) say. A full run of all observers only when the person who starts it asks for one. One fresh [observe](observe.md) per observer.
 2. Run the [Triager](triage.md).
 3. Run the [Recorder](record.md).
-4. Run the [Briefer](brief.md).
+4. Run the [Briefer](brief.md). The Recorder runs before it, so that the briefing shows what was recorded since the last one; the circle names the stations in the order a finding meets them.
 5. Start [Builders](build.md), by priority, for every story in `ready` whose predecessors are all `done` and whose priority is `normal` or higher ([when a story starts](../rules/plan/when-a-story-starts.md)), except smell analyses: a story whose tasks are the [fixed tasks](../rules/plan/fixed-tasks.md) of a smell analysis is the Analyst's alone. Start [Analysts](analyze.md) for those smell analyses, by priority. A story a person does is never `ready`, so it is nobody's to start ([commitments](../rules/plan/commitments.md)). Who started you, a person or a routine, makes no difference.
 6. Lay a short report into the context: what is new, what is critical, what was started; it lists everything you started, so that runs without a report of their own are covered too.
 

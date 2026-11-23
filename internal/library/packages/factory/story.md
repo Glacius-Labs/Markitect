@@ -21,7 +21,7 @@ Where it came from: a link to the finding or the report in the context, or to it
 What should hold when the story is done, like an interface or a responsibility. It fits every level above it: its feature and the spec. Example: `A member renews an open loan once; the due date moves by the lending period.`
 
 ## Target changes
-Every place in the spec that this story's files realize, each as a link with one sentence on how the story changes it, or `unchanged` when it changes nothing there. When no document of the spec covers its files, something is missing in the spec, and the story adds it: that is a change. `none` only for a story that changes no file, such as a smell analysis. The changes lie on the story's branch and land with its realization. Example: `[Lending period](../../../../docs/spec/product/lending/period.md): a renewal extends it once.`
+Every place in the spec that this story's files realize, each as a link with one sentence on how the story changes it, or `unchanged` when it changes nothing there. When no document of the spec covers its files, something is missing in the spec, and the story adds it: that is a change. `none` only for a story that changes no file, such as a smell analysis. A story cut in a feature's planning holds the places as far as they are known; its own planning completes them. The changes lie on the story's branch and land with its realization. Example: `[Lending period](../../../../docs/spec/product/lending/period.md): a renewal extends it once.`
 
 ## Plan
 How it will be realized, coarse, in concepts and building blocks: no file names, no code; `not planned yet` while the story waits in `draft` for its planning. Example: `The loan gains a renewal; the member's page offers it.`

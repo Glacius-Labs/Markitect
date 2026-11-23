@@ -12,7 +12,7 @@ Who starts it, as links: a role, a person's session, another agent, or a routine
 `yes` when the agent talks with a human during its session, `no` when it runs alone. Example: `no`.
 
 ## Model
-The model and the effort it runs with, one line per provider: the provider, then a model name as that provider knows it, then the effort, such as `Claude: Opus, effort high` and `Codex: Sol, effort high`. A single line `as the session` for an agent that has no model of its own and takes that of the session it runs in. Whoever starts the agent reads it here, so a change here holds from the next start, without a build. Example: `Claude: Sonnet, effort high`, then `Codex: Luna, effort high`.
+The model and the effort it runs with, one line per provider: the provider, then a model name as that provider knows it, then the effort, such as `Claude: Opus, effort high` and `Codex: Sol, effort high`. A single line `as the session` for an agent that has no model of its own and takes that of the session it runs in, or `as the observer says` for the agent that runs observers, which takes the Model of the observer it runs. Whoever starts the agent reads it here, so a change here holds from the next start, without a build. Example: `Claude: Sonnet, effort high`, then `Codex: Luna, effort high`.
 
 ## Changes
 What the agent writes, one item per line: plan items and their sections, findings, folders of `.markitect/`, branches, code, documents of the spec. It leaves everything else as it is. Example: `the story's State, Claimed by and Result`.

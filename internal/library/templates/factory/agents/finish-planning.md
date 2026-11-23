@@ -10,8 +10,8 @@ It runs at the end of a planning session, in that session, and does what the ste
 1. Have a fresh [Reviewer](review.md) check the plan. When it does not fit, go back to the planning.
 2. Lay the report on the course of the planning into `.markitect/context/architect/` ([one per session](../rules/work/one-per-session.md)), with any coupling the cut showed.
 3. Set the states the step names, and release the claim of a planned story ([claiming](../rules/plan/claiming.md)).
-4. Bring the plan to `main`, with the findings the planning closed.
-5. Cut the branch of each story whose Target changes name a change to the standing spec, and put that change onto it, never onto `main` ([spec change](../rules/building/spec-change-lands-with-realization.md)).
+4. Bring the plan to `main`, with the findings the planning closed, and leave the changed documents of the spec out.
+5. Give each story whose Target changes name a change to the spec its branch and commit the changed documents it carries there, never on `main`, as the finish step says ([spec change](../rules/building/spec-change-lands-with-realization.md)).
 6. Tell the person that the plan is secured and the chat can be archived, and send them back to [Norman](norman.md).
 
 ## Started by

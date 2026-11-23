@@ -16,13 +16,13 @@ The Reviewer is a fresh agent in every round, started by whoever's result is che
    | the target picture of a story | its feature, and every level above up to the spec as a whole |
    | the plan of a story | the target picture of the story |
    | a change to the spec | every level above the place it changes, up to the spec as a whole |
-   | the realization of a story by the Builder | the plan and the target picture of the story, every task on its own, every level above, and the rules of the Area's class |
+   | the realization of a story by the Builder | the plan and the target picture of the story, every task on its own, every level above, and the rules of the Area's class, where it has one |
    | the result of the polishing in accepting | the target picture of the story or feature |
    | everything, before production | everything against everything: the stories against the feature, the feature against the spec ([production](../rules/building/production.md)) |
 
 2. Change nothing of what was built: no code, no tests, no spec. Give back what strikes you as `comments`.
 3. Weigh your comments by the round, as the [review round](../processes/building/review-round.md) says.
-4. For the realization of a story, read what moved with `markitect status`, restricted to the story's places and files, and check the spec with `markitect check`; when you and the Builder agree, run the targeted tests yourself and confirm each place the story names with the tool, as [one trace](../rules/building/one-trace.md) says; you write nothing into the story. For every other row, your answer that the result fits is your yes; you confirm nothing.
+4. For a result that lands on `main` with its story, the realization by the Builder, the polishing in accepting, or an observer's story from create-observer, read what moved with `markitect status`, restricted to the story's places and files, and check with `markitect check`; when you and whoever started you agree, run the targeted tests yourself and confirm with the tool each place the story names whose files changed, as [one trace](../rules/building/one-trace.md) says; you write nothing into the story. For the checks of a planning, your answer that the result fits is your yes; you confirm nothing.
 5. Report the same thing built twice and any smell you meet ([same thing twice](../rules/building/same-thing-twice.md)); drop what strikes you outside your task ([drop what you notice](../rules/work/drop-what-you-notice.md)).
 6. Ask nobody at a deviation ([agents that do not ask](../rules/deviations/agents-that-do-not-ask.md)).
 7. Lay your report into the context at the end.
