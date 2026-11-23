@@ -27,10 +27,10 @@ const (
 	SpecFile = ".markitect/spec"
 )
 
-// SpecPath turns a spec folder, as written in .markitect/spec, into a clean path below the project folder with forward
-// slashes. It refuses a path that is empty, absolute, has a drive, leaves the
-// project folder, is the project folder itself, or lies in .markitect/ or a
-// .git folder, in any case.
+// SpecPath turns a spec folder, as written in .markitect/spec, into a clean
+// path below the project folder with forward slashes. It refuses a path that
+// is empty, absolute, has a drive, leaves the project folder, is the project
+// folder itself, or lies in .markitect/, in any case.
 func SpecPath(arg string) (string, error) {
 	p := strings.TrimSpace(strings.ReplaceAll(arg, "\\", "/"))
 	switch {
@@ -43,15 +43,10 @@ func SpecPath(arg string) (string, error) {
 	if p == "." || p == ".." || strings.HasPrefix(p, "../") {
 		return "", fmt.Errorf("the spec folder %s is not a path below the project folder", arg)
 	}
-	// The reserved names count in any case, as a file system that ignores
-	// case reads them.
-	for i, part := range strings.Split(p, "/") {
-		switch {
-		case i == 0 && strings.EqualFold(part, Dir):
-			return "", fmt.Errorf("the spec folder %s lies in %s/", arg, Dir)
-		case strings.EqualFold(part, ".git"):
-			return "", fmt.Errorf("the spec folder %s lies in a .git folder", arg)
-		}
+	// The reserved name counts in any case, as a file system that ignores
+	// case reads it.
+	if first, _, _ := strings.Cut(p, "/"); strings.EqualFold(first, Dir) {
+		return "", fmt.Errorf("the spec folder %s lies in %s/", arg, Dir)
 	}
 	return p, nil
 }

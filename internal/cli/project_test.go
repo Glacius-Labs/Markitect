@@ -173,7 +173,7 @@ func TestSpecFolderOutsideTheProjectIsRefused(t *testing.T) {
 }
 
 func TestReservedSpecFolders(t *testing.T) {
-	for spec, want := range map[string]string{".Markitect/x": "lies in .markitect/", "a/.GIT/b": "lies in a .git folder", "../up": "not a path below the project folder"} {
+	for spec, want := range map[string]string{".Markitect/x": "lies in .markitect/", "../up": "not a path below the project folder"} {
 		dir := t.TempDir()
 		write(t, dir, ".markitect/spec", spec+"\n")
 		if code, _, errOut := run("check", "-C", dir); code != ExitFailed || !strings.Contains(errOut, want) {

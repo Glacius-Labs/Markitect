@@ -194,7 +194,7 @@ func TestUsage(t *testing.T) {
 	}
 }
 
-// The flags may stand before the command, as Git's do, and between its
+// The flags may stand before the command, as in markitect -C PROJECT check, and between its
 // arguments.
 func TestFlagsMayStandBeforeTheCommand(t *testing.T) {
 	dir := spec(t, map[string]string{"a.md": "# A\n"})

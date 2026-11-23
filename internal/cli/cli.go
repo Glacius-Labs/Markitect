@@ -83,8 +83,8 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprint(stdout, usage)
 		return ExitOK
 	}
-	// The flags may stand before the command, as Git's do: markitect -C
-	// PROJECT check.
+	// The flags may stand before the command, as in markitect -C PROJECT
+	// check.
 	name, rest, err := splitCommand(args)
 	if err != nil {
 		fmt.Fprintf(stderr, "markitect: %v; markitect --help lists the commands and flags\n", err)

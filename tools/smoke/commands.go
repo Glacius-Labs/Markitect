@@ -32,15 +32,20 @@ var smokeFiles = map[string]string{
 	"docs/spec/domain/borrow.md": "# Borrow\n\nType: [Operation](../packages/software/operation.md)\n\n## Does\nLends a book to a member for three weeks.\n\n## Who\nA [member](member.md).\n\n## Given\nThe book and the card.\n",
 }
 
-// snapshot reads every file below root, by its path with forward slashes.
+// snapshot reads every file below root, by its path with forward slashes, and
+// lists every folder with a trailing slash and no content.
 func snapshot(root string) (map[string]string, error) {
 	out := map[string]string{}
 	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
+		if err != nil || p == root {
 			return err
 		}
-		data, err := os.ReadFile(p)
 		rel, _ := filepath.Rel(root, p)
+		if d.IsDir() {
+			out[filepath.ToSlash(rel)+"/"] = ""
+			return nil
+		}
+		data, err := os.ReadFile(p)
 		out[filepath.ToSlash(rel)] = string(data)
 		return err
 	})
@@ -111,7 +116,7 @@ func layOut(repo, project string) error {
 }
 
 // projectCommands drives the built CLI over a small project that it lays out
-// by hand in a plain folder, with no Git: the commands that read it, check,
+// by hand in a plain folder: the commands that read it, check,
 // table, show, topic, questions, licenses and diff against a copy made before a
 // change, and the refusal of the commands that are gone. It starts no agent
 // and checks that no command writes anything into the project.
@@ -331,16 +336,13 @@ func (s *smoke) projectCommands() error {
 	}
 
 	// No command wrote anything into the project: not a file, a folder, a
-	// state or a history, and the project is no Git repository.
+	// state or a history.
 	after, err := snapshot(project)
 	if err != nil {
 		return err
 	}
 	if err := sameFiles(changed, after); err != nil {
 		return fmt.Errorf("a command wrote into the project: %w", err)
-	}
-	if _, err := os.Stat(filepath.Join(project, ".git")); err == nil {
-		return fmt.Errorf("a command made the project folder a Git repository")
 	}
 	return nil
 }

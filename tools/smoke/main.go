@@ -3,9 +3,9 @@
 // folder, the packages and templates of the library copied into a spec folder,
 // and the file .markitect/spec. It checks the version, check, show, table,
 // topic, questions, licenses and diff, the refusal of the commands that are
-// gone, and that no command writes into the project. It starts no agent and
-// needs no Git. The same checks run on every operating system, so CI needs no
-// shell-specific copies.
+// gone, and that no command writes into the project. It starts no agent. The
+// same checks run on every operating system, so CI needs no shell-specific
+// copies.
 //
 //	go run ./tools/smoke [-repo DIR] [-work DIR]
 package main
