@@ -55,7 +55,7 @@ Trust and overview are rebuilt on the spec:
 | Was something forgotten? | The spec states the whole project in one place, with links between what relies on what, so what a change reaches can be followed instead of remembered |
 | Was it understood correctly? | Every result is checked against the spec, not against a prompt or a memory of a conversation |
 | Does the spec say what was meant? | The person answers for the spec and develops it in conversation with an agent. `check` finds structural errors, signals say where reading pays off, and readers and competency questions find contradictions, gaps and unclear statements; use shows the rest |
-| How does the project stand, and what changed? | The tool shows the spec, and the agent explains it with a citation for each statement. A change to the spec is seen in the repository's diff, like every change, and between two states of the project the tool shows for each module whether its spec, its files or both changed |
+| How does the project stand, and what changed? | The tool shows the spec, and the agent explains it with a citation for each statement. A change to the spec is seen in the repository's diff, like every change, and between two states of the project the tool reports for each module whether its spec, its files or both changed |
 
 How a project checks its results, and measures that checking, is its way of working, which its spec states ([Where trust comes from](#where-trust-comes-from)). [Expected outcomes](#expected-outcomes) says what is still to be shown.
 
