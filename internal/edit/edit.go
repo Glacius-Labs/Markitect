@@ -1,6 +1,6 @@
-// Package edit computes the changes of the commands that write a spec: new,
-// move and apply. Each reads only the file systems it is handed and returns a
-// change set, files to move and files to write, which the caller applies.
+// Package edit computes the changes of the commands that write a spec: new
+// and apply. Each reads only the file systems it is handed and returns a
+// change set, files to write, which the caller applies.
 //
 // The rules are in docs/guides/language-reference.md.
 package edit
@@ -17,15 +17,11 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/lang"
 )
 
-// Changes is what a command changes in a spec folder: first the moves, then
-// the writes, each at its final path below the spec folder.
+// Changes is what a command changes in a spec folder: the writes, each at its
+// path below the spec folder.
 type Changes struct {
-	Moves  []Move
 	Writes []Write
 }
-
-// Move moves the file at From to To.
-type Move struct{ From, To string }
 
 // Write writes Data to Path. Create means that no file may exist there yet.
 type Write struct {

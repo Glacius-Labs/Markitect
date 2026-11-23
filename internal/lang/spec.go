@@ -78,8 +78,8 @@ const (
 	CodeLinkUnresolved = "link.unresolved"
 )
 
-// CheckTitle checks that the document starts with one level-1 title.
-func CheckTitle(d *Document) []Diagnostic {
+// checkTitle checks that the document starts with one level-1 title.
+func checkTitle(d *Document) []Diagnostic {
 	switch {
 	case d.TitleLine == 0:
 		return []Diagnostic{{Path: d.Path, Line: max(d.ContentLine, 1), Code: CodeTitle, Message: "missing level-1 title"}}
@@ -89,9 +89,9 @@ func CheckTitle(d *Document) []Diagnostic {
 	return nil
 }
 
-// CheckSections checks the sections the type t declares: a required one
+// checkSections checks the sections the type t declares: a required one
 // missing is reported at line, and one the document has must hold text.
-func CheckSections(d, t *Document, line int, by string) []Diagnostic {
+func checkSections(d, t *Document, line int, by string) []Diagnostic {
 	var out []Diagnostic
 	for _, want := range t.Declared() {
 		sec, has := d.Section(want.Name)
@@ -127,7 +127,7 @@ func Check(s *Spec) []Diagnostic {
 		add := func(line int, code, format string, args ...any) {
 			out = append(out, Diagnostic{Path: d.Path, Line: line, Code: code, Message: fmt.Sprintf(format, args...)})
 		}
-		out = append(out, CheckTitle(d)...)
+		out = append(out, checkTitle(d)...)
 		switch {
 		case d.TypeLine != 0 && !d.HasType():
 			add(d.TypeLine, CodeTypeLine, "type line must be exactly one link to a document")
@@ -137,7 +137,7 @@ func Check(s *Spec) []Diagnostic {
 				add(d.TypeLine, CodeTypeUnresolved, "no document at \"%s\"", d.TypeRaw)
 				break
 			}
-			out = append(out, CheckSections(d, t, d.TypeLine, t.Path)...)
+			out = append(out, checkSections(d, t, d.TypeLine, t.Path)...)
 		}
 		for _, line := range d.StrayTypeLines {
 			add(line, CodeTypeLine, "a type line stands only on the first line after the title")

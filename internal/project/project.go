@@ -1,14 +1,11 @@
-// Package state is a Markitect project, over a file system rooted
-// at the project folder: the layout of .markitect/, the project loaded with
-// its spec, the files of the project without what its ignore files exclude,
-// the hash of a file, the state: its rows, what status lists and the rows a
-// confirm or a move leaves, the history, the documents of the work with what
-// check finds in them, the comparison of two projects and the change signals
-// of the history. It reads only the file system it is handed, so that two
-// projects, such as two states to compare, load the same way.
+// Package project is a Markitect project, over a file system rooted at the
+// project folder: the layout of .markitect/, the project loaded with its spec,
+// and the comparison of the specs of two projects. It reads only the file
+// system it is handed, so that two projects, such as two states to compare,
+// load the same way.
 //
 // The rules are in docs/guides/project-reference.md.
-package state
+package project
 
 import (
 	"bytes"
@@ -32,9 +29,13 @@ const (
 	DefaultSpec = "docs/spec"
 )
 
-// attributes has Git keep the lines of both sides of a merge of the state and
-// the history.
+// attributes has Git keep the lines of both sides of a merge of the files
+// init lays out.
 const attributes = "state.jsonl merge=union\nhistory.jsonl merge=union\n"
+
+// initFolders are the folders init lays out below .markitect/, each with a
+// .gitkeep so that it survives a Git commit.
+var initFolders = []string{"context", "findings/pending", "findings/ready", "findings/closed", "plan", "briefing"}
 
 // Layout is what .markitect/ says of a project: the tool version it pins and
 // its spec folder, a path below the project folder.
@@ -52,7 +53,7 @@ type File struct {
 // InitFiles are the files init writes into .markitect/ for a project that
 // pins version and keeps its spec in spec, a path SpecPath accepts: the
 // version, the spec folder, the attributes and the ignore file, and an empty
-// .gitkeep in each folder of the work, so that each survives a Git commit.
+// .gitkeep in each folder of initFolders.
 func InitFiles(version, spec string) []File {
 	files := []File{
 		{VersionFile, []byte(version + "\n")},
@@ -60,8 +61,8 @@ func InitFiles(version, spec string) []File {
 		{AttributesFile, []byte(attributes)},
 		{IgnoreFile, nil},
 	}
-	for _, dir := range WorkFolders {
-		files = append(files, File{dir + "/.gitkeep", nil})
+	for _, dir := range initFolders {
+		files = append(files, File{Dir + "/" + dir + "/.gitkeep", nil})
 	}
 	return files
 }
@@ -135,45 +136,9 @@ func readLine(fsys fs.FS, name string) (string, error) {
 // Project is a project loaded from a file system rooted at its folder.
 type Project struct {
 	Layout
-	// FS is the project folder, SpecFS the spec folder in it.
-	FS, SpecFS fs.FS
-	Spec       *lang.Spec
-	// SpecAliases are further paths of the spec folder below the project
-	// folder, where a symbolic link or a junction on the way to it leads.
-	SpecAliases []string
-}
-
-// specFile is the path below the spec folder of a file of the walk that lies
-// in the spec folder or one of its aliases.
-func (p *Project) specFile(file string) (string, bool) {
-	for _, folder := range append([]string{p.SpecFolder}, p.SpecAliases...) {
-		if rest, ok := strings.CutPrefix(file, folder+"/"); ok {
-			return rest, true
-		}
-	}
-	return "", false
-}
-
-// isDocument says whether a file of the walk is a document of the spec, or
-// a link on the way to the spec folder: neither is unexplained, and both
-// count through the documents' own inputs.
-func (p *Project) isDocument(file string) bool {
-	if strings.HasPrefix(p.SpecFolder, file+"/") {
-		return true
-	}
-	_, ok := p.specFile(file)
-	return ok && lang.IsDocumentName(path.Base(file))
-}
-
-// InSpec says whether a file of the walk belongs to the spec folder: it lies
-// in it or in one of its aliases, or it is a link on the way to it.
-func (p *Project) InSpec(file string) bool {
-	for _, folder := range append([]string{p.SpecFolder}, p.SpecAliases...) {
-		if strings.HasPrefix(file, folder+"/") || file == folder || strings.HasPrefix(p.SpecFolder, file+"/") {
-			return true
-		}
-	}
-	return false
+	// SpecFS is the spec folder.
+	SpecFS fs.FS
+	Spec   *lang.Spec
 }
 
 // Load reads the layout of the project at fsys and its spec, whose folder
@@ -195,5 +160,5 @@ func Load(fsys fs.FS) (*Project, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Project{Layout: layout, FS: fsys, SpecFS: sub, Spec: spec}, nil
+	return &Project{Layout: layout, SpecFS: sub, Spec: spec}, nil
 }

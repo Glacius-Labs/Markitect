@@ -115,7 +115,7 @@ func TestInitLaysOutTheProject(t *testing.T) {
 	}
 
 	// The spec passes check but for the sections a project fills, and none of
-	// them stands in the way of working; status runs.
+	// them stands in the way of working.
 	code, out, _ = run("check", "-C", dir)
 	codes := diagnosticCodes(out)
 	if code != ExitFound || len(codes) != 1 || codes["section.empty"] == 0 {
@@ -123,28 +123,6 @@ func TestInitLaysOutTheProject(t *testing.T) {
 	}
 	if strings.Contains(out, "\nfactory/") || strings.HasPrefix(out, "factory/") {
 		t.Errorf("check finds something in factory/:\n%s", out)
-	}
-	// check reports the empty sections of the templates, and status lists and
-	// confirm binds all the same: right after init, a reviewer can work.
-	l := statusOf(t, dir)
-	e, kind := l.entry("project/README.md")
-	if l.code != ExitFound || kind != "changed" || len(e.Fingerprint) != 8 || len(l.State) != 0 {
-		t.Fatalf("status: %d %v", l.code, l.summary())
-	}
-	if _, kind := l.entry("factory/README.md"); kind != "changed" {
-		t.Error("the way of working is not listed")
-	}
-	unexplained := strings.Join(l.Unexplained, " ")
-	for _, part := range []string{"AGENTS.md", ".claude/skills/markitect-assistant/SKILL.md", ".agents/skills/markitect-assistant/SKILL.md"} {
-		if !strings.Contains(unexplained, part) {
-			t.Errorf("%s is not unexplained: %s", part, unexplained)
-		}
-	}
-	if code, out, errOut := run("confirm", "-C", dir, "project/README.md@"+e.Fingerprint, "skip", "-m", "the sections are filled later"); code != ExitOK {
-		t.Fatalf("confirm: %d %s %s", code, out, errOut)
-	}
-	if _, kind := statusOf(t, dir).entry("project/README.md"); kind != "" {
-		t.Error("the confirmed document is still listed")
 	}
 }
 

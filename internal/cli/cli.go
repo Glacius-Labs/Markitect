@@ -1,8 +1,7 @@
 // Package cli is the command line of markitect: it
 // parses the arguments, finds the project they work in, sets one up with
-// init, reads its spec and the documents of its work, prints what the
-// language finds, as text or as JSON, and applies the changes of the commands
-// that write.
+// init, reads its spec, prints what the language finds, as text or as JSON,
+// and applies the changes of the commands that write.
 package cli
 
 import (
@@ -15,7 +14,6 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/edit"
 	"github.com/Glacius-Labs/Markitect/internal/lang"
-	"github.com/Glacius-Labs/Markitect/internal/state"
 )
 
 // FormatVersion is the version of every JSON document the command prints. A
@@ -32,34 +30,21 @@ const (
 const usage = `usage: markitect COMMAND ARGUMENTS [-C PROJECT] [--json]
 
 Look
-  show DOCUMENT               a document with its type, sections, links and row
+  show DOCUMENT               a document with its type, sections and links
   table [TYPE]                every document of a type as a Markdown table, or
-                              every document with its verdict and artifacts
-  topic [TOPIC] [--all]       the signals of the spec and the change signals of
-                              its history, or everything about a document, a
-                              type or a folder
+                              every document with its type and title
+  topic [TOPIC] [--all]       the signals of the spec, or everything about a
+                              document, a type or a folder
   questions                   the questions of the packages the spec has
-  compare OLD [NEW]           what is new, gone, moved, changed or suspect in NEW,
-                              by default this project, against the project OLD,
-                              and the documents of the work that are new, gone
-                              or changed
+  compare OLD [NEW]           what is new, gone or changed in the spec of NEW,
+                              by default this project, against the project OLD
 
 Check
-  check                       check the spec and the documents of the work
-  status [PATH]...            what is changed, suspect or unexplained, for the
-                              documents, files and folders named, or for all
+  check                       check the spec
 
 Change the spec
   new TYPE PATH [TITLE]       create a document of a type
   apply TEMPLATE [TARGET]     copy a template of the library into the spec
-  move OLD NEW                move a document and rewrite the links to it
-
-Confirm
-  confirm DOCUMENT@FINGERPRINT VERDICT [--file PATH]... [--check PATH]...
-          [-e EVIDENCE]... [-m REASON]
-                              bind ok, fail or skip to the state status showed;
-                              --file names the files that realize the document,
-                              all of them: a later confirm replaces the list
 
 Set up
   init [--spec PATH]          set up a project: .markitect/, the spec folder, by
@@ -70,16 +55,12 @@ Set up
                               built from
 
 The project is the nearest folder, from the working directory upward, that
-holds .markitect/version, or the folder -C names. A DOCUMENT, TYPE or PATH is a path
-below the spec folder, with or without .md. Diagnostics read
+holds .markitect/version, or the folder -C names. A DOCUMENT, TYPE or TOPIC is a
+path below the spec folder, with or without .md. Diagnostics read
 path:line: code: message. --json prints one document with format_version and
 kind. Exit codes: 0 when all is well, 1 when the command found something, 2
 when it could not run.
 `
-
-// maxArguments is no limit on the number of arguments of a command that takes
-// any.
-const maxArguments = 1 << 30
 
 // A command takes its positional arguments, between min and max of them.
 type command struct {
@@ -93,14 +74,11 @@ var commands = map[string]command{
 	"show":      {1, 1, show},
 	"table":     {0, 1, table},
 	"new":       {2, 3, newDocument},
-	"move":      {2, 2, move},
 	"apply":     {1, 2, apply},
 	"topic":     {0, 1, topic},
 	"questions": {0, 0, questions},
 	"version":   {0, 0, version},
 	"licenses":  {0, 0, licenses},
-	"status":    {0, maxArguments, status},
-	"confirm":   {2, 2, confirm},
 	"compare":   {1, 2, compare},
 }
 
@@ -143,14 +121,9 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	}
 	if err != nil {
 		var r *edit.Refusal
-		var s *state.Refusal
 		switch {
 		case errors.As(err, &r):
 			for _, p := range r.Problems {
-				fmt.Fprintf(stderr, "markitect %s: %s\n", name, p)
-			}
-		case errors.As(err, &s):
-			for _, p := range s.Problems {
 				fmt.Fprintf(stderr, "markitect %s: %s\n", name, p)
 			}
 		default:
@@ -204,17 +177,13 @@ func splitCommand(args []string) (string, []string, error) {
 var flagWithoutValue = map[string]bool{"--json": true, "-json": true, "--all": true, "-all": true}
 
 // flagWithValue are the flags that take the argument after them as a value.
-var flagWithValue = map[string]bool{
-	"-C": true, "--spec": true, "-spec": true, "--file": true, "-file": true, "--check": true, "-check": true,
-	"-e": true, "--evidence": true, "-m": true, "--reason": true,
-}
+var flagWithValue = map[string]bool{"-C": true, "--spec": true, "-spec": true}
 
 // synopsis is the one line of usage of each command.
 var synopsis = map[string]string{
 	"init": "init [--spec PATH]", "check": "check", "show": "show DOCUMENT", "table": "table [TYPE]", "new": "new TYPE PATH [TITLE]",
-	"move": "move OLD NEW", "apply": "apply TEMPLATE [TARGET]", "topic": "topic [TOPIC] [--all]", "questions": "questions",
-	"version": "version", "licenses": "licenses", "status": "status [PATH]...",
-	"confirm": "confirm DOCUMENT@FINGERPRINT VERDICT [--file PATH]... [--check PATH]... [-e EVIDENCE]... [-m REASON]",
+	"apply": "apply TEMPLATE [TARGET]", "topic": "topic [TOPIC] [--all]", "questions": "questions",
+	"version": "version", "licenses": "licenses",
 	"compare": "compare OLD [NEW]",
 }
 
@@ -228,8 +197,6 @@ func validate(name string, c command, o options) error {
 		return errors.New("--spec is a flag of init")
 	case o.all && name != "topic":
 		return errors.New("--all is a flag of topic")
-	case o.confirmFlags && name != "confirm":
-		return errors.New("--file, --check, -e and -m are flags of confirm")
 	}
 	return nil
 }
@@ -242,14 +209,9 @@ type options struct {
 	// dir is the project folder -C names, "" without the flag.
 	dir string
 	// spec is the spec folder --spec names, specSet whether it was given.
-	spec    string
-	specSet bool
-	// files, checks, evidence and reason are the flags of confirm,
-	// confirmFlags whether any was given.
-	files, checks, evidence []string
-	reason                  string
-	reasonSet, confirmFlags bool
-	positional              []string
+	spec       string
+	specSet    bool
+	positional []string
 	// stderr is where a command puts a warning; nil outside Run.
 	stderr io.Writer
 }
@@ -284,21 +246,6 @@ func parse(args []string) (options, error) {
 		case strings.HasPrefix(a, "--spec=") || strings.HasPrefix(a, "-spec="):
 			_, o.spec, _ = strings.Cut(a, "=")
 			o.specSet = true
-		case a == "--file" || a == "-file":
-			var v string
-			v, err = value(a)
-			o.files, o.confirmFlags = append(o.files, v), true
-		case a == "--check" || a == "-check":
-			var v string
-			v, err = value(a)
-			o.checks, o.confirmFlags = append(o.checks, v), true
-		case a == "-e" || a == "--evidence":
-			var v string
-			v, err = value(a)
-			o.evidence, o.confirmFlags = append(o.evidence, v), true
-		case a == "-m" || a == "--reason":
-			o.reason, err = value(a)
-			o.reasonSet, o.confirmFlags = true, true
 		case strings.HasPrefix(a, "-") && a != "-":
 			err = fmt.Errorf("unknown flag %s", a)
 		default:
@@ -327,13 +274,9 @@ func check(o options, stdout io.Writer) (int, error) {
 		return ExitFailed, err
 	}
 	spec := w.Spec
-	work, err := workOf(w)
-	if err != nil {
-		return ExitFailed, err
-	}
-	found := append(lang.Check(spec), work.Diagnostics...)
+	found := lang.Check(spec)
 	if o.json {
-		doc := checkDocument{header: newHeader("check"), Documents: len(spec.Documents), Work: len(work.Documents), Diagnostics: []diagnostic{}}
+		doc := checkDocument{header: newHeader("check"), Documents: len(spec.Documents), Diagnostics: []diagnostic{}}
 		for _, d := range found {
 			doc.Diagnostics = append(doc.Diagnostics, diagnostic{File: d.Path, Line: d.Line, Code: d.Code, Message: d.Message})
 		}
@@ -345,11 +288,7 @@ func check(o options, stdout io.Writer) (int, error) {
 		for _, d := range found {
 			b.WriteString(d.String() + "\n")
 		}
-		fmt.Fprintf(&b, "%s in %s", plural(len(found), "error"), plural(len(spec.Documents), "document"))
-		if len(work.Documents) > 0 {
-			fmt.Fprintf(&b, ", %s of the work", plural(len(work.Documents), "document"))
-		}
-		b.WriteString("\n")
+		fmt.Fprintf(&b, "%s in %s\n", plural(len(found), "error"), plural(len(spec.Documents), "document"))
 		if _, err := io.WriteString(stdout, b.String()); err != nil {
 			return ExitFailed, err
 		}
@@ -369,22 +308,24 @@ type header struct {
 func newHeader(kind string) header { return header{FormatVersion: FormatVersion, Kind: kind} }
 
 // checkDocument is the JSON document of check: the number of documents of
-// the spec and of the work, and the diagnostics.
+// the spec, and the diagnostics.
 type checkDocument struct {
 	header
 	Documents   int          `json:"documents"`
-	Work        int          `json:"work"`
 	Diagnostics []diagnostic `json:"diagnostics"`
 }
 
 // diagnostic is one diagnostic in a JSON document; file is the path below the
-// spec folder for a document of the spec, and below the project folder for
-// a document of the work and any other file.
+// spec folder.
 type diagnostic struct {
 	File    string `json:"file"`
 	Line    int    `json:"line"`
 	Code    string `json:"code"`
 	Message string `json:"message"`
+}
+
+func (d diagnostic) String() string {
+	return fmt.Sprintf("%s:%d: %s: %s", d.File, d.Line, d.Code, d.Message)
 }
 
 // output prints a JSON document with --json and the text otherwise.

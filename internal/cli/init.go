@@ -15,7 +15,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/edit"
 	"github.com/Glacius-Labs/Markitect/internal/library"
-	"github.com/Glacius-Labs/Markitect/internal/state"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
 // initTemplates are the templates init applies, each into a folder of the
@@ -52,15 +52,15 @@ func initProject(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	spec := state.DefaultSpec
+	spec := project.DefaultSpec
 	if o.specSet {
-		if spec, err = state.SpecPath(o.spec); err != nil {
+		if spec, err = project.SpecPath(o.spec); err != nil {
 			return ExitFailed, err
 		}
 	}
-	target := filepath.Join(dir, state.Dir)
+	target := filepath.Join(dir, project.Dir)
 	if _, err := os.Lstat(target); err == nil {
-		return ExitFailed, fmt.Errorf("%s/ exists already in %s", state.Dir, dir)
+		return ExitFailed, fmt.Errorf("%s/ exists already in %s", project.Dir, dir)
 	}
 	if err := specInside(dir, spec); err != nil {
 		return ExitFailed, err
@@ -106,13 +106,13 @@ func planInit(dir, spec string, specExists bool) (initPlan, error) {
 	var plan initPlan
 	var problems []string
 	var writes []edit.Write
-	project := func(p string) string { return filepath.Join(dir, filepath.FromSlash(p)) }
+	onDisk := func(p string) string { return filepath.Join(dir, filepath.FromSlash(p)) }
 
-	plan.created = []string{state.Dir + "/"}
+	plan.created = []string{project.Dir + "/"}
 	var version edit.Write
-	for _, f := range state.InitFiles(buildinfo.Version(), spec) {
+	for _, f := range project.InitFiles(buildinfo.Version(), spec) {
 		w := edit.Write{Path: f.Path, Data: f.Data, Create: true}
-		if f.Path == state.VersionFile {
+		if f.Path == project.VersionFile {
 			// The version is written last: it makes the folder a project.
 			version = w
 			continue
@@ -126,7 +126,7 @@ func planInit(dir, spec string, specExists bool) (initPlan, error) {
 	if !specExists {
 		plan.created = append(plan.created, spec+"/")
 	}
-	specFS := layered{base: os.DirFS(project(spec)), planned: fstest.MapFS{}}
+	specFS := layered{base: os.DirFS(onDisk(spec)), planned: fstest.MapFS{}}
 	for _, tpl := range initTemplates {
 		if _, err := fs.Stat(specFS, tpl); err == nil {
 			problems = append(problems, path.Join(spec, tpl)+": already exists")
@@ -171,7 +171,7 @@ func planInit(dir, spec string, specExists bool) (initPlan, error) {
 		}
 		for _, folder := range skillFolders {
 			at := path.Join(folder, name)
-			if _, err := os.Lstat(project(at)); err == nil {
+			if _, err := os.Lstat(onDisk(at)); err == nil {
 				problems = append(problems, at+": already exists")
 				continue
 			}
@@ -189,7 +189,7 @@ func planInit(dir, spec string, specExists bool) (initPlan, error) {
 	// The entry in AGENTS.md: the file is created when it is missing, and
 	// the entry is appended as a section of its own when it exists, so that
 	// what stands there is never changed.
-	switch info, err := os.Lstat(project(agentsFile)); {
+	switch info, err := os.Lstat(onDisk(agentsFile)); {
 	case errors.Is(err, fs.ErrNotExist):
 		writes = append(writes, edit.Write{Path: agentsFile, Data: []byte("# Agent instructions\n\n" + agentsEntry(spec)), Create: true})
 		plan.created = append(plan.created, agentsFile)
@@ -198,7 +198,7 @@ func planInit(dir, spec string, specExists bool) (initPlan, error) {
 	case !info.Mode().IsRegular():
 		problems = append(problems, agentsFile+": is a link or a folder, not a file; init appends its entry to a file")
 	default:
-		existing, err := os.ReadFile(project(agentsFile))
+		existing, err := os.ReadFile(onDisk(agentsFile))
 		if err != nil {
 			return plan, err
 		}

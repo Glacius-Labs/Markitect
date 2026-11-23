@@ -82,7 +82,7 @@ func TestCommandsFindTheProjectUpward(t *testing.T) {
 	if code, out, _ := run("new", filepath.Join("..", "lending"), "loans"); code != ExitFailed || out != "" {
 		t.Error("a path below the working directory was taken for one below the spec folder", code, out)
 	}
-	if code, out, _ := run("show", "lending"); code != ExitOK || !strings.HasPrefix(out, "lending.md@") {
+	if code, out, _ := run("show", "lending"); code != ExitOK || !strings.HasPrefix(out, "lending.md\nTitle: Lending\n") {
 		t.Error(code, out)
 	}
 	// A missing spec folder is named.
@@ -206,26 +206,6 @@ func TestReservedSpecFolders(t *testing.T) {
 	for spec, want := range map[string]string{".Markitect/x": "lies in .markitect/", "a/.GIT/b": "lies in a .git folder"} {
 		if code, _, errOut := run("init", "-C", t.TempDir(), "--spec", spec); code != ExitFailed || !strings.Contains(errOut, want) {
 			t.Errorf("%s: %d %q", spec, code, errOut)
-		}
-	}
-}
-
-func TestProjectFSReachesOutside(t *testing.T) {
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "HEAD"), []byte("x"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	project := filepath.Join(dir, "project")
-	if err := os.Mkdir(project, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	for _, name := range []string{filepath.ToSlash(filepath.Join(dir, "HEAD")), "../HEAD"} {
-		host, p, ok := diskProject(project).Outside(name)
-		if !ok {
-			t.Fatalf("%s: not reached", name)
-		}
-		if data, err := fs.ReadFile(host, p); err != nil || string(data) != "x" {
-			t.Errorf("%s: read %q %v", name, data, err)
 		}
 	}
 }

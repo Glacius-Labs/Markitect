@@ -7,41 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/Glacius-Labs/Markitect/internal/state"
 )
-
-// projectFS is a project folder on disk as the state reads it: os.DirFS,
-// which also reaches a path outside the folder that a .git file names.
-type projectFS struct {
-	fs.FS
-	dir string
-}
-
-func diskProject(dir string) projectFS { return projectFS{os.DirFS(dir), dir} }
-
-func (p projectFS) ReadDir(name string) ([]fs.DirEntry, error) { return fs.ReadDir(p.FS, name) }
-func (p projectFS) ReadFile(name string) ([]byte, error)       { return fs.ReadFile(p.FS, name) }
-func (p projectFS) Stat(name string) (fs.FileInfo, error)      { return fs.Stat(p.FS, name) }
-func (p projectFS) Lstat(name string) (fs.FileInfo, error)     { return fs.Lstat(p.FS, name) }
-func (p projectFS) ReadLink(name string) (string, error)       { return fs.ReadLink(p.FS, name) }
-
-// Outside returns the volume that holds name, absolute or relative to the
-// project folder, and the path of name on it.
-func (p projectFS) Outside(name string) (fs.FS, string, bool) {
-	abs := filepath.FromSlash(name)
-	if !filepath.IsAbs(abs) {
-		abs = filepath.Join(p.dir, abs)
-	}
-	root := filepath.VolumeName(abs) + string(filepath.Separator)
-	rel, err := filepath.Rel(root, abs)
-	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return nil, "", false
-	}
-	return os.DirFS(root), filepath.ToSlash(rel), true
-}
-
-var _ state.OutsideFS = projectFS{}
 
 // maxLinks is how many links realPath follows before it gives up.
 const maxLinks = 255
@@ -105,26 +71,4 @@ func specInside(dir, spec string) error {
 		return fmt.Errorf("the spec folder %s lies outside the project, at %s", spec, real)
 	}
 	return nil
-}
-
-// specAlias is where the spec folder lies below the project folder once every
-// link on the way is resolved, when that differs from its path.
-func specAlias(dir, spec string) (string, bool) {
-	project, err := realPath(dir, 0)
-	if err != nil {
-		return "", false
-	}
-	real, err := realPath(filepath.Join(dir, filepath.FromSlash(spec)), 0)
-	if err != nil {
-		return "", false
-	}
-	rel, err := filepath.Rel(project, real)
-	if err != nil {
-		return "", false
-	}
-	rel = filepath.ToSlash(rel)
-	if rel == spec || rel == "." || rel == ".." || strings.HasPrefix(rel, "../") {
-		return "", false
-	}
-	return rel, true
 }

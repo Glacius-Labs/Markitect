@@ -9,13 +9,13 @@ import (
 	"path/filepath"
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
-	"github.com/Glacius-Labs/Markitect/internal/state"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
 // isProject says whether dir holds .markitect/version, so that a .markitect/
 // folder of another kind, such as the one in the home folder, is no project.
 func isProject(dir string) bool {
-	info, err := os.Stat(filepath.Join(dir, filepath.FromSlash(state.VersionFile)))
+	info, err := os.Stat(filepath.Join(dir, filepath.FromSlash(project.VersionFile)))
 	return err == nil && info.Mode().IsRegular()
 }
 
@@ -68,9 +68,9 @@ func projectFolder(o options) (dir string, found bool, err error) {
 // noProject says that no project was found, and how to make one.
 func noProject(o options, at string) error {
 	if o.dir != "" {
-		return fmt.Errorf("%s holds no %s; markitect init makes one", o.dir, state.VersionFile)
+		return fmt.Errorf("%s holds no %s; markitect init makes one", o.dir, project.VersionFile)
 	}
-	return fmt.Errorf("no folder from %s upward holds %s; markitect init makes one", at, state.VersionFile)
+	return fmt.Errorf("no folder from %s upward holds %s; markitect init makes one", at, project.VersionFile)
 }
 
 // mustProject is the project a command works in, or an error when there is
@@ -90,7 +90,7 @@ func mustProject(o options) (string, error) {
 // workspace is a loaded project and its folder on disk.
 type workspace struct {
 	dir string
-	*state.Project
+	*project.Project
 }
 
 // load loads the project a command works in.
@@ -104,15 +104,12 @@ func load(o options) (*workspace, error) {
 
 // loadDir loads the project at dir.
 func loadDir(dir string) (*workspace, error) {
-	p, err := state.Load(diskProject(dir))
+	p, err := project.Load(os.DirFS(dir))
 	if err != nil {
 		return nil, fmt.Errorf("the project %s: %w", dir, err)
 	}
 	if err := specInside(dir, p.SpecFolder); err != nil {
 		return nil, err
-	}
-	if alias, ok := specAlias(dir, p.SpecFolder); ok {
-		p.SpecAliases = append(p.SpecAliases, alias)
 	}
 	return &workspace{dir: dir, Project: p}, nil
 }
@@ -144,7 +141,7 @@ func version(o options, stdout io.Writer) (int, error) {
 	case !found && o.dir != "":
 		return ExitFailed, noProject(o, dir)
 	case found:
-		layout, err := state.ReadLayout(os.DirFS(dir))
+		layout, err := project.ReadLayout(os.DirFS(dir))
 		if err != nil {
 			return ExitFailed, fmt.Errorf("the project %s: %w", dir, err)
 		}
@@ -176,7 +173,7 @@ func licenses(o options, stdout io.Writer) (int, error) {
 // specFolderOf is the spec folder of the project at dir, which apply creates
 // when it is missing.
 func specFolderOf(dir string) (string, error) {
-	layout, err := state.ReadLayout(os.DirFS(dir))
+	layout, err := project.ReadLayout(os.DirFS(dir))
 	if err != nil {
 		return "", fmt.Errorf("the project %s: %w", dir, err)
 	}
@@ -185,7 +182,7 @@ func specFolderOf(dir string) (string, error) {
 	}
 	folder := filepath.Join(dir, filepath.FromSlash(layout.SpecFolder))
 	if info, err := os.Stat(folder); err == nil && !info.IsDir() || err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return "", fmt.Errorf("the spec folder %s, which %s names, is no folder", layout.SpecFolder, state.SpecFile)
+		return "", fmt.Errorf("the spec folder %s, which %s names, is no folder", layout.SpecFolder, project.SpecFile)
 	}
 	return folder, nil
 }

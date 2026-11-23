@@ -20,11 +20,11 @@ var fault func(step int) error
 var undoFault func(step int) error
 
 // applyChanges carries a change set out in the folder, all or nothing. It
-// checks first that every move and every created file meets nothing, that
-// every file to rewrite can be written and that every target folder can be
-// written in. It then writes each new content to a temporary file beside its
-// target, makes the moves and renames the temporary files into place, keeping
-// each replaced file aside until the end. When a step fails, every step done
+// checks first that every created file meets nothing, that every file to
+// rewrite can be written and that every target folder can be written in. It
+// then writes each new content to a temporary file beside its target and
+// renames the temporary files into place, keeping each replaced file aside
+// until the end. When a step fails, every step done
 // is undone; when an undo fails too, the error names the original failure and
 // every file left behind, so that the user can restore by hand.
 func applyChanges(folder string, c edit.Changes) (err error) {
@@ -43,9 +43,6 @@ func applyChanges(folder string, c edit.Changes) (err error) {
 		}
 	}()
 	var dirs []string
-	for _, m := range c.Moves {
-		dirs = append(dirs, filepath.Dir(local(m.To)))
-	}
 	for _, w := range c.Writes {
 		dirs = append(dirs, filepath.Dir(local(w.Path)))
 	}
@@ -60,11 +57,6 @@ func applyChanges(folder string, c edit.Changes) (err error) {
 			return err
 		}
 	}
-	for _, m := range c.Moves {
-		if err := t.rename(local(m.From), local(m.To)); err != nil {
-			return err
-		}
-	}
 	for i, w := range c.Writes {
 		if err := t.place(temps[i], local(w.Path), w.Create); err != nil {
 			return err
@@ -75,19 +67,9 @@ func applyChanges(folder string, c edit.Changes) (err error) {
 
 // precheck finds what would stop the change set before anything changes.
 func precheck(folder string, c edit.Changes, local func(string) string) error {
-	movedTo := map[string]string{}
-	for _, m := range c.Moves {
-		if _, err := os.Lstat(local(m.To)); err == nil {
-			return fmt.Errorf("%s: already exists", m.To)
-		}
-		movedTo[m.To] = m.From
-	}
 	probed := map[string]error{}
 	for _, w := range c.Writes {
 		file := local(w.Path)
-		if from, ok := movedTo[w.Path]; ok {
-			file = local(from)
-		}
 		_, statErr := os.Lstat(file)
 		switch {
 		case w.Create && statErr == nil:
@@ -108,17 +90,6 @@ func precheck(folder string, c edit.Changes, local func(string) string) error {
 		}
 	}
 	return nil
-}
-
-// canWrite says why the file at name cannot be replaced, nil when it can: the
-// file must be writable and a temporary file must fit beside it.
-func canWrite(name string) error {
-	f, err := os.OpenFile(name, os.O_WRONLY, 0)
-	if err != nil {
-		return err
-	}
-	f.Close()
-	return probe(filepath.Dir(name))
 }
 
 // existingAncestor returns dir or its nearest ancestor that exists.
@@ -253,17 +224,6 @@ func (t *transaction) temp(dir string, data []byte) (string, error) {
 		err = cerr
 	}
 	return name, err
-}
-
-func (t *transaction) rename(from, to string) error {
-	if err := t.next(); err != nil {
-		return err
-	}
-	if err := os.Rename(from, to); err != nil {
-		return err
-	}
-	t.undo = append(t.undo, func() error { return os.Rename(to, from) })
-	return nil
 }
 
 // place puts a temporary file at path. A new file is linked there, which

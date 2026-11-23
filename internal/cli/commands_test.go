@@ -44,25 +44,21 @@ func files(t *testing.T, project string) map[string]string {
 	return out
 }
 
-// noRow is how show ends for a document without a row in the state.
-const noRow = "Verdict: (no row)\nArtifacts: (none)\nCounter-checks: (none)\nEvidence: (none)\n"
-
 func TestShow(t *testing.T) {
 	dir := spec(t, branches)
 	code, out, _ := run("show", "-C", dir, `members\ada`)
-	out = withoutFingerprint(out)
 	want := "members/ada.md\nTitle: Ada Lovelace\nType: types/member.md\nSections:\n  Card\n  Branch\n" +
-		"Links to:\n  members/grace.md\n  places/central.md\nLinked from: (none)\n" + noRow
+		"Links to:\n  members/grace.md\n  places/central.md\nLinked from: (none)\n"
 	if code != ExitOK || out != want {
 		t.Errorf("got %d\n%s\nwant\n%s", code, out, want)
 	}
 	_, out, _ = run("show", "-C", dir, "places/central.md")
-	if !strings.HasSuffix(out, "Linked from:\n  members/ada.md (Branch)\n  members/grace.md (Branch)\n"+noRow) {
+	if !strings.HasSuffix(out, "Linked from:\n  members/ada.md (Branch)\n  members/grace.md (Branch)\n") {
 		t.Error(out)
 	}
 	_, out, _ = run("show", "-C", dir, "types/member")
 	if !strings.Contains(out, "Type: (none)\nSections:\n  Card\n  Branch\n  Notes (optional)\n") ||
-		!strings.HasSuffix(out, "Documents:\n  members/ada.md\n  members/grace.md\n"+noRow) {
+		!strings.HasSuffix(out, "Documents:\n  members/ada.md\n  members/grace.md\n") {
 		t.Error(out)
 	}
 	_, out, _ = run("show", "-C", dir, "members/grace", "--json")
@@ -72,6 +68,11 @@ func TestShow(t *testing.T) {
 	}
 	if doc["kind"] != "show" || doc["type_state"] != "ok" || len(doc["links_to"].([]any)) != 2 || len(doc["documents"].([]any)) != 0 {
 		t.Error(out)
+	}
+	for _, key := range []string{"fingerprint", "verdict", "artifacts", "counter_checks", "evidence", "reason", "conflict"} {
+		if _, ok := doc[key]; ok {
+			t.Errorf("show has the key %s", key)
+		}
 	}
 	for _, arg := range []string{"nobody", "../outside", "types"} {
 		if code, out, errOut := run("show", "-C", dir, arg); code != ExitFailed || out != "" || !strings.Contains(errOut, "unknown path") {
@@ -91,7 +92,39 @@ func TestTable(t *testing.T) {
 	}
 }
 
-func TestNewAndMove(t *testing.T) {
+func TestSpecTable(t *testing.T) {
+	dir := spec(t, map[string]string{
+		"types/operation.md": "# Operation\n\n## Rule\nWhat holds.\n",
+		"lending/borrow.md":  "# Borrow | Lend\n\nType: [Operation](../types/operation.md)\n\n## Rule\nA member borrows.\n",
+		"lending/ghost.md":   "# Ghost\n\nType: [Nothing](../types/nothing.md)\n",
+		"README.md":          "# Lending\n",
+		"lending/return.md":  "# Return\n\nType:\n",
+	})
+	code, out, errOut := run("table", "-C", dir)
+	want := "| Document | Type | Title |\n| --- | --- | --- |\n" +
+		"| README.md |  | Lending |\n" +
+		"| lending/borrow.md | types/operation.md | Borrow \\| Lend |\n" +
+		"| lending/ghost.md | types/nothing.md | Ghost |\n" +
+		"| lending/return.md |  | Return |\n" +
+		"| types/operation.md |  | Operation |\n"
+	if code != ExitOK || out != want || errOut != "" {
+		t.Errorf("got %d\n%s\nwant\n%s", code, out, want)
+	}
+	code, out, _ = run("table", "-C", dir, "--json")
+	var doc tableDocument
+	if err := json.Unmarshal([]byte(out), &doc); err != nil {
+		t.Fatal(err)
+	}
+	if code != ExitOK || doc.Kind != "table" || doc.Type != "" || strings.Join(doc.Columns, " ") != "Type" || len(doc.Rows) != 5 ||
+		doc.Rows[1].Path != "lending/borrow.md" || doc.Rows[1].Title != "Borrow | Lend" || strings.Join(doc.Rows[1].Cells, " ") != "types/operation.md" {
+		t.Errorf("got %d %s", code, out)
+	}
+	if code, out, _ := run("table", "-C", spec(t, nil)); code != ExitOK || out != "| Document | Type | Title |\n| --- | --- | --- |\n" {
+		t.Errorf("an empty spec: %d %q", code, out)
+	}
+}
+
+func TestNew(t *testing.T) {
 	dir := spec(t, movable())
 	code, out, _ := run("new", "-C", dir, "types/member", "members/alan", "Alan Turing")
 	if code != ExitOK || out != "created members/alan.md\n" {
@@ -104,24 +137,15 @@ func TestNewAndMove(t *testing.T) {
 	if code, out, errOut := run("new", "-C", dir, "types/member", "members/ada"); code != ExitFailed || out != "" || !strings.Contains(errOut, "already exists") {
 		t.Error(code, out, errOut)
 	}
-	// Its empty sections are errors of check, which stop no move.
-	before = files(t, dir)
-	code, out, _ = run("move", "-C", dir, "places/central", "places/main hall")
-	if code != ExitOK || out != "moved places/central.md -> places/main hall.md\nchanged members/ada.md\nchanged members/grace.md\n" {
-		t.Fatal(code, out)
-	}
-	after := files(t, dir)
-	if !strings.Contains(after["members/ada.md"], "[Central](../places/main%20hall.md)") || after["places/main hall.md"] != before["places/central.md"] {
-		t.Error(after)
-	}
-	moved := files(t, dir)
-	for _, args := range [][]string{{"places/main hall", "members/ada"}, {"nobody", "x"}, {"members/ada", "../out"}} {
-		if code, out, _ := run(append([]string{"move", "-C", dir}, args...)...); code != ExitFailed || out != "" {
+	// A document of an unknown type, and one at a path that is not below the
+	// spec folder, are refused and change nothing.
+	for _, args := range [][]string{{"nobody", "x"}, {"types/member", "../out"}} {
+		if code, out, _ := run(append([]string{"new", "-C", dir}, args...)...); code != ExitFailed || out != "" {
 			t.Errorf("%v: %d %q", args, code, out)
 		}
 	}
-	if !equalMaps(files(t, dir), moved) {
-		t.Error("a refused move changed files")
+	if !equalMaps(files(t, dir), before) {
+		t.Error("a refused new changed files")
 	}
 }
 
@@ -287,33 +311,15 @@ func unique(list []string) []string {
 	return out
 }
 
-func TestReadOnlyFileChangesNothing(t *testing.T) {
-	dir := spec(t, map[string]string{"a.md": "# A\n", "z.md": "# Z\n\nSee [a](a.md).\n"})
-	z := filepath.Join(specOf(dir), "z.md")
-	if err := os.Chmod(z, 0o444); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { os.Chmod(z, 0o644) })
-	if f, err := os.OpenFile(z, os.O_WRONLY, 0); err == nil {
-		f.Close()
-		t.Skip("the file system lets this user write a read-only file")
-	}
-	before := files(t, dir)
-	code, out, errOut := run("move", "-C", dir, "a.md", "n.md")
-	if code != ExitFailed || out != "" || !strings.Contains(errOut, "z.md: cannot be written") || !equalMaps(files(t, dir), before) {
-		t.Error(code, out, errOut)
-	}
-}
-
-// TestFailureLeavesTheSpecAsItWas fails each step of a move and an apply in turn
+// TestFailureLeavesTheSpecAsItWas fails each step of a new and an apply in turn
 // and checks that the spec folder is as it was.
 func TestFailureLeavesTheSpecAsItWas(t *testing.T) {
 	cases := []struct {
 		name string
 		args func(dir string) []string
 	}{
-		{"move", func(dir string) []string {
-			return []string{"move", "-C", dir, "places/central", "elsewhere/deep/main hall"}
+		{"new", func(dir string) []string {
+			return []string{"new", "-C", dir, "types/member", "elsewhere/deep/alan"}
 		}},
 		{"apply", func(dir string) []string { return []string{"apply", "-C", dir, "software", "parts/new"} }},
 	}
@@ -360,7 +366,7 @@ func TestFailureLeavesTheSpecAsItWas(t *testing.T) {
 }
 
 func TestFailedUndoNamesWhatIsLeft(t *testing.T) {
-	args := func(dir string) []string { return []string{"move", "-C", dir, "places/central", "elsewhere/main hall"} }
+	args := func(dir string) []string { return []string{"apply", "-C", dir, "software", "parts/new"} }
 	steps := 0
 	fault = func(int) error { steps++; return nil }
 	run(args(spec(t, movable()))...)
@@ -417,7 +423,8 @@ func TestCreateRefusesAFileThatAppeared(t *testing.T) {
 func TestTopicAndQuestions(t *testing.T) {
 	dir := spec(t, branches)
 	code, out, _ := run("topic", "-C", dir)
-	if code != ExitOK || !strings.HasPrefix(out, "# Signals of the spec\n") || !strings.Contains(out, "\n### weak (") || !strings.Contains(out, "\n### unlinked-mention (") {
+	if code != ExitOK || !strings.HasPrefix(out, "# Signals of the spec\n") || !strings.Contains(out, "\n### weak (") || !strings.Contains(out, "\n### unlinked-mention (") ||
+		strings.Contains(out, "hange signals") {
 		t.Fatal(code, out)
 	}
 	code, out, _ = run("topic", "-C", dir, "places/central")
@@ -471,8 +478,8 @@ func TestReferenceValuesCoverEveryType(t *testing.T) {
 	}
 }
 
-// movable is the spec of members and branches without its broken link, since
-// move refuses while the spec has errors.
+// movable is the spec of members and branches with one more document, which
+// the broken link of grace leads to.
 func movable() map[string]string {
 	files := map[string]string{"members/gone.md": "# Gone\n"}
 	for p, text := range branches {

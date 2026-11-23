@@ -51,13 +51,6 @@ type Document struct {
 	// Refs are all destinations of links to .md paths, type lines, footnotes
 	// and link reference definitions included, with their place in Source.
 	Refs []Ref
-	// Paths are all relative destinations, of links to any file, images,
-	// link reference definitions and HTML href and src values, with their
-	// place in Source.
-	Paths []Ref
-	// UnplacedHTML are lines of HTML that name an href or src whose value
-	// could not be read.
-	UnplacedHTML []int
 	// Texts are the stretches of prose, in order.
 	Texts []Text
 	// Source is the document's bytes as read.

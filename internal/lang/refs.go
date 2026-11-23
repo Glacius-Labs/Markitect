@@ -2,7 +2,6 @@ package lang
 
 import (
 	"bytes"
-	"strings"
 	"unicode/utf8"
 
 	"github.com/yuin/goldmark/ast"
@@ -78,34 +77,20 @@ func normalize(src []byte) (text []byte, orig []int) {
 	return text, append(orig, len(src))
 }
 
-// refs collects the destinations of the document: in Refs those of links to
-// .md paths, in Paths every relative destination of a link, an image, a
-// definition or an HTML href or src.
+// refs collects the destinations of the document's links to .md paths in
+// Refs.
 func (p *parser) refs(root ast.Node) {
-	seenRef, seenPath := map[int]bool{}, map[int]bool{}
+	seenRef := map[int]bool{}
 	_ = ast.Walk(root, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		if !entering {
 			return ast.WalkContinue, nil
 		}
 		var dest []byte
-		md := true
 		switch n := n.(type) {
 		case *ast.Link:
 			dest = n.Destination
 		case *ast.LinkReferenceDefinition:
 			dest = n.Destination
-		case *ast.Image:
-			dest, md = n.Destination, false
-		case *ast.RawHTML:
-			p.html(n.Segments.Sliced(0, n.Segments.Len()))
-			return ast.WalkContinue, nil
-		case *ast.HTMLBlock:
-			segs := n.Lines().Sliced(0, n.Lines().Len())
-			if n.HasClosure() {
-				segs = append(segs, n.ClosureLine)
-			}
-			p.html(segs)
-			return ast.WalkContinue, nil
 		default:
 			return ast.WalkContinue, nil
 		}
@@ -116,33 +101,13 @@ func (p *parser) refs(root ast.Node) {
 			ref.Angle = off > 0 && p.source[off-1] == '<'
 			ref.Line = p.line(off)
 		}
-		if raw, ok := relativePath(ref.Dest); ok && !(placed && seenPath[off]) {
-			seenPath[off] = placed
-			path := ref
-			path.Raw, path.Target = raw, resolve(p.doc.Path, raw)
-			p.doc.Paths = append(p.doc.Paths, path)
-		}
-		if raw, ok := localPath(ref.Dest); ok && md && !(placed && seenRef[off]) {
+		if raw, ok := localPath(ref.Dest); ok && !(placed && seenRef[off]) {
 			seenRef[off] = placed
 			ref.Raw, ref.Target = raw, resolve(p.doc.Path, raw)
 			p.doc.Refs = append(p.doc.Refs, ref)
 		}
 		return ast.WalkContinue, nil
 	})
-}
-
-// relativePath returns the path of a destination that is relative: not empty,
-// no bare #section or ?query, not absolute and without a scheme. The path
-// ends before the #section or ?query.
-func relativePath(dest string) (string, bool) {
-	raw := cutFragment(dest)
-	if i := strings.IndexByte(raw, '?'); i >= 0 {
-		raw = raw[:i]
-	}
-	if raw == "" || strings.HasPrefix(raw, "/") || hasScheme(raw) {
-		return "", false
-	}
-	return raw, true
 }
 
 // offset returns where a destination stands in the parsed text, when the

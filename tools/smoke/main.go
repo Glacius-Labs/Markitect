@@ -1,8 +1,8 @@
 // Command smoke builds markitect from the repository and drives its commands
 // over a small fresh project with exact assertions. It checks the version,
-// init with the project it lays out, apply, new, check with the documents of
-// the work, status, confirm, move and compare, and the refusal of the commands
-// that are gone. It starts no agent and needs no Git. The same checks run on
+// init with the project it lays out, apply, new, check, show, table, topic,
+// questions, licenses and compare, and the refusal of the commands that are
+// gone. It starts no agent and needs no Git. The same checks run on
 // every operating system, so CI needs no shell-specific copies.
 //
 //	go run ./tools/smoke [-repo DIR] [-work DIR]
