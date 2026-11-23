@@ -35,7 +35,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 ## The spec as an interface
 
-**Taken.** A module of software states what it is responsible for and hides the decisions behind it (Parnas 1972). The spec plays that role for a whole project: it declares what is fixed, what someone relies on or what was decided, and leaves free what nobody relies on ([DEC-122](decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)).
+**Taken.** A component of software states what it is responsible for and hides the decisions behind it (Parnas 1972). The spec plays that role for a whole project: it declares what is fixed, what someone relies on or what was decided, and leaves free what nobody relies on ([DEC-122](decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)).
 
 **Differs.** An interface shows only the outside. The spec also holds decisions about the inside, such as components and technology, since they are decided and so fixed.
 

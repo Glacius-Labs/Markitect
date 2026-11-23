@@ -33,7 +33,7 @@ Markitect is three things ([DEC-154](../decisions.md#dec-154-markitect-is-a-lang
 |---|---|
 | **Spec** | The one description of the project that has authority over its artifacts: the target |
 | **Document, type** | One Markdown file of the spec, and a document that declares the sections of other documents |
-| **Module** | A folder of the spec that holds documents, with a README that says what it is for and what it shows to other modules |
+| **Module** | A folder of the spec that holds a document directly, with a README that says what it is for and what it shows to other modules |
 | **Public, internal** | What a module's README lists under `Contents`, which other modules may link; and everything else in the module |
 | **Default** | What ships with Markitect: today the module `core`, with its reference values and question catalog |
 | **Artifact** | Any file that comes from the spec: code, tests, configuration, a handbook, a skill. The artifacts are what is |

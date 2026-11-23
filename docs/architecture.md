@@ -19,7 +19,7 @@ None of the commands writes a file, starts an agent or a process, uses the netwo
 
 ## Layers
 
-All Go packages use one root module. One rule table in [`internal/tooling/architecture/rules.go`](../internal/tooling/architecture/rules.go) gives every package a layer and its owning document, lists which layers each layer may import and names the exceptions, of which there are none today. The [import gate](#import-gate) enforces it, and the generated [code map](development/code-map.md) shows the table.
+All Go packages use one root Go module. One rule table in [`internal/tooling/architecture/rules.go`](../internal/tooling/architecture/rules.go) gives every package a layer and its owning document, lists which layers each layer may import and names the exceptions, of which there are none today. The [import gate](#import-gate) enforces it, and the generated [code map](development/code-map.md) shows the table.
 
 | Responsibility | Packages | Depends on |
 | --- | --- | --- |
@@ -48,7 +48,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 ### Adding, changing or removing a package
 
-A new package root needs an actual consumer and a distinct responsibility. Land each contract with a caller and a concrete implementation, never as an interface-only wave. Add, move or remove the package's row in the rule table, give it a package doc comment and regenerate the code map. Keep one root module and reject nested modules. Delete obsolete source, commands and gates together ([DEC-139](decisions.md#dec-139-quality-simplicity-and-stability-over-effort-and-compatibility)). Producers own value types; consumers own ports.
+A new package root needs an actual consumer and a distinct responsibility. Land each contract with a caller and a concrete implementation, never as an interface-only wave. Add, move or remove the package's row in the rule table, give it a package doc comment and regenerate the code map. Keep one root Go module and reject nested Go modules. Delete obsolete source, commands and gates together ([DEC-139](decisions.md#dec-139-quality-simplicity-and-stability-over-effort-and-compatibility)). Producers own value types; consumers own ports.
 
 ## Distribution
 

@@ -25,7 +25,7 @@ A link counts when its destination, without its `#section` and after decoding, e
 
 - **Resolution.** The path is relative to the folder of the linking document. Backslash escapes and character references, named and numeric such as `&#46;` and `&#x2E;`, are resolved, and percent-encoding is decoded, so `open%20loans.md` names `open loans.md`; a `%` that is not followed by two hexadecimal digits stays as it is. A path that starts with `/`, or that leaves the spec folder with `..`, names no document.
 - **Sections.** A link with a section, `[Card](members/ada.md#card)`, points to the document; the section is not checked.
-- **Every counted link must point to a document of the spec**, by its exact path, and to one it may see across the boundaries of modules ([below](#visibility)).
+- **Every counted link must point to a document of the spec**, by its exact path, and to one that is shown across the boundaries of modules ([below](#visibility)).
 
 ## Types and the type line
 
@@ -160,10 +160,10 @@ A module that holds both documents is never asked, so the spec folder, when it i
 | `section.missing` | A required section of the type's chain is missing: `missing section "NAME" required by TYPEPATH`, the most derived type of the chain that requires it | The type line |
 | `section.empty` | A declared section of the type's chain that the document has holds no text: `empty section "NAME"` | The document's heading of that section |
 | `link.unresolved` | A counted link points to no document: `no document at "PATH"`, with the path as written, without its section | The link's first line |
-| `link.internal` | A counted link, the type line's and the extends line's included, points to a document of a module that does not show the way to it ([visibility](#visibility)): `"PATH" is internal to MODULE: MODULE/README.md does not list it under Contents`, for the first module of the way that does not show its step, or `… does not list MODULE/BELOW/README.md under Contents` when that step is the README of a module below; for a module without a README, `"PATH" is internal to MODULE: MODULE has no README.md`. PATH is the target below the spec folder | The link's first line |
-| `module.readme` | A folder that holds a document directly has no `README.md`: `the folder "FOLDER" holds documents and has no README.md`, or for the spec folder `the spec folder holds documents and has no README.md`. Once per folder | Line 1 of the README's path, such as `shop/README.md:1` or `README.md:1` |
+| `link.internal` | A counted link, the type line's and the extends line's included, points to a document of a module that does not show the way to it ([visibility](#visibility)): `"PATH" is internal to MODULE: MODULE/README.md does not list it under Contents`, for the first module of the way that does not show its step, or `… does not list MODULE/BELOW/README.md under Contents` when that step is the README of a module below; when a module on the way has no README, `"PATH" is internal to MODULE: BELOW has no README.md`, where BELOW is that module, MODULE itself or one below it. PATH is the target below the spec folder | The link's first line |
+| `module.readme` | A folder that holds a document directly has no `README.md`: `the folder FOLDER holds documents and has no README.md`, or for the spec folder `the spec folder holds documents and has no README.md`. Once per folder | Line 1 of the README's path, such as `shop/README.md:1` or `README.md:1` |
 | `readme.pattern` | A code span in a README's `Contents` without `/` is no valid pattern: `bad pattern "TEXT": a pattern uses the wildcards *, ? and [a-z]` | The code span's line |
-| `readme.type` | A README has a type line or an extends line: `a README has no type line` or `a README has no extends line`. A type line or an extends line names a README: `"PATH" is a README, which is no type` | That line |
+| `readme.type` | A README has a type line or an extends line: `a README has no type line` or `a README has no extends line`, once for each line it has. A type line or an extends line names a README: `"PATH" is a README, which is no type` | That line |
 
 A document reports each unresolved or internal target once, at its first link, where its type line or extends line comes first: `[the archive](archive.md)`, `[its rules](archive.md#rules)` and `[again](./archive.md)` are one report. Each declared section is reported at most once, and a document at most one `title`. The diagnostics are sorted by path, then by line.
 
@@ -182,7 +182,7 @@ A flag may stand anywhere, before the command as well, as in `markitect -C PROJE
 | | `markitect diff OLD [NEW]` | What is new, gone or changed in the spec of NEW, by default this project, against the project OLD, with a diff for what changed ([project reference](project-reference.md#diff)) |
 | Check | `markitect check` | Checks the spec by the rules above |
 | Tool | `markitect version` | The tool's version and build ([project reference](project-reference.md#version)) |
-| | `markitect licenses` | The license notices of the modules the tool is built from |
+| | `markitect licenses` | The license notices of the Go modules the tool is built from |
 
 The commands only read: none writes a file, keeps a state, starts an agent or steers work, and each does one thing on its own.
 

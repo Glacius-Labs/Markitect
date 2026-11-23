@@ -9,7 +9,7 @@ A spec is a folder, by default `docs/spec/`, and every `.md` file in it, at any 
 - **Path.** A document is known by its path below the spec folder, such as `lending/borrow.md`. File names use lowercase letters, digits and `-`, so that links stay plain, except a module's `README.md`; the readable name is the title.
 - **Title.** The first line with content is a level-1 heading, the title. No other level-1 heading follows.
 - **Sections.** Each level-2 heading `## …` opens a section.
-- **Links.** A link is an ordinary Markdown link with a relative path to a `.md` file, `[Librarian](../team/librarian.md)`, optionally with a section, `[Librarian](../team/librarian.md#does)`. Every such link must point to a document of the spec that it may see ([below](#modules)). Web addresses, `mailto:` and a bare `#section` are not checked, and links in code are text.
+- **Links.** A link is an ordinary Markdown link with a relative path to a `.md` file, `[Librarian](../team/librarian.md)`, optionally with a section, `[Librarian](../team/librarian.md#does)`. Every such link must point to a document of the spec that is shown to it ([below](#modules)). Web addresses, `mailto:` and a bare `#section` are not checked, and links in code are text.
 
 A link is no import. It says that one document concerns another. No section of a document means anything special to the tool; only a module's README has a form of its own.
 
@@ -87,7 +87,7 @@ A value, such as the state of a concept or the role responsible for a rule, stan
 
 ## Modules
 
-**A module is a folder, and it only groups** ([DEC-156](../decisions.md#dec-156-a-module-is-a-folder-and-its-readme-says-what-it-shows)). It is no type, and there are no kinds of modules. The folder is its namespace. Every folder of the spec that holds documents is a module and has a README; a folder without documents, such as one that holds only images or only other folders, is none. Modules nest as their folders do.
+**A module is a folder, and it only groups** ([DEC-156](../decisions.md#dec-156-a-module-is-a-folder-and-its-readme-says-what-it-shows)). It is no type, and there are no kinds of modules. The folder is its namespace. Every folder of the spec that holds a document directly is a module and has a README; a folder without documents of its own, such as one that holds only images or only other folders, is none. Modules nest as their folders do.
 
 **The README is the manifest of its module.** It has no type line, since its form belongs to the language, and it is never a type:
 
@@ -98,7 +98,7 @@ A value, such as the state of a concept or the role responsible for a rule, stan
 
 A README is never itself the thing it describes: in a module `shop`, the shop is a document `shop/shop.md` of its own, and the README says what the module holds.
 
-**Public and internal.** What a README links under `Contents`, a document of its folder or the README of a module directly below, is public; the README itself is public as well. Everything else in the module is internal, and a link to it from outside the module is an error. Inside a module everything may link to everything, also to what is internal to the modules above it, as with Go's internal packages. This holds for every link, the type line and the extends line included: a type that other modules use stands in the `Contents` of its module, as `core`'s README lists its six types.
+**Public and internal.** What a README links under `Contents`, a document of its folder or the README of a module directly below, is public; the README itself is public as well. Everything else in the module is internal, and a link to it from outside the module is an error. Inside a module a document may link everything of its own folder, and what is internal to the modules above it, as with Go's internal packages; a module below shows it only what that module's README lists under `Contents`. This holds for every link, the type line and the extends line included: a type that other modules use stands in the `Contents` of its module, as `core`'s README lists its six types.
 
 **Patterns.** A README may also show documents of its folder by a pattern over their file names, written as code: in a module `reports` whose monthly reports keep arriving, `` `report-*.md` `` under `Contents` shows each new one without a change to the README, and `` `*.md` `` would show the whole folder. A pattern never reaches into a module below.
 
@@ -109,11 +109,15 @@ docs/spec/
   core/         the default's module: README.md and six types
   lending/
     README.md
-    borrow.md       public
+    borrow.md       public, an Operation
     loan-limit.md   internal, a Rule
   members/
     README.md
     card.md
+  types/
+    README.md       shows both types
+    operation.md
+    query.md
 ```
 
 ```markdown
@@ -148,8 +152,8 @@ An agent writes the structure, the sections and the links, as it writes the pros
 | `section.empty` | A section of the type, or of a type up its chain, has no text |
 | `link.unresolved` | A link to a `.md` path points to no document of the spec |
 | `link.internal` | A link, a type line or an extends line from outside a module points to a document that the module's README does not show under `Contents` |
-| `module.readme` | A folder that holds documents has no README |
+| `module.readme` | A folder that holds a document directly has no README |
 | `readme.pattern` | A pattern in a README's `Contents` is not valid |
 | `readme.type` | A README has a type line or an extends line, or a type line or an extends line names a README |
 
-What the language does not catch, contradictions between values, gaps and wrong values, a reader finds ([§5](is-the-spec-good.md)). There are no value forms, check rules or declared scopes: something new joins only when a real project needs it.
+What the language does not catch, contradictions between values, gaps and wrong values, a reader finds ([§5](is-the-spec-good.md)). There are no value forms or check rules: something new joins only when a real project needs it.
