@@ -39,7 +39,7 @@ func TestPathPatternNames(t *testing.T) {
 		yes, no []string
 	}{
 		// A pattern without a trailing slash names the files whose whole path matches.
-		{"src/shop/*.go", []string{"src/shop/a.go", "src/shop/.go", "src/shop/a.b.go"}, []string{"src/shop/x/a.go", "src/shop/a.GO", "src/shop/a.gox", "src/a.go", "x/src/shop/a.go", "src/shop"}},
+		{"src/shop/*.go", []string{"src/shop/a.go", "src/shop/a.b.go", "src/shop/.go"}, []string{"src/shop/x/a.go", "src/shop/a.GO", "src/shop/a.gox", "src/a.go", "x/src/shop/a.go", "src/shop"}},
 		// A trailing slash names the folder and everything below it.
 		{"src/shop/", []string{"src/shop/a.go", "src/shop/x/y/z.txt"}, []string{"src/shop", "src/shopx/a.go", "src/a.go", "x/src/shop/a.go"}},
 		{"src/shop", []string{"src/shop"}, []string{"src/shop/a.go", "src/shopx"}},
@@ -69,18 +69,6 @@ func TestPathPatternNames(t *testing.T) {
 				t.Errorf("%q should not name %q", tc.pattern, f)
 			}
 		}
-	}
-}
-
-func TestPathPatternIs(t *testing.T) {
-	p, err := ParsePathPattern("src/gen/")
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Is compares the path of a file or a folder with the pattern as written, without
-	// the trailing slash: the caller decides whether a folder is wanted.
-	if !p.Folder || !p.Is("src/gen") || p.Is("src/gen/x") || p.Is("x/src/gen") {
-		t.Errorf("%+v", p)
 	}
 }
 
@@ -148,14 +136,78 @@ func TestSpecRealizedIn(t *testing.T) {
 	}
 }
 
-// A name that starts with a dot is always left out of the files of a project, so
-// a pattern with one names nothing.
-func TestRealizedInDotNames(t *testing.T) {
-	const dot = "a name that starts with a dot is always left out, so a pattern with one names nothing"
-	files := realizedFiles("- `.github/workflows/`\n- `src/.env`\n- `.*`\n- `src/*.go`\n- `a.b/c.d`\n- `.`\n")
-	expect(t, checkExactly(t, files),
-		`shop/README.md:6: readme.pattern: bad pattern ".github/workflows/": `+dot,
-		`shop/README.md:7: readme.pattern: bad pattern "src/.env": `+dot,
-		`shop/README.md:8: readme.pattern: bad pattern ".*": `+dot,
-		`shop/README.md:11: readme.pattern: bad pattern ".": a pattern has no empty folder name and no .`)
+// A name that starts with a dot is a name like any other: * and ? and a class
+// match a leading dot, and a folder pattern covers everything below its folder.
+func TestPathPatternDotNames(t *testing.T) {
+	for _, tc := range []struct {
+		pattern string
+		yes, no []string
+	}{
+		{".github/workflows/*.yaml", []string{".github/workflows/ci.yaml", ".github/workflows/.draft.yaml"}, []string{".github/workflows/sub/ci.yaml", ".github/ci.yaml", ".gitlab/workflows/ci.yaml"}},
+		{"*/workflows/", []string{".github/workflows/ci.yaml", "app/workflows/.hidden", "app/workflows/.d/x"}, []string{"workflows/x", "a/b/workflows/x"}},
+		{".*/x/", []string{".git/x/f", ".github/x/y/z", ".git/x/.d/f"}, []string{".git/y/f", "a/x/f", ".git/x"}},
+		{".editorconfig", []string{".editorconfig"}, []string{"x/.editorconfig", ".editorconfig/x"}},
+		{".claude/skills/", []string{".claude/skills/triage/SKILL.md", ".claude/skills/.cache/x", ".claude/skills/triage/.hidden"}, []string{".claude/skills", ".claude/worktrees/x"}},
+		{"src/*", []string{"src/a", "src/.env"}, []string{"src", "src/a/b"}},
+		{"src/?env", []string{"src/.env", "src/aenv"}, nil},
+		{"src/[.a]env", []string{"src/.env", "src/aenv"}, []string{"src/benv"}},
+	} {
+		p, err := ParsePathPattern(tc.pattern)
+		if err != nil {
+			t.Fatalf("%q: %v", tc.pattern, err)
+		}
+		for _, f := range tc.yes {
+			if !p.Names(f) {
+				t.Errorf("%q should name %q", tc.pattern, f)
+			}
+		}
+		for _, f := range tc.no {
+			if p.Names(f) {
+				t.Errorf("%q should not name %q", tc.pattern, f)
+			}
+		}
+	}
+}
+
+// ** is a name of its own: at the start any folder, in the middle zero or more
+// folders, at the end everything inside.
+func TestPathPatternDoubleStar(t *testing.T) {
+	for _, tc := range []struct {
+		pattern string
+		yes, no []string
+	}{
+		{"**/main.go", []string{"main.go", "cmd/main.go", "a/b/c/main.go"}, []string{"main.go/x", "cmd/main.gox", "cmd/xmain.go"}},
+		{"src/**/gen.go", []string{"src/gen.go", "src/a/gen.go", "src/a/b/gen.go"}, []string{"gen.go", "x/src/gen.go", "src/a/gen.gox"}},
+		{"src/**", []string{"src/a", "src/a/b/c"}, []string{"src", "other/src/a"}},
+		{"**", []string{"a", "a/b"}, nil},
+		{"**/gen/", []string{"gen/x", "a/gen/x", "a/b/gen/y/z"}, []string{"gen", "a/gen", "a/genx/x"}},
+		{"a/**/b/**/c", []string{"a/b/c", "a/x/b/c", "a/b/y/z/c", "a/x/y/b/z/c"}, []string{"a/c", "b/c", "a/b/d"}},
+		{"**/*.go", []string{"a.go", "src/a.go", ".go"}, []string{"a.gox"}},
+		// ** inside a name is a star, and two stars match what one does.
+		{"src/a**b", []string{"src/ab", "src/aXb"}, []string{"src/x/ab"}},
+	} {
+		p, err := ParsePathPattern(tc.pattern)
+		if err != nil {
+			t.Fatalf("%q: %v", tc.pattern, err)
+		}
+		for _, f := range tc.yes {
+			if !p.Names(f) {
+				t.Errorf("%q should name %q", tc.pattern, f)
+			}
+		}
+		for _, f := range tc.no {
+			if p.Names(f) {
+				t.Errorf("%q should not name %q", tc.pattern, f)
+			}
+		}
+	}
+	// check reads ** like any pattern, and reports a bad one as before.
+	files := realizedFiles("- `**/*.go`\n- `src/**/x/`\n- `a/**`\n- `**/[`\n")
+	expect(t, checkExactly(t, files), `shop/README.md:9: readme.pattern: bad pattern "**/[": a pattern uses the wildcards *, ? and [a-z]`)
+}
+
+// A dot name in a Realized in pattern is a pattern like any other.
+func TestRealizedInDotNamesAreNoError(t *testing.T) {
+	files := realizedFiles("- `.github/workflows/`\n- `src/.env`\n- `.*/x/`\n- `.editorconfig`\n")
+	expect(t, checkExactly(t, files))
 }

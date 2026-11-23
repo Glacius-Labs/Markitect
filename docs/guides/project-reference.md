@@ -20,33 +20,37 @@ With `-C PROJECT`, the message names that folder: `PROJECT holds no .markitect/s
 
 ### The ignore file
 
-`.markitect/ignore`, optional, names what does not belong to the project's own files, such as build output and fetched dependencies, so that `diff` leaves it out ([DEC-158](../decisions.md#dec-158-a-module-says-where-it-is-built-and-diff-compares-its-spec-and-its-files)). A person writes it, as `.markitect/spec`. Only `diff` reads it; `check` and the other commands do not.
+`.markitect/ignore`, optional, says which files of the project are ignored for Markitect, such as the folder of a version control, build output and fetched dependencies, so that `diff` leaves them out ([DEC-158](../decisions.md#dec-158-a-module-says-where-it-is-built-and-diff-compares-its-spec-and-its-files)). It is the one way to leave files out: a name that starts with a dot is a name like any other. A person writes it, as `.markitect/spec`, and keeps it as the project changes. Only `diff` reads it; `check` and the other commands do not. It reads as the ignore files of version controls do, so a reader who knows one can write this one; its own rules are these.
 
 ```text
-# build output and fetched dependencies
-node_modules
-*.log
-build/out/
+# leave out the folder of the version control and all of .claude but its skills
+.git/
+.claude/*
+!.claude/skills/
+build/
 ```
 
-- **Lines.** One pattern per line. Blank lines and lines that start with `#` are skipped; white space and a carriage return at the end of a line and a byte order mark at the start of the file are dropped.
-- **Patterns.** A line is a path pattern with the wildcards of `Realized in`, each matching within one name ([language reference](language-reference.md#realized-in)). A pattern without `/`, such as `node_modules` or `*.log`, matches a file or folder of that name at any depth. A pattern with `/` between names, such as `build/out/`, is a path from the project folder. A pattern that ends with `/` matches only folders; a `/` at the end alone does not make it a path, so `node_modules/` matches a folder of that name at any depth. A line only ever leaves something out: a line that starts with `!` means a name that starts with `!`.
-- **Folders.** A folder that a pattern matches is left out with everything below it.
-- **Always left out**, with or without the file: every file and folder whose name starts with a dot, so `.markitect/` itself, with everything below such a folder; the spec folder; the folder of the other project, when one of the two projects that `diff` compares lies inside the other; and symbolic links, Windows junctions and other special files, which `diff` never follows.
-- **Not valid.** A line that is no valid path pattern, by the rules of `Realized in` except that a name may start with a dot, stops `diff` with exit 2, naming the line and the reason: `markitect diff: .markitect/ignore:3: bad pattern "a/../b": a pattern stays below the project folder, without ..`.
+- **Lines.** One pattern per line. Blank lines are skipped, and a line that starts with `#` is a comment. White space and a carriage return at the end of a line and a byte order mark at the start of the file are dropped. `\#` and `\!` at the start of a line stand for a literal `#` or `!`; a backslash anywhere else is not valid.
+- **Where a pattern matches.** A pattern with a `/` at its start or in its middle, such as `/build` or `build/out/`, is a path from the project folder; a `/` at its start only anchors it. A pattern without one, such as `node_modules` or `*.log`, matches a file or folder of that name at any depth. A pattern that ends with `/` matches only folders, and that `/` alone does not make it a path: `build/` matches a folder `build` at any depth.
+- **Wildcards.** `*` matches any run of characters within a name, `?` one character and a class such as `[a-z]` one of a set, none of them a `/`; each matches a dot at the start of a name too. `**/` at the start matches in any folder, `/**` at the end everything inside, and `/**/` in the middle zero or more folders: `docs/**/draft.md` matches `docs/draft.md` and `docs/a/b/draft.md`.
+- **Taking back.** A line that starts with `!` takes back: what an earlier line leaves out is taken in again when this pattern matches it. The last line that matches a file or folder decides. A line with `!` only takes back and never adds.
+- **Folders.** A folder that is left out is not entered, so nothing inside it can be taken in again. To take in part of a folder, leave out its contents and take in the part, as `.claude/*` and `!.claude/skills/` do above: `.claude/skills/` is read, everything else in `.claude/` is not.
+- **Always left out**, with or without the file, and nothing else: the folder `.markitect/` at the top of the project; the spec folder; the folder of the other project, when one of the two projects that `diff` compares lies inside the other; and symbolic links, Windows junctions and other special files, which `diff` never follows. A folder of a version control is no exception: without a line for it, its files count among the project's.
+- **Not valid.** A bad line stops `diff` with exit 2: `markitect diff: .markitect/ignore:N: bad pattern "LINE": REASON`, where REASON is `a pattern is not empty`, `a backslash is only the escape of a ! or # at the start of a pattern`, `a pattern is relative to the project folder and has no drive`, `a pattern stays below the project folder, without ..`, `a pattern has no empty folder name and no .` or `a pattern uses the wildcards *, ? and [a-z]`. A line of only `!` or `/` is empty.
 
-The ignore file of NEW counts for both projects that `diff` compares, so that both sides leave out the same.
+What the ignore file leaves out is left out even when a module names it under `Realized in`. The ignore file of NEW counts for both projects that `diff` compares, so that both sides leave out the same.
 
 ## Setting up a project by hand
 
-Nothing sets up a project: a person writes `.markitect/spec`, copies the default from Markitect's repository and writes the project's own modules. The default is the module `core` in [`internal/library/core/`](../../internal/library/core/) ([library](library.md)). The tool knows it as the folder `core` directly below the spec folder, so the copy goes there. Nothing rewrites links: a document that names a type of `core` links it by its relative path, such as `../core/rule.md` from a module directly below the spec folder, and `check` names every link that is off.
+Nothing sets up a project: a person writes `.markitect/spec` and `.markitect/ignore`, copies the default from Markitect's repository and writes the project's own modules. The default is the module `core` in [`internal/library/core/`](../../internal/library/core/) ([library](library.md)). The tool knows it as the folder `core` directly below the spec folder, so the copy goes there. Nothing rewrites links: a document that names a type of `core` links it by its relative path, such as `../core/rule.md` from a module directly below the spec folder, and `check` names every link that is off.
 
 From an empty folder, with the spec in `docs/spec/`:
 
 1. Write `.markitect/spec` with the one line `docs/spec`.
-2. Copy `internal/library/core/` to `docs/spec/core/`.
-3. Write the project's own modules, each a folder with a `README.md` ([language reference](language-reference.md#modules)), such as `docs/spec/lending/README.md`, and their documents beside it.
-4. Run `markitect check`, and fix what it reports until it prints `0 errors in N documents` and exits 0.
+2. Write `.markitect/ignore` with the files that are not the project's own, such as `.git/` for the folder of a version control and the folders of build output ([above](#the-ignore-file)). Without it, `diff` counts every file of the project that is not always left out.
+3. Copy `internal/library/core/` to `docs/spec/core/`.
+4. Write the project's own modules, each a folder with a `README.md` ([language reference](language-reference.md#modules)), such as `docs/spec/lending/README.md`, and their documents beside it.
+5. Run `markitect check`, and fix what it reports until it prints `0 errors in N documents` and exits 0.
 
 The spec owns its copy: a project may change `core` like any of its modules.
 
@@ -150,7 +154,7 @@ new     scripts/seed.sql
 Files of NEW that no module names: 2
 ```
 
-`lending` names `src/lending/fines.go` too, but `lending/fines` lies within it and names the file as well, so it goes only to `lending/fines`. The two files of NEW that no module names are `README.md` and `scripts/seed.sql`. `core` is not named, since nothing of it changed. `build/out/library.exe` is left out by the ignore file, and `.markitect/` because its name starts with a dot. `diff` exits 1.
+`lending` names `src/lending/fines.go` too, but `lending/fines` lies within it and names the file as well, so it goes only to `lending/fines`. The two files of NEW that no module names are `README.md` and `scripts/seed.sql`. `core` is not named, since nothing of it changed. `build/out/library.exe` is left out by the ignore file, and `.markitect/` always. `diff` exits 1.
 
 ### Exit codes and JSON
 

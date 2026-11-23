@@ -20,7 +20,7 @@ var lendingFiles = map[string]string{
 	"src/members/card.go":             "package members\n",
 	"tools/build.sh":                  "#!/bin/sh\n",
 	"LICENSE":                         "MIT\n",
-	".markitect/ignore":               "# generated\nout/\n",
+	".markitect/ignore":               "# generated, and the version control\nout/\n.git/\n.hidden/\n",
 	"out/result.txt":                  "left out by the ignore file\n",
 	".git/HEAD":                       "ref: refs/heads/main\n",
 	"docs/spec/lending/diagram.png":   "png",
@@ -222,7 +222,7 @@ func TestDiffExitCodeFollowsFiles(t *testing.T) {
 		}
 	}
 	// A file that differs only inside the ignore file's reach, the spec folder or a dot name does not count.
-	newer := projectOf(t, changes(lendingFiles, map[string]string{"out/other.txt": "x", ".github/ci.yml": "x", "docs/spec/lending/diagram.png": "other", "src/lending/.cache": "x"}))
+	newer := projectOf(t, changes(lendingFiles, map[string]string{"out/other.txt": "x", ".git/ci.yml": "x", "docs/spec/lending/diagram.png": "other", "src/lending/.hidden/x": "x"}))
 	if code, out, _ := run("diff", older, newer); code != ExitOK {
 		t.Errorf("%d\n%s", code, out)
 	}
@@ -283,9 +283,10 @@ func TestDiffReportsABadIgnoreLine(t *testing.T) {
 		t.Errorf("check: %d %q", code, out)
 	}
 	for text, want := range map[string]string{
-		"/abs\n":       `.markitect/ignore:1: bad pattern "/abs": a pattern is relative to the project folder, not absolute`,
+		"//abs\n":      `.markitect/ignore:1: bad pattern "//abs": a pattern has no empty folder name and no .`,
 		"x\n[\n":       `.markitect/ignore:2: bad pattern "[": a pattern uses the wildcards *, ? and [a-z]`,
-		"a\\b\r\n":     `.markitect/ignore:1: bad pattern "a\b": a pattern separates folders with /, not \`,
+		"a\\b\r\n":     `.markitect/ignore:1: bad pattern "a\b": a backslash is only the escape of a ! or # at the start of a pattern`,
+		"!x\n!../y\n":  `.markitect/ignore:2: bad pattern "!../y": a pattern stays below the project folder, without ..`,
 		"\n\n  \na//b": `.markitect/ignore:4: bad pattern "a//b": a pattern has no empty folder name and no .`,
 	} {
 		bad := projectOf(t, changes(lendingFiles, map[string]string{".markitect/ignore": text}))
@@ -300,7 +301,7 @@ func TestDiffIgnoreFileOfNewCountsForBothSides(t *testing.T) {
 	older := projectOf(t, changes(lendingFiles, map[string]string{".markitect/ignore": "tools/\n", "out/result.txt": "old"}))
 	newer := projectOf(t, changes(lendingFiles, map[string]string{".markitect/ignore": "", "out/result.txt": "new", "tools/build.sh": "#!/bin/sh\n# changed\n"}))
 	_, out, _ := run("diff", older, newer)
-	for _, part := range []string{"## Files no module names (2)\n\nchanged out/result.txt\nchanged tools/build.sh\n\nFiles of NEW that no module names: 3\n"} {
+	for _, part := range []string{"## Files no module names (2)\n\nchanged out/result.txt\nchanged tools/build.sh\n\nFiles of NEW that no module names: 5\n"} {
 		if !strings.Contains(out, part) {
 			t.Errorf("missing %q in\n%s", part, out)
 		}

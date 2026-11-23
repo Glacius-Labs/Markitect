@@ -293,7 +293,7 @@ func TestDiffProjectsWithoutRealizedIn(t *testing.T) {
 	newer := with(plain, map[string]string{"src/a.go": "A", "src/c.go": "c", "src/gone.go": gone, "build/out.bin": "O", ".hidden/x": "X", "spec/img/diagram.md": "# Diagram\n\nChanged.\n"})
 	// The one changed document makes its module a change; its files are none.
 	want := "img spec=true files=false\n" +
-		"unassigned: changed build/out.bin; changed src/a.go; new src/c.go; gone src/gone.go;\ntotal 4 differs true\n"
+		"unassigned: changed .hidden/x; changed build/out.bin; changed src/a.go; new src/c.go; gone src/gone.go;\ntotal 5 differs true\n"
 	if got := render(mustDiff(t, plain, newer, nil)); got != want {
 		t.Errorf("got\n%s\nwant\n%s", got, want)
 	}
@@ -302,7 +302,7 @@ func TestDiffProjectsWithoutRealizedIn(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, want := render(mustDiff(t, plain, newer, ig)), "img spec=true files=false\nunassigned:\ntotal 0 differs true\n"; got != want {
+	if got, want := render(mustDiff(t, plain, newer, ig)), "img spec=true files=false\nunassigned: changed .hidden/x;\ntotal 1 differs true\n"; got != want {
 		t.Errorf("with ignore\n%s", got)
 	}
 }
@@ -358,15 +358,17 @@ func TestDiffProjectsIgnoreAppliesToBothSides(t *testing.T) {
 	}
 }
 
-// Files of the spec folder, and what starts with a dot, are no files of the project.
-func TestDiffProjectsLeavesOutTheSpecFolderAndDotNames(t *testing.T) {
+// Files of the spec folder and the folder .markitect/ are no files of the project;
+// a name that starts with a dot is a name like any other.
+func TestDiffProjectsLeavesOutTheSpecFolderAndMarkitect(t *testing.T) {
 	newer := with(shop(), map[string]string{
 		"docs/spec/shop/image.png": "png",
 		".github/ci.yml":           "ci",
 		"src/shop/.secret":         "s",
 		".markitect/ignore":        "# nothing\n",
 	})
-	if got := diffOf(t, shop(), newer, ""); got != "unassigned:\ntotal 2 differs false\n" {
+	want := "shop spec=false files=true\n  new src/shop/.secret\nunassigned: new .github/ci.yml;\ntotal 3 differs true\n"
+	if got := diffOf(t, shop(), newer, ""); got != want {
 		t.Errorf("got\n%s", got)
 	}
 }
