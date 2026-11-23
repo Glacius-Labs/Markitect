@@ -1,6 +1,7 @@
 // Package lang is the spec language over supplied files: it parses documents,
-// with their title, type line, sections and links, loads a spec from a file
-// system and checks it.
+// with their title, type or extends line, sections and links, loads a spec from
+// a file system, resolves the sections of a type through its chain of base
+// types and checks it.
 //
 // It reads only the file system it is handed and writes nothing. Documents are
 // read as CommonMark with GitHub's extensions, as GitHub renders them. The
@@ -45,11 +46,22 @@ type Document struct {
 	TypePath string
 	// StrayTypeLines are the other lines of text that start with "Type:".
 	StrayTypeLines []int
-	Sections       []Section
-	// Links are the links to .md paths outside type lines.
+	// ExtendsLine is the line starting with "Extends:" in the slot after the
+	// title, where an object has its type line; a document has one of the two.
+	// ExtendsRaw is the path its link names as written, and ExtendsPath that
+	// path resolved below the spec folder. Both are empty when the extends line
+	// is absent or is not exactly one link to a .md path.
+	ExtendsLine int
+	ExtendsRaw  string
+	ExtendsPath string
+	// StrayExtendsLines are the other lines of text that start with "Extends:".
+	StrayExtendsLines []int
+	Sections          []Section
+	// Links are the links to .md paths outside type and extends lines.
 	Links []Link
-	// Refs are all destinations of links to .md paths, type lines, footnotes
-	// and link reference definitions included, with their place in Source.
+	// Refs are all destinations of links to .md paths, type and extends lines,
+	// footnotes and link reference definitions included, with their place in
+	// Source.
 	Refs []Ref
 	// Texts are the stretches of prose, in order.
 	Texts []Text
@@ -84,6 +96,10 @@ type Link struct {
 
 // HasType reports whether the document names a type with a valid type line.
 func (d *Document) HasType() bool { return d.TypePath != "" }
+
+// HasExtends reports whether the document names a base type with a valid
+// extends line.
+func (d *Document) HasExtends() bool { return d.ExtendsPath != "" }
 
 // Section returns the document's first section whose heading equals name
 // without regard to case.
@@ -134,7 +150,10 @@ func cutOptional(heading string) (string, bool) {
 
 var markdown = goldmark.New(goldmark.WithExtensions(extension.GFM, extension.Footnote))
 
-const typePrefix = "Type:"
+const (
+	typePrefix    = "Type:"
+	extendsPrefix = "Extends:"
+)
 
 // Parse reads one document from its bytes as CommonMark with GitHub's
 // extensions. A leading byte order mark is dropped, invalid UTF-8 is replaced,
@@ -149,11 +168,12 @@ func Parse(docPath string, src []byte) *Document {
 }
 
 type parser struct {
-	doc       *Document
-	source    []byte // the normalized text
-	orig      []int  // the offset in Document.Source of each offset of source
-	starts    []int  // the offset of each line
-	typeLines map[int]bool
+	doc    *Document
+	source []byte // the normalized text
+	orig   []int  // the offset in Document.Source of each offset of source
+	starts []int  // the offset of each line
+	// headLines are the lines of type lines and extends lines, placed or not.
+	headLines map[int]bool
 }
 
 // line returns the line of a byte offset.
@@ -171,7 +191,7 @@ func lineStarts(source []byte) []int {
 
 func (p *parser) read(root ast.Node) {
 	d := p.doc
-	p.typeLines = map[int]bool{}
+	p.headLines = map[int]bool{}
 	first := nextBlock(root.FirstChild())
 	if first != nil {
 		d.ContentLine = p.line(first.Pos())
@@ -184,26 +204,41 @@ func (p *parser) read(root ast.Node) {
 	if d.TitleLine != 0 {
 		if para, ok := nextBlock(first.NextSibling()).(*ast.Paragraph); ok {
 			seg := para.Lines().At(0)
-			if line := p.lineText(seg); strings.HasPrefix(line, typePrefix) {
+			switch line := p.lineText(seg); {
+			case strings.HasPrefix(line, typePrefix):
 				d.TypeLine = p.line(seg.Start)
-				p.typeLines[d.TypeLine] = true
+				p.headLines[d.TypeLine] = true
 				if raw, ok := soleLink(strings.TrimSpace(line[len(typePrefix):])); ok {
 					d.TypeRaw, d.TypePath = raw, resolve(d.Path, raw)
+				}
+			case strings.HasPrefix(line, extendsPrefix):
+				d.ExtendsLine = p.line(seg.Start)
+				p.headLines[d.ExtendsLine] = true
+				if raw, ok := soleLink(strings.TrimSpace(line[len(extendsPrefix):])); ok {
+					d.ExtendsRaw, d.ExtendsPath = raw, resolve(d.Path, raw)
 				}
 			}
 		}
 	}
-	// Stray type lines first, in paragraphs and in the text of tight list items,
-	// so that their links are skipped below.
+	// Stray type and extends lines first, in paragraphs and in the text of tight
+	// list items, so that their links are skipped below.
 	_ = ast.Walk(root, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		if !entering || (n.Kind() != ast.KindParagraph && n.Kind() != ast.KindTextBlock) {
 			return ast.WalkContinue, nil
 		}
 		for i := 0; i < n.Lines().Len(); i++ {
 			seg := n.Lines().At(i)
-			if l := p.line(seg.Start); !p.typeLines[l] && strings.HasPrefix(p.lineText(seg), typePrefix) {
+			l := p.line(seg.Start)
+			if p.headLines[l] {
+				continue
+			}
+			switch line := p.lineText(seg); {
+			case strings.HasPrefix(line, typePrefix):
 				d.StrayTypeLines = append(d.StrayTypeLines, l)
-				p.typeLines[l] = true
+				p.headLines[l] = true
+			case strings.HasPrefix(line, extendsPrefix):
+				d.StrayExtendsLines = append(d.StrayExtendsLines, l)
+				p.headLines[l] = true
 			}
 		}
 		return ast.WalkContinue, nil
@@ -323,7 +358,8 @@ func visible(s string) bool {
 	}
 }
 
-// links collects the links to .md paths in a block, outside the type lines.
+// links collects the links to .md paths in a block, outside the type and
+// extends lines.
 func (p *parser) links(block ast.Node, section string) {
 	_ = ast.Walk(block, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		link, ok := n.(*ast.Link)
@@ -331,7 +367,7 @@ func (p *parser) links(block ast.Node, section string) {
 			return ast.WalkContinue, nil
 		}
 		line := p.line(link.Pos())
-		if raw, ok := localPath(string(link.Destination)); ok && !p.typeLines[line] {
+		if raw, ok := localPath(string(link.Destination)); ok && !p.headLines[line] {
 			p.doc.Links = append(p.doc.Links, Link{Target: resolve(p.doc.Path, raw), Raw: raw, Section: section, Line: line})
 		}
 		return ast.WalkContinue, nil

@@ -25,11 +25,15 @@ func (s *smoke) version() error {
 
 // smokeFiles are the documents of a small lending library that a person writes
 // by hand into the spec: a domain, a concept and an operation of the types of
-// the packages.
+// the packages, and a type of its own that extends another with a document of
+// it.
 var smokeFiles = map[string]string{
-	"docs/spec/domain/README.md": "# Domain\n\nType: [Domain](../packages/software/domain.md)\n\n## Concepts\n- [Member](member.md)\n\n## Operations\n- [Borrow](borrow.md)\n",
-	"docs/spec/domain/member.md": "# Member\n\nType: [Concept](../packages/core/concept.md)\n\n## Definition\nA person with a library card.\n",
-	"docs/spec/domain/borrow.md": "# Borrow\n\nType: [Operation](../packages/software/operation.md)\n\n## Does\nLends a book to a member for three weeks.\n\n## Who\nA [member](member.md).\n\n## Given\nThe book and the card.\n",
+	"docs/spec/domain/README.md":       "# Domain\n\nType: [Domain](../packages/software/domain.md)\n\n## Concepts\n- [Member](member.md)\n\n## Operations\n- [Borrow](borrow.md)\n",
+	"docs/spec/domain/member.md":       "# Member\n\nType: [Concept](../packages/core/concept.md)\n\n## Definition\nA person with a library card.\n",
+	"docs/spec/domain/borrow.md":       "# Borrow\n\nType: [Operation](../packages/software/operation.md)\n\n## Does\nLends a book to a member for three weeks.\n\n## Who\nA [member](member.md).\n\n## Given\nThe book and the card.\n",
+	"docs/spec/domain/artifact.md":     "# Artifact\n\nSomething the library keeps.\n\n## Owner\nWho answers for it.\n",
+	"docs/spec/domain/catalog.md":      "# Catalog\n\nExtends: [Artifact](artifact.md)\n\nA list of books.\n\n## Entries\nThe books it lists.\n",
+	"docs/spec/domain/main-catalog.md": "# Main catalog\n\nType: [Catalog](catalog.md)\n\n## Owner\nThe head librarian.\n\n## Entries\nEvery book.\n",
 }
 
 // snapshot reads every file below root, by its path with forward slashes, and
@@ -217,6 +221,18 @@ func (s *smoke) projectCommands() error {
 	if err := os.Remove(filepath.Join(project, "docs", "spec", "domain", "broken.md")); err != nil {
 		return err
 	}
+	// A derived type that makes a section of its base optional is found.
+	if err := writeFile(project, "docs/spec/domain/loose.md", "# Loose\n\nExtends: [Artifact](artifact.md)\n\n## Owner (optional)\nNobody.\n"); err != nil {
+		return err
+	}
+	if out, err := markitect(1, "check"); err != nil {
+		return err
+	} else if err := requireContains(out, `domain/loose.md:5: extends.loosens: section "Owner" is required by domain/artifact.md`+"\n", fmt.Sprintf("1 error in %d documents\n", total+1)); err != nil {
+		return err
+	}
+	if err := os.Remove(filepath.Join(project, "docs", "spec", "domain", "loose.md")); err != nil {
+		return err
+	}
 
 	// Everything from here on reads: nothing of the project may change.
 	before, err := snapshot(project)
@@ -244,6 +260,24 @@ func (s *smoke) projectCommands() error {
 	if out, err := markitect(0, "table", "packages/software/operation"); err != nil {
 		return err
 	} else if err := requireContains(out, "| Title | Does | Who | Given | Refused when | Returns |\n", "| Borrow | Lends a book to a member for three weeks. | A member. |"); err != nil {
+		return err
+	}
+	// A type that extends another: show names the base and where each section
+	// comes from, and table and topic count the documents of the derived type
+	// among those of the base.
+	if out, err := markitect(0, "show", "domain/catalog"); err != nil {
+		return err
+	} else if err := requireContains(out, "domain/catalog.md\nTitle: Catalog\nExtends: domain/artifact.md\nSections:\n  Owner (from domain/artifact.md)\n  Entries\n", "Documents:\n  domain/main-catalog.md\n"); err != nil {
+		return err
+	}
+	if out, err := markitect(0, "table", "domain/artifact"); err != nil {
+		return err
+	} else if out != "| Title | Owner |\n| --- | --- |\n| Main catalog | The head librarian. |\n" {
+		return fmt.Errorf("table of the base type: %s", tail(out))
+	}
+	if out, err := markitect(0, "topic", "domain/artifact", "--json"); err != nil {
+		return err
+	} else if err := requireContains(out, `"topic_kind": "type"`, `"domain/main-catalog.md"`); err != nil {
 		return err
 	}
 	if out, err := markitect(0, "questions"); err != nil {

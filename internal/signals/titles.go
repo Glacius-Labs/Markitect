@@ -22,16 +22,10 @@ type title struct {
 // except those of types, whose names stand in prose as ordinary words, and
 // one-word titles shorter than four letters.
 func newTitles(spec *lang.Spec) *titles {
-	types := map[string]bool{}
-	for _, d := range spec.Documents {
-		if d.HasType() {
-			types[d.TypePath] = true
-		}
-	}
 	byWords := map[string]*title{}
 	for _, d := range spec.Documents {
 		ws := words(d.Title)
-		if types[d.Path] || len(ws) == 0 || len(ws) == 1 && len([]rune(ws[0])) < 4 {
+		if spec.IsType(d) || len(ws) == 0 || len(ws) == 1 && len([]rune(ws[0])) < 4 {
 			continue
 		}
 		key := strings.Join(ws, " ")
