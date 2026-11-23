@@ -94,39 +94,47 @@ func (ig *Ignore) leaves(rel string, folder bool) bool {
 // their path below the project folder.
 type fileTable map[string]int64
 
-// folders are folders below a project folder that are left out of its files.
-// A path names one when it is equal to it, or, on a file system that does not
-// regard case, when it differs only in case and lies at the same place: the
-// folder that is meant is the one on the disk, whatever case the name was
-// written in.
-type folders struct {
-	names []string
-	infos []fs.FileInfo
+// Folder is a folder below a project folder that is left out of its files. It
+// is named by its Path below the project folder, with /, or by Info, the folder
+// as it is on the disk, which holds whatever names lead to it, upper or lower
+// case and short names included. Either may be empty.
+type Folder struct {
+	Path string
+	Info fs.FileInfo
 }
 
-func newFolders(fsys fs.FS, names ...string) *folders {
+// folders are the folders left out of the files of a project. A path names one
+// when it is equal to its Path, or when it is the folder of its Info on the
+// disk; the Path may also be written in another case, on a file system that does
+// not regard case, which os.SameFile tells.
+type folders struct {
+	list []Folder
+}
+
+func newFolders(fsys fs.FS, leave []Folder) *folders {
 	f := &folders{}
-	for _, name := range names {
-		if name == "" || name == "." {
+	for _, l := range leave {
+		if l.Path == "." || l.Path == "" && l.Info == nil {
 			continue
 		}
-		info, _ := fs.Stat(fsys, name)
-		f.names = append(f.names, name)
-		f.infos = append(f.infos, info)
+		if l.Info == nil {
+			l.Info, _ = fs.Stat(fsys, l.Path)
+		}
+		f.list = append(f.list, l)
 	}
 	return f
 }
 
 // holds reports whether the folder at p, an entry of the walk, is one of them.
 func (f *folders) holds(p string, e fs.DirEntry) bool {
-	for i, name := range f.names {
-		if p == name {
+	for _, l := range f.list {
+		if p == l.Path {
 			return true
 		}
-		if f.infos[i] == nil || !strings.EqualFold(p, name) {
+		if l.Info == nil || l.Path != "" && !strings.EqualFold(p, l.Path) {
 			continue
 		}
-		if info, err := e.Info(); err == nil && os.SameFile(f.infos[i], info) {
+		if info, err := e.Info(); err == nil && os.SameFile(l.Info, info) {
 			return true
 		}
 	}
@@ -138,9 +146,9 @@ func (f *folders) holds(p string, e fs.DirEntry) bool {
 // this one, links and junctions, which it never follows, special files and what
 // the ignore file names; a folder that is left out is left out with everything
 // below it.
-func listFiles(fsys fs.FS, ig *Ignore, leave ...string) (fileTable, error) {
+func listFiles(fsys fs.FS, ig *Ignore, leave ...Folder) (fileTable, error) {
 	files := fileTable{}
-	out := newFolders(fsys, leave...)
+	out := newFolders(fsys, leave)
 	err := fs.WalkDir(fsys, ".", func(p string, e fs.DirEntry, err error) error {
 		if err != nil {
 			return fmt.Errorf("cannot read %s: %w", p, unwrapPath(err))

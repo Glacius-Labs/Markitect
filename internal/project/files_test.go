@@ -141,7 +141,7 @@ func TestListFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, err := listFiles(fsys, ig, "docs/spec")
+	got, err := listFiles(fsys, ig, Folder{Path: "docs/spec"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +155,7 @@ func TestListFiles(t *testing.T) {
 		t.Errorf("sizes %v", got)
 	}
 	// Without an ignore file, only the fixed rules apply.
-	got, err = listFiles(fsys, nil, "docs/spec")
+	got, err = listFiles(fsys, nil, Folder{Path: "docs/spec"})
 	if err != nil {
 		t.Fatal(err)
 	}

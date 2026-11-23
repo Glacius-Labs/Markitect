@@ -56,7 +56,7 @@ func load(t *testing.T, files map[string]string) *Project {
 
 func mustDiff(t *testing.T, older, newer map[string]string, ig *Ignore) *ProjectDiff {
 	t.Helper()
-	d, err := DiffProjects(load(t, older), load(t, newer), ig, "", "")
+	d, err := DiffProjects(load(t, older), load(t, newer), ig, Folder{}, Folder{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -377,16 +377,16 @@ func TestDiffProjectsUnreadableFile(t *testing.T) {
 	newer := tree(with(shop(), map[string]string{"src/users/u.go": "package USERS\n"}))
 	o, n := load(t, shop()), load(t, shop())
 	o.FS, n.FS = failing{FS: older, open: "src/users/u.go"}, newer
-	if _, err := DiffProjects(o, n, nil, "", ""); err == nil || err.Error() != "cannot read src/users/u.go in the old project: permission denied" {
+	if _, err := DiffProjects(o, n, nil, Folder{}, Folder{}); err == nil || err.Error() != "cannot read src/users/u.go in the old project: permission denied" {
 		t.Errorf("got %v", err)
 	}
 	o.FS, n.FS = older, failing{FS: newer, read: "src/users/u.go"}
-	if _, err := DiffProjects(o, n, nil, "", ""); err == nil || err.Error() != "cannot read src/users/u.go in the new project: disk error" {
+	if _, err := DiffProjects(o, n, nil, Folder{}, Folder{}); err == nil || err.Error() != "cannot read src/users/u.go in the new project: disk error" {
 		t.Errorf("got %v", err)
 	}
 	// A file that only one side has is never opened.
 	n.FS = failing{FS: tree(with(shop(), map[string]string{"tools/new.sh": "x"})), open: "tools/new.sh"}
-	if d, err := DiffProjects(o, n, nil, "", ""); err != nil || len(d.Unassigned) != 1 {
+	if d, err := DiffProjects(o, n, nil, Folder{}, Folder{}); err != nil || len(d.Unassigned) != 1 {
 		t.Errorf("got %v %v", d, err)
 	}
 }
@@ -415,7 +415,7 @@ func prefixed(files map[string]string, folder string) map[string]string {
 func TestDiffProjectsLeavesOutAProjectInside(t *testing.T) {
 	outer := with(shop(), prefixed(shop(), "backup/old"))
 	// OLD lies inside NEW.
-	d, err := DiffProjects(load(t, shop()), load(t, outer), nil, "backup/old", "")
+	d, err := DiffProjects(load(t, shop()), load(t, outer), nil, Folder{Path: "backup/old"}, Folder{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -423,7 +423,7 @@ func TestDiffProjectsLeavesOutAProjectInside(t *testing.T) {
 		t.Errorf("OLD inside NEW\n%s", got)
 	}
 	// Without it the copy shows as new files.
-	d, err = DiffProjects(load(t, shop()), load(t, outer), nil, "", "")
+	d, err = DiffProjects(load(t, shop()), load(t, outer), nil, Folder{}, Folder{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -431,7 +431,7 @@ func TestDiffProjectsLeavesOutAProjectInside(t *testing.T) {
 		t.Errorf("OLD inside NEW, not left out\n%s", render(d))
 	}
 	// NEW lies inside OLD; the files of OLD do not count the copy.
-	d, err = DiffProjects(load(t, outer), load(t, shop()), nil, "", "backup/old")
+	d, err = DiffProjects(load(t, outer), load(t, shop()), nil, Folder{}, Folder{Path: "backup/old"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -440,7 +440,7 @@ func TestDiffProjectsLeavesOutAProjectInside(t *testing.T) {
 	}
 	// What else changed in the outer project still shows.
 	outer = with(outer, map[string]string{"src/users/u.go": "package users // changed\n"})
-	d, err = DiffProjects(load(t, shop()), load(t, outer), nil, "backup/old", "")
+	d, err = DiffProjects(load(t, shop()), load(t, outer), nil, Folder{Path: "backup/old"}, Folder{})
 	if err != nil {
 		t.Fatal(err)
 	}

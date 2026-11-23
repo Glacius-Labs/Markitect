@@ -170,23 +170,28 @@ func count(m project.ModuleChange) string {
 	return ""
 }
 
-// inside returns the path of the folder inner below the folder outer, with /,
-// when inner lies in outer, and "" otherwise, also when they are the same
-// folder. Links and junctions on the way are resolved.
-func inside(inner, outer string) string {
-	in, err := realPath(inner, 0)
+// inside returns the folder inner as a folder to leave out of the files of the
+// project outer when inner lies in outer, and the zero Folder otherwise, also
+// when they are the same folder. It decides by the folders on the disk, not by
+// the text of the paths, so that another case or a short name of a folder, such
+// as CONSIL~1, makes no difference: some folder above inner is outer.
+func inside(inner, outer string) project.Folder {
+	in, err := os.Stat(inner)
 	if err != nil {
-		in = inner
+		return project.Folder{}
 	}
-	out, err := realPath(outer, 0)
+	out, err := os.Stat(outer)
 	if err != nil {
-		out = outer
+		return project.Folder{}
 	}
-	rel, err := filepath.Rel(out, in)
-	if err != nil || rel == "." || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) || filepath.IsAbs(rel) {
-		return ""
+	for dir := filepath.Dir(inner); ; dir = filepath.Dir(dir) {
+		if info, err := os.Stat(dir); err == nil && os.SameFile(info, out) {
+			return project.Folder{Info: in}
+		}
+		if up := filepath.Dir(dir); up == dir {
+			return project.Folder{}
+		}
 	}
-	return filepath.ToSlash(rel)
 }
 
 // what says what changed in a module that has a change.

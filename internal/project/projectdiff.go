@@ -81,8 +81,8 @@ func within(child, parent string) bool {
 	return strings.HasPrefix(child, parent+"/")
 }
 
-func newSide(p *Project, ig *Ignore, inside string) (*side, error) {
-	files, err := listFiles(p.FS, ig, p.SpecFolder, inside)
+func newSide(p *Project, ig *Ignore, inside Folder) (*side, error) {
+	files, err := listFiles(p.FS, ig, Folder{Path: p.SpecFolder}, inside)
 	if err != nil {
 		return nil, err
 	}
@@ -130,10 +130,10 @@ func newSide(p *Project, ig *Ignore, inside string) (*side, error) {
 // the file from the one above in that state. A module whose spec or whose files
 // changed is a change of the project; a changed file that no module names, in
 // the state it belongs to, is listed apart. oldInside is the folder of the older
-// project below the newer one, newInside that of the newer below the older, ""
-// where the project does not lie inside the other: a copy kept inside a project
+// project below the newer one, newInside that of the newer below the older, the
+// zero Folder where the project does not lie inside the other: a copy kept inside a project
 // is left out of that project's files.
-func DiffProjects(older, newer *Project, ig *Ignore, oldInside, newInside string) (*ProjectDiff, error) {
+func DiffProjects(older, newer *Project, ig *Ignore, oldInside, newInside Folder) (*ProjectDiff, error) {
 	d := &ProjectDiff{Spec: DiffSpecs(older, newer)}
 	before, err := newSide(older, ig, newInside)
 	if err != nil {
