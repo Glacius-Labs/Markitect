@@ -1,6 +1,6 @@
 # The plugin
 
-The Claude Code plugin `markitect` only fetches the tool: it brings the `markitect` command into a session. It holds no skill, no agent and no job. The skills of the standard lie in the project and are laid out by `init` ([library](library.md#the-skills-of-the-standard)). [The project and its skills](../concept/the-project.md#the-plugin-the-version-and-the-library) in the concept says why; this page says what the plugin holds, how its launcher gets the tool and how firm that is.
+The Claude Code plugin `markitect` only fetches the tool: it brings the `markitect` command into a session. It holds no skill, no agent and no job. The skills of the standard lie in the project and are laid out by `init` ([library](library.md#the-skills-of-the-standard)). [The project and its skills](../concept/the-project.md#the-plugin-the-version-and-the-library) in the concept and [DEC-153](../decisions.md#dec-153-markitect-holds-the-work-init-lays-out-templates-and-skills-and-the-plugin-fetches-its-own-version) say why; this page says what the plugin holds, how its launcher gets the tool and how firm that is.
 
 ## What it holds
 

@@ -21,7 +21,7 @@ A role forbids nothing: *Does not* names what the role usually leaves to another
 
 ### software
 
-The types follow the six chapters of a software project ([what goes in a spec](../concept/what-goes-in-a-spec.md#the-content-model)).
+The types follow the six chapters of a software project ([what goes in a spec](../concept/what-goes-in-a-spec.md#the-content-model)), and the capabilities of a product.
 
 | Type | Sections |
 |---|---|
@@ -31,6 +31,7 @@ The types follow the six chapters of a software project ([what goes in a spec](.
 | Context | Terms, External systems; *Constraints*, each a link to the rule that imposes it; *Assumptions*, each with who ensures it and what is therefore not built |
 | External system | What it is, Expected |
 | Domain | Concepts, Operations; *Rules*, *Parts* |
+| Capability | For, Offers, Covers; *Parts* |
 | Operation | Does, Who, Given; *Refused when*, each condition with its reason and the answer the caller gets; *Returns* |
 | Interfaces | Interfaces |
 | Interface | For, Offers |
@@ -65,12 +66,12 @@ The types of the way of working ([the work](../concept/the-work.md)). Roles and 
 | Observer | Observes, Source, Worth a statement, Never in the report, Schedule, Model |
 | Person | Roles |
 | Meeting | Rhythm, Time, Participants, Covers |
-| Area | Purpose, Owner; *Class*, *Rules* |
+| Area | Purpose, Owner, Covers; *Class*, *Rules* |
 | Class | Purpose, Connects to, Never, Usually planned by |
 | Dashboard | For, Sections |
 | Handbook | For, Covers, Form |
 
-An Area is an area of planning, with an owner and an optional class. It is no part of the spec: a part of the spec is a folder whose README is its table of contents.
+The Model section of an Agent and of an Observer holds one line per provider, the provider, a model name as it knows it and the effort, such as `Claude: Sonnet, effort high`, or `as the session` for an agent that takes the model of the session it runs in. An Area is an area of planning, with an owner, the parts of the product and the building blocks of the architecture it covers, as links into the spec, and an optional class. It has no spec of its own and is no part of the spec: a part of the spec is a folder whose README is its table of contents.
 
 | Type, in `.markitect/` | Sections |
 |---|---|
@@ -87,9 +88,9 @@ A template is a folder of documents that name their types by links into the pack
 | Template | Documents |
 |---|---|
 | `project` | `README.md` and four parts, each a folder with a README: `purpose/`, `context/`, `principles/` and `quality/`. They say why the project exists, what is given from outside, which few rules every decision follows, and how well the result must work. The quality README lists all nine characteristics, so that `check` names each as empty until it says what the project requires of it or why nothing |
-| `product` | `README.md` and `handbook.md`, the user handbook, a Handbook. The README says how to build the themes of the product, folder by folder, each with a README of the type Domain; it has no fixed chapters |
+| `product` | `README.md` and `handbook.md`, the user handbook, a Handbook. The README says how to build the product by capabilities, folder by folder, each with a README of the type Capability, with its operations, concepts and rules beside it; it has no fixed chapters |
 | `architecture` | `README.md`, an Architecture, with `components/`, `decisions/` and `rules/`, each a README that says which documents belong there |
-| `factory` | The way of working as a standard, filled: `roles/`, `agents/`, `observers/`, `processes/`, `rules/`, `classes/`, `dashboards/` and `handbook.md`, whose documents link to one another, so that they are applied together. The folders `people/`, `areas/` and `meetings/` hold only a README and stay empty for the project to fill, as do the classes of its product and the observers of its own sources |
+| `factory` | The way of working as a standard, filled, for any project, one with a single person included: `roles/` with one role, the Admin, `agents/` with one document per skill, `observers/` (`deviations`, `dropped-material`, `duplication`, `hotspots`, `plan-items` and `status`), `processes/`, `rules/`, `classes/` (`cross-cutting`, `factory` and `infrastructure`), `dashboards/` (`overview`, `briefing`, `plan` and `my-work`) and `handbook.md`, whose documents link to one another, so that they are applied together. The folders `people/`, `areas/` and `meetings/` hold only a README and stay empty for the project to fill, as do the further roles, the classes of its product and the observers of its own sources |
 | `software` | A checklist for `project`, not its outline: `README.md`, a Software project, and one README per chapter: `purpose/`, `context/`, `domain/`, `interfaces/`, `quality/` and `architecture/` |
 | `company` | `README.md`, a Company, and READMEs for `offer/`, `processes/`, `rules/` and `team/` that say which documents belong there |
 
@@ -107,8 +108,8 @@ After `apply`, `check` reports nothing but `section.empty` for a template that l
 
 ## The skills of the standard
 
-The fourteen skills of the standard are built into the tool, one folder `NAME/` with a `SKILL.md` each, apart from the packages and templates: `accept`, `analyze`, `architect`, `brief`, `build`, `capture`, `create-observer`, `finish-planning`, `housekeeper`, `norman`, `observe`, `record`, `review` and `triage`. They are plain files, no documents of the language.
+The fourteen skills of the standard are built into the tool, one folder `markitect-NAME/` with a `SKILL.md` each, apart from the packages and templates: `markitect-accept`, `markitect-analyze`, `markitect-architect`, `markitect-brief`, `markitect-build`, `markitect-capture`, `markitect-create-observer`, `markitect-finish-planning`, `markitect-housekeeper`, `markitect-norman`, `markitect-observe`, `markitect-record`, `markitect-review` and `markitect-triage`. They are plain files, no documents of the language.
 
-- **One per Agent document.** The `factory` template holds one Agent document per skill, with the same name in `agents/`, and each skill is built from its Agent document, the processes and rules that document links and the types it uses. A skill ends with a section `Built from`, which lists these documents by their paths relative to the `factory` part. Its front matter holds the `name` and the `description` that Claude Code and Codex read.
-- **`init` copies them.** `markitect init` copies each skill whole and byte for byte into `.claude/skills/NAME/` and into `.agents/skills/NAME/` of the project, so that Claude Code and Codex find the same skills ([project reference](project-reference.md#init)). `apply` never copies them, and the project owns its copies.
+- **One per Agent document.** The `factory` template holds one Agent document per skill, named like the skill without the prefix, such as `agents/review.md` for `markitect-review`, and each skill is built from its Agent document, the processes and rules that document links and the types it uses. A skill ends with a section `Built from`, which lists these documents by their paths relative to the `factory` part. Its front matter holds the `name` and the `description` that Claude Code and Codex read.
+- **`init` copies them.** `markitect init` copies each skill whole and byte for byte into `.claude/skills/markitect-NAME/` and into `.agents/skills/markitect-NAME/` of the project, so that Claude Code and Codex find the same skills ([project reference](project-reference.md#init)). `apply` never copies them, and the project owns its copies.
 - **They are artifacts of the spec.** The state maps a skill to the documents it realizes like any other artifact: when the `factory` part changes, the skill is built and confirmed again ([the project and its skills](../concept/the-project.md#the-skills)). Until a confirmation names them, `status` lists the copies as unexplained.
