@@ -84,15 +84,13 @@ func within(child, parent string) bool {
 func newSide(p *Project, ig *Ignore, inside Folder) (*side, error) {
 	patterns := map[string][]lang.PathPattern{}
 	var modules []string
-	var all []lang.PathPattern
 	for _, m := range p.Spec.Modules() {
 		if list := p.Spec.RealizedIn(m); len(list) > 0 {
 			patterns[m] = list
 			modules = append(modules, m)
-			all = append(all, list...)
 		}
 	}
-	files, err := listFiles(p.FS, ig, all, Folder{Path: p.SpecFolder}, inside)
+	files, err := listFiles(p.FS, ig, Folder{Path: p.SpecFolder}, inside)
 	if err != nil {
 		return nil, err
 	}

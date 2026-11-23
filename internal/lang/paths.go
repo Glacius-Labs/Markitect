@@ -10,23 +10,18 @@ import (
 // A path pattern names files of a project by their path below the project
 // folder, with / between folders. Each folder name and the file name is matched
 // as path.Match matches a name: * for any run of characters, ? for one
-// character and a class such as [a-z], none of them across a /; everything
-// else, case included, matches itself. A pattern that ends with / names a
-// folder and everything below it.
-//
-// A name that starts with a dot is matched only by a segment that starts with a
-// dot itself, as shells do: * and ? and a class such as [.] never match a
-// leading dot, so src/* names no file .env, and */workflows/ names nothing in
-// .github. What a folder pattern names below its folder holds no dot name
-// either: .claude/skills/ names .claude/skills/triage/SKILL.md and not
-// .claude/skills/.cache/x. A project's dot folders are therefore named by
-// patterns that spell the dot, such as .github/workflows/*.yaml or .*/x/.
+// character and a class such as [a-z], none of them across a /, and a leading
+// dot is a character like any other; everything else, case included, matches
+// itself. A folder name that is ** alone matches folders: **/ at the start in
+// any folder, /**/ in the middle zero or more folders, /** at the end everything
+// inside. A pattern that ends with / names a folder and everything below it.
+// The ignore file of a project reads its patterns in the same language.
 
 // PathPattern is a path pattern that is well-formed.
 type PathPattern struct {
 	// Text is the pattern as written.
 	Text string
-	// Segments are the names between the slashes, each a path.Match pattern.
+	// Segments are the names between the slashes, each a path.Match pattern or **.
 	Segments []string
 	// Folder is whether the pattern ended with /.
 	Folder bool
@@ -47,79 +42,75 @@ func ParsePathPattern(text string) (PathPattern, error) {
 		return PathPattern{}, errors.New("a pattern is relative to the project folder, not absolute")
 	}
 	body, folder := strings.CutSuffix(text, "/")
-	segments := strings.Split(body, "/")
-	for _, s := range segments {
-		switch s {
-		case "..":
-			return PathPattern{}, errors.New("a pattern stays below the project folder, without ..")
-		case "", ".":
-			return PathPattern{}, errors.New("a pattern has no empty folder name and no .")
-		}
-		if !validPattern(s) {
-			return PathPattern{}, errors.New("a pattern uses the wildcards *, ? and [a-z]")
-		}
+	segments, err := PatternSegments(body)
+	if err != nil {
+		return PathPattern{}, err
 	}
 	return PathPattern{Text: text, Segments: segments, Folder: folder}, nil
 }
 
+// PatternSegments splits a pattern without its slashes at the start and the end
+// into its names and checks each: none is empty, . or .., and each is ** or one
+// that path.Match reads.
+func PatternSegments(body string) ([]string, error) {
+	segments := strings.Split(body, "/")
+	for _, s := range segments {
+		switch s {
+		case "..":
+			return nil, errors.New("a pattern stays below the project folder, without ..")
+		case "", ".":
+			return nil, errors.New("a pattern has no empty folder name and no .")
+		}
+		if !validPattern(s) {
+			return nil, errors.New("a pattern uses the wildcards *, ? and [a-z]")
+		}
+	}
+	return segments, nil
+}
+
+// MatchSegments reports whether the names, the folders and the file of a path,
+// match the pattern segments: each name matches its segment as path.Match says,
+// and a segment ** matches zero or more names, or, as the last segment, one or
+// more.
+func MatchSegments(pattern, names []string) bool {
+	if len(pattern) == 0 {
+		return len(names) == 0
+	}
+	if pattern[0] == "**" {
+		if len(pattern) == 1 {
+			return len(names) > 0
+		}
+		for i := 0; i <= len(names); i++ {
+			if MatchSegments(pattern[1:], names[i:]) {
+				return true
+			}
+		}
+		return false
+	}
+	if len(names) == 0 {
+		return false
+	}
+	if ok, _ := path.Match(pattern[0], names[0]); !ok {
+		return false
+	}
+	return MatchSegments(pattern[1:], names[1:])
+}
+
 // Names reports whether the pattern names the file at rel, a path below the
 // project folder with /: its whole path matches, or, for a pattern that ends
-// with /, a folder it names holds the file at any depth. A dot name is matched
-// only by a segment that starts with a dot, and what lies below a folder the
-// pattern names holds no dot name.
+// with /, a folder it names holds the file at any depth.
 func (p PathPattern) Names(rel string) bool {
 	names := strings.Split(rel, "/")
 	if p.Folder {
 		// The file is below the folder, so its own name is no folder name.
-		return len(names) > len(p.Segments) && matchSegments(p.Segments, names[:len(p.Segments)], true) && !anyDot(names[len(p.Segments):])
-	}
-	return len(names) == len(p.Segments) && matchSegments(p.Segments, names, true)
-}
-
-// MayHold reports whether a file below the folder dir, a path below the project
-// folder with /, can be named by the pattern: the pattern is longer than dir and
-// its leading segments match dir, or it ends with / and its folder is dir or
-// above it. It is what lets a walk enter a dot folder only where something below
-// it can be named.
-func (p PathPattern) MayHold(dir string) bool {
-	names := strings.Split(dir, "/")
-	if len(names) < len(p.Segments) {
-		return matchSegments(p.Segments[:len(names)], names, true)
-	}
-	return p.Folder && matchSegments(p.Segments, names[:len(p.Segments)], true) && !anyDot(names[len(p.Segments):])
-}
-
-// Is reports whether the whole path rel, the path of a file or of a folder,
-// matches the pattern segment by segment, whether or not it ends with /. Here a
-// star matches a leading dot too, so that a pattern of an ignore file such as
-// *.log leaves out .hidden.log.
-func (p PathPattern) Is(rel string) bool {
-	names := strings.Split(rel, "/")
-	return len(names) == len(p.Segments) && matchSegments(p.Segments, names, false)
-}
-
-// anyDot reports whether one of the names starts with a dot.
-func anyDot(names []string) bool {
-	for _, n := range names {
-		if strings.HasPrefix(n, ".") {
-			return true
+		for k := 1; k < len(names); k++ {
+			if MatchSegments(p.Segments, names[:k]) {
+				return true
+			}
 		}
+		return false
 	}
-	return false
-}
-
-// matchSegments matches each name against its pattern; with dots, a name that
-// starts with a dot is matched only by a pattern that starts with a dot.
-func matchSegments(patterns, names []string, dots bool) bool {
-	for i, pattern := range patterns {
-		if dots && strings.HasPrefix(names[i], ".") && !strings.HasPrefix(pattern, ".") {
-			return false
-		}
-		if ok, _ := path.Match(pattern, names[i]); !ok {
-			return false
-		}
-	}
-	return true
+	return MatchSegments(p.Segments, names)
 }
 
 // realizedPatterns returns the well-formed patterns of the sections Realized in

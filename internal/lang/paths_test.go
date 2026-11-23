@@ -39,7 +39,7 @@ func TestPathPatternNames(t *testing.T) {
 		yes, no []string
 	}{
 		// A pattern without a trailing slash names the files whose whole path matches.
-		{"src/shop/*.go", []string{"src/shop/a.go", "src/shop/a.b.go"}, []string{"src/shop/x/a.go", "src/shop/.go", "src/shop/a.GO", "src/shop/a.gox", "src/a.go", "x/src/shop/a.go", "src/shop"}},
+		{"src/shop/*.go", []string{"src/shop/a.go", "src/shop/a.b.go", "src/shop/.go"}, []string{"src/shop/x/a.go", "src/shop/a.GO", "src/shop/a.gox", "src/a.go", "x/src/shop/a.go", "src/shop"}},
 		// A trailing slash names the folder and everything below it.
 		{"src/shop/", []string{"src/shop/a.go", "src/shop/x/y/z.txt"}, []string{"src/shop", "src/shopx/a.go", "src/a.go", "x/src/shop/a.go"}},
 		{"src/shop", []string{"src/shop"}, []string{"src/shop/a.go", "src/shopx"}},
@@ -69,18 +69,6 @@ func TestPathPatternNames(t *testing.T) {
 				t.Errorf("%q should not name %q", tc.pattern, f)
 			}
 		}
-	}
-}
-
-func TestPathPatternIs(t *testing.T) {
-	p, err := ParsePathPattern("src/gen/")
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Is compares the path of a file or a folder with the pattern as written, without
-	// the trailing slash: the caller decides whether a folder is wanted.
-	if !p.Folder || !p.Is("src/gen") || p.Is("src/gen/x") || p.Is("x/src/gen") {
-		t.Errorf("%+v", p)
 	}
 }
 
@@ -148,44 +136,21 @@ func TestSpecRealizedIn(t *testing.T) {
 	}
 }
 
-// A name that starts with a dot is matched only by a segment that starts with a
-// dot itself; Names says which files a pattern names, and MayHold which folders a
-// walk has to enter to find them.
+// A name that starts with a dot is a name like any other: * and ? and a class
+// match a leading dot, and a folder pattern covers everything below its folder.
 func TestPathPatternDotNames(t *testing.T) {
 	for _, tc := range []struct {
-		pattern                   string
-		yes, no, enter, dontEnter []string
+		pattern string
+		yes, no []string
 	}{
-		{".github/workflows/*.yaml",
-			[]string{".github/workflows/ci.yaml"},
-			[]string{".github/workflows/.x.yaml", ".github/workflows/sub/ci.yaml", ".github/ci.yaml", ".gitlab/workflows/ci.yaml"},
-			[]string{".github", ".github/workflows"},
-			[]string{".gitlab", ".github/workflows/sub", ".github/other", "x"}},
-		{"*/workflows/",
-			[]string{"app/workflows/run.yaml", "app/workflows/a/b.txt"},
-			[]string{".github/workflows/ci.yaml", "app/workflows/.hidden", "app/workflows/.d/x"},
-			[]string{"app", "app/workflows", "app/workflows/a"},
-			[]string{".github", ".github/workflows", "app/other", "app/workflows/.d"}},
-		{".*/x/",
-			[]string{".git/x/f", ".github/x/y/z"},
-			[]string{".git/y/f", "a/x/f", ".git/x/.f", ".git/x/.d/f"},
-			[]string{".git", ".git/x", ".git/x/y"},
-			[]string{".git/y", "a", ".git/x/.d"}},
-		{".editorconfig",
-			[]string{".editorconfig"},
-			[]string{"x/.editorconfig", ".editorconfig/x"},
-			[]string{},
-			[]string{".editorconfig", "x"}},
-		{".claude/skills/",
-			[]string{".claude/skills/triage/SKILL.md"},
-			[]string{".claude/skills/.cache/x", ".claude/skills/triage/.hidden", ".claude/skills", ".claude/worktrees/x"},
-			[]string{".claude", ".claude/skills", ".claude/skills/triage"},
-			[]string{".claude/worktrees", ".claude/skills/.cache", "claude"}},
-		// A bare wildcard, a question mark and a class never match a leading dot.
-		{"src/*", []string{"src/a"}, []string{"src/.env"}, []string{"src"}, nil},
-		{"src/?env", []string{"src/aenv"}, []string{"src/.env"}, nil, nil},
-		{"src/[.a]env", []string{"src/aenv"}, []string{"src/.env"}, nil, nil},
-		{"src/.env", []string{"src/.env"}, []string{"src/aenv"}, []string{"src"}, []string{"other"}},
+		{".github/workflows/*.yaml", []string{".github/workflows/ci.yaml", ".github/workflows/.draft.yaml"}, []string{".github/workflows/sub/ci.yaml", ".github/ci.yaml", ".gitlab/workflows/ci.yaml"}},
+		{"*/workflows/", []string{".github/workflows/ci.yaml", "app/workflows/.hidden", "app/workflows/.d/x"}, []string{"workflows/x", "a/b/workflows/x"}},
+		{".*/x/", []string{".git/x/f", ".github/x/y/z", ".git/x/.d/f"}, []string{".git/y/f", "a/x/f", ".git/x"}},
+		{".editorconfig", []string{".editorconfig"}, []string{"x/.editorconfig", ".editorconfig/x"}},
+		{".claude/skills/", []string{".claude/skills/triage/SKILL.md", ".claude/skills/.cache/x", ".claude/skills/triage/.hidden"}, []string{".claude/skills", ".claude/worktrees/x"}},
+		{"src/*", []string{"src/a", "src/.env"}, []string{"src", "src/a/b"}},
+		{"src/?env", []string{"src/.env", "src/aenv"}, nil},
+		{"src/[.a]env", []string{"src/.env", "src/aenv"}, []string{"src/benv"}},
 	} {
 		p, err := ParsePathPattern(tc.pattern)
 		if err != nil {
@@ -201,22 +166,44 @@ func TestPathPatternDotNames(t *testing.T) {
 				t.Errorf("%q should not name %q", tc.pattern, f)
 			}
 		}
-		for _, d := range tc.enter {
-			if !p.MayHold(d) {
-				t.Errorf("%q: a walk should enter %q", tc.pattern, d)
+	}
+}
+
+// ** is a name of its own: at the start any folder, in the middle zero or more
+// folders, at the end everything inside.
+func TestPathPatternDoubleStar(t *testing.T) {
+	for _, tc := range []struct {
+		pattern string
+		yes, no []string
+	}{
+		{"**/main.go", []string{"main.go", "cmd/main.go", "a/b/c/main.go"}, []string{"main.go/x", "cmd/main.gox", "cmd/xmain.go"}},
+		{"src/**/gen.go", []string{"src/gen.go", "src/a/gen.go", "src/a/b/gen.go"}, []string{"gen.go", "x/src/gen.go", "src/a/gen.gox"}},
+		{"src/**", []string{"src/a", "src/a/b/c"}, []string{"src", "other/src/a"}},
+		{"**", []string{"a", "a/b"}, nil},
+		{"**/gen/", []string{"gen/x", "a/gen/x", "a/b/gen/y/z"}, []string{"gen", "a/gen", "a/genx/x"}},
+		{"a/**/b/**/c", []string{"a/b/c", "a/x/b/c", "a/b/y/z/c", "a/x/y/b/z/c"}, []string{"a/c", "b/c", "a/b/d"}},
+		{"**/*.go", []string{"a.go", "src/a.go", ".go"}, []string{"a.gox"}},
+		// ** inside a name is a star, and two stars match what one does.
+		{"src/a**b", []string{"src/ab", "src/aXb"}, []string{"src/x/ab"}},
+	} {
+		p, err := ParsePathPattern(tc.pattern)
+		if err != nil {
+			t.Fatalf("%q: %v", tc.pattern, err)
+		}
+		for _, f := range tc.yes {
+			if !p.Names(f) {
+				t.Errorf("%q should name %q", tc.pattern, f)
 			}
 		}
-		for _, d := range tc.dontEnter {
-			if p.MayHold(d) {
-				t.Errorf("%q: a walk should not enter %q", tc.pattern, d)
+		for _, f := range tc.no {
+			if p.Names(f) {
+				t.Errorf("%q should not name %q", tc.pattern, f)
 			}
 		}
 	}
-	// The patterns of an ignore file are looser: a star leaves out .hidden.log too.
-	p, _ := ParsePathPattern("logs/*")
-	if !p.Is("logs/.hidden.log") || p.Names("logs/.hidden.log") {
-		t.Error("Is and Names differ in what they do with a leading dot")
-	}
+	// check reads ** like any pattern, and reports a bad one as before.
+	files := realizedFiles("- `**/*.go`\n- `src/**/x/`\n- `a/**`\n- `**/[`\n")
+	expect(t, checkExactly(t, files), `shop/README.md:9: readme.pattern: bad pattern "**/[": a pattern uses the wildcards *, ? and [a-z]`)
 }
 
 // A dot name in a Realized in pattern is a pattern like any other.

@@ -6,9 +6,9 @@ import (
 	"testing"
 )
 
-// A name that starts with a dot is left out unless a module names it. The walk
-// enters a dot folder only where some Realized in pattern may name something
-// below it, so that what nobody names is never opened.
+// A name that starts with a dot is a name like any other, for the walk and for
+// the patterns of Realized in. What a project does not want to look at, it says
+// in its ignore file, as it does for a version control.
 
 // recording is a file system that keeps the names of what is opened.
 type recording struct {
@@ -57,7 +57,6 @@ func dotted() map[string]string {
 		".git/objects/ab/cdef":           "object",
 		".github/workflows/ci.yaml":      "ci",
 		".github/workflows/notes.txt":    "notes",
-		".github/workflows/.draft.yaml":  "draft",
 		".github/CODEOWNERS":             "owners",
 		".editorconfig":                  "root",
 		".gitignore":                     "x",
@@ -84,30 +83,39 @@ func diffRecording(t *testing.T, older, newer map[string]string, ignore string) 
 	return render(d), opened
 }
 
-func TestDotFolderNamedByAModule(t *testing.T) {
-	newer := with(dotted(), map[string]string{
+// changedDotted changes the files of a module, and files that no module names.
+func changedDotted() map[string]string {
+	return with(dotted(), map[string]string{
 		".claude/skills/triage/SKILL.md": "triage, changed",
+		".claude/skills/triage/.hidden":  "hidden, changed",
 		".claude/skills/triage/new.md":   "new",
 		".claude/skills/triage/run.sh":   gone,
-		// Nobody names these, in either state: not read, not listed, not counted.
-		".claude/skills/other/SKILL.md": "other, changed",
-		".claude/worktrees/w1/big.txt":  gone,
-		".claude/worktrees/w2/new.txt":  "new",
-		".git/HEAD":                     "ref, changed",
-		".git/objects/ab/new":           "new object",
-		".gitignore":                    "changed",
-		".github/CODEOWNERS":            "changed",
-		".claude/skills/triage/.hidden": "hidden, changed",
-		"src/.env":                      "changed",
+		".claude/skills/other/SKILL.md":  "other, changed",
+		".claude/worktrees/w1/big.txt":   gone,
+		".claude/worktrees/w2/new.txt":   "new",
+		".git/HEAD":                      "ref, changed",
+		".git/objects/ab/new":            "new object",
+		".gitignore":                     "changed",
+		".github/CODEOWNERS":             "changed",
+		"src/.env":                       "changed",
 	})
-	// Total of NEW that no module names: src/a.go only.
-	want := "skills spec=false files=true\n  changed .claude/skills/triage/SKILL.md\n  new .claude/skills/triage/new.md\n  gone .claude/skills/triage/run.sh\nunassigned:\ntotal 1 differs true\n"
-	got, opened := diffRecording(t, dotted(), newer, "")
+}
+
+// A module names a folder below a dot name; the ignore file leaves out the
+// version control and the contents of .claude, and takes in the skills.
+func TestModuleInADotFolderWithAnIgnoreFile(t *testing.T) {
+	const ignore = ".git/\n.claude/*\n!.claude/skills/\n"
+	got, opened := diffRecording(t, dotted(), changedDotted(), ignore)
+	// What lies below the folder of the pattern is the module's, a dot name too. The
+	// other skill is taken in by the ignore file, and no module names it.
+	want := "skills spec=false files=true\n" +
+		"  changed .claude/skills/triage/.hidden\n  changed .claude/skills/triage/SKILL.md\n  new .claude/skills/triage/new.md\n  gone .claude/skills/triage/run.sh\n" +
+		"unassigned: changed .claude/skills/other/SKILL.md; changed .github/CODEOWNERS; changed .gitignore; changed src/.env;\ntotal 6 differs true\n"
 	if got != want {
-		t.Errorf("got\n%s", got)
+		t.Errorf("got\n%s\nwant\n%s", got, want)
 	}
-	// What no pattern could name is never opened; the folders of the skill are.
-	for _, folder := range []string{".git", ".claude/worktrees", ".claude/skills/other", ".github/CODEOWNERS"} {
+	// A folder that is left out is never entered.
+	for _, folder := range []string{".git", ".claude/worktrees", ".claude/settings.json"} {
 		if opens(opened, folder) {
 			t.Errorf("%s was opened", folder)
 		}
@@ -117,110 +125,75 @@ func TestDotFolderNamedByAModule(t *testing.T) {
 	}
 }
 
-func TestDotFileNamedAsAFilePattern(t *testing.T) {
-	newer := with(dotted(), map[string]string{
-		".github/workflows/ci.yaml":     "ci, changed",
-		".github/workflows/lint.yaml":   "new",
-		".github/workflows/notes.txt":   "changed",
-		".github/workflows/.draft.yaml": "changed",
-		".github/CODEOWNERS":            "changed",
-		".editorconfig":                 "changed",
-		".gitignore":                    "changed",
-	})
-	want := "ci spec=false files=true\n  changed .github/workflows/ci.yaml\n  new .github/workflows/lint.yaml\n" +
-		"editor spec=false files=true\n  changed .editorconfig\nunassigned:\ntotal 1 differs true\n"
-	got, opened := diffRecording(t, dotted(), newer, "")
+// The skills are a module's, and the rest of .claude is left out: without the
+// lines that take them in, the module sees nothing.
+func TestModuleInADotFolderLeftOutByTheIgnoreFile(t *testing.T) {
+	got, opened := diffRecording(t, dotted(), changedDotted(), ".git/\n.claude/\n")
+	want := "unassigned: changed .github/CODEOWNERS; changed .gitignore; changed src/.env;\ntotal 5 differs true\n"
 	if got != want {
 		t.Errorf("got\n%s", got)
 	}
-	if opens(opened, ".git") || opens(opened, ".claude/worktrees") || opens(opened, ".claude/skills/other") {
-		t.Errorf("a folder nobody names was opened: %v", opened)
+	if opens(opened, ".claude") || opens(opened, ".git") {
+		t.Errorf("a folder that is left out was opened: %v", opened)
 	}
-}
-
-// A segment that is a bare wildcard never matches a dot name, so */workflows/
-// does not open .github; .*/x/ does open dot folders, because its segment
-// starts with a dot.
-func TestWildcardSegmentsAndDotFolders(t *testing.T) {
-	files := map[string]string{
-		".markitect/spec":           "docs/spec\n",
-		"docs/spec/flows/README.md": readme("Flows", "*/workflows/"),
-		".github/workflows/ci.yaml": "ci",
-		"app/workflows/run.yaml":    "run",
-		".a/workflows/x.txt":        "x",
-	}
-	newer := with(files, map[string]string{".github/workflows/ci.yaml": "changed", "app/workflows/run.yaml": "changed", ".a/workflows/x.txt": "changed"})
-	got, opened := diffRecording(t, files, newer, "")
-	if want := "flows spec=false files=true\n  changed app/workflows/run.yaml\nunassigned:\ntotal 0 differs true\n"; got != want {
-		t.Errorf("*/workflows/\n%s", got)
-	}
-	if opens(opened, ".github") || opens(opened, ".a") {
-		t.Errorf("a dot folder was opened by a bare wildcard: %v", opened)
-	}
-
-	files = map[string]string{
-		".markitect/spec":          "docs/spec\n",
-		"docs/spec/dots/README.md": readme("Dots", ".*/x/"),
-		".a/x/f.txt":               "f",
-		".b/y/g.txt":               "g",
-		".c/x/.hidden":             "h",
-		".c/x/sub/deep.txt":        "d",
-		"plain/x/h.txt":            "h",
-	}
-	newer = with(files, map[string]string{".a/x/f.txt": "changed", ".b/y/g.txt": "changed", ".c/x/.hidden": "changed", ".c/x/sub/deep.txt": "changed", "plain/x/h.txt": "changed"})
-	got, opened = diffRecording(t, files, newer, "")
-	want := "dots spec=false files=true\n  changed .a/x/f.txt\n  changed .c/x/sub/deep.txt\nunassigned: changed plain/x/h.txt;\ntotal 1 differs true\n"
+	// A line that takes back what is below a folder that is left out has no effect.
+	got, _ = diffRecording(t, dotted(), changedDotted(), ".git/\n.claude/\n!.claude/skills/\n!.claude/skills/triage/SKILL.md\n")
 	if got != want {
-		t.Errorf(".*/x/\n%s", got)
-	}
-	if opens(opened, ".b/y") || !opens(opened, ".a/x") {
-		t.Errorf("walked the wrong dot folders: %v", opened)
+		t.Errorf("a negation below a folder that is left out\n%s", got)
 	}
 }
 
-// The folder .markitect/ is never read, whatever names it; the ignore file wins
-// over a module; the spec folder rule is the same.
-func TestDotFoldersIgnoreAndMarkitect(t *testing.T) {
-	files := with(dotted(), map[string]string{"docs/spec/all/README.md": readme("All", ".*/")})
-	newer := with(files, map[string]string{
-		".markitect/spec":                "docs/spec\n",
-		".markitect/other":               "new",
-		".git/HEAD":                      "changed",
-		".claude/skills/triage/SKILL.md": "changed",
-		".github/workflows/ci.yaml":      "changed",
-	})
-	got, opened := diffRecording(t, files, newer, "")
-	// .*/ names everything below the dot folders of the top, but never a dot name
-	// below them, and never .markitect/.
-	want := "all spec=false files=true\n  changed .claude/skills/triage/SKILL.md\n  changed .git/HEAD\n  changed .github/workflows/ci.yaml\n" +
-		"ci spec=false files=true\n  changed .github/workflows/ci.yaml\n" +
-		"skills spec=false files=true\n  changed .claude/skills/triage/SKILL.md\nunassigned:\ntotal 1 differs true\n"
+// Without an ignore file nothing is left out but what the tool fixes: every file
+// counts, the dot folders too, and the files no module names are listed.
+func TestNoIgnoreFile(t *testing.T) {
+	newer := changedDotted()
+	newer[".markitect/ignore"] = "never read\n"
+	newer[".markitect/extra"] = "never read\n"
+	got, opened := diffRecording(t, dotted(), newer, "")
+	want := "skills spec=false files=true\n" +
+		"  changed .claude/skills/triage/.hidden\n  changed .claude/skills/triage/SKILL.md\n  new .claude/skills/triage/new.md\n  gone .claude/skills/triage/run.sh\n" +
+		"unassigned: changed .claude/skills/other/SKILL.md; gone .claude/worktrees/w1/big.txt; new .claude/worktrees/w2/new.txt; changed .git/HEAD; new .git/objects/ab/new; changed .github/CODEOWNERS; changed .gitignore; changed src/.env;\n" +
+		"total 10 differs true\n"
 	if got != want {
 		t.Errorf("got\n%s\nwant\n%s", got, want)
 	}
-	for _, o := range opened {
-		if o == ".markitect" || strings.HasPrefix(o, ".markitect/") {
-			t.Errorf(".markitect was opened: %v", opened)
-			break
+	if opens(opened, ".markitect") {
+		t.Errorf(".markitect was opened: %v", opened)
+	}
+}
+
+// The folder .markitect/ is never read, whatever names it, and the ignore file
+// cannot take it in.
+func TestMarkitectFolderIsNeverRead(t *testing.T) {
+	files := with(dotted(), map[string]string{"docs/spec/all/README.md": readme("All", ".*/", ".markitect/", "**")})
+	newer := with(files, map[string]string{".markitect/spec": "docs/spec\n", ".markitect/other": "new", ".git/HEAD": "changed"})
+	got, opened := diffRecording(t, files, newer, "!.markitect/\n")
+	if !strings.Contains(got, "  changed .git/HEAD\n") || strings.Contains(got, ".markitect") {
+		t.Errorf("got\n%s", got)
+	}
+	if opens(opened, ".markitect") {
+		t.Errorf(".markitect was opened: %v", opened)
+	}
+}
+
+// Only the Realized in of two READMEs changes between the states and the files
+// are the same, those below a dot folder too: no file is new, gone or changed.
+func TestOnlyRealizedInChangesAndTheFilesAreTheSame(t *testing.T) {
+	newer := with(dotted(), map[string]string{
+		"docs/spec/skills/README.md": readme("Skills", ".claude/skills/"),
+		"docs/spec/ci/README.md":     readme("CI", ".github/"),
+		"docs/spec/editor/README.md": readme("Editor"),
+	})
+	for _, ignore := range []string{"", ".git/\n.claude/worktrees/\n"} {
+		got, _ := diffRecording(t, dotted(), newer, ignore)
+		if !strings.HasPrefix(got, "ci spec=true files=false\neditor spec=true files=false\nskills spec=true files=false\nunassigned:\ntotal ") || !strings.HasSuffix(got, " differs true\n") {
+			t.Errorf("ignore %q:\n%s", ignore, got)
 		}
-	}
-	// The ignore file leaves a dot folder out, though a module names it.
-	newer = with(dotted(), map[string]string{".claude/skills/triage/SKILL.md": "changed", ".github/workflows/ci.yaml": "changed"})
-	got, opened = diffRecording(t, dotted(), newer, ".claude/\n")
-	if want := "ci spec=false files=true\n  changed .github/workflows/ci.yaml\nunassigned:\ntotal 1 differs true\n"; got != want {
-		t.Errorf("ignored .claude/\n%s", got)
-	}
-	if opens(opened, ".claude") {
-		t.Errorf(".claude was opened: %v", opened)
-	}
-	got, _ = diffRecording(t, dotted(), newer, "triage\n*.yaml\n")
-	if want := "unassigned:\ntotal 1 differs false\n"; got != want {
-		t.Errorf("ignored by name\n%s", got)
 	}
 }
 
 // A module and a module below it name files below a dot folder: the lower
-// module takes what it names, as for any file.
+// module takes what it names, as for any file; a folder pattern covers all below.
 func TestDotFolderNamedByParentAndChild(t *testing.T) {
 	files := map[string]string{
 		".markitect/spec":                   "docs/spec\n",
@@ -239,30 +212,34 @@ func TestDotFolderNamedByParentAndChild(t *testing.T) {
 		".claude/skills/.cache/x":        "changed",
 		".claude/settings.json":          "changed",
 	})
-	want := "skills spec=false files=true\n  changed .claude/skills/other/SKILL.md\n  changed .claude/skills/triage/run.sh\n" +
-		"skills/triage spec=false files=true\n  changed .claude/skills/triage/SKILL.md\nunassigned:\ntotal 0 differs true\n"
-	got, opened := diffRecording(t, files, newer, "")
-	if got != want {
+	want := "skills spec=false files=true\n  changed .claude/skills/.cache/x\n  changed .claude/skills/other/SKILL.md\n  changed .claude/skills/triage/run.sh\n" +
+		"skills/triage spec=false files=true\n  changed .claude/skills/triage/SKILL.md\n" +
+		"unassigned: changed .claude/settings.json;\ntotal 1 differs true\n"
+	if got := diffOf(t, files, newer, ""); got != want {
 		t.Errorf("got\n%s", got)
-	}
-	if opens(opened, ".claude/skills/.cache") {
-		t.Errorf("a dot folder below a named folder was opened: %v", opened)
 	}
 }
 
-// A dot file below a plain folder is named by a pattern that spells it, and
-// by nothing else.
-func TestDotFileBelowAPlainFolder(t *testing.T) {
+// *, ? and a class match a leading dot, a ** goes through dot folders, and a dot
+// file at the top is named by a pattern that spells it.
+func TestWildcardsAndDotNames(t *testing.T) {
 	files := map[string]string{
-		".markitect/spec":         "docs/spec\n",
-		"docs/spec/app/README.md": readme("App", "src/*", "cfg/.env"),
-		"src/a.go":                "a",
-		"src/.env":                "secret",
-		"cfg/.env":                "cfg",
-		"cfg/.other":              "other",
+		".markitect/spec":           "docs/spec\n",
+		"docs/spec/flows/README.md": readme("Flows", "*/workflows/", "src/*", "**/gen/", ".editor*"),
+		".github/workflows/ci.yaml": "ci",
+		"app/workflows/run.yaml":    "run",
+		"src/.env":                  "secret",
+		"src/a":                     "a",
+		".a/b/gen/x":                "x",
+		".editorconfig":             "root",
+		".gitignore":                "x",
 	}
-	newer := with(files, map[string]string{"src/a.go": "changed", "src/.env": "changed", "cfg/.env": "changed", "cfg/.other": "changed"})
-	want := "app spec=false files=true\n  changed cfg/.env\n  changed src/a.go\nunassigned:\ntotal 0 differs true\n"
+	newer := with(files, map[string]string{
+		".github/workflows/ci.yaml": "changed", "app/workflows/run.yaml": "changed", "src/.env": "changed", "src/a": "changed",
+		".a/b/gen/x": "changed", ".editorconfig": "changed", ".gitignore": "changed",
+	})
+	want := "flows spec=false files=true\n  changed .a/b/gen/x\n  changed .editorconfig\n  changed .github/workflows/ci.yaml\n  changed app/workflows/run.yaml\n  changed src/.env\n  changed src/a\n" +
+		"unassigned: changed .gitignore;\ntotal 1 differs true\n"
 	if got := diffOf(t, files, newer, ""); got != want {
 		t.Errorf("got\n%s", got)
 	}
