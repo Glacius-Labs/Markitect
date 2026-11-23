@@ -1,6 +1,6 @@
 ---
 name: markitect-create-observer
-description: Explains how a new observer of a Markitect project is planned and built through its story, which questions the target picture answers, what the Architect writes on the story's branch, how the Builder runs the trial and how its report is accepted. Runs inside the Architect's session when it plans such a story, and inside the Builder's when it builds one.
+description: Explains how a new observer of a Markitect project is planned and built through its story, which questions the target picture answers, what the Architect writes on the story's branch, how the Builder runs the trial and how its outcome is accepted. Runs inside the Architect's session when it plans such a story, and inside the Builder's when it builds one.
 ---
 
 # Create observer
