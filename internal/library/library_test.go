@@ -23,10 +23,10 @@ func TestEmbedsPackagesTemplatesAndTheReportType(t *testing.T) {
 		sort.Strings(out)
 		return out
 	}
-	if got := strings.Join(folders("packages"), " "); got != "company core software" {
+	if got := strings.Join(folders("packages"), " "); got != "company core factory software" {
 		t.Errorf("packages: %s", got)
 	}
-	if got := strings.Join(folders("templates"), " "); got != "company software" {
+	if got := strings.Join(folders("templates"), " "); got != "architecture company factory product project software" {
 		t.Errorf("templates: %s", got)
 	}
 	report, err := fs.ReadFile(FS(), ReportType)
@@ -36,12 +36,19 @@ func TestEmbedsPackagesTemplatesAndTheReportType(t *testing.T) {
 	if !strings.HasPrefix(string(report), "# Report\n") {
 		t.Errorf("report type starts %q", strings.SplitN(string(report), "\n", 2)[0])
 	}
+	// A package may hold a type of the same file name, such as factory/report.md;
+	// what it must not hold is a copy of a type the tool owns.
 	for _, own := range []string{ReportType, SettingsType, SampleType} {
-		if _, err := fs.Stat(FS(), own); err != nil {
+		root, err := fs.ReadFile(FS(), own)
+		if err != nil {
 			t.Error(err)
+			continue
 		}
-		if matches, _ := fs.Glob(FS(), path.Join("packages", "*", own)); len(matches) > 0 {
-			t.Errorf("the type %s is inside packages/: %v", own, matches)
+		matches, _ := fs.Glob(FS(), path.Join("packages", "*", own))
+		for _, m := range matches {
+			if got, _ := fs.ReadFile(FS(), m); string(got) == string(root) {
+				t.Errorf("the type %s is copied inside packages/: %s", own, m)
+			}
 		}
 	}
 }

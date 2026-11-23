@@ -54,8 +54,8 @@ Where a type says that a section holds a link to something, each document links 
 ## Packages and templates
 
 - **A package** is a folder of types, such as `core` (concept, decision, goal, role, rule, term), `software`, `company` or `factory`. A type in one package may link to types of another.
-- **A template** is a folder of documents that name their types by links into the packages and leave their sections empty. Every folder of a template is a template too, so a template applies at any level: a whole project, one part of the domain, or a field such as fire protection. Its README says what the part is for and how to fill it.
-- **`apply`** copies a template into the spec, together with every package its documents need. A package the spec already has is never overwritten: the spec owns its copy and may change it. After `apply`, `check` lists the empty sections, and that list is the work still to do.
+- **A template** is a folder of documents that name their types by links into the packages and leave empty the sections a project has to fill. A folder of a template is a template of its own when its documents link nowhere outside it, so a template applies at any level: a whole project, one part of the domain, or a field such as fire protection. Its README says what the part is for and how to fill it. A template may also come filled, as `factory` does with the way of working.
+- **`apply`** copies a template into the spec, together with every package its documents need. A package the spec already has is never overwritten: the spec owns its copy and may change it. After `apply`, `check` lists the sections left empty, and that list is the work still to do.
 
 Each type says before its sections what it is and when to use it, and under each section what belongs there, with an example. The library of packages and templates, the reference values and the question catalogs ship inside the tool, in its version ([§12](the-project.md)).
 

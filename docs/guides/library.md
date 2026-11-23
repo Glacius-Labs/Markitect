@@ -4,7 +4,7 @@ The library built into the tool `markitect`: the packages of types, the template
 
 ## Packages
 
-A package is a folder of types. A type in one package may link to types of another; `apply` copies every package a template needs. Sections marked *optional* may be left out.
+A package is a folder of types. A type in one package may link to types of another; `apply` copies every package a template needs. Every type says before its sections what it is and when to take it, and when not, where it is easily confused with another. Under every section it says what belongs there, with a short example. Sections marked *optional* may be left out.
 
 ### core
 
@@ -17,18 +17,20 @@ A package is a folder of types. A type in one package may link to types of anoth
 | Rule | Applies to, Rule; *Responsible*, *Example* |
 | Term | Meaning |
 
+A role forbids nothing: *Does not* names what the role usually leaves to another, and working outside the usual way is a deviation, which is noticed, not blocked.
+
 ### software
 
-The area types follow the six areas of a software project ([what goes in a spec](../concept/what-goes-in-a-spec.md#the-content-model)).
+The types follow the six chapters of a software project ([what goes in a spec](../concept/what-goes-in-a-spec.md#the-content-model)).
 
 | Type | Sections |
 |---|---|
-| Software project | Purpose, Context, Domain, Interfaces, Quality, Architecture: each a link to the README of its area |
+| Software project | Purpose, Context, Domain, Interfaces, Quality, Architecture: each a link to the README of its part |
 | Purpose | Problem, Stakeholders, Goals; *Not included* |
 | Stakeholder | Who, Wants; *Today* |
 | Context | Terms, External systems; *Constraints*, each a link to the rule that imposes it; *Assumptions*, each with who ensures it and what is therefore not built |
 | External system | What it is, Expected |
-| Domain | Concepts, Operations; *Rules*, *Areas* |
+| Domain | Concepts, Operations; *Rules*, *Parts* |
 | Operation | Does, Who, Given; *Refused when*, each condition with its reason and the answer the caller gets; *Returns* |
 | Interfaces | Interfaces |
 | Interface | For, Offers |
@@ -41,7 +43,7 @@ The area types follow the six areas of a software project ([what goes in a spec]
 
 | Type | Sections |
 |---|---|
-| Company | Purpose, Offer, Customers, Team, Processes, Rules; *Areas* |
+| Company | Purpose, Offer, Customers, Team, Processes, Rules; *Parts* |
 | Service | Description, Price, Performed by; *Under supervision*, *Duration* |
 | Product | Description, Price, Sold by |
 | Target group | Description, Buys |
@@ -51,16 +53,47 @@ The area types follow the six areas of a software project ([what goes in a spec]
 | Resource | Description, Responsible |
 | Metric | Definition, Target, Source, Responsible |
 
+The responsible, involved and performing parties of a process and its steps are roles or agents, as links.
+
+### factory
+
+The types of the way of working ([the work](../concept/the-work.md)). Roles and rules are of the types of the core, processes and steps of the types of the company; the package holds what they do not cover. Its types of what holds have their documents in the spec, in its `factory` part. Its types of the work have their documents in `.markitect/`, never in the spec, since they change all the time and are no target.
+
+| Type, in the spec | Sections |
+|---|---|
+| Agent | Task, Started by, Asks, Model, Changes; *Schedule* |
+| Observer | Observes, Source, Worth a statement, Never in the report, Schedule, Model |
+| Person | Roles |
+| Meeting | Rhythm, Time, Participants, Covers |
+| Area | Purpose, Owner; *Class*, *Rules* |
+| Class | Purpose, Connects to, Never, Usually planned by |
+| Dashboard | For, Sections |
+| Handbook | For, Covers, Form |
+
+An Area is an area of planning, with an owner and an optional class. It is no part of the spec: a part of the spec is a folder whose README is its table of contents.
+
+| Type, in `.markitect/` | Sections |
+|---|---|
+| Feature | State, Owner, Origin, Target picture, Stories, Acceptance |
+| Story | State, Priority, Depends on, Claimed by, Origin, Target picture, Target changes, Plan, Tasks; *Result* |
+| Finding | Type, Importance, Area, What, Source, Context, Why this importance; *Likelihood and impact*, *Outcome* |
+| Report | Started by, For, Started, Finished, Outcome; *Item*, *Statements*, *Not observed* |
+| Briefing | Needs a decision, Decided for you, Went to work without a decision, Decided yesterday |
+
 ## Templates
 
-A template is a folder of documents that name their types by links into the packages and leave their sections empty. Every folder of a template is a template too, so `apply software/domain` applies the domain area alone.
+A template is a folder of documents that name their types by links into the packages. Most leave their sections empty, to be filled; the `factory` template is filled. A folder of a template is a template of its own when its documents link nowhere outside it, so `apply software/domain` applies the domain part alone. A folder whose documents link to its siblings cannot be applied alone.
 
 | Template | Documents |
 |---|---|
-| `software` | `README.md`, a Software project, and one README per area: `purpose/`, `context/`, `domain/`, `interfaces/`, `quality/` and `architecture/`. The quality README lists all nine characteristics, so that `check` names each as empty until it says what the system requires of it or why nothing |
+| `project` | `README.md` and four parts, each a folder with a README: `purpose/`, `context/`, `principles/` and `quality/`. They say why the project exists, what is given from outside, which few rules every decision follows, and how well the result must work. The quality README lists all nine characteristics, so that `check` names each as empty until it says what the project requires of it or why nothing |
+| `product` | `README.md` and `handbook.md`, the user handbook, a Handbook. The README says how to build the themes of the product, folder by folder, each with a README of the type Domain; it has no fixed chapters |
+| `architecture` | `README.md`, an Architecture, with `components/`, `decisions/` and `rules/`, each a README that says which documents belong there |
+| `factory` | The way of working as a standard, filled: `roles/`, `agents/`, `observers/`, `processes/`, `rules/`, `classes/`, `dashboards/` and `handbook.md`, whose documents link to one another, so that they are applied together. The folders `people/`, `areas/` and `meetings/` hold only a README and stay empty for the project to fill, as do the classes of its product and the observers of its own sources |
+| `software` | A checklist for `project`, not its outline: `README.md`, a Software project, and one README per chapter: `purpose/`, `context/`, `domain/`, `interfaces/`, `quality/` and `architecture/` |
 | `company` | `README.md`, a Company, and READMEs for `offer/`, `processes/`, `rules/` and `team/` that say which documents belong there |
 
-After `apply`, `check` reports nothing but `section.empty`: that list is the work still to do.
+After `apply`, `check` reports nothing but `section.empty` for a template that leaves sections empty: that list is the work still to do. The `factory` template reports nothing.
 
 ## Apply
 
@@ -68,7 +101,7 @@ After `apply`, `check` reports nothing but `section.empty`: that list is the wor
 
 - **Packages.** Every package a copied document links to, and every package those types link to in turn, is copied whole, byte for byte, to `packages/NAME/` in the spec, unless the spec has that folder already. A package the spec has is never overwritten, and never completed.
 - **Links.** Links of the copied documents into the library's packages are rewritten to the spec's copy. Links between the copied documents stay as they are.
-- **Refusals.** Nothing is copied when a document's path exists in the spec, when a copied document or a needed package links elsewhere in the library, including a template folder that links to its parent when applied alone, or when a package is missing. Every reason is reported.
+- **Refusals.** Nothing is copied when a document's path exists in the spec, when a copied document or a needed package links elsewhere in the library, including a template folder that links to a document outside it when applied alone, or when a package is missing. Every reason is reported.
 
 ## The types the tool owns
 

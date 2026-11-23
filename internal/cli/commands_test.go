@@ -159,19 +159,40 @@ func templates(t *testing.T) []string {
 	return out
 }
 
+// TestEveryTemplateApplies applies every template, at the spec root and at a target
+// folder. A top-level template applies cleanly. A folder of a template applies
+// cleanly too, unless its documents link to a sibling outside it: then apply
+// refuses for exactly that reason and copies nothing.
 func TestEveryTemplateApplies(t *testing.T) {
 	tpls := templates(t)
 	if len(tpls) < 10 {
 		t.Fatalf("templates %v", tpls)
 	}
+	// The types the tool owns lie at the library's root; a package type of the same
+	// file name is another type, so the content tells them apart.
+	own := map[string]string{}
+	for _, name := range []string{library.ReportType, library.SettingsType, library.SampleType} {
+		data, err := fs.ReadFile(library.FS(), name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		own[name] = string(data)
+	}
+	refused := 0
 	for _, tpl := range tpls {
-		for _, target := range []string{"", "areas/" + path.Base(tpl)} {
+		for _, target := range []string{"", "parts/" + path.Base(tpl)} {
 			dir := initialized(t)
+			before := files(t, dir)
 			args := []string{"apply", "-C", dir, tpl}
 			if target != "" {
 				args = append(args, target)
 			}
-			if code, out, errOut := run(args...); code != ExitOK {
+			code, out, errOut := run(args...)
+			if code != ExitOK {
+				if strings.Contains(tpl, "/") && code == ExitFailed && out == "" && onlyLeavesTheTemplate(errOut) && equalMaps(files(t, dir), before) {
+					refused++
+					continue
+				}
 				t.Fatalf("%s at %q: %d %s %s", tpl, target, code, out, errOut)
 			}
 			s, err := lang.Load(os.DirFS(specOf(dir)))
@@ -183,13 +204,28 @@ func TestEveryTemplateApplies(t *testing.T) {
 					t.Errorf("%s at %q: %s", tpl, target, d)
 				}
 			}
-			for p := range files(t, dir) {
-				if b := path.Base(p); b == library.ReportType || b == library.SettingsType || b == library.SampleType {
-					t.Errorf("%s copied the type %s the tool owns", tpl, b)
+			for p, text := range files(t, dir) {
+				if want, ok := own[path.Base(p)]; ok && text == want {
+					t.Errorf("%s copied the type %s the tool owns", tpl, p)
 				}
 			}
 		}
 	}
+	if refused == 0 {
+		t.Error("no folder of a template links to a sibling, so the refusal is not tested")
+	}
+}
+
+// onlyLeavesTheTemplate reports whether every line of a refusal gives the reason
+// that a link leaves the template.
+func onlyLeavesTheTemplate(errOut string) bool {
+	lines := strings.Split(strings.TrimSpace(errOut), "\n")
+	for _, line := range lines {
+		if !strings.Contains(line, ": link leaves the template: ") {
+			return false
+		}
+	}
+	return errOut != ""
 }
 
 func TestApplyCommand(t *testing.T) {
@@ -246,7 +282,7 @@ func TestLibrary(t *testing.T) {
 			packages = append(packages, strings.Split(d.Path, "/")[1])
 		}
 	}
-	if got := strings.Join(unique(packages), " "); got != "company core software" {
+	if got := strings.Join(unique(packages), " "); got != "company core factory software" {
 		t.Errorf("packages %s", got)
 	}
 	// Only the templates' sections are empty.
@@ -310,7 +346,7 @@ func TestFailureLeavesTheSpecAsItWas(t *testing.T) {
 		{"move", func(dir string) []string {
 			return []string{"move", "-C", dir, "places/central", "elsewhere/deep/main hall"}
 		}},
-		{"apply", func(dir string) []string { return []string{"apply", "-C", dir, "software", "areas/new"} }},
+		{"apply", func(dir string) []string { return []string{"apply", "-C", dir, "software", "parts/new"} }},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
