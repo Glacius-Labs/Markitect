@@ -1,6 +1,6 @@
 # Questions: core
 
-Questions across documents that a spec built on the core package should answer. Each answer comes from the spec alone, with a citation.
+Questions across documents that a spec built on the core module should answer. Each answer comes from the spec alone, with a citation.
 
 - Which role is responsible for each rule, and does that role exist?
 - For each decision, what was weighed against it, and what evidence would reopen it?

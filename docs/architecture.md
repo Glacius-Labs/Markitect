@@ -1,6 +1,6 @@
 # Architecture
 
-How the source is composed, where each responsibility lives and which contracts hold between the packages. Main builds the [concept](concept/README.md). The tool checks a project's spec, analyses it and helps reading it; it never writes, keeps no state, starts no agent and steers no work ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec), [DEC-097](decisions.md#dec-097-markitect-neither-needs-nor-knows-version-control); [where Main is](roadmap.md#where-main-is)). The packages and templates of the library are plain files that a person copies into a spec; the [plugin](guides/plugin.md) only fetches the tool.
+How the source is composed, where each responsibility lives and which contracts hold between the packages. Main builds the [concept](concept/README.md). The tool checks a project's spec, analyses it and helps reading it; it never writes, keeps no state, starts no agent and steers no work ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec), [DEC-097](decisions.md#dec-097-markitect-neither-needs-nor-knows-version-control); [where Main is](roadmap.md#where-main-is)). The default's module `core` in the library is plain files that a person copies into a spec; the [plugin](guides/plugin.md) only fetches the tool.
 
 This page owns the package contracts and the repository layout. The [language reference](guides/language-reference.md) owns the language and the commands, the [project reference](guides/project-reference.md) the project; the [code map](development/code-map.md) lists every package with its owning document.
 
@@ -12,20 +12,20 @@ This page owns the package contracts and the repository layout. The [language re
 - The command line (`internal/cli`) parses the arguments, finds the project, the nearest folder upward that holds `.markitect/spec` or the one `-C` names, makes sure its spec folder lies inside it, runs the command that reads the spec, and prints text or JSON. It prints the version and the license notices from `internal/buildinfo`. It writes no file.
 - The project (`internal/project`) loads a project through the `os.DirFS` of its folder: the file `.markitect/spec`, the spec it names, and the difference between the specs of two projects that `diff` prints. It reads and returns.
 - The signals (`internal/signals`) read a parsed spec: its statements, the eight signals and the topic view.
-- The library (`internal/library`) holds the packages and templates as plain files, and builds into the binary only the reference values and the question catalogs.
+- The library (`internal/library`) holds the default's module `core` as plain files, and builds into the binary only its reference values and question catalog.
 - The language (`internal/lang`) parses and checks the documents of the file system it is handed and writes nothing.
 
 None of the commands writes a file, starts an agent or a process, uses the network or needs credentials. The [language reference](guides/language-reference.md#commands) gives their arguments and exit codes.
 
 ## Layers
 
-All Go packages use one root module. One rule table in [`internal/tooling/architecture/rules.go`](../internal/tooling/architecture/rules.go) gives every package a layer and its owning document, lists which layers each layer may import and names the exceptions, of which there are none today. The [import gate](#import-gate) enforces it, and the generated [code map](development/code-map.md) shows the table.
+All Go packages use one root Go module. One rule table in [`internal/tooling/architecture/rules.go`](../internal/tooling/architecture/rules.go) gives every package a layer and its owning document, lists which layers each layer may import and names the exceptions, of which there are none today. The [import gate](#import-gate) enforces it, and the generated [code map](development/code-map.md) shows the table.
 
 | Responsibility | Packages | Depends on |
 | --- | --- | --- |
 | Version and license notices | `internal/buildinfo` | No other Markitect package |
-| The spec language over a supplied file system: documents, types, sections, links and `check` ([language reference](guides/language-reference.md)) | `internal/lang` | No other Markitect package |
-| The library: packages and templates as plain files, and the reference values and question catalogs built into the tool ([library](guides/library.md)) | `internal/library` | No other Markitect package |
+| The spec language over a supplied file system: documents, types, sections, links, modules and `check` ([language reference](guides/language-reference.md)) | `internal/lang` | No other Markitect package |
+| The library: the default's module `core` as plain files, and its reference values and question catalog built into the tool ([library](guides/library.md)) | `internal/library` | No other Markitect package |
 | The statements, signals and topic view over a parsed spec ([signals](guides/signals.md)) | `internal/signals` | The language |
 | The project over a supplied file system: the file `.markitect/spec`, the project loaded with its spec, and the difference between the specs of two projects ([project reference](guides/project-reference.md)) | `internal/project` | The language |
 | The command line: arguments, the project it works in, the commands that read its spec, `version` and `licenses`, and the text and JSON output; it writes nothing | `internal/cli` | Every layer above, and build data |
@@ -48,7 +48,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 ### Adding, changing or removing a package
 
-A new package root needs an actual consumer and a distinct responsibility. Land each contract with a caller and a concrete implementation, never as an interface-only wave. Add, move or remove the package's row in the rule table, give it a package doc comment and regenerate the code map. Keep one root module and reject nested modules. Delete obsolete source, commands and gates together ([DEC-139](decisions.md#dec-139-quality-simplicity-and-stability-over-effort-and-compatibility)). Producers own value types; consumers own ports.
+A new package root needs an actual consumer and a distinct responsibility. Land each contract with a caller and a concrete implementation, never as an interface-only wave. Add, move or remove the package's row in the rule table, give it a package doc comment and regenerate the code map. Keep one root Go module and reject nested Go modules. Delete obsolete source, commands and gates together ([DEC-139](decisions.md#dec-139-quality-simplicity-and-stability-over-effort-and-compatibility)). Producers own value types; consumers own ports.
 
 ## Distribution
 
@@ -61,7 +61,7 @@ One Go module at the root, with `cmd/` and `internal/` below it.
 | Path | Holds |
 |---|---|
 | `cmd/` | The Go entrypoint `markitect` |
-| `internal/` | The Go packages, including the library (`internal/library`), whose packages and templates a person copies into a spec and whose reference values and question catalogs the binary embeds; the [code map](development/code-map.md) lists every package |
+| `internal/` | The Go packages, including the library (`internal/library`), whose module `core` a person copies into a spec and whose reference values and question catalog the binary embeds; the [code map](development/code-map.md) lists every package |
 | `plugin/` | The Claude Code plugin `markitect`, which only fetches the tool: launcher and start hooks ([plugin](guides/plugin.md)) |
 | `tools/` | Independent tools that import no product code: the command smoke |
 | `scripts/` | Maintainer scripts: the documentation link check and the CI test and flake reports |

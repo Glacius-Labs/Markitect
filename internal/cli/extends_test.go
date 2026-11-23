@@ -18,12 +18,20 @@ var sites = map[string]string{
 }
 
 func TestCheckDerivedTypes(t *testing.T) {
-	dir := spec(t, sites)
-	if code, out, _ := run("check", "-C", dir); code != ExitOK || out != "0 errors in 6 documents\n" {
+	withReadmes := map[string]string{
+		"types/README.md":  readme("Types", "artifact.md", "website.md", "blog.md"),
+		"things/README.md": readme("Things", "logo.md"),
+		"sites/README.md":  readme("Sites", "home.md", "news.md"),
+	}
+	for p, text := range sites {
+		withReadmes[p] = text
+	}
+	dir := spec(t, withReadmes)
+	if code, out, _ := run("check", "-C", dir); code != ExitOK || out != "0 errors in 9 documents\n" {
 		t.Fatalf("%d %s", code, out)
 	}
 	broken := map[string]string{}
-	for p, text := range sites {
+	for p, text := range withReadmes {
 		broken[p] = text
 	}
 	broken["sites/news.md"] = "# News\n\nType: [Blog](../types/blog.md)\n\n## Owner\n\n## Pages\nOne\n\n## Feed\nDaily\n"
@@ -39,7 +47,7 @@ func TestCheckDerivedTypes(t *testing.T) {
 		`types/loop.md:3: extends.cycle: the chain of extends lines comes back to itself` + "\n" +
 		`types/loose.md:5: extends.loosens: section "Owner" is required by types/artifact.md` + "\n" +
 		`types/lost.md:3: extends.unresolved: no document at "nowhere.md"` + "\n" +
-		"7 errors in 10 documents\n"
+		"7 errors in 13 documents\n"
 	if code != ExitFound || out != want {
 		t.Errorf("got %d\n%s\nwant\n%s", code, out, want)
 	}

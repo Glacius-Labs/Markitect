@@ -34,7 +34,7 @@ Look
                               every document with its type and title
   topic [TOPIC] [--all]       the signals of the spec, or everything about a
                               document, a type or a folder
-  questions                   the questions of the packages the spec has
+  questions                   the questions of the modules the spec has
   diff OLD [NEW]              what is new, gone or changed in the spec of NEW,
                               by default this project, against the project OLD
 

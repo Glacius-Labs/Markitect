@@ -1,13 +1,13 @@
 # Foundations
 
-This page says what Markitect builds on. For each of its solutions it names what is taken, the source it comes from and where Markitect departs from it on purpose. The [vision](vision.md) says why Markitect exists, the [concept](concept/README.md) describes the product, and the [decisions](decisions.md) record what holds. Where a solution only borrows an image, such as Terraform or the compiler, the page calls it an analogy: the idea helps to explain, and no method is taken over. Every source the page names is listed, with a reference a reader can check, at the [end of the page](#sources). The page uses Markitect's own words, such as document, type, package and template; the [concept](concept/what-markitect-is.md#words) defines them.
+This page says what Markitect builds on. For each of its solutions it names what is taken, the source it comes from and where Markitect departs from it on purpose. The [vision](vision.md) says why Markitect exists, the [concept](concept/README.md) describes the product, and the [decisions](decisions.md) record what holds. Where a solution only borrows an image, such as Terraform or the compiler, the page calls it an analogy: the idea helps to explain, and no method is taken over. Every source the page names is listed, with a reference a reader can check, at the [end of the page](#sources). The page uses Markitect's own words, such as document, type and module; the [concept](concept/what-markitect-is.md#words) defines them.
 
 ## At a glance
 
 | Markitect's solution | Builds on |
 |---|---|
 | [The spec in the repository](#the-spec-in-the-repository) | Docs as code; Parnas and Clements on documenting the end state |
-| [A typed, declarative specification language](#a-typed-declarative-specification-language) | Static typing, declarative languages and specification languages such as TLA+ and Alloy, as analogies; classes and objects |
+| [A typed, declarative specification language](#a-typed-declarative-specification-language) | Static typing, declarative languages and specification languages such as TLA+ and Alloy, as analogies; classes and objects; Go's packages and internal folders |
 | [The spec as an interface](#the-spec-as-an-interface) | Parnas's information hiding |
 | [Designing a good spec](#designing-a-good-spec) | ISO/IEC/IEEE 29148; competency questions; Tornhill's hotspots and change coupling |
 | [Purpose, world and system](#purpose-world-and-system) | Meyer's Handbook of Requirements and Business Analysis; Zave and Jackson |
@@ -29,22 +29,22 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 **Analogy.** A statically typed language reports a contradiction when it compiles, a dynamically typed one only when the program runs into it. A declarative language states what should hold and leaves how to an executor, as SQL leaves the plan to the database and Terraform the steps to its providers. TLA+ (Lamport) and Alloy (Jackson) are specification languages: formal, and never executed. The spec borrows all three images ([DEC-119](decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)): it is typed, it is declarative with an agent as its executor, and nothing in it is executed. `markitect check` is the type checker, and a borrowed idea, not a guarantee ([DEC-138](decisions.md#dec-138-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)).
 
-**Taken.** Types and their instances, as classes and objects: a type declares the sections of its documents, and a checker enforces them ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-packages-and-templates)). A type extends another as a class extends its base class, and inherits its sections ([DEC-155](decisions.md#dec-155-a-type-extends-another-with-a-line-of-its-own)).
+**Taken.** Types and their instances, as classes and objects: a type declares the sections of its documents, and a checker enforces them ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-and-modules)). A type extends another as a class extends its base class, and inherits its sections ([DEC-155](decisions.md#dec-155-a-type-extends-another-with-a-line-of-its-own)). A module shows some of what it holds and keeps the rest internal, as a Go package exports some names, and inside it everything may use what is internal to the modules above it, as Go's internal folders allow ([DEC-156](decisions.md#dec-156-a-module-is-a-folder-and-its-readme-says-what-it-shows)).
 
-**Differs.** Only the structure is formal. The content is prose that an agent interprets, so the result is checked, not derived. A type declares sections only, with no value forms or check rules, and everything stays plain Markdown with ordinary links.
+**Differs.** Only the structure is formal. A module shows whole documents, by links in its README, not names marked in each document. The content is prose that an agent interprets, so the result is checked, not derived. A type declares sections only, with no value forms or check rules, and everything stays plain Markdown with ordinary links.
 
 ## The spec as an interface
 
-**Taken.** A module states what it is responsible for and hides the decisions behind it (Parnas 1972). The spec plays that role for a whole project: it declares what is fixed, what someone relies on or what was decided, and leaves free what nobody relies on ([DEC-122](decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)).
+**Taken.** A component of software states what it is responsible for and hides the decisions behind it (Parnas 1972). The spec plays that role for a whole project: it declares what is fixed, what someone relies on or what was decided, and leaves free what nobody relies on ([DEC-122](decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)).
 
-**Differs.** An interface shows only the outside. The spec also holds decisions about the inside, such as modules and technology, since they are decided and so fixed.
+**Differs.** An interface shows only the outside. The spec also holds decisions about the inside, such as components and technology, since they are decided and so fixed.
 
 ## Designing a good spec
 
 **Taken.**
 
 - **Characteristics of good requirements** (ISO/IEC/IEEE 29148): a good spec is necessary, complete, consistent, unambiguous and verifiable, and structured, each fact singular and on its level ([DEC-123](decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)). Vague words that the standard names as signs of a weak requirement are one of the signals that say where reading pays off.
-- **Competency questions** (Grüninger and Fox 1995): an ontology is judged by the questions it must be able to answer. A spec is questioned the same way, with catalogs of questions per package and template, each answer taken from the spec with a citation.
+- **Competency questions** (Grüninger and Fox 1995): an ontology is judged by the questions it must be able to answer. A spec is questioned the same way, with a catalog of questions that ships with the default, each answer taken from the spec with a citation.
 - **Hotspots and change coupling** (Tornhill 2015, 2018): a hotspot is what changes often and costs much; change coupling is what changes together without a declared dependency. Both are among the signals of a spec's changes.
 
 **Differs.**
@@ -57,14 +57,14 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 **Taken.**
 
-- **Goals, environment and system** (Meyer 2022): a description says what the system is for, what holds in the world around it and what the system does. The software package sorts them into Purpose, Context and the chapters of the system.
-- **The world is not ours to decide** (Zave and Jackson 1997; Meyer 2022): what is imposed is a constraint, and what is taken for granted so that the system can be simpler is an assumption, with who ensures it. Both stand in Context. What the project chooses is a rule.
+- **Goals, environment and system** (Meyer 2022): a description says what the system is for, what holds in the world around it and what the system does. A software project's spec states them apart ([what goes in a spec](concept/what-goes-in-a-spec.md#what-a-software-project-states)).
+- **The world is not ours to decide** (Zave and Jackson 1997; Meyer 2022): what is imposed is a constraint, and what is taken for granted so that the system can be simpler is an assumption, with who ensures it. Both are given from outside. What the project chooses is a rule.
 
 **Differs.** Meyer's fourth book, the Project, describes the work: roles, schedule, tasks and risks. The spec leaves out the work that changes it, and keeps what should hold: the processes an operation runs and the way of working of a project.
 
 ## Behaviour as contracts
 
-**Taken.** An operation is specified by its precondition, its postcondition and the invariant of its class (Meyer 1992, 1997). In the software package an operation says what it does, what the caller gives and when it is refused, and a concept's rules are its invariants. An example illustrates and fixes nothing, as Meyer (2022) gives scenarios that role.
+**Taken.** An operation is specified by its precondition, its postcondition and the invariant of its class (Meyer 1992, 1997). In a spec an operation says what it does, what the caller gives and when it is refused, and a concept's rules are its invariants. An example illustrates and fixes nothing, as Meyer (2022) gives scenarios that role.
 
 **Differs.** Each condition of refusal states the answer the caller gets, since a caller relies on which answer it gets ([DEC-122](decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)).
 
@@ -72,13 +72,13 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 **Taken.** Quality follows the nine characteristics of ISO/IEC 25010:2023: functional suitability, performance efficiency, compatibility, interaction capability, reliability, security, maintainability, flexibility and safety. Each quality requirement has a measure that decides whether it is met, as a quality attribute scenario ends in a response measure (Bass, Clements and Kazman 2003).
 
-**Differs.** The characteristics are optional sections of the Quality type, which the template lists empty: `check` names each until it says what it asks of the system or why it asks nothing. A requirement is one sentence with its measure, not the scenario's six parts.
+**Differs.** A requirement is one sentence with its measure, not the scenario's six parts.
 
 ## Architecture
 
 **Taken.**
 
-- **arc42** (Starke and Hruschka): what its sections on cross-cutting concepts, building blocks, deployment and decisions describe is stated in the `architecture` part of the spec.
+- **arc42** (Starke and Hruschka): what its sections on cross-cutting concepts, building blocks, deployment and decisions describe is stated in the spec.
 - **Architecture decision records** (Nygard 2011; MADR): a decision is one choice with its reason and the alternatives it rejected.
 
 **Differs.**
@@ -89,7 +89,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 ## The default and the tool
 
-**Analogy.** Terraform runs the same command line everywhere and copies modules from a registry into the configuration, which then owns them. Markitect's tool and the packages and templates of its default are cut the same way, except that a person copies them by hand ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
+**Analogy.** Terraform runs the same command line everywhere and copies modules from a registry into the configuration, which then owns them. Markitect's tool and the module of its default are cut the same way, except that a person copies the module by hand ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
 
 **Differs.** The way of working is no process document beside the project and no part of the default: the project states it in its own spec, with general types, and its skills, agents and scripts realize it.
 
@@ -103,8 +103,8 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 ## Weighed and not taken
 
-- **An ontology language or SysML v2 as the form of the spec,** and front matter with typed fields. RDF with OWL and SHACL, SysML v2 and TypeScript were weighed. Markdown is what people and agents already write ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-packages-and-templates)).
-- **A module layer** with rules on the direction of links, visibility and binding by place, as programming languages have. Folders carry no rules, and a rule names what it applies to by links ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-packages-and-templates)).
+- **An ontology language or SysML v2 as the form of the spec,** and front matter with typed fields. RDF with OWL and SHACL, SysML v2 and TypeScript were weighed. Markdown is what people and agents already write ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-and-modules)).
+- **Rules on the direction of links** between modules, as layered architectures have. A module only groups and shows, and a rule names what it applies to by links ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-and-modules)).
 - **Architecture metrics of the spec,** such as coupling, cohesion and abstractness, and fixed thresholds. They measure structure, not whether a spec serves its purpose ([DEC-123](decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)).
 - **Attributes per requirement**, such as priority, risk, owner and history, which requirements standards keep. They describe the work, not the system, and the spec states only the system as it should be.
 - **Views as declared things.** A declared view states the same facts twice ([DEC-131](decisions.md#dec-131-the-tool-shows-claude-explains)).
@@ -120,11 +120,13 @@ Each source is named as in the text above. ISO standards are cited by their numb
 - ISO/IEC/IEEE 42010:2022, *Software, systems and enterprise — Architecture description*. <https://www.iso.org/standard/74393.html>
 - OMG 2025: *OMG Systems Modeling Language (SysML), Version 2.0*. <https://www.omg.org/spec/SysML/2.0>
 
-**Templates, tools and documentation**
+**Methods, tools and documentation**
 
 - arc42, by Gernot Starke and Peter Hruschka. <https://arc42.org/overview>
 - MADR, Markdown Architectural Decision Records. <https://adr.github.io/madr/>
 - Terraform documentation: *Modules*, <https://developer.hashicorp.com/terraform/language/modules>.
+- Go 1.4 release notes, *Internal packages*. <https://go.dev/doc/go1.4#internalpackages>
+- The Go Programming Language Specification, *Exported identifiers*. <https://go.dev/ref/spec#Exported_identifiers>
 - TLA+, by Leslie Lamport. <https://lamport.azurewebsites.net/tla/tla.html>
 - Alloy, by Daniel Jackson and others. <https://alloytools.org/>
 - Write the Docs, *Docs as Code*. <https://www.writethedocs.org/guide/docs-as-code/>

@@ -1,7 +1,7 @@
 // Command smoke builds markitect from the repository and drives its commands
 // over a small project that it builds by hand, the way a person does: an empty
-// folder, the packages and templates of the library copied into a spec folder,
-// and the file .markitect/spec. It checks the version, check, show, table,
+// folder, the module core of the library copied into a spec folder, a few
+// documents of its own and the file .markitect/spec. It checks the version, check, show, table,
 // topic, questions, licenses and diff, the refusal of the commands that are
 // gone, and that no command writes into the project. It starts no agent. The
 // same checks run on every operating system, so CI needs no shell-specific

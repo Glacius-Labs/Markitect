@@ -72,25 +72,26 @@ type Reference struct {
 	Statements, Words [2]int
 }
 
-// References holds reference values by package and type name, as
-// "software/operation".
+// References holds reference values by module and type name, as
+// "core/concept".
 type References map[string]Reference
 
 // For returns the reference values of the type at typePath, a path below the
-// spec folder: packages/PACKAGE/NAME.md matches PACKAGE's NAME.
+// spec folder: MODULE/NAME.md matches MODULE's NAME, a module of the library
+// being the folder of its name directly below the spec folder.
 func (r References) For(typePath string) (Reference, bool) {
 	parts := strings.Split(typePath, "/")
-	if len(parts) != 3 || parts[0] != "packages" {
+	if len(parts) != 2 {
 		return Reference{}, false
 	}
-	ref, ok := r[parts[1]+"/"+strings.TrimSuffix(parts[2], ".md")]
+	ref, ok := r[parts[0]+"/"+strings.TrimSuffix(parts[1], ".md")]
 	return ref, ok
 }
 
-// ParseReferences reads the reference values of a package from its file: a
+// ParseReferences reads the reference values of a module from its file: a
 // Markdown table whose rows hold a type name, the statements per document and
 // the words per statement, each as "low–high".
-func ParseReferences(pkg string, data []byte, into References) error {
+func ParseReferences(module string, data []byte, into References) error {
 	for n, line := range strings.Split(strings.ReplaceAll(string(data), "\r\n", "\n"), "\n") {
 		line = strings.TrimSpace(line)
 		if !strings.HasPrefix(line, "|") {
@@ -106,9 +107,9 @@ func ParseReferences(pkg string, data []byte, into References) error {
 		statements, err1 := parseRange(cells[1])
 		words, err2 := parseRange(cells[2])
 		if err1 != nil || err2 != nil {
-			return fmt.Errorf("%s: line %d: a range is low–high", pkg, n+1)
+			return fmt.Errorf("%s: line %d: a range is low–high", module, n+1)
 		}
-		into[pkg+"/"+cells[0]] = Reference{Statements: statements, Words: words}
+		into[module+"/"+cells[0]] = Reference{Statements: statements, Words: words}
 	}
 	return nil
 }

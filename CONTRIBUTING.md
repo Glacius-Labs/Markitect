@@ -1,6 +1,6 @@
 # Contributing
 
-Markitect is a language, the default of packages and templates that ships with it, and a small Go tool with a Claude Code plugin ([DEC-154](docs/decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)), developed as an ordinary project: agentic coding, tests and ordinary documentation, with no spec of itself ([DEC-076](docs/decisions.md#dec-076-markitect-is-developed-as-an-ordinary-software-project)). This page is the whole development process: how to make, check, review and land a change, and where things go.
+Markitect is a language, the default that ships with it, and a small Go tool with a Claude Code plugin ([DEC-154](docs/decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)), developed as an ordinary project: agentic coding, tests and ordinary documentation, with no spec of itself ([DEC-076](docs/decisions.md#dec-076-markitect-is-developed-as-an-ordinary-software-project)). This page is the whole development process: how to make, check, review and land a change, and where things go.
 
 ## Make a change
 
@@ -17,7 +17,7 @@ Product code and tests that handle a project's `.markitect/spec` use fixtures, n
 |---|---|---|
 | Go package | `internal/<responsibility>/` | A row in the architecture rule table, a package doc comment, and the code map regenerated ([architecture](docs/architecture.md#adding-changing-or-removing-a-package)) |
 | Shipped command | `cmd/<name>/` | A row in the rule table |
-| Package or template of the default, and a file the binary embeds | Inside its package, such as `internal/library/` | |
+| Module of the default, and a file the binary embeds | Inside its Go package, such as `internal/library/` | |
 | Fixture of one package | `<package>/testdata/` | |
 | Check that must not import product code | `tools/` | A CI step |
 | Maintainer script | `scripts/` | Its tests beside it |
@@ -30,12 +30,12 @@ Product code and tests that handle a project's `.markitect/spec` use fixtures, n
 | The product as a whole | [Concept](docs/concept/README.md) |
 | Decisions in force and open questions | [Decisions](docs/decisions.md) |
 | The spec language and the commands | [Language reference](docs/guides/language-reference.md) |
-| The default, its packages and templates, and the library folder that holds them | [Library](docs/guides/library.md) |
+| The default, its modules, and the library folder that holds them | [Library](docs/guides/library.md) |
 | The signals, the topic view, reference values and question catalogs | [Signals](docs/guides/signals.md) |
 | The project: finding it, `.markitect/spec`, setting one up by hand, `version` and `diff` | [Project reference](docs/guides/project-reference.md) |
 | The plugin as built: the launcher that fetches the tool, and its start hooks | [The plugin](docs/guides/plugin.md) |
 | What makes a good spec, and how to write one | [Is the spec good?](docs/concept/is-the-spec-good.md) |
-| Packages, layers and the repository layout | [Architecture](docs/architecture.md) and the generated [code map](docs/development/code-map.md) |
+| Go packages, layers and the repository layout | [Architecture](docs/architecture.md) and the generated [code map](docs/development/code-map.md) |
 | Releases | [Releasing](docs/releasing.md) |
 | Where Main is and what comes next | [Roadmap](docs/roadmap.md) |
 | Where earlier concepts and records are | [History](docs/history.md) |

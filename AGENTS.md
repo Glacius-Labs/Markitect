@@ -1,6 +1,6 @@
 # Markitect agent entrypoint
 
-With Markitect, people architect their project in a typed, declarative specification language in Markdown ([DEC-119](docs/decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)). They maintain one spec of it, its way of working included, which is the project's own. Markitect is the language, the default of packages and templates that ships with it, and the `markitect` tool, which checks the spec, analyses it and helps reading it; the tool never writes and keeps no state ([DEC-154](docs/decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec), [roadmap](docs/roadmap.md#where-main-is)).
+With Markitect, people architect their project in a typed, declarative specification language in Markdown ([DEC-119](docs/decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)). They maintain one spec of it, its way of working included, which is the project's own. Markitect is the language, the default that ships with it, today the one module `core` of general types, and the `markitect` tool, which checks the spec, analyses it and helps reading it; the tool never writes and keeps no state ([DEC-154](docs/decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec), [roadmap](docs/roadmap.md#where-main-is)).
 
 **Before you assess or change the product's direction,** read, in this order:
 

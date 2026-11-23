@@ -15,7 +15,7 @@ A spec is a folder. Every file in it, at any depth, whose name ends in `.md` in 
 Titles and sections come from the headings at the top level of a document; a heading inside a list or a block quote is part of the text around it. Link reference definitions, `[rules]: lending/rules.md`, and footnote definitions are no blocks: they stand before no title and give no section text. Both kinds of CommonMark heading count: `# Borrow`, and `Borrow` underlined with `=====` (level 1) or `-----` (level 2). The text of a heading is as written, without closing `#`, and the lines of an underlined heading are joined by a space.
 
 - **Title.** The first block of a document is a level-1 heading with text, the title. Any further level-1 heading is a second title.
-- **Sections.** Each level-2 heading opens a section, which runs to the next level-1 or level-2 heading. Every block in between, level-3 to level-6 headings, code and rules included, belongs to it. A section has text when one of these blocks shows something: a character other than white space outside HTML comments, code, a rule, an image or a link. A section that holds only white space and comments, such as a template's `<!-- fill in -->`, is empty.
+- **Sections.** Each level-2 heading opens a section, which runs to the next level-1 or level-2 heading. Every block in between, level-3 to level-6 headings, code and rules included, belongs to it. A section has text when one of these blocks shows something: a character other than white space outside HTML comments, code, a rule, an image or a link. A section that holds only white space and comments, such as `<!-- fill in -->`, is empty.
 
 ## Links
 
@@ -25,7 +25,7 @@ A link counts when its destination, without its `#section` and after decoding, e
 
 - **Resolution.** The path is relative to the folder of the linking document. Backslash escapes and character references, named and numeric such as `&#46;` and `&#x2E;`, are resolved, and percent-encoding is decoded, so `open%20loans.md` names `open loans.md`; a `%` that is not followed by two hexadecimal digits stays as it is. A path that starts with `/`, or that leaves the spec folder with `..`, names no document.
 - **Sections.** A link with a section, `[Card](members/ada.md#card)`, points to the document; the section is not checked.
-- **Every counted link must point to a document of the spec**, by its exact path.
+- **Every counted link must point to a document of the spec**, by its exact path, and to one that is shown across the boundaries of modules ([below](#visibility)).
 
 ## Types and the type line
 
@@ -90,6 +90,62 @@ How often it may be renewed.
 
 A document of a derived type has each required section of the type's chain, and every declared section of the chain it has has text, by the rules above. A document of `Renewable loan` needs `Borrower`, `Due`, `Renewals` and `Limit`.
 
+## Modules
+
+A **module** is a folder of the spec that holds a document directly, as a file of its own and not only in a folder below it ([DEC-156](../decisions.md#dec-156-a-module-is-a-folder-and-its-readme-says-what-it-shows)). The spec folder itself is a module only when it holds a document directly. A module **holds** the documents of its folder and of every folder below it, those of the modules below included.
+
+- **Transparent folders.** A folder that holds no document directly, only folders or files that are no documents, is no module and needs no README. It shows and hides nothing: the modules in it count as lying directly in the nearest module above it.
+- **Nesting.** A module lies within every module whose folder holds its folder at any depth. A module is **directly below** another when it lies within it and within no other module that lies within it, transparent folders passed over. When the module `lending/` holds `fines/late.md`, and a folder `rules/` that holds no document but the folder `renewals/` with `limit.md`, both `lending/fines/` and `lending/rules/renewals/` are directly below `lending/`.
+- **README.** Every module has a document named exactly `README.md` in its folder, its README. A module without one is `module.readme`, and every link into it from outside is `link.internal`.
+
+### The README
+
+A README is a document, read and checked by the rules above, with a form of its own:
+
+- **No type line and no extends line.** Either line in a README is `readme.type`, and the README is read without it: a README is never a document of a type and never a type, and `show` prints `Type: (none)` for it. A type line or an extends line of another document that names a README is `readme.type` as well.
+- **Text before the first section** says what the module is for.
+- **`Responsible`**, optional, names the role that answers for the module, as a link; without it, the role of the module above answers. **`Realized in`**, optional, says where in the project the module is built. `check` checks neither.
+- **`Contents`** is every section of the README whose level-2 heading is `Contents`, without regard to case; when there are two, the links of both count. `Contents` is not required, and a README without it shows nothing but itself.
+
+**What `Contents` shows.** Every counted link in `Contents`, one with a `#section` included, that points to a document of the README's own folder or to the README of a module directly below. Such a document is **public** in the module, and so is the README itself. A link in `Contents` to anything else shows nothing and is checked as any other link of the README: one to a document inside a module below is itself `link.internal` unless that module shows it.
+
+**Patterns.** A code span in `Contents` whose text holds no `/` is a pattern over the file names of the documents directly in the README's folder, and every document it matches is public: `` `*.md` `` shows every document of the folder, `` `report-*.md` `` those whose names start with `report-`. The wildcards are `*` for any run of characters, `?` for one character and a class such as `[a-z]` for one of a set, or `[^a-z]` for one outside it; everything else matches itself, case included. A pattern matches the file name alone, so it never reaches into a folder below: a module below is shown by a link to its README. A code span that holds `/`, such as `` `old/*.md` ``, is plain code and shows nothing. A pattern that matches no document is no error; one that is not a valid pattern, such as `` `report-[1.md` ``, is `readme.pattern` and shows nothing. Code spans count anywhere in `Contents`, in list items and block quotes too; fenced and indented code blocks do not. A pattern is written as code so that a rendered page shows no dead link.
+
+```markdown
+# Lending
+
+How members borrow copies and bring them back.
+
+## Responsible
+[Librarian](../team/librarian.md)
+
+## Realized in
+The loan service and its database.
+
+## Contents
+- [Borrow](borrow.md)
+- [Fines](fines/README.md)
+- `notice-*.md`
+```
+
+### Visibility
+
+Every counted link passes the boundaries of modules by one rule: a link from a document A to a document B passes when **every module that holds B but not A shows the way to B**, that is, lists under `Contents` either B itself, when B lies in that module's folder, or else the README of the module directly below it that holds B. A module's own README is always shown. A link that does not pass is `link.internal`. The rule holds for the type line and the extends line as for every other link, so a type that other modules name stands in the `Contents` of its module, and of every module above it that the naming document lies outside.
+
+With the README above, `lending/fines/README.md` showing `late.md`, and a further document `lending/loan-limit.md` that `Contents` does not list:
+
+| Direction | From | To | Passes |
+|---|---|---|---|
+| Inside | `lending/borrow.md` | `lending/loan-limit.md` | Yes: `lending` holds both |
+| Upward | `lending/fines/late.md` | `lending/loan-limit.md` | Yes: a module may link what is internal to the modules above it |
+| Downward | `lending/borrow.md` | `lending/fines/late.md` | Yes: `fines` shows `late.md` |
+| Sideways | `members/card.md` | `lending/borrow.md` | Yes: `lending` shows it |
+| Sideways | `members/card.md` | `lending/loan-limit.md` | No: `link.internal` |
+| Two levels | `members/card.md` | `lending/fines/late.md` | Yes: `lending` shows `fines/README.md`, and `fines` shows `late.md` |
+| Two levels | `members/card.md` | `lending/fines/waiver.md`, not listed in `fines` | No: `link.internal` |
+
+A module that holds both documents is never asked, so the spec folder, when it is a module, never hides anything. A link that points to no document is `link.unresolved`, not `link.internal`.
+
 ## What check reports
 
 | Code | Reported when | At line |
@@ -104,8 +160,12 @@ A document of a derived type has each required section of the type's chain, and 
 | `section.missing` | A required section of the type's chain is missing: `missing section "NAME" required by TYPEPATH`, the most derived type of the chain that requires it | The type line |
 | `section.empty` | A declared section of the type's chain that the document has holds no text: `empty section "NAME"` | The document's heading of that section |
 | `link.unresolved` | A counted link points to no document: `no document at "PATH"`, with the path as written, without its section | The link's first line |
+| `link.internal` | A counted link, the type line's and the extends line's included, points to a document of a module that does not show the way to it ([visibility](#visibility)): `"PATH" is internal to MODULE: MODULE/README.md does not list it under Contents`, for the first module of the way that does not show its step, or `… does not list MODULE/BELOW/README.md under Contents` when that step is the README of a module below; when a module on the way has no README, `"PATH" is internal to MODULE: BELOW has no README.md`, where BELOW is that module, MODULE itself or one below it. PATH is the target below the spec folder | The link's first line |
+| `module.readme` | A folder that holds a document directly has no `README.md`: `the folder FOLDER holds documents and has no README.md`, or for the spec folder `the spec folder holds documents and has no README.md`. Once per folder | Line 1 of the README's path, such as `shop/README.md:1` or `README.md:1` |
+| `readme.pattern` | A code span in a README's `Contents` without `/` is no valid pattern: `bad pattern "TEXT": a pattern uses the wildcards *, ? and [a-z]` | The code span's line |
+| `readme.type` | A README has a type line or an extends line: `a README has no type line` or `a README has no extends line`, once for each line it has. A type line or an extends line names a README: `"PATH" is a README, which is no type` | That line |
 
-A document reports each unresolved target once, at its first link: `[the archive](archive.md)`, `[its rules](archive.md#rules)` and `[again](./archive.md)` are one report. Each declared section is reported at most once, and a document at most one `title`. The diagnostics are sorted by path, then by line.
+A document reports each unresolved or internal target once, at its first link, where its type line or extends line comes first: `[the archive](archive.md)`, `[its rules](archive.md#rules)` and `[again](./archive.md)` are one report. Each declared section is reported at most once, and a document at most one `title`. The diagnostics are sorted by path, then by line.
 
 ## Commands
 
@@ -118,11 +178,11 @@ A flag may stand anywhere, before the command as well, as in `markitect -C PROJE
 | Look | `markitect show DOCUMENT` | The document's title, its type or, for a derived type, its base, its sections (a type's those of its whole chain, with their `(optional)` marker and, for an inherited one, the type that declares it), the documents it links to, the documents that link to it with the section each link stands in, and for a type the types that extend it and its documents, those of the types that extend it included |
 | | `markitect table [TYPE]` | Every document of the type and of every type that extends it as a Markdown table: the title, then one column per section of the type's chain. Without a type, every document with its type and title |
 | | `markitect topic [TOPIC] [--all]` | The signals of the spec, or the topic view of a document, a type or a folder ([signals](signals.md)) |
-| | `markitect questions` | The question catalogs of the packages of the default that the spec has ([signals](signals.md#question-catalogs)) |
+| | `markitect questions` | The question catalog of the default's module `core`, when the spec has it ([signals](signals.md#question-catalogs)) |
 | | `markitect diff OLD [NEW]` | What is new, gone or changed in the spec of NEW, by default this project, against the project OLD, with a diff for what changed ([project reference](project-reference.md#diff)) |
 | Check | `markitect check` | Checks the spec by the rules above |
 | Tool | `markitect version` | The tool's version and build ([project reference](project-reference.md#version)) |
-| | `markitect licenses` | The license notices of the modules the tool is built from |
+| | `markitect licenses` | The license notices of the Go modules the tool is built from |
 
 The commands only read: none writes a file, keeps a state, starts an agent or steers work, and each does one thing on its own.
 

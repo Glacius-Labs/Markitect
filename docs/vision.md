@@ -8,11 +8,11 @@ Read this section first, then [Why Markitect exists](#why-markitect-exists), [Fo
 
 **What it is: a way to architect a project in Markdown** ([DEC-119](decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)). An architect draws the plan, builders build to it, and an inspection checks the building against the plan. A change of plan goes through the architect. Markitect works the same way, with one difference: the plan lives and moves with every change. The spec is the plan, and it is binding. Agents build to it, and the result is checked against it. Architecture is the whole design: what the project's concepts are and mean, how they relate, its interfaces, structure, rules and way of working.
 
-**The parts.**
-- People maintain one authoritative place per project: the spec. It is a typed, declarative specification language in Markdown: documents with a type, ordinary links, and types from packages, started from a few small templates. It states what is fixed about the project: its concepts, rules, boundaries, interfaces, structure and way of working.
+**Who holds what.**
+- People maintain one authoritative place per project: the spec. It is a typed, declarative specification language in Markdown: documents with a type and ordinary links, grouped in modules whose READMEs say what each shows to the others. It states what is fixed about the project: its concepts, rules, boundaries, interfaces, structure and way of working.
 - Code, tests, configuration, documentation and the agents' skills are implementations of the spec. Where they differ from it, the spec is right.
 - How the team works is the project's own. The project describes its way of working in its spec, with general types, and skills, agents and scripts in the repository realize it ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
-- Markitect itself is the language, the default that ships with it, packages of types and templates, and a deterministic tool, the `markitect` program, that checks the spec, analyses it and helps reading it. The tool never writes, keeps no state and steers nothing.
+- Markitect itself is the language, the default that ships with it, a module of general types, and a deterministic tool, the `markitect` program, that checks the spec, analyses it and helps reading it. The tool never writes, keeps no state and steers nothing.
 
 Markitect expects people's work to move from writing code to architecture: designing, defining and modeling. What matters in code matters there too: consistency, cleanliness, an overview of the project without reading its code, and knowing what should be as against what is.
 
@@ -44,7 +44,7 @@ Reading everything again would bring both back, and it would make people the bot
 
 **Today's substitutes have no measure.** People ask the agent how something works. They start separate sessions to look for bugs, to judge the architecture, to check that everything fits, and after a fix to check that nothing else broke. Each of these passes looks from one angle, and each does find what the implementing session missed. Two things limit them: "everything fits" has nothing to fit against, and a pass runs only when someone thinks of it. So projects add rules, processes and skills. These live in agent instructions and documentation. They are more artifacts to remember, to maintain and to keep uniform, and more for an agent to overlook. Consolidating them with an agent works on a small project, scales badly, and leaves nothing that shows the result is consistent.
 
-**A standing statement of what should be is missing.** A prompt, a user story and most specs in spec-driven development describe one change or one part of the project. They age once the change is made, and nobody maintains them. People work from their conversations with the agent, and nothing in those is settled for good. At no moment is it written down what the project as a whole should be. The project stays nebulous, without a clear outline, and what exists has nothing to converge on. An agent cannot tell how far the project has moved from what was wanted, cannot find differences that crept in earlier, and cannot tell a bug from intended behavior. It guesses, and each guess makes the result less reliable. Getting what one wants takes knowing what one wants and saying it.
+**A standing statement of what should be is missing.** A prompt, a user story and most specs in spec-driven development describe one change or one area of the project. They age once the change is made, and nobody maintains them. People work from their conversations with the agent, and nothing in those is settled for good. At no moment is it written down what the project as a whole should be. The project stays nebulous, without a clear outline, and what exists has nothing to converge on. An agent cannot tell how far the project has moved from what was wanted, cannot find differences that crept in earlier, and cannot tell a bug from intended behavior. It guesses, and each guess makes the result less reliable. Getting what one wants takes knowing what one wants and saying it.
 
 **The spec is that statement.** It is the one place where what the project should be is written down, and what is written there is binding. The spec is what a person works on: they decide what should be, and an agent writes it down with them. Code, tests, configuration and documentation are the agents' work, checked against the spec. The aim is work that nobody has to watch and nobody signs off. Today such approvals are mostly nodded through unread, which helps nobody; trust comes instead from facts that can turn out negative without anyone reading. A question an agent should not settle for itself shows that the spec leaves out or contradicts something that matters, and the spec is the place to settle it.
 
@@ -61,9 +61,9 @@ How a project checks its results, and measures that checking, is its way of work
 
 ## Founding intent
 
-**The problem.** A project built almost entirely with coding agents, documented in Markdown with rules, skills and agent instructions, drifted away from its code. It had explicit Core, Module and Product boundaries, and a specified working method, review policies and skills per module. Code, documentation and the agents' skills repeatedly contradicted one another; changes missed rules, every consistency run took hours and found more, and nobody could tell any more which rules existed, what was defined and what had entered the project silently.
+**The problem.** A project built almost entirely with coding agents, documented in Markdown with rules, skills and agent instructions, drifted away from its code. It had explicit boundaries between its core, its components and its product, and a specified working method, review policies and skills per component. Code, documentation and the agents' skills repeatedly contradicted one another; changes missed rules, every consistency run took hours and found more, and nobody could tell any more which rules existed, what was defined and what had entered the project silently.
 
-**The whole project, as far as it is fixed.** The spec covers the whole project: which modules and deployments exist, what a concept such as a book is and what can be done with it, the rules and the way of working. It states what is fixed, what someone relies on or what was decided, such as data shapes and the answer to a refused call, and leaves loops and data structures to the agents ([DEC-122](decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)). The concept says [what belongs in it](concept/what-goes-in-a-spec.md) and what happens where it leaves something open.
+**The whole project, as far as it is fixed.** The spec covers the whole project: which components and deployments exist, what a concept such as a book is and what can be done with it, the rules and the way of working. It states what is fixed, what someone relies on or what was decided, such as data shapes and the answer to a refused call, and leaves loops and data structures to the agents ([DEC-122](decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)). The concept says [what belongs in it](concept/what-goes-in-a-spec.md) and what happens where it leaves something open.
 
 **One source, and why it is documentation.** A project is many artifacts that work together: code, tests, configuration and documentation. They drift apart. When two of them contradict each other, nothing says which is right, so the agent guesses or a person brings them back in step. Software solves this with a single source of truth and gives it up only where a system must scale across machines. A project's description never has to. Code could be that source: it compiles, it can be tested and it is exact. Code cannot state everything, though. A deployment or a way of working needs documentation, Dockerfiles and agent rules beside the code, and the detail of code makes it rigid. Documentation, kept as one source, can state everything. It lacks a compiler and tests, and it tends to say the same thing in many places.
 
@@ -73,14 +73,15 @@ How a project checks its results, and measures that checking, is its way of work
 
 | In a typed, declarative language | In a Markitect spec |
 | --- | --- |
-| type, class | type: a document whose sections are the template |
+| type, class | type: a document that declares the sections of its documents |
 | object, declaration | document |
 | the body | the prose of a section: what holds, which agents realize |
 | reference | an ordinary Markdown link |
-| standard library | packages, copied into the spec, which owns its copy |
+| package, with exported and internal names | module: a folder whose README shows what other modules may link |
+| standard library | the default's module `core`, copied into the spec, which owns its copy |
 | type checker, `validate` | `markitect check`: structure only, never meaning |
 
-- The core stays small. Projects define their own types and so form their own vocabulary; packages supply common ones, so that no project reinvents them.
+- The core stays small. Projects define their own types and so form their own vocabulary; the default supplies common ones, so that no project reinvents them.
 - The tool checks structure. Meaning is judged by agents and people: readers judge the spec itself, and whoever checks the project judges its artifacts against the spec.
 - People decide intent and answer for the spec. Agents write it with them in conversation, and ask first when something is open.
 
@@ -99,7 +100,7 @@ Two claims stay apart ([DEC-138](decisions.md#dec-138-the-compiler-is-a-borrowed
 | Role | Responsibility |
 |---|---|
 | People | Decide what should exist and why; choose concepts, architecture, boundaries, rules and the way of working; answer for what the spec means. |
-| Markitect | Ship the language and a default of packages and templates; check the spec, analyse it and help reading it. The tool writes nothing, keeps no state, starts no agent and steers no work. |
+| Markitect | Ship the language and a default of general types; check the spec, analyse it and help reading it. The tool writes nothing, keeps no state, starts no agent and steers no work. |
 | Agents | Write the spec with people, realize it and check the result, as the project's way of working says. An agent's report is not a person's approval. |
 
 A real change of intent changes the spec first. When intent is unchanged, a bug or a stale file is repaired against the same spec; no artificial spec edit is needed. The target human role is specification and engineering judgment, not being a permanent agent scheduler, prompt supervisor or reader of every routine diff. Whether that work can actually be reduced is what Markitect has to show.

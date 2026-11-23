@@ -6,18 +6,18 @@ Deleting `.markitect/spec` and the tool leaves an ordinary repository with its d
 
 ## Setting up a project
 
-A project is set up by hand: write `.markitect/spec`, copy the packages and the templates the project starts from into the spec folder, and run `check`. A template's documents link into the packages by relative links, so the two are copied side by side as they lie in Markitect's repository; a template may stay where it was copied, or move once its links are adjusted. `check` then lists the sections the templates leave empty: that list is the work still to do, and once it is done, `check` reports nothing. The [project reference](../guides/project-reference.md#setting-up-a-project-by-hand) gives the steps.
+A project is set up by hand: write `.markitect/spec`, copy the default's module `core` into the spec folder, write the project's own modules, each a folder with a README ([§3](the-language.md#modules)), and run `check` until it reports nothing. The [project reference](../guides/project-reference.md#setting-up-a-project-by-hand) gives the steps.
 
 ## The default
 
-The default is the packages and templates that ship with Markitect, and per package its reference values and question catalog ([library](../guides/library.md)).
+The default is what ships with Markitect ([DEC-156](../decisions.md#dec-156-a-module-is-a-folder-and-its-readme-says-what-it-shows); [library](../guides/library.md)). Until a new default is designed, it is the one module `core`, with six general types, concept, decision, goal, role, rule and term, and its reference values and question catalog.
 
-- **Packages and templates** are plain files in Markitect's repository. A person copies them into the spec, which owns its copy and may change it like any of its documents.
-- **Reference values and question catalogs** are not part of the spec. They are built into the tool and read from its version, so they improve with each version: `topic` shows the reference values beside the project's own figures, and `questions` prints the catalogs of the packages the spec has ([§5](is-the-spec-good.md)).
+- **The module** is plain files in Markitect's repository. A person copies it into the spec, as the folder `core` directly below the spec folder, and the spec owns its copy and may change it like any of its modules.
+- **Reference values and the question catalog** are not part of the spec. They are built into the tool and read from its version, so they improve with each version: `topic` shows the reference values beside the project's own figures, and `questions` prints the catalog for a spec that has `core` ([§5](is-the-spec-good.md)).
 
 ## The way of working
 
-A way of working is always the project's own, also when it starts from one that a default ships; today the default ships none. The project describes how its people and agents work in its spec, with the general types of the default, such as Role, Rule and Decision of the `core` package and Process, Step and Task of the `company` package, and skills, agents and scripts realize it, as code realizes the product ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)). Markitect ships no skill and no folder for the work.
+A way of working is always the project's own, also when it starts from one that a default ships; today the default ships none. The project describes how its people and agents work in its spec, with general types such as Role, Rule and Decision of `core` and types of its own, and skills, agents and scripts realize it, as code realizes the product ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)). Markitect ships no skill and no folder for the work.
 
 ## The plugin and the version
 
