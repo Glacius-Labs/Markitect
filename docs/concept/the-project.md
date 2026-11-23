@@ -1,60 +1,24 @@
-# The project and its skills
+# The project
 
-**`.markitect/` holds the work, and `init` lays out templates and skills** ([DEC-153](../decisions.md#dec-153-markitect-holds-the-work-init-lays-out-templates-and-skills-and-the-plugin-fetches-its-own-version)). A project holds three things of Markitect's: the spec, an ordinary folder of documentation, by default `docs/spec/`; the skills of the standard, as artifacts of the spec; and `.markitect/`.
+**A project is the nearest folder upward that holds the file `.markitect/spec`** ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)). Its one line names the spec folder, an ordinary folder of documentation such as `docs/spec/`. That file is all Markitect keeps in a project: the tool reads nothing else from `.markitect/`, and nothing creates the file. A person writes it.
 
-## `.markitect/`
+Deleting `.markitect/spec` and the tool leaves an ordinary repository with its documentation, code and tests.
 
-```text
-.markitect/
-  version                     the tool's version the project pins
-  spec                        the path of the spec folder
-  ignore                      files that realize nothing, written like a .gitignore
-  state.jsonl                 one row per document (§6)
-  history.jsonl               the facts of each confirmation and move (§6)
-  .gitattributes              keeps both sides of the state and the history in a merge
-  context/                    everything that happened
-    <agent>/                  one folder per kind of agent, named like its Agent document
-      YYYY-MM-DD-HHMM-<item>.md   one report per run or session
-      checkpoint.md           where the agent continues, where needed
-  findings/
-    pending/                  needs a person
-    ready/                    released for work
-    closed/                   done, with its outcome
-  plan/                       Features and Stories, as a tree under their Areas
-  briefing/                   daily, weekly and per meeting
-```
+## Setting up a project
 
-Each observer is a kind of agent of its own, with its own folder in `context/`; a report without an item, such as an observer's, is named by date and time only. The state and the history are the results of `confirm`; the context, the findings, the plan and the briefing are the work everyone continues from, and several agents write the plan ([§9](the-work.md)).
+A project is set up by hand: write `.markitect/spec`, copy the packages and the templates the project starts from into the spec folder, and run `check`. A template's documents link into the packages by relative links, so the two are copied side by side as they lie in Markitect's repository; a template may stay where it was copied, or move once its links are adjusted. `check` then lists the sections the templates leave empty: that list is the work still to do, and once it is done, `check` reports nothing. The [project reference](../guides/project-reference.md#setting-up-a-project-by-hand) gives the steps.
 
-## `init`
+## The default
 
-`init` lays out:
+The default is the packages and templates that ship with Markitect, and per package its reference values and question catalog ([library](../guides/library.md)).
 
-- `.markitect/`, with the version, the spec path and empty folders for the work;
-- the spec, with the four templates `project`, `product`, `architecture` and `factory` ([§4](what-goes-in-a-spec.md#four-templates));
-- the skills of the standard, in `.claude/skills/` and `.agents/skills/`;
-- a short entry in `AGENTS.md`, which names the spec, the skills and `markitect-assistant` as the entry.
+- **Packages and templates** are plain files in Markitect's repository. A person copies them into the spec, which owns its copy and may change it like any of its documents.
+- **Reference values and question catalogs** are not part of the spec. They are built into the tool and read from its version, so they improve with each version: `topic` shows the reference values beside the project's own figures, and `questions` prints the catalogs of the packages the spec has ([§5](is-the-spec-good.md)).
 
-Deleting `.markitect/` and the tool leaves an ordinary repository with documentation, code, tests and skills.
+## The way of working
 
-## The skills
+A way of working is always the project's own, also when it starts from one that a default ships; today the default ships none. The project describes how its people and agents work in its spec, with the general types of the default, such as Role, Rule and Decision of the `core` package and Process, Step and Task of the `company` package, and skills, agents and scripts realize it, as code realizes the product ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)). Markitect ships no skill and no folder for the work.
 
-The skills of the standard are built from the `factory` template, one per Agent document, each named `markitect-` and the document's name: `markitect-assistant`, `markitect-capture`, `markitect-architect`, `markitect-finish-planning`, `markitect-build`, `markitect-review`, `markitect-analyze`, `markitect-accept`, `markitect-observe`, `markitect-create-observer`, `markitect-triage`, `markitect-record`, `markitect-brief` and `markitect-housekeeper` ([§8](the-circle.md#agents)). Each describes its agent's work completely and step by step; `markitect-capture`, `markitect-finish-planning` and `markitect-create-observer` run inside the session that calls them.
+## The plugin and the version
 
-- **They lie in the repository,** never in the plugin, where Claude Code and Codex both find them, and hold for both alike ([DEC-147](../decisions.md#dec-147-the-way-of-working-stands-in-the-spec-and-skills-realize-it)).
-- **They are artifacts of the spec.** When the `factory` part changes, the skills are built and confirmed again like any code, and the state maps each to the documents it realizes. A failure in how agents work is fixed in the `factory` part and the skill built from it, not with prompt text beside them.
-- **What steers an agent stands in the spec.** Which agents and observers exist, their model, one line per provider, such as Sonnet, Opus or Fable for Claude and Luna, Sol or Astra for Codex, their schedule and whether they ask stand at their Agent document; persons, roles and meetings stand there too. There is no settings file. To give the builder another model, a person changes the builder's Agent document with the Architect; nothing has to be built, since whoever starts the builder reads its model there.
-
-## Who starts an agent
-
-An agent is started by a person, by the Assistant, by the Housekeeper or by a routine, as its Agent document says ([DEC-142](../decisions.md#dec-142-the-tool-computes-and-checks-a-runner-acts)). Agents and people make every Git step; the tool makes none.
-
-Agents run on the login of the user's subscription: in their own session, as a scheduled task of the desktop app, as a cloud task, or in CI with a token that `claude setup-token` makes for a run without a session. API keys are never used ([DEC-134](../decisions.md#dec-134-agents-run-on-the-users-subscription-with-or-without-a-session)). Agents run with the rights of whoever runs them, so work that reads untrusted input needs an isolated machine with limited rights around it.
-
-## The plugin, the version and the library
-
-**The plugin only fetches the tool.** Its launcher fetches the plugin's own version, which is the tool's version, and does not read the version a project pins. It brings no skills.
-
-**The project pins a version** in `.markitect/version`, since the state is hashes the tool computes and two versions could disagree. `markitect version` says whether the tool that runs is that version. A newer version is taken by changing the version line and using a tool of that version, as with any other dependency. A release publishes the tool for Linux, macOS and Windows with checksums ([releasing](../releasing.md)).
-
-**The library is inside the tool:** packages, templates with the skills of the standard, reference values and question catalogs. `apply` copies packages and templates into the spec, which owns its copy; a newer package in the library shows in a comparison, and the Architect takes it where it fits. Reference values and catalogs are not part of the spec and are read from the tool's version, so they improve with each version. The [library](../guides/library.md) describes its content.
+**The plugin only fetches the tool** ([DEC-135](../decisions.md#dec-135-the-tool-stays-in-go-and-is-rebuilt-for-the-language)). Its launcher fetches the release of the plugin's own version, which is the tool's version, checks it against the release's checksums and starts it ([the plugin](../guides/plugin.md)). A project pins no version: `markitect version` names the tool's version and build. A release publishes the tool for Linux, macOS and Windows with checksums ([releasing](../releasing.md)).

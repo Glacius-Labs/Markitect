@@ -78,58 +78,40 @@ A document with a type has each required section of its type as a level-2 headin
 
 A document reports each unresolved target once, at its first link: `[the archive](archive.md)`, `[its rules](archive.md#rules)` and `[again](./archive.md)` are one report. Each declared section is reported at most once, and a document at most one `title`. The diagnostics are sorted by path, then by line.
 
-The documents of the work in `.markitect/` are checked with the same codes against their types in the spec, with the differences the [project reference](project-reference.md#the-documents-of-the-work) gives.
-
 ## Commands
 
-Every command but `init`, `version` and `licenses` works in a project and finds its spec through it: the folder `-C PROJECT` names, or the nearest folder from the working directory upward that holds `.markitect/version` ([project reference](project-reference.md#the-project)). A document, type, topic or folder named on the command line is a path below the spec folder, with or without `.md`, with `/` or `\` between folders; a path that leaves the spec folder, is absolute or starts with a scheme names no document. The `OLD` and `NEW` of `compare` are project folders, and the `OLD` and `NEW` of `move` are documents.
+Every command but `version` and `licenses` works in a project and finds its spec through it: the folder `-C PROJECT` names, or the nearest folder from the working directory upward that holds `.markitect/spec` ([project reference](project-reference.md#the-project)). A document, type, topic or folder named on the command line is a path below the spec folder, with or without `.md`, with `/` or `\` between folders; a path that leaves the spec folder, is absolute or starts with a scheme names no document. The `OLD` and `NEW` of `diff` are project folders.
 
-A flag may stand anywhere, before the command as well, as in `markitect -C PROJECT check`, and `-json` is the same as `--json`. A flag belongs to the commands that name it: `--spec` is one of `init`, `--all` one of `topic`, and `--file`, `--check`, `-e` and `-m` are flags of `confirm`. `--` ends the flags, so that a name starting with `-` can follow. `markitect help`, `-h` or `--help`, wherever it stands, even after a command, prints the general usage, which groups the commands as this table does; the usage of one command is printed with a wrong number of arguments. A flag that no command has, or one that lacks its value, is an error that names it. Output paths are below the spec folder, with `/`, unless they name a file of the work or of the project.
+A flag may stand anywhere, before the command as well, as in `markitect -C PROJECT check`, and `-json` is the same as `--json`. `--all` is a flag of `topic` only. `--` ends the flags, so that a name starting with `-` can follow. `markitect help`, or `-h` or `--help` wherever it stands, even after a command, prints the general usage, which groups the commands as this table does; the usage of one command is printed with a wrong number of arguments. A flag that no command has, or one that lacks its value, is an error that names it. Output paths are below the spec folder, with `/`.
 
 | Group | Command | Does |
 |---|---|---|
-| Look | `markitect show DOCUMENT` | The document's title, its type, its sections (a type's with their `(optional)` marker), the documents it links to, the documents that link to it with the section each link stands in, for a type its documents, and its row in the state |
-| | `markitect table [TYPE]` | Every document of the type as a Markdown table: the title, then one column per section of the type. Without a type, every document with its verdict and artifacts |
-| | `markitect topic [TOPIC] [--all]` | The signals of the spec and the change signals of its history, or the topic view of a document, a type or a folder ([signals](signals.md)) |
-| | `markitect questions` | The question catalogs of the library packages the spec has ([signals](signals.md#question-catalogs)) |
-| | `markitect compare OLD [NEW]` | What is new, gone, moved, changed or suspect in NEW, by default this project, against OLD, with diffs, changed verdicts and the documents of the work that are new, gone or changed ([project reference](project-reference.md#compare)) |
-| Check | `markitect check` | Checks the spec by the rules above, and the documents of the work against their types ([project reference](project-reference.md#the-documents-of-the-work)) |
-| | `markitect status [PATH]...` | What is changed, suspect or unexplained, for the documents, files and folders named, or for all; it lists whatever `check` finds ([project reference](project-reference.md#status)) |
-| Change the spec | `markitect new TYPE PATH [TITLE]` | Creates a document of the type |
-| | `markitect apply TEMPLATE [TARGET]` | Copies a template of the [library](library.md) into the spec |
-| | `markitect move OLD NEW` | Moves or renames a document, rewrites the links to it, carries its row in the state and records the move in the history ([project reference](project-reference.md#move-and-the-state)) |
-| Confirm | `markitect confirm DOCUMENT@FINGERPRINT VERDICT [--file PATH]... [--check PATH]... [-e EVIDENCE]... [-m REASON]` | Binds `ok`, `fail` or `skip`, with the files that realize the document, all of them, its counter-checks and its evidence, to the state `status` showed ([project reference](project-reference.md#confirm)) |
-| Set up | `markitect init [--spec PATH]` | Sets up a project: `.markitect/`, the spec folder with the four templates, the skills of the standard and an entry in `AGENTS.md` ([project reference](project-reference.md#init)) |
-| | `markitect version` | The tool's build, and whether its version is the one the project pins ([project reference](project-reference.md#version)) |
+| Look | `markitect show DOCUMENT` | The document's title, its type, its sections (a type's with their `(optional)` marker), the documents it links to, the documents that link to it with the section each link stands in, and for a type its documents |
+| | `markitect table [TYPE]` | Every document of the type as a Markdown table: the title, then one column per section of the type. Without a type, every document with its type and title |
+| | `markitect topic [TOPIC] [--all]` | The signals of the spec, or the topic view of a document, a type or a folder ([signals](signals.md)) |
+| | `markitect questions` | The question catalogs of the packages of the default that the spec has ([signals](signals.md#question-catalogs)) |
+| | `markitect diff OLD [NEW]` | What is new, gone or changed in the spec of NEW, by default this project, against the project OLD, with a diff for what changed ([project reference](project-reference.md#diff)) |
+| Check | `markitect check` | Checks the spec by the rules above |
+| Tool | `markitect version` | The tool's version and build ([project reference](project-reference.md#version)) |
 | | `markitect licenses` | The license notices of the modules the tool is built from |
 
-The commands inform and write on request; none starts an agent, and none steers work. Each does one thing on its own: `check` shows the problems of the spec and the work, and `status`, `confirm` and `move` never refuse for what `check` finds; `status` is a list, never a gate.
+The commands only read: none writes a file, keeps a state, starts an agent or steers work, and each does one thing on its own.
 
-**Exit codes.** 0 when all is well, 1 when `check`, `status` or `compare` found something, `confirm` refused, or `version` found a project that pins another version, and 2 when the command could not run: an unknown command or flag, a flag without its value, no command at all, a wrong number of arguments, no project, a `.markitect/` that cannot be read, a spec folder that does not exist (`apply` creates it), a document that `show` or `confirm` does not know, a path that `status` does not know, a file that cannot be read, a refused `init`, `new`, `move` or `apply`, or a `confirm` that is malformed ([project reference](project-reference.md#confirm)). A command that does not succeed changes nothing, also when writing fails partway, unless undoing fails as well, which it reports ([below](#commands-that-write)).
+**Exit codes.** 0 when all is well, 1 when `check` or `diff` found something, and 2 when the command could not run: an unknown command or flag, a flag without its value, no command at all, a wrong number of arguments, no project, a `.markitect/spec` that cannot be read or names a spec folder it may not, a spec folder that does not exist, a document, type or topic that the spec does not have, or a file that cannot be read.
 
 ### Commands that read
 
-**`check`** prints one line per diagnostic, `path:line: code: message`, then a summary such as `2 errors in 9 documents`, to which the documents of the work add their number when there are any:
+**`check`** prints one line per diagnostic, `path:line: code: message`, then a summary such as `2 errors in 9 documents`:
 
 ```text
 loans/borrow.md:11: link.unresolved: no document at "fines.md"
 roles/member.md:5: section.empty: empty section "Does"
-2 errors in 9 documents, 1 document of the work
+2 errors in 9 documents
 ```
 
-A document of the work has its path below the project folder, such as `.markitect/findings/pending/late-fee.md`.
+**`show`** prints the document's path, `Title:`, `Type:` (the type's path, `(none)`, `(invalid line)` for a type line that is not one link, or the path with `(missing)`), then the lists `Sections:`, `Links to:`, with `(missing)` after a path that names no document, and `Linked from:`, each `(none)` when empty, and `Documents:` only for a type that has some. `Links to:` holds each path once; `Linked from:` holds one entry per linking document and section, `path (Section)`, or the bare path for a link that stands before any section, so a document that links from two sections appears twice. Both are sorted without regard to case.
 
-**`show`** prints the document's path and its fingerprint, `lending/borrow.md@fde1ae8e`, which `confirm` takes ([project reference](project-reference.md#status)), `Title:`, `Type:` (the type's path, `(none)`, `(invalid line)` for a type line that is not one link, or the path with `(missing)`), then the lists `Sections:`, `Links to:`, with `(missing)` after a path that names no document, and `Linked from:`, each `(none)` when empty, and `Documents:` only for a type that has some. `Links to:` holds each path once; `Linked from:` holds one entry per linking document and section, `path (Section)`, so a document that links from two sections appears twice. Both are sorted without regard to case. Then comes the document's row in the state, the one `status` takes ([project reference](project-reference.md#the-state)): `Verdict:`, `(no row)` without one and `(rows conflict)` after it for a conflict, the lists `Artifacts:`, `Counter-checks:` and `Evidence:`, each `(none)` when empty, and `Reason:` when the row gives one.
-
-**`table`** prints a row per document of the type, in path order. A cell holds the first line of the section's text as plain text: markup, list markers, HTML tags and comments are dropped, and links, reference links and images show as their text. A section that starts with code shows its first code line, one that starts with a table its first row, cells separated by ` | `. `|` is escaped, and a cell is empty when the section has no text or the document leaves an optional section out. A row's title is the document's title, or its path. Without a type, `table` prints every document of the spec in path order as `| Document | Verdict | Artifacts |`: its path, the verdict of the row `status` takes, empty without one and with `(rows conflict)` for a conflict, and its artifacts.
-
-### Commands that write
-
-They compute every change first and check that nothing stands in the way: no file at a path to create, every file to rewrite writable, and every target folder writable. They then write each new content to a temporary file beside its target, make the moves and rename the temporary files into place, keeping each replaced file aside until the end. A new file is linked into place or created exclusively, so a file that appeared meanwhile is never replaced. When a step fails, every step done is undone, so the spec is as it was; a document of the work that `move` cannot read or write is the one exception ([project reference](project-reference.md#move-and-the-state)). Should an undo fail too, the error names the original failure, what could not be undone and every temporary or backup file left behind (`.markitect-*.tmp`, `.markitect-*.bak`), so that the spec can be restored by hand.
-
-- **`new`** writes `# TITLE`, by default the file name, the type line with a relative link to the type, percent-encoded where the path needs it, and an empty level-2 heading for each section the type requires. It refuses when `PATH` exists, as a document or as anything else. It prints `created PATH`.
-- **`move`** moves the document and rewrites every link to it in the spec: links, type lines and link reference definitions. When the document changes folder, it also rewrites every relative destination in it so that it reaches the same file: links to any file, images, link reference definitions, and the `href` and `src` attributes of HTML tags. Text between tags, escaped markup such as `&lt;img src="x.png"&gt;`, comments, other attributes, such as a `title` that mentions `href=`, and the contents of `script`, `style` and `textarea` stay as they are. It refuses when such an attribute's value cannot be placed: in a tag that does not close, or broken across lines inside a block quote or a list. A rewritten destination keeps its `#section` and its `<…>` form, and is percent-encoded when it was, or when the new path holds white space, a parenthesis or an angle bracket; nothing else in a file changes, line ends and byte order mark included. It refuses when `OLD` is no document or `NEW` exists, and while the state has a line it cannot read; what `check` finds in the spec or in the work does not stop it. It carries the state and appends to the history in the same change set, under the lock of the state ([project reference](project-reference.md#move-and-the-state)). It rewrites the links in the documents of the work too, and names those it leaves as they are ([project reference](project-reference.md#move-and-the-state)). It prints `moved OLD -> NEW`, then `changed PATH` for each document it rewrote, a document of the spec by its path below the spec folder and one of the work by its path below the project folder, and `left as it is PATH: REASON` for each document of the work it left.
-- **`apply`** copies the template, with every package it needs, into the spec at `TARGET`, by default the spec's root; the spec folder is created when it does not exist. It prints `copied PATH` for each document and `copied packages/NAME/` for each package. The [library](library.md#apply) gives the rules.
+**`table`** prints a row per document of the type, in path order. A cell holds the first line of the section's text as plain text: markup, list markers, HTML tags and comments are dropped, and links, reference links and images show as their text. A section that starts with code shows its first code line, one that starts with a table its first row, cells separated by ` | `. `|` is escaped, and a cell is empty when the section has no text or the document leaves an optional section out. A row's title is the document's title, or its path. Without a type, `table` prints every document of the spec in path order as `| Document | Type | Title |`: its path, the path of its type, empty without one, and its title.
 
 ### JSON
 
@@ -137,12 +119,9 @@ With `--json`, every command prints one document that starts with `format_versio
 
 | Kind | Fields |
 |---|---|
-| `check` | `documents`, the number of documents of the spec, `work`, the number of documents of the work, and `diagnostics`, a list, empty when nothing is found, of objects with `file`, `line`, `code` and `message` |
-| `show` | `path`, `fingerprint`, `title`, `type`, `type_state` (`none`, `invalid`, `missing` or `ok`), `sections` with `heading`, `links_to` with `path` and `missing`, `linked_from` with `path` and `section`, `documents`, and from the state `verdict`, empty without a row, `conflict` when rows conflict, `artifacts`, `counter_checks`, `evidence` and `reason` |
-| `table` | `type`, `columns`, and `rows` with `path`, `title` and `cells`; without a type, `type` is empty and the columns are `Verdict` and `Artifacts` |
-| `init`, `version`, `status`, `confirm`, `compare` | As the [project reference](project-reference.md) says |
-| `new` | `path` |
+| `check` | `documents`, the number of documents of the spec, and `diagnostics`, a list, empty when nothing is found, of objects with `file`, `line`, `code` and `message` |
+| `show` | `path`, `title`, `type`, `type_state` (`none`, `invalid`, `missing` or `ok`), `sections` with `heading`, `links_to` with `path` and `missing`, `linked_from` with `path` and `section`, and `documents`; an empty `section` and a `missing` that is false are left out |
+| `table` | `type`, `columns`, and `rows` with `path`, `title` and `cells`; without a type, `type` is empty and the one column is `Type` |
+| `version`, `diff` | As the [project reference](project-reference.md) says |
 | `licenses` | `notices` |
-| `move` | `from`, `to`, `changed`, the documents of the spec it rewrote, `work`, the documents of the work it rewrote, and `left`, with `path` and `reason` for each document of the work it left as it is, sorted by path |
-| `apply` | `documents` and `packages` |
 | `topic`, `questions` | As [signals](signals.md#commands) says |

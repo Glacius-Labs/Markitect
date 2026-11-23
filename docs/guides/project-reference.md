@@ -1,258 +1,63 @@
 # Project reference
 
-How the tool `markitect` finds and sets up a project, what lies in `.markitect/`, how it checks the documents of the work, which files of the project it sees, how it hashes them, the state with `status`, `confirm` and `move`, the history, and the comparison of two projects ([DEC-097](../decisions.md#dec-097-markitect-uses-no-git); [where Main is](../roadmap.md#where-main-is)). [The project](../concept/the-project.md) and [the state](../concept/the-state.md) in the concept say what they are for; this page says precisely what the tool does. [The language reference](language-reference.md) gives the commands that read and write the spec. The examples are a small lending library.
+How the tool `markitect` finds a project and its spec, how a project is set up by hand, and the commands `version` and `diff` ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec); [where Main is](../roadmap.md#where-main-is)). [The project](../concept/the-project.md) in the concept says what it is for; this page says precisely what the tool does. [The language reference](language-reference.md) gives the language and the other commands. The examples are a small lending library.
 
 ## The project
 
-A project is a folder that holds `.markitect/version`. Every command but `init`, `version` and `licenses` works in one: the folder `-C PROJECT` names, which must hold `.markitect/version`, or else the nearest folder, from the working directory upward, that holds it. A `.markitect/` folder without a version file, such as `~/.markitect/` in a home folder, is no project and is passed over. Without a project, a command exits 2 and says that `init` makes one. The tool uses no Git to find it, and a folder that holds `.markitect/version` is a project wherever it lies.
+A project is a folder that holds the file `.markitect/spec`. Every command but `version` and `licenses` works in one: the folder `-C PROJECT` names, which must hold that file, or else the nearest folder, from the working directory upward, that holds it. `.markitect/spec` must be a regular file; a `.markitect/` folder without it, such as `~/.markitect/` in a home folder, is no project and is passed over. A folder that holds `.markitect/spec` is a project wherever it lies ([DEC-097](../decisions.md#dec-097-markitect-neither-needs-nor-knows-version-control)).
 
-The tool reads a project through a file system rooted at its folder, the spec and `.markitect/` included, so that two projects, such as two states to compare, load the same way. It names a document by its path below the spec folder and any other file by its path below the project folder, with `/` on every system.
-
-## The .markitect/ folder
-
-| Path | Holds |
-|---|---|
-| `version` | One line: the tool version the project pins, such as `0.35.0`. It is readable without the tool |
-| `spec` | One line: the spec folder, a path below the project folder, by default `docs/spec` |
-| `.gitattributes` | `state.jsonl merge=union` and `history.jsonl merge=union`, so that Git keeps the lines of both sides of a merge |
-| `ignore` | Files the project does not explain, written like a `.gitignore` ([the walk](#the-walk)); empty at `init` |
-| `state.jsonl` | The state: one row per document with its verdict and the hashes it rests on ([below](#the-state)); written by `confirm` and `move`, and absent until the first of them writes it |
-| `history.jsonl` | The history: what changed when, as hashes ([below](#the-history)); appended to by `confirm` and `move`, and absent until the first of them writes it |
-| `context/` | Everything that happened: the reports of the agents, one folder per kind of agent, named like its Agent document in the spec without the prefix of its skill, such as `assistant/`, and one folder `observe-NAME/` for each observer |
-| `findings/pending/`, `findings/ready/`, `findings/closed/` | The findings, one document each; the folder is the state of the finding |
-| `plan/` | The Features and Stories of the plan, as a tree |
-| `briefing/` | The briefings, daily, weekly and per meeting |
-
-The last four are the work, which agents write and the tool checks ([the documents of the work](#the-documents-of-the-work)); [the work](../concept/the-work.md) says what lies in them. `init` lays out each of their folders with an empty `.gitkeep`, so that an empty folder survives a commit. The tool starts no run, writes no report and keeps no other file in `.markitect/`.
-
-`version` and `spec` are read as one line each: a byte order mark, white space and the line end around it are dropped, so a checkout with CRLF reads the same. An empty file, a second line or a missing file stops every command that reads it. The spec folder is a relative path with `/` or `\`; it may not be empty, absolute, the project folder itself, outside it, in `.markitect/` or in a `.git` folder. `.markitect` and `.git` count in any case, as a file system that ignores case reads them, so `.Markitect/spec` is refused too. Nor may it lie outside the project through a symbolic link or a Windows junction: `init` and every command that reads `.markitect/spec` resolve the folder, or the nearest folder above it that exists, and refuse one that lands outside. A spec folder that does not exist stops every command that reads the spec; `init` and `apply` create it.
-
-## init
-
-`markitect init [--spec PATH]` sets up the folder `-C` names, or the working directory, as a project. It lays out:
-
-- `.markitect/` with `version`, the tool's own version, `spec`, by default `docs/spec`, `.gitattributes`, an empty `ignore`, and the folders of the work, `context/`, `findings/pending/`, `findings/ready/`, `findings/closed/`, `plan/` and `briefing/`, each with an empty `.gitkeep`;
-- the spec folder when it is missing, with each of the four templates `project`, `product`, `architecture` and `factory` applied into a folder of its own name, and the packages they need in `packages/`, each copied once, as `apply` copies them ([library](library.md#apply));
-- the skills of the standard, each whole and byte for byte, in `.claude/skills/markitect-NAME/` and in `.agents/skills/markitect-NAME/` ([library](library.md#the-skills-of-the-standard));
-- an entry in `AGENTS.md`.
-
-**The entry in `AGENTS.md`** is a section `## Markitect` that says where the spec lies and that `.markitect/spec` names the folder, that the way of working stands in its `factory` part, where the skills lie, and that a person starts with the skill `markitect-assistant`. A missing `AGENTS.md` is created, with the heading `# Agent instructions` above the entry. An existing one gets the entry appended as a section of its own, in the line ends the file uses, and what stands there stays as it is.
-
-**What it keeps and what it refuses.** It keeps a spec folder that exists with every file in it, and every other skill in `.claude/skills/` and `.agents/skills/`. It writes no `CLAUDE.md`, no other file in `.claude/` or `.agents/` and no line in `.gitignore`, and it commits nothing. It refuses, names every reason and changes nothing when `.markitect/` exists, when the spec folder is a file, when the spec folder holds one of the four folders already, when a skill of the standard exists already in either place, or when `AGENTS.md` is a symbolic link or a folder.
+Without a project, a command exits 2 and says what it looked for:
 
 ```text
-markitect init: .claude/skills/markitect-build: already exists
+markitect check: no folder from C:\work\library upward holds .markitect/spec; that file holds one line, the path of the spec folder below the project folder
 ```
 
-**One change set.** `init` computes every file first and writes them as `new` and `apply` do ([language reference](language-reference.md#commands-that-write)), `.markitect/version` last, since that file makes the folder a project; when a step fails, every step done is undone, so a failed `init` leaves nothing that stops the next.
+With `-C PROJECT`, the message names that folder: `PROJECT holds no .markitect/spec; …`. Where `.markitect/spec` exists but is no regular file, such as a folder, the command exits 2 as well and says so: `FOLDER: .markitect/spec is no file, but a project needs one there; …`.
 
-It prints `created PATH` for each top-level thing it made: `.markitect/`, the spec folder when it is new, each of the four template folders and each package folder it copied, each skill folder in `.claude/skills/` and in `.agents/skills/`, each with a `/` at the end, and `AGENTS.md` when it made the file; the files inside those folders are not listed. For an `AGENTS.md` that existed it prints `appended an entry to AGENTS.md`. With `--json`, it prints `version`, `spec`, `created`, the same list, and `appended`, the files it appended an entry to.
+**The file.** `.markitect/spec` holds one line: the spec folder, a path below the project folder, such as `docs/spec`. A byte order mark, white space and the line end around it are dropped, so a copy with CRLF line ends reads the same. An empty file or a second line stops every command that reads it. The spec folder is a relative path with `/` or `\`; it may not be empty, absolute, the project folder itself, outside it or in `.markitect/`. `.markitect` counts in any case, as a file system that ignores case reads it, so a spec folder `.Markitect/docs` is refused too. Nor may it lie outside the project through a symbolic link or a Windows junction: the tool resolves the folder, or the nearest folder above it that exists, and refuses one that lands outside. A spec folder that does not exist, or that is a file, stops every command that reads the spec.
 
-**Inside another project.** When the folder lies inside a project, `init` lays out the new project all the same and prints one line on standard error, `markitect init: warning: FOLDER lies inside the project at PATH; …`: the commands of the folder find the nearest project, which is the new one. The `--json` document does not change.
+The tool reads nothing else from `.markitect/` and nothing of the project outside the spec folder. It writes no file. It names a document by its path below the spec folder, with `/` on every system.
 
-**What follows.** Right after `init`, `check` prints one `section.empty` for each section the templates leave empty, such as `architecture/README.md:7: section.empty: empty section "Strategy"`: that list is the work still to do ([library](library.md#templates)). `status` does not wait for it. It lists every document of the spec as changed, since none has a row yet, and the skills and `AGENTS.md`, files that no document explains yet, as unexplained, until a confirmation names them as artifacts of the documents they realize or `.markitect/ignore` leaves them out, and it exits 1 ([status](#status)). `confirm` binds from the first moment.
+## Setting up a project by hand
 
-## The documents of the work
+Nothing sets up a project: a person writes `.markitect/spec` and copies the default from Markitect's repository. The packages and templates lie in [`internal/library/`](../../internal/library/) ([library](library.md)). A template's documents link into the packages by relative paths, such as `../../packages/software/architecture.md`, which assume the library's layout, so the copy keeps it: the packages in `packages/` and each template in `templates/NAME/` below the spec folder. A copied template may stay there. To move its documents elsewhere in the spec, adjust their links to the packages by hand: nothing rewrites links, and `check` names every one that is off, as `type.unresolved` or `link.unresolved`.
 
-The documents of the work are the Markdown files below `.markitect/context/`, `.markitect/findings/`, `.markitect/plan/` and `.markitect/briefing/`, at any depth. A file is a document by the rule of the [language reference](language-reference.md#documents). The folders of the work that are missing are no error; a folder whose name starts with a dot, every file that is no document and everything the project's `.gitignore` files exclude, read as [the walk](#the-walk) reads them, are passed over, so that `check` and `compare` do not read it; `.markitect/ignore` does not apply, since it names files that realize nothing; a file that cannot be read stops the command. A project's `.markitect/` holds no other document.
+From an empty folder, with the spec in `docs/spec/` and the template `project`:
 
-They are written in the language and are no part of the spec: a document of the work has no row in the state, `status`, `show` and `table` know none, a link from it into the spec makes nothing suspect, and `confirm` refuses one ([confirm](#confirm)). `check` checks each one and exits 1 when it finds an error; no other command looks at what it finds.
+1. Write `.markitect/spec` with the one line `docs/spec`.
+2. Copy `internal/library/packages/` to `docs/spec/packages/`, and `internal/library/templates/project/` to `docs/spec/templates/project/`. Copy further templates the same way, each to `docs/spec/templates/NAME/`.
+3. Run `markitect check`. In a fresh copy it reports only `section.empty` for the sections the templates leave empty, such as `templates/project/quality/README.md:25: section.empty: empty section "Safety"`, and exits 1: that list is the work still to do.
+4. Fill each listed section. Once none is left, `check` prints `0 errors in N documents` and exits 0.
 
-**What `check` finds.** A document of the work is checked for its title, as a document of the spec is. Its type line, when it has one, must be exactly one link to a document of the spec: the link is relative to the document's own folder, so that from `.markitect/findings/pending/` the type `packages/factory/finding.md` of a spec in `docs/spec/` is `../../../docs/spec/packages/factory/finding.md`. The document then has each section its type requires, and each section it has holds text. A document without a type line is checked for its title and its links only. Each relative destination, of a link to any file, an image, a link reference definition or an HTML `href` or `src`, must lead to an existing file or folder of the project, in the case it is written; a web address or a bare `#section` is not checked, and neither is the type line's link, which is the type.
-
-| Code | Reported when | At line |
-|---|---|---|
-| `title` | As for a document of the spec | As there |
-| `type.line` | As for a document of the spec | As there |
-| `type.unresolved` | The type line's link points to no document of the spec, or leaves the spec folder: `no document at "PATH"`, with the path as written | The type line |
-| `section.missing` | A required section of the type is missing: `missing section "NAME" required by TYPEPATH` | The type line |
-| `section.empty` | A section of the type that the document has holds no text | The document's heading of that section |
-| `link.unresolved` | A relative destination leads to no file or folder of the project: `no file at "PATH"`, with the path as written. A target is reported once, at its first link | The link's first line |
-
-A document of the work is named by its path below the project folder, with `/`: with `--json`, `file` holds that path, and the number of such documents is `work`.
-
-```text
-.markitect/findings/pending/late-fee.md:3: section.missing: missing section "Context" required by packages/factory/finding.md
-.markitect/findings/pending/late-fee.md:18: link.unresolved: no file at "../../context/observe-desk/2026-11-23-0915.md"
-2 errors in 35 documents, 1 document of the work
-```
-
-`move` rewrites their links to a moved document ([move and the state](#move-and-the-state)). `compare` names the documents of the work that are new, gone or changed ([compare](#compare)).
+The spec owns its copy: a project may change its packages and templates like any of its documents.
 
 ## version
 
-`markitect version` prints the tool's build: its version, with the source revision when the build knows it, `markitect 0.35.0-dev+COMMIT`; a release names the commit it was built from. It needs no project. In the project `-C` names, or the nearest one upward, it adds the version the project pins, `the project pins 0.35.0-dev`, or `the project pins 0.34.0, not this version` and exits 1 when the two differ. The launcher of the plugin fetches the plugin's own version and never reads the pin, so `version` is where a mismatch shows ([the plugin](plugin.md#the-launcher), [DEC-153](../decisions.md#dec-153-markitect-holds-the-work-init-lays-out-templates-and-skills-and-the-plugin-fetches-its-own-version)). Outside a project it prints the build alone and exits 0. With `--json`, it prints `version`, `build`, `pinned`, empty outside a project, and `matches`.
+`markitect version` prints the tool's build: its version, with the source revision when the build knows it, `markitect 0.35.0-dev+COMMIT`; a release names the commit it was built from. It needs no project and always exits 0. With `--json`, it prints `version` and `build`.
 
-## The walk
+## diff
 
-The walk lists every file of the project by its path below the project folder, sorted. It reads the folder itself and uses no Git. It leaves out:
-
-- every entry named `.git`, file or folder, at any depth and in any case, and `.markitect/` at the top, spelled exactly so;
-- what the project's `.gitignore` files exclude, each read in its own folder, as Git reads them;
-- what `.markitect/ignore` excludes, read like a `.gitignore` file at the top of the project.
-
-The `.gitignore` files and `.markitect/ignore` are judged apart, and a file either excludes is left out. So a `!` line in one brings back nothing the other excludes: `!notes.md` in `.markitect/ignore` does not list a `notes.md` that `.gitignore` excludes.
-
-**The patterns.** They follow [Git's gitignore rules](https://git-scm.com/docs/gitignore) and are matched as Git's wildmatch matches them, byte by byte:
-
-| Pattern | Means |
-|---|---|
-| A blank line, or one starting with `#` | Nothing; `\#` starts a pattern with `#` |
-| Trailing spaces | Dropped, unless a backslash keeps one: `name\ ` |
-| `!pattern` | Brings back what an earlier pattern excluded, unless a folder above it is excluded; `\!` starts a pattern with `!` |
-| `name/` | Only a folder |
-| `name` | A file or folder of that name at any depth below the ignore file's folder |
-| `/name`, `docs/name` | With a `/` at the start or in the middle: the path below the ignore file's folder |
-| `*`, `?` | Any bytes but `/`, one byte but `/`; so `?` does not match `é`, which is two bytes in UTF-8 |
-| `[a-z]`, `[!a]`, `[^a]`, `[]a]` | One of a range, one not in the set, the same with `^`, and `]` as the first member of a set |
-| `[[:digit:]]` | One character of a POSIX class: `alnum`, `alpha`, `blank`, `cntrl`, `digit`, `graph`, `lower`, `print`, `punct`, `space`, `upper` or `xdigit`, over ASCII. An unknown class or an unclosed `[` matches nothing |
-| `**/name`, `a/**/b`, `name/**` | Any number of folders, none included; `name/**` holds what is inside `name`, not `name` itself. More stars, `***`, count as two |
-| `\x` | The character `x` itself; `name\\ ` ends in a backslash, and its trailing space is dropped |
-
-The last pattern that matches decides, and a `.gitignore` file in a deeper folder wins over one above it. A byte order mark at the start and CR at line ends are dropped. A missing `.gitignore` is none, and so is a folder or a symbolic link of that name, which Git does not follow; any other file that cannot be read stops the walk.
-
-**Case.** Patterns match a name's case exactly, on every system, so that a Windows and a Linux checkout list the same files. Git on Windows and macOS ignores case by default (`core.ignorecase`), so a pattern there may match a name in another case, which the walk does not: write each pattern in the case of the name it means.
-
-**Other entries.**
-
-- **Another repository.** A folder that is a valid repository or worktree of its own, as Git decides, is one entry and is not walked; it reads as the fixed line `a repository of its own`. Valid means that its `.git` is a folder with `objects/`, `refs/` and a `HEAD` that holds `ref: refs/…` or a full object hash, or with such a `HEAD` and a `commondir` file naming a folder with `objects/` and `refs/`, as a worktree's has; or that its `.git` is a file whose `gitdir:` line names such a folder, relative to the folder or absolute. Any other `.git` is left out and the folder is walked, so a fake repository never hides files.
-- **A symbolic link** is one entry, read as the path it points to, as Git stores it, and is not followed; a pattern for folders does not match it.
-- **A Windows junction** is walked like the folder it leads to, and its files are listed below the junction's path. A junction that leads back to a folder the walk is already in is dropped entirely, and so is one that leads nowhere.
-- **Other kinds of file,** such as FIFOs, sockets and devices, are left out, as Git leaves them out, so that reading the project never blocks. The walk lists only regular files, symbolic links, folders and junctions to folders.
-
-**The limits.** Without Git, the walk cannot know what is committed: a file that is committed although a `.gitignore` excludes it is not walked, while Git keeps tracking it. The walk reads only the `.gitignore` files inside the project folder: in a project below the top of a repository, the files above it do not count, though Git applies them. Global Git settings and `.git/info/exclude` are not read.
-
-## Hashing
-
-A file's hash is its SHA-256, written `sha256:` and 64 hexadecimal digits. A file is text, as Git decides, unless a NUL byte stands in its first 8000 bytes. A text file, in any encoding, Latin-1 included, is hashed with each CRLF as LF, so a checkout on Windows and one on Linux of the same commit agree; a lone CR stays. Any other file is hashed as it is, so the CRLF in an image is kept.
-
-## The state
-
-`.markitect/state.jsonl` maps each document to its artifacts and verdict ([DEC-124](../decisions.md#dec-124-a-state-maps-each-document-to-its-artifacts-and-status-is-the-plan)). It holds one JSON object per line, one line per document, sorted by `doc`, with the fields in this order:
-
-```json
-{"doc":"lending/loan-limit.md","verdict":"ok","source":"confirm","inputs":{"check:tests/loans_test.go":"sha256:…","evidence:tests/loans_test.go":"sha256:…","file:src/loans.go":"sha256:…","link:lending/borrow.md":"sha256:…","self":"sha256:…","type:packages/core/rule.md":"sha256:…"},"evidence":["tests/loans_test.go:5"],"reason":""}
-```
-
-| Field | Holds |
-|---|---|
-| `doc` | The document, by its path below the spec folder |
-| `verdict` | `ok`, `fail` or `skip` |
-| `source` | What wrote the row last: `confirm`, or `move` for a row a move carried |
-| `inputs` | The hash of each input at the confirmation, by key, sorted |
-| `evidence` | The evidence as the reviewer gave it: `path`, `path:line`, `path:line-line` or `path:line:col` |
-| `reason` | Why, for a `fail` or a `skip`; one line |
-
-| Input | Is |
-|---|---|
-| `self` | The document's own text |
-| `type:PATH` | Its type, by its path below the spec folder |
-| `link:PATH` | Each document it links to and each document that links to it, not itself; the type line is no link |
-| `asset:PATH` | Each file of the spec folder that is no document and that it links or shows, such as a diagram, by its path below the spec folder |
-| `file:PATH` | An artifact the reviewer named, by its path below the project folder |
-| `check:PATH` | A counter-check the reviewer named |
-| `evidence:PATH` | A file of the evidence |
-
-Every hash is a file's hash as [hashing](#hashing) computes it, so a row written on one system holds on the other.
-
-**Reading it.** Lines may stand in any order and twice, as a union merge of two branches leaves them, and a blank line, a byte order mark and CR at line ends count for nothing. A field the tool does not know is ignored. A line that is not a row is reported as `.markitect/state.jsonl:LINE: state.unreadable: MESSAGE`: one that is no JSON object, whose `doc` is no clean path below the spec folder, whose verdict or source is unknown, that has no `self`, or that has an input of an unknown kind, a path that is not clean or a value that is no `sha256:` hash. `status` names each such line first as a note, `note: .markitect/state.jsonl:LINE: state.unreadable: MESSAGE, left out`, and lists without it, so that the document it belonged to may show as having no row; `show` and `table` leave it out. `confirm` and `move` refuse while one is there, since they write the state again and would lose it.
-
-**Which row counts.** Of several rows for one document, the tool takes the row whose inputs all match the project as it is: each input has its current hash, and the document has no `type:` or `link:` input the row lacks. Two such rows with different verdicts are a conflict. When none matches, it takes the closest, the row with the most inputs that match, to say what changed. A file a row names that the walk does not list, deleted or now ignored, matches nothing.
-
-## status
-
-`markitect status [PATH]...` is the plan: what moved since the last confirmation, from the folder and the state. It only shows and changes nothing, and it lists whatever [`check`](language-reference.md#what-check-reports) finds in the spec or in the work: a document with an empty section, a dead link or a type that resolves to nothing is a document like any other. It is stopped only by a project or a state file that cannot be read; a line of the state that cannot be read is named and left out ([below](#the-state)). It lists:
-
-| Entry | When |
-|---|---|
-| **changed** | The document has no row; its own text changed; a file of the spec folder it links changed, is new or is gone; an artifact, a counter-check or a file of its evidence changed or is gone; its verdict is `fail`, which stays on the list with its reason; rows of it conflict; or it is gone from the spec and still has a row |
-| **suspect** | Only its type or the documents it links to or that link to it changed, or the set of those documents changed |
-| **unexplained** | A file of the [walk](#the-walk) that is no document, that no `file:` or `check:` input names in the row taken for a document of the spec, and that no document links. Only `.md` files are documents: a script in the spec folder is unexplained until a document links it or it is ignored. Evidence alone maps no file, and the files of a gone document's row are unexplained |
-
-```text
-changed: lending/loan-limit.md@fb5475bd: self
-  look at: docs/spec/lending/loan-limit.md, src/loans.go, tests/loans_test.go, tests/loans_test.go:5
-suspect: lending/borrow.md@a2f57542: link:lending/loan-limit.md
-  look at: docs/spec/lending/borrow.md, src/loans.go, tests/loans_test.go, tests/loans_test.go:5
-unexplained: src/fines.go
-note: roles/member.md: skip: no members at the kiosk
-1 changed, 1 suspect, 1 unexplained
-```
-
-Each entry reads `DOCUMENT@FINGERPRINT: CHANGES`, in path order. A change is `no row`, `gone`, `self`, an input such as `file:src/loans.go`, with ` (gone)` for a file that is gone, ` (new)` for a type, a link or a linked file of the spec folder the row lacks and ` (dropped)` for one the document no longer has, `fail: REASON`, or `conflict: fail, ok`. `look at:` names the document's file, below the project folder, the artifacts and counter-checks of the row taken, and its evidence. A `skip` at the document's current state is a note, not an entry. `status` exits 0 when it lists nothing and 1 otherwise; notes never change that. With `--json` it prints `changed` and `suspect`, each with `doc`, `fingerprint`, `changes` and `look_at`, `unexplained`, `notes`, with `doc`, `verdict` and `reason`, `state`, the unreadable lines of the state, and `history`, the unreadable lines of the history ([below](#the-history)).
-
-**Paths.** Each `PATH` restricts the list to what it names: a document or a folder of the spec, by its path below the spec folder, a document with or without `.md`, such as `lending`, which names every document below it; or a file or a folder of the project, by its path below the project folder, such as `docs/spec/lending` or `src`, which names the unexplained files in it. A name that is both a folder of the spec and a path of the project shows both. An entry or a note is shown when it is a named document or file, or lies in a named folder, and the summary counts what is shown. A path that names none of these exits 2, `markitect status: unknown path: PATH`.
-
-**The fingerprint** of every document, changed, suspect or unlisted, is the first 8 hexadecimal digits of the SHA-256 of what a verdict on it will rest on, without the evidence, which the reviewer chooses after reading: its `self`, `type:`, `link:` and `asset:` inputs, the current hashes of the artifacts and counter-checks of the row taken, and the digest of every file of the walk but the documents, by path and hash, the files of the spec folder that are no documents included. A `confirm` changes only `.markitect/`, so confirmations made from one `status` never invalidate one another. Any edit of a project file after `status`, by a builder working beside the reviewer or a test run writing a file, changes every fingerprint, and the files named with `--file` or `--check` are covered in every case. The cost is that `status` hashes every file of the walk. `show` prints the fingerprint of any document, listed or not, so that a confirmed document can be confirmed again: an `ok` turned into a `fail`, or an unexplained file mapped to it.
-
-## confirm
-
-`markitect confirm DOCUMENT@FINGERPRINT VERDICT [--file PATH]... [--check PATH]... [-e EVIDENCE]... [-m REASON]` binds a verdict to the state `status` showed:
-
-```text
-markitect confirm lending/loan-limit.md@fb5475bd ok --file src/loans.go --check tests/loans_test.go -e "tests/loans_test.go:5 (TestBorrow)"
-markitect confirm lending/borrow.md@a2f57542 fail --file src/loans.go -m "the limit is still five"
-```
-
-- **The verdict.** `ok` needs at least one piece of evidence; `fail` and `skip` need a reason with `-m`, kept on one line. A document gone from the spec takes only `ok`, without artifacts, counter-checks or evidence, which removes its row.
-- **The paths** are below the project folder, with `/` or `\`. `--file` names an artifact, `--check` a counter-check; each must be a file of the walk outside the spec folder, and one file cannot be both; a file of the spec folder counts through the documents that link it. `--file` names the files that realize the document, all of them, and `--check` its counter-checks, all of them: the lists replace those of the earlier row, and a confirm that names none leaves the row with none. Evidence is `path`, `path:line`, `path:line-line` or `path:line:col`, and a trailing `(note)`, such as a test name, is dropped; its file must be a file of the walk, so it never lies in `.markitect/`, and its hash becomes an input.
-- **The documents of the work** are not bound: `confirm` refuses a path below `.markitect/`, since a document of the work has no row ([the documents of the work](#the-documents-of-the-work)).
-- **The row** holds the document's `self`, `type:` and `link:` inputs, the named files and the evidence, each at its current hash, with `source` `confirm`.
-
-It computes the fingerprint as `status` does and refuses, writes nothing and exits 1 when it differs: a file of the project was created, edited or removed since `status`, such as by a builder working beside the reviewer or by a test run. It also exits 1 when the state has a line it cannot read or when a path is bad, naming every reason. It exits 2 for a document that is in neither the spec nor the state, or that is a document of the work, as `show` and `status` do for an unknown document. What `check` finds in the spec or in the work stops it no more than it stops `status`. It exits 2 when the command is malformed: a document without `@FINGERPRINT`, an unknown verdict, an `ok` without evidence or a `fail` or `skip` without a reason.
-
-It writes under a lock: a file in `markitect/locks/` of the user's cache folder, named after the project folder's real path, so that a symbolic link, a junction, a short name or a substituted drive lead to the same lock. It holds the process's ID and a random token. A lock is stale once its process is gone or it is older than an hour, since a process ID may be reused; it is moved aside in one rename, which only one of several takers can make, and a lock moved aside by mistake is put back. A command that finds the lock held waits up to a minute for it. `confirm` checks that the lock is still its own before it writes, and removes no lock that is not. The lock lives on one system: Windows and WSL working on one checkout have different cache folders and do not share it. Under it, `confirm` reads the folder and the state afresh and replaces the state file in one step, so parallel reviewers lose no row. The file it writes holds one row per document, the row `status` takes, except the rows of a conflict, which stay until a confirmation of that document settles it; a verdict rewrites only the row of its own document. It prints `confirmed DOCUMENT VERDICT`, then `files that realize it, all of them: FILES` and `counter-checks, all of them: CHECKS`, each `(none)` when empty, or `removed the row of DOCUMENT, which is gone`; with `--json`, `doc`, `verdict`, `removed`, `files` and `checks`.
-
-## move and the state
-
-`markitect move OLD NEW` ([language reference](language-reference.md#commands-that-write)) carries the state with the document, so that a move leaves `status` as it was. It takes the lock of the state ([confirm](#confirm)), refuses while the state has a line it cannot read, and writes the moved and rewritten documents of the spec, the state and the history in one change set: when a step fails, every step done is undone, the state and the history included.
-
-- The moved document's rows take the new path, and every `type:` and `link:` input that names it names the new path.
-- For each document whose text `move` rewrote, the moved one included: a `self` that matched its text before the move takes the hash of its new text, and so does a `type:` or `link:` input of another row that matched it. One that did not match stays, so a document that was changed or suspect before the move is so after it.
-- Every row the move touched has `source` `move`.
-- It appends a `move` event to the history.
-
-The other inputs stay: an artifact, a counter-check or a file of the spec folder that a document links keeps its path, and the moved document's rewritten links reach the same file. The documents of the work have no row, so they carry no state.
-
-**The work.** `move` also rewrites, in the documents of the work, every link to the moved document that `check` verifies there: links, type lines, images, `<a href>` and `src` values, reference definitions, and the forms of a destination, with a query or an anchor, with `./` and `../`, in `<…>`, encoded or with spaces. It rewrites them mechanically, as in the spec, so that each still reaches the same file, and keeps every other byte. A document of the work that cannot be read, rewritten or written never stops the move: it is left as it is and named, `left as it is PATH: REASON`, sorted by path, with `cannot be written: …` for one it could not write, and for one it could not read that it was not searched for links to the moved document. Only the spec's own documents, the state and the history stay all or nothing. The move records no document of the work in the history.
-
-## The history
-
-`.markitect/history.jsonl` records, as hashes, what changed when: one JSON event per line, only ever appended to, and joined with `merge=union` like the state. Only `confirm` and `move` write it. Each event has `time`, in UTC and RFC 3339, and `type`:
-
-| Type | Fields | Written |
-|---|---|---|
-| `verdict` | `doc`, `verdict`, `self`, the hash of the document's text, absent for a document that is gone, `inputs`, the hash over the inputs of the row it binds without the evidence, absent for a document that is gone, and `changed`: every other document `status` lists as changed at that moment, each with `doc` and its `self`, the whole list | By `confirm`, in one change set with the state, under the lock |
-| `move` | `from`, `to`, `rewritten`, the documents whose links `move` rewrote, by their paths after the move | By `move`, in the change set of the move |
-
-```text
-{"time":"2026-11-23T01:24:39.0337769Z","type":"verdict","doc":"lending/loan-limit.md","verdict":"ok","self":"sha256:…","inputs":"sha256:…","changed":[{"doc":"lending/borrow.md","self":"sha256:…"},{"doc":"roles/member.md","self":"sha256:…"}]}
-{"time":"2026-11-23T01:29:19.690022Z","type":"move","from":"lending/borrow.md","to":"loans/borrow.md","rewritten":["lending/loan-limit.md"]}
-```
-
-`inputs` is the SHA-256 of one line `KEY HASH` per input of the row, sorted, without the `evidence:` inputs, so that a later verdict on the same document at the same inputs can be told apart: a spot check that differs from it is a contradiction.
-
-`confirm` writes the state and the history together, all or nothing: when the history cannot be written, the state is not written either, and `confirm` exits 2.
-
-**Reading it.** Events are read in time order, the file's order among equal times; the time is the writing machine's clock. The change signals read the history in this order, so a machine whose clock is wrong can reorder events and shift what they show. A line that both sides of a merge hold is read once, a type the tool does not know is skipped, so new types need no format version, and a line that is not an event, without a time in RFC 3339 or a type, or a known event without its fields, is reported as `.markitect/history.jsonl:LINE: history.unreadable: MESSAGE` and skipped, without failing. `status` prints each such line as a note, `note: .markitect/history.jsonl:LINE: …`, which does not change its exit code, and with `--json` lists them in `history`; `topic` shows them at the head of the change signals ([signals](signals.md#the-change-signals)).
-
-## compare
-
-`markitect compare OLD [NEW]` compares two projects, each a folder that holds `.markitect/version` and its spec ([DEC-131](../decisions.md#dec-131-the-tool-shows-claude-explains)). NEW is by default the project the command works in. The tool uses no Git: whoever compares lays out OLD, as a Git worktree or an export of a commit, preferably outside the project, or in a folder the project ignores, since NEW's walk would otherwise list its files as unexplained. `compare` carries what changed since a reader last looked, the preview of an idea, its branch against the main branch, and the development of the project. It reads both projects as `status` does, with the documents of their work, and changes nothing. It names, each list sorted by path:
+`markitect diff OLD [NEW]` compares the specs of two projects, each a folder that holds `.markitect/spec` ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)). NEW is by default the project the command works in. OLD is any folder that holds `.markitect/spec`, however its owner made it, such as a copy of an older state of the project ([DEC-097](../decisions.md#dec-097-markitect-neither-needs-nor-knows-version-control)). A change to a spec is otherwise seen through the repository's ordinary diff, like every change; `diff` shows it document by document, by the paths below each spec folder. It reads both specs and changes nothing. It names, each list sorted by path:
 
 | Section | Lists |
 |---|---|
-| **New** | The documents of NEW that OLD does not have and that no move brought |
-| **Gone** | The documents of OLD that NEW does not have and that no move took away |
-| **Moved** | The documents NEW's history moved from a path of OLD to a path of NEW, following the moves in their order, each applied to the document that held its path at that moment, so that a name vacated and taken by another document leads each to its own place: `(links rewritten only)` when their text is what the moves alone make of it, and otherwise with the diff of their text |
-| **Rewritten** | The documents at the same path whose text differs only by the links NEW's moves rewrote: `(links rewritten only)` |
-| **Changed** | The documents at the same path whose text differs, with a unified diff of the old and the new text, three lines of context, CRLF read as LF. A last line without a line end is followed by `\ No newline at end of file`, so a change of only the last line end shows. Where both texts differ in so many lines that the differing middle holds more than four million pairs of lines, the diff is one hunk that removes all of that middle and adds the new one |
-| **Suspect** | The documents whose own text is the same while a document they link to, one that links to them, or their type, in either project, is new, gone, changed, or moved with a change of its own, or while a file of the spec folder they link changed: `link:PATH`, `type:PATH` or `asset:PATH` |
-| **Verdicts** | The documents of NEW whose verdict or artifacts, in the row `status` takes, differ from OLD's, a moved document against its row at the old path: `ok -> fail; artifacts src/returns.go -> src/returns.go`, with `(no row)` and `(none)` |
-| **Unexplained** | The files unexplained in NEW that were not unexplained in OLD |
-| **Work** | The documents of the work, by their path below the project folder, that are new, gone or changed, without a diff: `new: PATH`, `gone: PATH` or `changed: PATH`. A document of the work that moved to another folder, such as a finding that went from `pending/` to `ready/`, is one gone and one new |
+| **New** | The documents of NEW that OLD does not have |
+| **Gone** | The documents of OLD that NEW does not have |
+| **Changed** | The documents at the same path whose text differs, line ends and a byte order mark apart, with a unified diff of the old and the new text, three lines of context, its headers the document's file below each project folder. Where both texts differ in so many lines that the differing middle holds more than four million pairs of lines, the diff is one hunk that removes all of that middle and adds the new one |
+
+A document that moved is one gone and one new. Each section shows `(none)` when empty.
 
 ```text
+# Difference
+
+## New (1)
+
+lending/renew-a-loan.md
+
+## Gone (0)
+
+(none)
+
 ## Changed (1)
 
 lending/loan-limit.md
@@ -266,4 +71,4 @@ lending/loan-limit.md
 +A loan is open until the book is returned.
 ```
 
-**Mechanical rewrites.** `compare` replays on OLD's documents, as `move` computes them, the moves among the events of NEW's history that OLD's history lacks, so that a document moved back to an earlier path shows as moved. A document whose text in NEW is what the replay makes of it is moved or rewritten, not changed, and makes no neighbour suspect, as `status` lists none of them. One whose text also changed otherwise is changed, with its diff, and makes its neighbours suspect. A move made without `move` leaves no event, and shows as a document gone and one new. A line of either project's state or history that `compare` cannot read is left out and printed first as a note, `note: old: .markitect/state.jsonl:LINE: …, left out`; with `--json`, `notes` holds them with `side`. Each section shows `(none)` when empty. `compare` exits 0 when nothing differs and 1 otherwise; notes do not change that. With `--json` it prints `new`, `gone`, `moved` with `from`, `to`, `diff` and `mechanical`, `rewritten`, `changed` with `doc` and `diff`, `suspect` with `doc` and `because`, `verdicts` with `doc`, `old_verdict`, `new_verdict`, `old_artifacts` and `new_artifacts`, `unexplained`, `work` with `path` and `change`, and `notes`.
+`diff` exits 0 when nothing differs, 1 when anything does, and 2 when OLD or NEW is no folder or holds no `.markitect/spec`, or a spec cannot be read. With `--json`, its `kind` is `diff`, and it prints `new`, `gone` and `changed`, each changed document with `doc` and `diff`.

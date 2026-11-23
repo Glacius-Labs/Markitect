@@ -1,6 +1,6 @@
 # Foundations
 
-This page says what Markitect builds on. For each of its solutions it names what is taken, the source it comes from and where Markitect departs from it on purpose. The [vision](vision.md) says why Markitect exists, the [concept](concept/README.md) describes the product, and the [decisions](decisions.md) record what holds. Where a solution only borrows an image, such as Terraform or the compiler, the page calls it an analogy: the idea helps to explain, and no method is taken over. Every source the page names is listed, with a reference a reader can check, at the [end of the page](#sources). The page uses Markitect's own words, such as document, type, package, state and finding; the [concept](concept/what-markitect-is.md#words) defines them.
+This page says what Markitect builds on. For each of its solutions it names what is taken, the source it comes from and where Markitect departs from it on purpose. The [vision](vision.md) says why Markitect exists, the [concept](concept/README.md) describes the product, and the [decisions](decisions.md) record what holds. Where a solution only borrows an image, such as Terraform or the compiler, the page calls it an analogy: the idea helps to explain, and no method is taken over. Every source the page names is listed, with a reference a reader can check, at the [end of the page](#sources). The page uses Markitect's own words, such as document, type, package and template; the [concept](concept/what-markitect-is.md#words) defines them.
 
 ## At a glance
 
@@ -14,17 +14,14 @@ This page says what Markitect builds on. For each of its solutions it names what
 | [Behaviour as contracts](#behaviour-as-contracts) | Meyer's Design by Contract |
 | [Quality](#quality) | ISO/IEC 25010; the quality attribute scenario |
 | [Architecture](#architecture) | arc42; Views and Beyond; architecture decision records; ISO/IEC/IEEE 42010 |
-| [The state and `status`](#the-state-and-status) | Requirements traceability with suspect links; Go's test cache; Terraform's state, plan and drift, as an analogy |
-| [Verification](#verification) | The V-model and its traceability; independent verification; testing laboratories and checklists, as analogies |
-| [Findings and the circle](#findings-and-the-circle) | Nonconformity and corrective action in ISO 9001 |
-| [The way of working in the spec](#the-way-of-working-in-the-spec) | Conway's law; Terraform's command line and modules, as an analogy |
+| [The default and the tool](#the-default-and-the-tool) | Terraform's command line and modules, as an analogy |
 | [The tool's conventions](#the-tools-conventions) | The output of compilers and linters |
 
 [Related practice](#related-practice) says how Markitect differs from spec-driven development, and [weighed and not taken](#weighed-and-not-taken) what was considered and left out.
 
 ## The spec in the repository
 
-**Taken.** Documentation is written, versioned and reviewed with the tools of code, beside the code: Markdown in the repository, changed by pull request (Write the Docs). The spec states the project as it should be now, as if it came from an ideal process, and leaves the way there to Git, as Parnas and Clements (1986) advise for design documents. The same rule holds for Markitect's own pages ([DEC-071](decisions.md#dec-071-main-holds-only-the-current-state)).
+**Taken.** Documentation is written, versioned and reviewed with the tools of code, beside the code: Markdown in the repository, changed by pull request (Write the Docs). The spec states the project as it should be now, as if it came from an ideal process, and leaves the way there to the repository's history, as Parnas and Clements (1986) advise for design documents. The same rule holds for Markitect's own pages ([DEC-071](decisions.md#dec-071-main-holds-only-the-current-state)).
 
 **Differs.** In docs as code, documentation sits beside the code and follows it. The spec has authority over the code: where they differ, the code is wrong ([DEC-122](decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)).
 
@@ -53,7 +50,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 **Differs.**
 
 - The properties are judged by readers, guided by signals with no fixed thresholds. Each number stands beside the reference value of its type and the rest of the project.
-- A hotspot weighs how often a document changed by how many documents link to it, not by its complexity. Changes come from Markitect's own history of confirmations, not from Git.
+- A hotspot weighs how often a document changed by how many documents link to it, not by its complexity. The tool computes no signal of the changes: an agent reads them from the repository's history.
 - Correctness, whether the spec says what is meant, is not among the properties a reader checks: only use shows it.
 
 ## Purpose, world and system
@@ -82,65 +79,27 @@ This page says what Markitect builds on. For each of its solutions it names what
 **Taken.**
 
 - **arc42** (Starke and Hruschka): what its sections on cross-cutting concepts, building blocks, deployment and decisions describe is stated in the `architecture` part of the spec.
-- **Views and Beyond** (Clements and others 2010): the state is the implementation allocation, which files realize which document.
 - **Architecture decision records** (Nygard 2011; MADR): a decision is one choice with its reason and the alternatives it rejected.
 
 **Differs.**
 
-- A decision has no status: the spec holds what is decided now, and Git keeps what was superseded. It may say what would reopen it.
+- A decision has no status: the spec holds what is decided now, and the repository's history keeps what was superseded. It may say what would reopen it.
 - Views are not declared. ISO/IEC/IEEE 42010:2022 and Views and Beyond describe an architecture through views written for their readers; Markitect generates every view from the spec, so each fact is stated once ([DEC-131](decisions.md#dec-131-the-tool-shows-claude-explains)).
 - arc42's risks and technical debt have no place: they describe the work, not the system as it should be.
 
-## The state and `status`
+## The default and the tool
 
-**Taken.**
+**Analogy.** Terraform runs the same command line everywhere and copies modules from a registry into the configuration, which then owns them. Markitect's tool and the packages and templates of its default are cut the same way, except that a person copies them by hand ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
 
-- **Requirements traceability** (Gotel and Finkelstein 1994): follow a requirement forwards to what realizes it and backwards to where it came from. Safety and automotive standards require it: DO-178C between requirements, code and tests in both directions (Jacklin 2012), and Automotive SPICE bidirectional traceability across its system and software processes (VDA QMC 2023).
-- **Suspect links** (IBM DOORS Next): a change to either end of a link makes it suspect until someone confirms it. A change makes the documents linked to it in both directions suspect, and a reviewer's verdict clears them ([DEC-124](decisions.md#dec-124-a-state-maps-each-document-to-its-artifacts-and-status-is-the-plan)).
-- **Go's test cache** (Go documentation): a result is kept with the inputs it depended on and reused while they are unchanged. The state keeps each verdict with the hashes of what it rests on.
-
-**Analogy.** Terraform keeps a state of what exists beside its configuration and shows in a plan what would change, drift included. One then changes the configuration to keep a drifted resource, or applies it to revert the drift, and `import` adopts a resource Terraform does not manage yet. Loosely, the spec is the configuration, the state maps artifacts to documents, `status` is the plan, and a change past the spec shows in `status` and becomes a finding ([DEC-146](decisions.md#dec-146-a-spec-change-lands-with-its-realization-and-status-only-shows)).
-
-**Differs.**
-
-- The trace is plain text in the repository, and there is no database to keep in step. Nothing of it stands in an artifact or in the spec.
-- Suspect entries are computed from content hashes, one step of links deep. A person does not clear them: a reviewer agent does, with evidence.
-- Every file is mapped to a document or ignored, the code end of a trace in both directions: any other file is unexplained.
-
-## Verification
-
-**Taken.**
-
-- **The V-model:** what is wanted is stated before the code and traced in both directions, and each level on the left side is paired with a level of verification on the right. Counter-checks take that pairing over: a counter-checker derives tests, or questions with expected answers, from the spec alone ([DEC-125](decisions.md#dec-125-trust-is-measured-not-granted)). Where a rule names modules, they are architecture tests in a tool such as ArchUnit.
-- **Independent verification:** the one who builds does not judge the result.
-
-**Differs.** No person approves anything: trust comes only from facts that can turn out negative without anyone reading. The tests a builder writes are realizations; counter-checks are not, and the builder may not change them.
-
-**Analogy.** A testing laboratory is trusted because testing is apart from making and control samples with a known result run along. Control samples plant known errors, and the reviewer's hit rate measures the check.
-
-**Analogy.** A surgical safety checklist lowers complications because a team that knows every step can still skip one (Haynes and others 2009). `status` is such a list, computed from the spec and the state instead of an agent's memory.
-
-## Findings and the circle
-
-**Taken.** ISO 9001:2015, clause 10.2, handles a nonconformity in a loop: react to it, find its cause, take a corrective action, and review whether the action worked. What anyone notices lands as a report; triage makes it a finding and files it; a plan item answers it; and a finding that recurs is bundled into a new finding one level higher, where the cause may lie ([DEC-151](decisions.md#dec-151-reports-findings-and-plan-items-hold-the-work-and-every-story-names-the-places-its-files-realize)).
-
-**Differs.** There are no approvals. People decide what is new in conversation, and what follows from what was decided is recorded without a question and shown in the briefing ([DEC-145](decisions.md#dec-145-triage-has-three-exits-and-what-follows-from-what-was-decided-is-recorded-without-a-question)).
-
-## The way of working in the spec
-
-**Taken.** Conway's law (Conway 1968): a system's structure mirrors the communication structure of the organization that builds it. Areas of planning usually follow the architecture, since both divide what is as independent as possible.
-
-**Differs.** Areas need not follow the architecture: one may plan differently from how the system is built. And the way of working is no process document beside the project: it stands in the spec, and the skills that realize it are artifacts, confirmed against it like code ([DEC-147](decisions.md#dec-147-the-way-of-working-stands-in-the-spec-and-skills-realize-it)).
-
-**Analogy.** Terraform runs the same command line everywhere, with a version the project fixes, and copies modules from a registry into the configuration. Markitect's tool, its templates and the skills of its standard are cut the same way ([DEC-148](decisions.md#dec-148-markitect-is-a-tool-a-spec-with-templates-and-skills)).
+**Differs.** The way of working is no process document beside the project and no part of the default: the project states it in its own spec, with general types, and its skills, agents and scripts realize it.
 
 ## The tool's conventions
 
-**Taken.** A diagnostic reads `file:line: code: message`, as compilers and linters print it; exit code 0 means all is well, 1 that something was found and 2 that the command could not run; and `--json` prints one document for scripts. Commands are named after what they do ([DEC-142](decisions.md#dec-142-the-tool-computes-and-checks-a-runner-acts)).
+**Taken.** A diagnostic reads `file:line: code: message`, as compilers and linters print it; exit code 0 means all is well, 1 that something was found and 2 that the command could not run; and `--json` prints one document for scripts. Commands are named after what they do ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
 
 ## Related practice
 
-**Spec-driven development**, as GitHub Spec Kit and Kiro practise it, writes a spec for each feature or fix, plans and implements it, and keeps standing project knowledge apart: Spec Kit's constitution, Kiro's steering files. Markitect keeps one standing spec of the whole project: a change is a change to that spec, which stays current after the change is built. What both share is that the agent works from a written statement of what is wanted rather than a prompt. Unlike spec-driven development, Markitect also proves what was verified against the spec: the state binds each verdict to what it rests on.
+**Spec-driven development**, as GitHub Spec Kit and Kiro practise it, writes a spec for each feature or fix, plans and implements it, and keeps standing project knowledge apart: Spec Kit's constitution, Kiro's steering files. Markitect keeps one standing spec of the whole project: a change is a change to that spec, which stays current after the change is built. What both share is that the agent works from a written statement of what is wanted rather than a prompt.
 
 ## Weighed and not taken
 
@@ -156,24 +115,18 @@ Each source is named as in the text above. ISO standards are cited by their numb
 
 **Standards**
 
-- ISO 9001:2015, *Quality management systems — Requirements*. Clause 10.2: nonconformity and corrective action.
 - ISO/IEC 25010:2023, *Systems and software engineering — Systems and software Quality Requirements and Evaluation (SQuaRE) — Product quality model*. <https://www.iso.org/standard/78176.html>
 - ISO/IEC/IEEE 29148:2018, *Systems and software engineering — Life cycle processes — Requirements engineering*. <https://www.iso.org/standard/72089.html>
 - ISO/IEC/IEEE 42010:2022, *Software, systems and enterprise — Architecture description*. <https://www.iso.org/standard/74393.html>
 - OMG 2025: *OMG Systems Modeling Language (SysML), Version 2.0*. <https://www.omg.org/spec/SysML/2.0>
-- VDA QMC 2023: *Automotive SPICE Process Assessment / Reference Model*, version 4.0. <https://vda-qmc.de/en/automotive-spice/>
-- DO-178C: cited for its traceability requirements through Jacklin 2012.
 
 **Templates, tools and documentation**
 
 - arc42, by Gernot Starke and Peter Hruschka. <https://arc42.org/overview>
 - MADR, Markdown Architectural Decision Records. <https://adr.github.io/madr/>
-- IBM Engineering Requirements Management DOORS Next, *Link validity*. <https://www.ibm.com/docs/SSYMRC_7.2/com.ibm.jazz.vvc.doc/topics/c_linkval.html>
-- Terraform documentation: *State*, <https://developer.hashicorp.com/terraform/language/state>; *terraform plan*, <https://developer.hashicorp.com/terraform/cli/commands/plan>; *Import existing resources*, <https://developer.hashicorp.com/terraform/cli/import>.
-- Go documentation: test caching, <https://pkg.go.dev/cmd/go#hdr-Test_packages>.
+- Terraform documentation: *Modules*, <https://developer.hashicorp.com/terraform/language/modules>.
 - TLA+, by Leslie Lamport. <https://lamport.azurewebsites.net/tla/tla.html>
 - Alloy, by Daniel Jackson and others. <https://alloytools.org/>
-- ArchUnit. <https://www.archunit.org/>
 - Write the Docs, *Docs as Code*. <https://www.writethedocs.org/guide/docs-as-code/>
 - GitHub Spec Kit. <https://github.com/github/spec-kit>
 - Kiro, *Specs* and *Steering*. <https://kiro.dev/docs/specs/>, <https://kiro.dev/docs/steering/>
@@ -182,11 +135,7 @@ Each source is named as in the text above. ISO standards are cited by their numb
 
 - Bass, L., Clements, P., Kazman, R. *Software Architecture in Practice*, 2nd ed. Addison-Wesley, 2003. ISBN 0-321-15495-9.
 - Clements, P., Bachmann, F., Bass, L., Garlan, D., Ivers, J., Little, R., Merson, P., Nord, R., Stafford, J. *Documenting Software Architectures: Views and Beyond*, 2nd ed. Addison-Wesley, 2010. ISBN 978-0-321-55268-6.
-- Conway, M. E. How Do Committees Invent? *Datamation* 14(4), 1968, 28–31.
-- Gotel, O., Finkelstein, A. An Analysis of the Requirements Traceability Problem. *Proceedings of the First International Conference on Requirements Engineering*, IEEE, 1994, 94–101. doi:[10.1109/ICRE.1994.292398](https://doi.org/10.1109/ICRE.1994.292398)
 - Grüninger, M., Fox, M. S. Methodology for the Design and Evaluation of Ontologies. *Workshop on Basic Ontological Issues in Knowledge Sharing*, IJCAI-95, Montreal, 1995.
-- Haynes, A. B., and others. A Surgical Safety Checklist to Reduce Morbidity and Mortality in a Global Population. *New England Journal of Medicine* 360(5), 2009, 491–499. doi:[10.1056/NEJMsa0810119](https://doi.org/10.1056/NEJMsa0810119)
-- Jacklin, S. A. Certification of Safety-Critical Software Under DO-178C and DO-278A. *AIAA Infotech@Aerospace*, 2012. NASA Ames Research Center. <https://ntrs.nasa.gov/citations/20120016835>
 - Meyer, B. Applying "Design by Contract". *IEEE Computer* 25(10), 1992, 40–51. doi:[10.1109/2.161279](https://doi.org/10.1109/2.161279)
 - Meyer, B. *Object-Oriented Software Construction*, 2nd ed. Prentice Hall, 1997. ISBN 978-0-13-629155-8.
 - Meyer, B. *Handbook of Requirements and Business Analysis*. Springer, 2022. doi:[10.1007/978-3-031-06739-6](https://doi.org/10.1007/978-3-031-06739-6)

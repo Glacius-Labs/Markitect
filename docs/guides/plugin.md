@@ -1,6 +1,6 @@
 # The plugin
 
-The Claude Code plugin `markitect` only fetches the tool: it brings the `markitect` command into a session. It holds no skill, no agent and no job. The skills of the standard lie in the project and are laid out by `init` ([library](library.md#the-skills-of-the-standard)). [The project and its skills](../concept/the-project.md#the-plugin-the-version-and-the-library) in the concept and [DEC-153](../decisions.md#dec-153-markitect-holds-the-work-init-lays-out-templates-and-skills-and-the-plugin-fetches-its-own-version) say why; this page says what the plugin holds, how its launcher gets the tool and how firm that is.
+The Claude Code plugin `markitect` only fetches the tool: it brings the `markitect` command into a session. It holds no skill and no agent. [The project](../concept/the-project.md#the-plugin-and-the-version) in the concept and [DEC-135](../decisions.md#dec-135-the-tool-stays-in-go-and-is-rebuilt-for-the-language) say why; this page says what the plugin holds, how its launcher gets the tool and how firm that is.
 
 ## What it holds
 
@@ -16,9 +16,9 @@ The plugin and the tool always have the same version: a test refuses a differenc
 
 ## The launcher
 
-While the plugin is on, Claude Code puts its `bin/` folder on the PATH of its shell, so a session runs `markitect` without anyone installing it. The first call downloads the binary of the release that has the plugin's own version, `markitect-vX.Y.Z-OS-ARCH` with `.exe` on Windows, and `markitect-vX.Y.Z-checksums.txt` from the [releases](https://github.com/Glacius-Labs/Markitect/releases), checks the binary against the checksums, keeps it in the plugin's data folder, `~/.claude/plugins/data/markitect-glacius-labs/vX.Y.Z/`, and starts it. Later calls start it at once, and a plugin update with a new version fetches the matching binary the same way. `MARKITECT_RELEASES_URL` names a mirror with the same layout; PowerShell reaches the launcher through `markitect.cmd`, which runs it with the bash of Git for Windows.
+While the plugin is on, Claude Code puts its `bin/` folder on the PATH of its shell, so a session runs `markitect` without anyone installing it. The first call downloads the binary of the release that has the plugin's own version, `markitect-vX.Y.Z-OS-ARCH` with `.exe` on Windows, and `markitect-vX.Y.Z-checksums.txt` from the [releases](https://github.com/Glacius-Labs/Markitect/releases), checks the binary against the checksums, keeps it in the plugin's data folder, `~/.claude/plugins/data/markitect-glacius-labs/vX.Y.Z/`, and starts it. Later calls start it at once, and a plugin update with a new version fetches the matching binary the same way. `MARKITECT_RELEASES_URL` names a mirror with the same layout; PowerShell reaches the launcher through `markitect.cmd`, which runs it with the bash of Git for Windows; that is the plugin's launcher on Windows, as Claude Code itself needs it, not the tool.
 
-The launcher fetches the version of the plugin. It does not read the version a project pins in `.markitect/version`; `markitect version` says whether the tool it started is the one the project pins, and exits 1 when it is not ([project reference](project-reference.md#version)).
+The launcher fetches the version of the plugin. A project pins no version; `markitect version` names the version and build of the tool the launcher started ([project reference](project-reference.md#version)).
 
 A development version of the plugin, such as `0.35.0-dev`, has no release binary and fetches nothing: its launcher starts the next `markitect` on the PATH, passing over its own `bin/`, with every argument. So for development, build the tool from source, `go install github.com/Glacius-Labs/Markitect/cmd/markitect@COMMIT` with the commit of the plugin, and keep its folder on the PATH; the plugin's `bin/` may come before it.
 
@@ -37,9 +37,9 @@ The two hooks at the start of a session serve the launcher alone. The first puts
 The plugin brings the tool and nothing else, so it checks and steers nothing in a session.
 
 - **The download is checked,** against the checksums of the same release, over HTTPS to GitHub: that guards against a damaged or swapped file. The binary is not signed ([releasing](../releasing.md#rules)).
-- **The version is not enforced.** The launcher starts the plugin's version whatever a project pins, and a development plugin starts whatever `markitect` follows it on the PATH. Only `markitect version` shows a mismatch, and nothing stops a command that runs on one.
+- **The version is the plugin's.** The launcher starts the release of the plugin's own version, and a development plugin starts whatever `markitect` follows it on the PATH; `markitect version` names which one runs.
 - **Nothing depends on the plugin.** A project that does not use it runs the same tool, built from source or downloaded from a release ([install](../../README.md#install)).
 
 ## The check of the plugin
 
-The tests of the command line, `internal/cli/launcher_test.go`, serve a release under the file names the workflow builds and run the launcher against it: the fetch and the checksum, calls at the same time, the data folder of an installed plugin, the development launcher, both hooks and the shim for Windows. They also check that the plugin has the version of the source and holds no skills, agents or jobs.
+The tests of the command line, `internal/cli/launcher_test.go`, serve a release under the file names the workflow builds and run the launcher against it: the fetch and the checksum, calls at the same time, the data folder of an installed plugin, the development launcher, both hooks and the shim for Windows. They also check that the plugin has the version of the source and holds no skills or agents.

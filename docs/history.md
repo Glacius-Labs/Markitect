@@ -14,7 +14,9 @@ Each earlier concept has an archive branch at the last Main commit where it was 
 | `archive/concept-4.0` | 6 to 20 November 2026 | Typed Definitions in Packages with a registry, a record of verdicts, and agents started by the owner's own session with their rights held by a hook |
 | `archive/concept-5.0` | 20 to 22 November 2026 | One owner and jobs started by a runner: reports and actions, a landing rule and a write table checked by the tool, and the jobs as skills and agents of a plugin |
 
-The current concept has been on Main since 22 November 2026.
+The concept on Main from 22 to 23 November 2026, a team's circle around the spec, with the way of working in the spec's `factory` part realized by fourteen skills of the standard and a state of verdicts that the tool computed and bound, has no archive branch yet; its documentation is at [`91ca6123`](https://github.com/Glacius-Labs/Markitect/tree/91ca61235c97aa37e5b5f04cc7b7f47343f453fd/docs).
+
+The current concept has been on Main since 23 November 2026.
 
 ## Everything else
 

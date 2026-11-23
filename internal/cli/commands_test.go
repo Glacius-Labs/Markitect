@@ -2,17 +2,8 @@ package cli
 
 import (
 	"encoding/json"
-	"errors"
-	"io/fs"
-	"os"
-	"path"
-	"path/filepath"
-	"sort"
 	"strings"
 	"testing"
-
-	"github.com/Glacius-Labs/Markitect/internal/lang"
-	"github.com/Glacius-Labs/Markitect/internal/library"
 )
 
 // branches is a small spec of members and branches.
@@ -24,45 +15,21 @@ var branches = map[string]string{
 	"members/grace.md":  "# Grace Hopper\n\nType: [Member](../types/member.md)\n\n## card\nL-2\n\n## Branch\n[Main](../places/central.md)\n\n## Notes\n![photo](photo.png) on file, [missing](gone.md).\n",
 }
 
-// files returns the files of a project's spec folder, by their paths below it.
-func files(t *testing.T, project string) map[string]string {
-	t.Helper()
-	dir := specOf(project)
-	out := map[string]string{}
-	err := filepath.WalkDir(dir, func(p string, e fs.DirEntry, err error) error {
-		if err != nil || e.IsDir() {
-			return err
-		}
-		data, err := os.ReadFile(p)
-		rel, _ := filepath.Rel(dir, p)
-		out[filepath.ToSlash(rel)] = string(data)
-		return err
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	return out
-}
-
-// noRow is how show ends for a document without a row in the state.
-const noRow = "Verdict: (no row)\nArtifacts: (none)\nCounter-checks: (none)\nEvidence: (none)\n"
-
 func TestShow(t *testing.T) {
 	dir := spec(t, branches)
 	code, out, _ := run("show", "-C", dir, `members\ada`)
-	out = withoutFingerprint(out)
 	want := "members/ada.md\nTitle: Ada Lovelace\nType: types/member.md\nSections:\n  Card\n  Branch\n" +
-		"Links to:\n  members/grace.md\n  places/central.md\nLinked from: (none)\n" + noRow
+		"Links to:\n  members/grace.md\n  places/central.md\nLinked from: (none)\n"
 	if code != ExitOK || out != want {
 		t.Errorf("got %d\n%s\nwant\n%s", code, out, want)
 	}
 	_, out, _ = run("show", "-C", dir, "places/central.md")
-	if !strings.HasSuffix(out, "Linked from:\n  members/ada.md (Branch)\n  members/grace.md (Branch)\n"+noRow) {
+	if !strings.HasSuffix(out, "Linked from:\n  members/ada.md (Branch)\n  members/grace.md (Branch)\n") {
 		t.Error(out)
 	}
 	_, out, _ = run("show", "-C", dir, "types/member")
 	if !strings.Contains(out, "Type: (none)\nSections:\n  Card\n  Branch\n  Notes (optional)\n") ||
-		!strings.HasSuffix(out, "Documents:\n  members/ada.md\n  members/grace.md\n"+noRow) {
+		!strings.HasSuffix(out, "Documents:\n  members/ada.md\n  members/grace.md\n") {
 		t.Error(out)
 	}
 	_, out, _ = run("show", "-C", dir, "members/grace", "--json")
@@ -72,6 +39,11 @@ func TestShow(t *testing.T) {
 	}
 	if doc["kind"] != "show" || doc["type_state"] != "ok" || len(doc["links_to"].([]any)) != 2 || len(doc["documents"].([]any)) != 0 {
 		t.Error(out)
+	}
+	for _, key := range []string{"fingerprint", "verdict", "artifacts", "counter_checks", "evidence", "reason", "conflict"} {
+		if _, ok := doc[key]; ok {
+			t.Errorf("show has the key %s", key)
+		}
 	}
 	for _, arg := range []string{"nobody", "../outside", "types"} {
 		if code, out, errOut := run("show", "-C", dir, arg); code != ExitFailed || out != "" || !strings.Contains(errOut, "unknown path") {
@@ -91,333 +63,43 @@ func TestTable(t *testing.T) {
 	}
 }
 
-func TestNewAndMove(t *testing.T) {
-	dir := spec(t, movable())
-	code, out, _ := run("new", "-C", dir, "types/member", "members/alan", "Alan Turing")
-	if code != ExitOK || out != "created members/alan.md\n" {
-		t.Fatal(code, out)
-	}
-	if got := files(t, dir)["members/alan.md"]; got != "# Alan Turing\n\nType: [Member](../types/member.md)\n\n## Card\n\n## Branch\n\n" {
-		t.Error(got)
-	}
-	before := files(t, dir)
-	if code, out, errOut := run("new", "-C", dir, "types/member", "members/ada"); code != ExitFailed || out != "" || !strings.Contains(errOut, "already exists") {
-		t.Error(code, out, errOut)
-	}
-	// Its empty sections are errors of check, which stop no move.
-	before = files(t, dir)
-	code, out, _ = run("move", "-C", dir, "places/central", "places/main hall")
-	if code != ExitOK || out != "moved places/central.md -> places/main hall.md\nchanged members/ada.md\nchanged members/grace.md\n" {
-		t.Fatal(code, out)
-	}
-	after := files(t, dir)
-	if !strings.Contains(after["members/ada.md"], "[Central](../places/main%20hall.md)") || after["places/main hall.md"] != before["places/central.md"] {
-		t.Error(after)
-	}
-	moved := files(t, dir)
-	for _, args := range [][]string{{"places/main hall", "members/ada"}, {"nobody", "x"}, {"members/ada", "../out"}} {
-		if code, out, _ := run(append([]string{"move", "-C", dir}, args...)...); code != ExitFailed || out != "" {
-			t.Errorf("%v: %d %q", args, code, out)
-		}
-	}
-	if !equalMaps(files(t, dir), moved) {
-		t.Error("a refused move changed files")
-	}
-}
-
-func equalMaps(a, b map[string]string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for k, v := range a {
-		if b[k] != v {
-			return false
-		}
-	}
-	return true
-}
-
-// templates lists every template of the library: each folder below templates/.
-func templates(t *testing.T) []string {
-	t.Helper()
-	var out []string
-	err := fs.WalkDir(library.FS(), "templates", func(p string, e fs.DirEntry, err error) error {
-		if err == nil && e.IsDir() && p != "templates" {
-			out = append(out, strings.TrimPrefix(p, "templates/"))
-		}
-		return err
+func TestSpecTable(t *testing.T) {
+	dir := spec(t, map[string]string{
+		"types/operation.md": "# Operation\n\n## Rule\nWhat holds.\n",
+		"lending/borrow.md":  "# Borrow | Lend\n\nType: [Operation](../types/operation.md)\n\n## Rule\nA member borrows.\n",
+		"lending/ghost.md":   "# Ghost\n\nType: [Nothing](../types/nothing.md)\n",
+		"README.md":          "# Lending\n",
+		"lending/return.md":  "# Return\n\nType:\n",
 	})
-	if err != nil {
+	code, out, errOut := run("table", "-C", dir)
+	want := "| Document | Type | Title |\n| --- | --- | --- |\n" +
+		"| README.md |  | Lending |\n" +
+		"| lending/borrow.md | types/operation.md | Borrow \\| Lend |\n" +
+		"| lending/ghost.md | types/nothing.md | Ghost |\n" +
+		"| lending/return.md |  | Return |\n" +
+		"| types/operation.md |  | Operation |\n"
+	if code != ExitOK || out != want || errOut != "" {
+		t.Errorf("got %d\n%s\nwant\n%s", code, out, want)
+	}
+	code, out, _ = run("table", "-C", dir, "--json")
+	var doc tableDocument
+	if err := json.Unmarshal([]byte(out), &doc); err != nil {
 		t.Fatal(err)
 	}
-	return out
-}
-
-// TestEveryTemplateApplies applies every template, at the spec root and at a target
-// folder. A top-level template applies cleanly. A folder of a template applies
-// cleanly too, unless its documents link to a sibling outside it: then apply
-// refuses for exactly that reason and copies nothing.
-func TestEveryTemplateApplies(t *testing.T) {
-	tpls := templates(t)
-	if len(tpls) < 10 {
-		t.Fatalf("templates %v", tpls)
+	if code != ExitOK || doc.Kind != "table" || doc.Type != "" || strings.Join(doc.Columns, " ") != "Type" || len(doc.Rows) != 5 ||
+		doc.Rows[1].Path != "lending/borrow.md" || doc.Rows[1].Title != "Borrow | Lend" || strings.Join(doc.Rows[1].Cells, " ") != "types/operation.md" {
+		t.Errorf("got %d %s", code, out)
 	}
-	refused := 0
-	for _, tpl := range tpls {
-		for _, target := range []string{"", "parts/" + path.Base(tpl)} {
-			dir := initialized(t)
-			before := files(t, dir)
-			args := []string{"apply", "-C", dir, tpl}
-			if target != "" {
-				args = append(args, target)
-			}
-			code, out, errOut := run(args...)
-			if code != ExitOK {
-				if strings.Contains(tpl, "/") && code == ExitFailed && out == "" && onlyLeavesTheTemplate(errOut) && equalMaps(files(t, dir), before) {
-					refused++
-					continue
-				}
-				t.Fatalf("%s at %q: %d %s %s", tpl, target, code, out, errOut)
-			}
-			s, err := lang.Load(os.DirFS(specOf(dir)))
-			if err != nil {
-				t.Fatal(err)
-			}
-			for _, d := range lang.Check(s) {
-				if d.Code != lang.CodeSectionEmpty {
-					t.Errorf("%s at %q: %s", tpl, target, d)
-				}
-			}
-		}
-	}
-	if refused == 0 {
-		t.Error("no folder of a template links to a sibling, so the refusal is not tested")
-	}
-}
-
-// onlyLeavesTheTemplate reports whether every line of a refusal gives the reason
-// that a link leaves the template.
-func onlyLeavesTheTemplate(errOut string) bool {
-	lines := strings.Split(strings.TrimSpace(errOut), "\n")
-	for _, line := range lines {
-		if !strings.Contains(line, ": link leaves the template: ") {
-			return false
-		}
-	}
-	return errOut != ""
-}
-
-func TestApplyCommand(t *testing.T) {
-	// apply creates the spec folder when it is missing.
-	dir := initialized(t)
-	if err := os.Remove(specOf(dir)); err != nil {
-		t.Fatal(err)
-	}
-	code, out, _ := run("apply", "-C", dir, "software/domain")
-	if code != ExitOK || out != "copied README.md\ncopied packages/software/\ncopied packages/core/\n" {
-		t.Fatal(code, out)
-	}
-	if line := strings.Split(files(t, dir)["README.md"], "\n")[2]; line != "Type: [Domain](packages/software/domain.md)" {
-		t.Error(line)
-	}
-	before := files(t, dir)
-	code, out, errOut := run("apply", "-C", dir, "software")
-	if code != ExitFailed || out != "" || !strings.Contains(errOut, "README.md: already exists") || !equalMaps(files(t, dir), before) {
-		t.Error(code, out, errOut)
-	}
-	// A package the spec has is kept, never overwritten or completed.
-	if err := os.WriteFile(filepath.Join(specOf(dir), "packages", "core", "role.md"), []byte("# Role\n\nOur own.\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Remove(filepath.Join(specOf(dir), "packages", "core", "term.md")); err != nil {
-		t.Fatal(err)
-	}
-	code, out, _ = run("apply", "-C", dir, "company", "orgs/main")
-	if code != ExitOK || strings.Contains(out, "packages/core/") || !strings.Contains(out, "copied packages/company/\n") {
-		t.Error(code, out)
-	}
-	after := files(t, dir)
-	if after["packages/core/role.md"] != "# Role\n\nOur own.\n" || after["packages/core/term.md"] != "" {
-		t.Error("the spec's package changed")
-	}
-	if !strings.Contains(after["orgs/main/team/README.md"], "(../../../packages/core/role.md)") {
-		t.Error(after["orgs/main/team/README.md"])
-	}
-	for _, args := range [][]string{{"nothing"}, {".."}, {"software", "../up"}} {
-		if code, out, _ := run(append([]string{"apply", "-C", initialized(t)}, args...)...); code != ExitFailed || out != "" {
-			t.Errorf("%v: %d %q", args, code, out)
-		}
-	}
-}
-
-func TestLibrary(t *testing.T) {
-	s, err := lang.Load(library.FS())
-	if err != nil {
-		t.Fatal(err)
-	}
-	var packages []string
-	for _, d := range s.Documents {
-		if strings.HasPrefix(d.Path, "packages/") {
-			packages = append(packages, strings.Split(d.Path, "/")[1])
-		}
-	}
-	if got := strings.Join(unique(packages), " "); got != "company core factory software" {
-		t.Errorf("packages %s", got)
-	}
-	// Only the templates' sections are empty.
-	for _, d := range lang.Check(s) {
-		if d.Code != lang.CodeSectionEmpty || !strings.HasPrefix(d.Path, "templates/") {
-			t.Error(d)
-		}
-	}
-	quality, _ := s.Document("packages/software/quality.md")
-	if n := len(quality.Declared()); n != 10 {
-		t.Errorf("quality declares %d sections", n)
-	}
-}
-
-func unique(list []string) []string {
-	sort.Strings(list)
-	var out []string
-	for _, s := range list {
-		if len(out) == 0 || out[len(out)-1] != s {
-			out = append(out, s)
-		}
-	}
-	return out
-}
-
-func TestReadOnlyFileChangesNothing(t *testing.T) {
-	dir := spec(t, map[string]string{"a.md": "# A\n", "z.md": "# Z\n\nSee [a](a.md).\n"})
-	z := filepath.Join(specOf(dir), "z.md")
-	if err := os.Chmod(z, 0o444); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { os.Chmod(z, 0o644) })
-	if f, err := os.OpenFile(z, os.O_WRONLY, 0); err == nil {
-		f.Close()
-		t.Skip("the file system lets this user write a read-only file")
-	}
-	before := files(t, dir)
-	code, out, errOut := run("move", "-C", dir, "a.md", "n.md")
-	if code != ExitFailed || out != "" || !strings.Contains(errOut, "z.md: cannot be written") || !equalMaps(files(t, dir), before) {
-		t.Error(code, out, errOut)
-	}
-}
-
-// TestFailureLeavesTheSpecAsItWas fails each step of a move and an apply in turn
-// and checks that the spec folder is as it was.
-func TestFailureLeavesTheSpecAsItWas(t *testing.T) {
-	cases := []struct {
-		name string
-		args func(dir string) []string
-	}{
-		{"move", func(dir string) []string {
-			return []string{"move", "-C", dir, "places/central", "elsewhere/deep/main hall"}
-		}},
-		{"apply", func(dir string) []string { return []string{"apply", "-C", dir, "software", "parts/new"} }},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			steps := 0
-			fault = func(int) error { steps++; return nil }
-			if code, _, errOut := run(tc.args(spec(t, movable()))...); code != ExitOK {
-				t.Fatal(errOut)
-			}
-			if steps < 4 {
-				t.Fatalf("only %d steps", steps)
-			}
-			for k := 1; k <= steps; k++ {
-				dir := spec(t, movable())
-				before := files(t, dir)
-				fault = func(step int) error {
-					if step == k {
-						return errors.New("injected")
-					}
-					return nil
-				}
-				code, out, errOut := run(tc.args(dir)...)
-				if code != ExitFailed || out != "" || !strings.Contains(errOut, "injected") {
-					t.Errorf("step %d: %d %q %q", k, code, out, errOut)
-				}
-				if after := files(t, dir); !equalMaps(after, before) {
-					t.Errorf("step %d changed the spec: %v", k, after)
-				}
-				var dirs []string
-				_ = filepath.WalkDir(specOf(dir), func(p string, e fs.DirEntry, err error) error {
-					if err == nil && e.IsDir() && p != specOf(dir) {
-						dirs = append(dirs, p)
-					}
-					return err
-				})
-				if len(dirs) != 3 {
-					t.Errorf("step %d left folders %v", k, dirs)
-				}
-			}
-			fault = nil
-		})
-	}
-}
-
-func TestFailedUndoNamesWhatIsLeft(t *testing.T) {
-	args := func(dir string) []string { return []string{"move", "-C", dir, "places/central", "elsewhere/main hall"} }
-	steps := 0
-	fault = func(int) error { steps++; return nil }
-	run(args(spec(t, movable()))...)
-	fault = func(step int) error {
-		if step == steps {
-			return errors.New("injected")
-		}
-		return nil
-	}
-	undoFault = func(int) error { return errors.New("undo refused") }
-	t.Cleanup(func() { fault, undoFault = nil, nil })
-	dir := spec(t, movable())
-	code, out, errOut := run(args(dir)...)
-	if code != ExitFailed || out != "" || !strings.Contains(errOut, "injected") || !strings.Contains(errOut, "undoing it failed: undo refused") {
-		t.Fatal(code, out, errOut)
-	}
-	_, left, ok := strings.Cut(strings.TrimSpace(errOut), "left behind: ")
-	if !ok || !strings.Contains(left, ".markitect-") {
-		t.Fatal(errOut)
-	}
-	for _, f := range strings.Split(left, ", ") {
-		if _, err := os.Lstat(f); err != nil {
-			t.Errorf("named %s, which is not there", f)
-		}
-	}
-}
-
-func TestCreateRefusesAFileThatAppeared(t *testing.T) {
-	dir := t.TempDir()
-	temp, path := filepath.Join(dir, "new.tmp"), filepath.Join(dir, "doc.md")
-	if err := os.WriteFile(temp, []byte("new"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(path, []byte("there first"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := createFrom(temp, path); !errors.Is(err, fs.ErrExist) {
-		t.Errorf("got %v", err)
-	}
-	if data, _ := os.ReadFile(path); string(data) != "there first" {
-		t.Errorf("overwrote it with %q", data)
-	}
-	if err := os.Remove(path); err != nil {
-		t.Fatal(err)
-	}
-	if err := createFrom(temp, path); err != nil {
-		t.Fatal(err)
-	}
-	if data, _ := os.ReadFile(path); string(data) != "new" {
-		t.Errorf("created %q", data)
+	if code, out, _ := run("table", "-C", spec(t, nil)); code != ExitOK || out != "| Document | Type | Title |\n| --- | --- | --- |\n" {
+		t.Errorf("an empty spec: %d %q", code, out)
 	}
 }
 
 func TestTopicAndQuestions(t *testing.T) {
 	dir := spec(t, branches)
 	code, out, _ := run("topic", "-C", dir)
-	if code != ExitOK || !strings.HasPrefix(out, "# Signals of the spec\n") || !strings.Contains(out, "\n### weak (") || !strings.Contains(out, "\n### unlinked-mention (") {
+	if code != ExitOK || !strings.HasPrefix(out, "# Signals of the spec\n") || !strings.Contains(out, "\n### weak (") || !strings.Contains(out, "\n### unlinked-mention (") ||
+		strings.Contains(out, "hange signals") {
 		t.Fatal(code, out)
 	}
 	code, out, _ = run("topic", "-C", dir, "places/central")
@@ -443,7 +125,7 @@ func TestTopicAndQuestions(t *testing.T) {
 		t.Error(code, out)
 	}
 	applied := initialized(t)
-	run("apply", "-C", applied, "software")
+	copyFromLibrary(t, applied, "packages/core", "packages/software")
 	_, out, _ = run("questions", "-C", applied)
 	if !strings.HasPrefix(out, "## core\n\n1. ") || !strings.Contains(out, "\n## software\n\n1. Who may call each operation") {
 		t.Error(out)
@@ -451,32 +133,4 @@ func TestTopicAndQuestions(t *testing.T) {
 	if code, out, _ := run("topic", "-C", applied, "--json"); code != ExitOK || !strings.Contains(out, `"topic_kind": "spec"`) {
 		t.Error(code, out)
 	}
-}
-
-func TestReferenceValuesCoverEveryType(t *testing.T) {
-	refs, err := references()
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = fs.WalkDir(library.FS(), "packages", func(p string, e fs.DirEntry, err error) error {
-		if err == nil && !e.IsDir() {
-			if _, ok := refs.For(p); !ok {
-				t.Errorf("no reference value for %s", p)
-			}
-		}
-		return err
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-// movable is the spec of members and branches without its broken link, since
-// move refuses while the spec has errors.
-func movable() map[string]string {
-	files := map[string]string{"members/gone.md": "# Gone\n"}
-	for p, text := range branches {
-		files[p] = text
-	}
-	return files
 }

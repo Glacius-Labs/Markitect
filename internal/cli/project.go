@@ -1,21 +1,19 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
-	"github.com/Glacius-Labs/Markitect/internal/state"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
-// isProject says whether dir holds .markitect/version, so that a .markitect/
+// isProject says whether dir holds .markitect/spec, so that a .markitect/
 // folder of another kind, such as the one in the home folder, is no project.
 func isProject(dir string) bool {
-	info, err := os.Stat(filepath.Join(dir, filepath.FromSlash(state.VersionFile)))
+	info, err := os.Stat(filepath.Join(dir, filepath.FromSlash(project.SpecFile)))
 	return err == nil && info.Mode().IsRegular()
 }
 
@@ -50,51 +48,61 @@ func workingFolder(o options) (string, error) {
 	return abs, nil
 }
 
-// projectFolder is the project a command works in: the folder -C names, which
-// must hold .markitect/version, or the nearest folder from the working
-// directory upward that holds it. found is false when there is none.
-func projectFolder(o options) (dir string, found bool, err error) {
-	at, err := workingFolder(o)
-	if err != nil {
-		return "", false, err
-	}
-	if o.dir != "" {
-		return at, isProject(at), nil
-	}
-	dir, found = findProject(at, isProject)
-	return dir, found, nil
-}
+// noProjectNote says what the file that makes a folder a project holds; no
+// command creates it.
+const noProjectNote = "that file holds one line, the path of the spec folder below the project folder"
 
-// noProject says that no project was found, and how to make one.
+// noProject says that no project was found, and what the missing file holds.
+// Where .markitect/spec exists but is no file, it says that instead.
 func noProject(o options, at string) error {
 	if o.dir != "" {
-		return fmt.Errorf("%s holds no %s; markitect init makes one", o.dir, state.VersionFile)
+		return notAProject(o.dir, at)
 	}
-	return fmt.Errorf("no folder from %s upward holds %s; markitect init makes one", at, state.VersionFile)
+	for dir := at; ; {
+		if _, err := os.Stat(filepath.Join(dir, filepath.FromSlash(project.SpecFile))); err == nil {
+			return notAProject(dir, dir)
+		}
+		up := filepath.Dir(dir)
+		if up == dir {
+			break
+		}
+		dir = up
+	}
+	return fmt.Errorf("no folder from %s upward holds %s; %s", at, project.SpecFile, noProjectNote)
 }
 
-// mustProject is the project a command works in, or an error when there is
-// none.
+// notAProject says why the folder dir, which the user named as shown, is no
+// project: it lacks .markitect/spec, or that is no file.
+func notAProject(shown, dir string) error {
+	if _, err := os.Stat(filepath.Join(dir, filepath.FromSlash(project.SpecFile))); err == nil {
+		return fmt.Errorf("%s: %s is no file, but a project needs one there; %s", shown, project.SpecFile, noProjectNote)
+	}
+	return fmt.Errorf("%s holds no %s; %s", shown, project.SpecFile, noProjectNote)
+}
+
+// mustProject is the project a command works in: the folder -C names, which
+// must hold .markitect/spec, or the nearest folder from the working directory
+// upward that holds it. It is an error when there is none.
 func mustProject(o options) (string, error) {
-	dir, found, err := projectFolder(o)
+	at, err := workingFolder(o)
 	if err != nil {
 		return "", err
 	}
+	if o.dir != "" {
+		if !isProject(at) {
+			return "", noProject(o, at)
+		}
+		return at, nil
+	}
+	dir, found := findProject(at, isProject)
 	if !found {
-		at, _ := workingFolder(o)
 		return "", noProject(o, at)
 	}
 	return dir, nil
 }
 
-// workspace is a loaded project and its folder on disk.
-type workspace struct {
-	dir string
-	*state.Project
-}
-
 // load loads the project a command works in.
-func load(o options) (*workspace, error) {
+func load(o options) (*project.Project, error) {
 	dir, err := mustProject(o)
 	if err != nil {
 		return nil, err
@@ -103,63 +111,29 @@ func load(o options) (*workspace, error) {
 }
 
 // loadDir loads the project at dir.
-func loadDir(dir string) (*workspace, error) {
-	p, err := state.Load(diskProject(dir))
+func loadDir(dir string) (*project.Project, error) {
+	p, err := project.Load(os.DirFS(dir))
 	if err != nil {
 		return nil, fmt.Errorf("the project %s: %w", dir, err)
 	}
 	if err := specInside(dir, p.SpecFolder); err != nil {
 		return nil, err
 	}
-	if alias, ok := specAlias(dir, p.SpecFolder); ok {
-		p.SpecAliases = append(p.SpecAliases, alias)
-	}
-	return &workspace{dir: dir, Project: p}, nil
+	return p, nil
 }
 
-// specDir is the spec folder on disk.
-func (w *workspace) specDir() string { return filepath.Join(w.dir, filepath.FromSlash(w.SpecFolder)) }
-
 // versionResult is the JSON document of version. Build is the version with
-// the source revision, when the build knows it; Pinned is the version the
-// project pins, "" outside a project.
+// the source revision, when the build knows it.
 type versionResult struct {
 	header
 	Version string `json:"version"`
 	Build   string `json:"build"`
-	Pinned  string `json:"pinned"`
-	Matches bool   `json:"matches"`
 }
 
-// version prints the tool's build, its version with the source revision,
-// and, in a project, the version it pins. It exits 1 when the version and the
-// pinned one differ.
+// version prints the tool's build: its version with the source revision.
 func version(o options, stdout io.Writer) (int, error) {
 	doc := versionResult{header: newHeader("version"), Version: buildinfo.Version(), Build: buildinfo.Build()}
-	text := "markitect " + doc.Build + "\n"
-	dir, found, err := projectFolder(o)
-	switch {
-	case err != nil:
-		return ExitFailed, err
-	case !found && o.dir != "":
-		return ExitFailed, noProject(o, dir)
-	case found:
-		layout, err := state.ReadLayout(os.DirFS(dir))
-		if err != nil {
-			return ExitFailed, fmt.Errorf("the project %s: %w", dir, err)
-		}
-		doc.Pinned, doc.Matches = layout.Version, layout.Version == doc.Version
-		if doc.Matches {
-			text += "the project pins " + doc.Pinned + "\n"
-		} else {
-			text += "the project pins " + doc.Pinned + ", not this version\n"
-		}
-	}
-	code, err := output(o, stdout, doc, text)
-	if err == nil && found && !doc.Matches {
-		code = ExitFound
-	}
-	return code, err
+	return output(o, stdout, doc, "markitect "+doc.Build+"\n")
 }
 
 // licensesResult is the JSON document of licenses.
@@ -171,21 +145,4 @@ type licensesResult struct {
 // licenses prints the license notices of the modules the tool is built from.
 func licenses(o options, stdout io.Writer) (int, error) {
 	return output(o, stdout, licensesResult{newHeader("licenses"), buildinfo.Notices}, buildinfo.Notices)
-}
-
-// specFolderOf is the spec folder of the project at dir, which apply creates
-// when it is missing.
-func specFolderOf(dir string) (string, error) {
-	layout, err := state.ReadLayout(os.DirFS(dir))
-	if err != nil {
-		return "", fmt.Errorf("the project %s: %w", dir, err)
-	}
-	if err := specInside(dir, layout.SpecFolder); err != nil {
-		return "", err
-	}
-	folder := filepath.Join(dir, filepath.FromSlash(layout.SpecFolder))
-	if info, err := os.Stat(folder); err == nil && !info.IsDir() || err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return "", fmt.Errorf("the spec folder %s, which %s names, is no folder", layout.SpecFolder, state.SpecFile)
-	}
-	return folder, nil
 }

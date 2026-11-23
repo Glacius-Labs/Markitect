@@ -2,40 +2,15 @@ package cli
 
 import (
 	"encoding/json"
-	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 )
-
-// tree lists every file and folder below dir, folders with a trailing slash.
-func tree(t *testing.T, dir string) []string {
-	t.Helper()
-	var out []string
-	err := filepath.WalkDir(dir, func(p string, e fs.DirEntry, err error) error {
-		if err != nil || p == dir {
-			return err
-		}
-		rel, _ := filepath.Rel(dir, p)
-		rel = filepath.ToSlash(rel)
-		if e.IsDir() {
-			rel += "/"
-		}
-		out = append(out, rel)
-		return nil
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	sort.Strings(out)
-	return out
-}
 
 func TestFindProject(t *testing.T) {
 	root := filepath.Join("C:", "work")
@@ -79,10 +54,7 @@ func TestCommandsFindTheProjectUpward(t *testing.T) {
 	if code != ExitFound || out != "lending.md:3: link.unresolved: no document at \"loans.md\"\n1 error in 1 document\n" {
 		t.Error(code, out)
 	}
-	if code, out, _ := run("new", filepath.Join("..", "lending"), "loans"); code != ExitFailed || out != "" {
-		t.Error("a path below the working directory was taken for one below the spec folder", code, out)
-	}
-	if code, out, _ := run("show", "lending"); code != ExitOK || !strings.HasPrefix(out, "lending.md@") {
+	if code, out, _ := run("show", "lending"); code != ExitOK || !strings.HasPrefix(out, "lending.md\nTitle: Lending\n") {
 		t.Error(code, out)
 	}
 	// A missing spec folder is named.
@@ -94,28 +66,22 @@ func TestCommandsFindTheProjectUpward(t *testing.T) {
 	}
 }
 
+// version prints the tool's version and build, in a project or outside one,
+// and reads nothing of the project.
 func TestVersion(t *testing.T) {
-	dir := initialized(t)
-	code, out, _ := run("version", "-C", dir)
-	if code != ExitOK || out != "markitect "+buildinfo.Build()+"\nthe project pins "+buildinfo.Version()+"\n" {
-		t.Error(code, out)
-	}
-	if err := os.WriteFile(filepath.Join(dir, ".markitect", "version"), []byte("0.1.0\r\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if code, out, _ := run("version", "-C", dir); code != ExitFound || !strings.HasSuffix(out, "the project pins 0.1.0, not this version\n") {
-		t.Error(code, out)
-	}
-	_, out, _ = run("version", "-C", dir, "--json")
-	var doc versionResult
-	if err := json.Unmarshal([]byte(out), &doc); err != nil {
-		t.Fatal(err)
-	}
-	if doc.Kind != "version" || doc.Version != buildinfo.Version() || doc.Build != buildinfo.Build() || doc.Pinned != "0.1.0" || doc.Matches {
-		t.Error(out)
-	}
-	if code, _, errOut := run("version", "-C", t.TempDir()); code != ExitFailed || !strings.Contains(errOut, "holds no .markitect/version") {
-		t.Error(code, errOut)
+	want := "markitect " + buildinfo.Build() + "\n"
+	for name, dir := range map[string]string{"in a project": initialized(t), "outside": t.TempDir()} {
+		if code, out, errOut := run("version", "-C", dir); code != ExitOK || out != want || errOut != "" {
+			t.Error(name, code, out, errOut)
+		}
+		_, out, _ := run("version", "-C", dir, "--json")
+		var doc map[string]any
+		if err := json.Unmarshal([]byte(out), &doc); err != nil {
+			t.Fatal(err)
+		}
+		if len(doc) != 4 || doc["format_version"] != float64(1) || doc["kind"] != "version" || doc["version"] != buildinfo.Version() || doc["build"] != buildinfo.Build() {
+			t.Error(name, out)
+		}
 	}
 }
 
@@ -131,16 +97,18 @@ func TestLicenses(t *testing.T) {
 	}
 }
 
-// TestOutsideAProject runs below a .markitect/ folder without a version file,
-// as in a home folder that holds the reader's last look, which is no project.
+// TestOutsideAProject runs below a .markitect/ folder without a spec file, as
+// in a home folder that holds other things, which is no project. A .markitect/
+// folder of a project holds nothing else the tool needs.
 func TestOutsideAProject(t *testing.T) {
 	outside := t.TempDir()
 	if dir, found := findProject(outside, isProject); found {
-		t.Fatalf("%s, above the temporary folder, holds .markitect/version", dir)
+		t.Fatalf("%s, above the temporary folder, holds .markitect/spec", dir)
 	}
 	if err := os.MkdirAll(filepath.Join(outside, ".markitect", "last-look"), 0o755); err != nil {
 		t.Fatal(err)
 	}
+	write(t, outside, ".markitect/version", "0.1.0\n")
 	inside := filepath.Join(outside, "work")
 	if err := os.Mkdir(inside, 0o755); err != nil {
 		t.Fatal(err)
@@ -149,8 +117,15 @@ func TestOutsideAProject(t *testing.T) {
 	if code, out, _ := run("version"); code != ExitOK || out != "markitect "+buildinfo.Build()+"\n" {
 		t.Error(code, out)
 	}
-	if code, _, errOut := run("check"); code != ExitFailed || !strings.Contains(errOut, "upward holds .markitect/version; markitect init makes one") {
+	if code, _, errOut := run("check"); code != ExitFailed || !strings.Contains(errOut, "upward holds .markitect/spec; that file holds one line, the path of the spec folder") {
 		t.Error(code, errOut)
+	}
+	// With the spec file, the other files of .markitect/ are no concern.
+	write(t, outside, ".markitect/spec", "docs\n")
+	write(t, outside, ".markitect/state.jsonl", "not json\n")
+	write(t, outside, "docs/a.md", "# A\n")
+	if code, out, errOut := run("check"); code != ExitOK || out != "0 errors in 1 document\n" {
+		t.Error(code, out, errOut)
 	}
 }
 
@@ -171,31 +146,26 @@ func link(t *testing.T, target, link string) {
 
 func TestSpecFolderOutsideTheProjectIsRefused(t *testing.T) {
 	elsewhere := t.TempDir()
-	dir := t.TempDir()
-	link(t, elsewhere, filepath.Join(dir, "docs"))
-	if code, _, errOut := run("init", "-C", dir); code != ExitFailed || !strings.Contains(errOut, "the spec folder docs/spec lies outside the project") {
-		t.Fatal(code, errOut)
-	}
-	if got := tree(t, elsewhere); len(got) != 0 {
-		t.Errorf("a refused init wrote %v outside", got)
-	}
+	write(t, elsewhere, "a.md", "# A\n")
 	// A link inside the project is fine.
 	inside := t.TempDir()
+	markitectFile(t, inside)
 	if err := os.MkdirAll(filepath.Join(inside, "handbook"), 0o755); err != nil {
 		t.Fatal(err)
 	}
+	write(t, inside, "handbook/spec/a.md", "# A\n")
 	link(t, filepath.Join(inside, "handbook"), filepath.Join(inside, "docs"))
-	if code, _, errOut := run("init", "-C", inside); code != ExitOK {
+	if code, _, errOut := run("check", "-C", inside); code != ExitOK {
 		t.Fatal(errOut)
 	}
-	// A spec folder that a link moved outside later stops every command that
-	// reads it.
+	// A spec folder that a link moved outside stops every command that reads
+	// it.
 	project := spec(t, map[string]string{"a.md": "# A\n"})
 	if err := os.RemoveAll(specOf(project)); err != nil {
 		t.Fatal(err)
 	}
 	link(t, elsewhere, specOf(project))
-	for _, args := range [][]string{{"check"}, {"apply", "software"}, {"show", "a"}} {
+	for _, args := range [][]string{{"check"}, {"show", "a"}, {"table"}, {"topic"}, {"questions"}, {"diff", project}} {
 		if code, _, errOut := run(append(args, "-C", project)...); code != ExitFailed || !strings.Contains(errOut, "lies outside the project") {
 			t.Errorf("%v: %d %q", args, code, errOut)
 		}
@@ -203,29 +173,11 @@ func TestSpecFolderOutsideTheProjectIsRefused(t *testing.T) {
 }
 
 func TestReservedSpecFolders(t *testing.T) {
-	for spec, want := range map[string]string{".Markitect/x": "lies in .markitect/", "a/.GIT/b": "lies in a .git folder"} {
-		if code, _, errOut := run("init", "-C", t.TempDir(), "--spec", spec); code != ExitFailed || !strings.Contains(errOut, want) {
+	for spec, want := range map[string]string{".Markitect/x": "lies in .markitect/", "../up": "not a path below the project folder"} {
+		dir := t.TempDir()
+		write(t, dir, ".markitect/spec", spec+"\n")
+		if code, _, errOut := run("check", "-C", dir); code != ExitFailed || !strings.Contains(errOut, want) {
 			t.Errorf("%s: %d %q", spec, code, errOut)
-		}
-	}
-}
-
-func TestProjectFSReachesOutside(t *testing.T) {
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "HEAD"), []byte("x"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	project := filepath.Join(dir, "project")
-	if err := os.Mkdir(project, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	for _, name := range []string{filepath.ToSlash(filepath.Join(dir, "HEAD")), "../HEAD"} {
-		host, p, ok := diskProject(project).Outside(name)
-		if !ok {
-			t.Fatalf("%s: not reached", name)
-		}
-		if data, err := fs.ReadFile(host, p); err != nil || string(data) != "x" {
-			t.Errorf("%s: read %q %v", name, data, err)
 		}
 	}
 }

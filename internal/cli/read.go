@@ -6,17 +6,13 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/lang"
-	"github.com/Glacius-Labs/Markitect/internal/state"
 )
 
 // showDocument is the JSON document of show.
 type showDocument struct {
 	header
-	Path string `json:"path"`
-	// Fingerprint is the document's fingerprint as status computes it, so
-	// that a confirm can name any document.
-	Fingerprint string `json:"fingerprint"`
-	Title       string `json:"title"`
+	Path  string `json:"path"`
+	Title string `json:"title"`
 	// Type is the path of the type, "" without one; TypeState is "none",
 	// "invalid" for a type line that is not one link, "missing" for a type
 	// that is no document, or "ok".
@@ -27,14 +23,6 @@ type showDocument struct {
 	LinkedFrom []showLink    `json:"linked_from"`
 	// Documents are the documents whose type this document is.
 	Documents []string `json:"documents"`
-	// The row of the state status takes: Verdict is "" without one, and
-	// Conflict says that rows of it conflict.
-	Verdict       string   `json:"verdict"`
-	Conflict      bool     `json:"conflict,omitempty"`
-	Artifacts     []string `json:"artifacts"`
-	CounterChecks []string `json:"counter_checks"`
-	Evidence      []string `json:"evidence"`
-	Reason        string   `json:"reason"`
 }
 
 type showSection struct {
@@ -57,21 +45,8 @@ func show(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	s, _, err := evaluate(w)
-	if err != nil {
-		return ExitFailed, err
-	}
 	doc := showDocument{header: newHeader("show"), Path: d.Path, Title: d.Title, Type: d.TypePath,
-		Sections: []showSection{}, LinksTo: []showLink{}, LinkedFrom: []showLink{}, Documents: []string{},
-		Artifacts: []string{}, CounterChecks: []string{}, Evidence: []string{}}
-	if doc.Fingerprint, _, err = s.Fingerprint(d.Path); err != nil {
-		return ExitFailed, err
-	}
-	if row, conflict, ok := s.Row(d.Path); ok {
-		doc.Verdict, doc.Conflict, doc.Reason = row.Verdict, conflict, row.Reason
-		doc.Artifacts, doc.CounterChecks = append(doc.Artifacts, row.Files()...), append(doc.CounterChecks, row.Checks()...)
-		doc.Evidence = append(doc.Evidence, row.Evidence...)
-	}
+		Sections: []showSection{}, LinksTo: []showLink{}, LinkedFrom: []showLink{}, Documents: []string{}}
 	switch _, ok := spec.Document(d.TypePath); {
 	case d.TypeLine == 0:
 		doc.TypeState = "none"
@@ -142,7 +117,7 @@ func showText(doc showDocument) string {
 	case "missing":
 		kind += " (missing)"
 	}
-	b.WriteString(doc.Path + "@" + doc.Fingerprint + "\nTitle: " + title + "\nType: " + kind + "\n")
+	b.WriteString(doc.Path + "\nTitle: " + title + "\nType: " + kind + "\n")
 	list := func(label string, items []string, always bool) {
 		if len(items) == 0 {
 			if always {
@@ -177,20 +152,6 @@ func showText(doc showDocument) string {
 	list("Links to:", to, true)
 	list("Linked from:", from, true)
 	list("Documents:", doc.Documents, false)
-	verdict := doc.Verdict
-	switch {
-	case verdict == "":
-		verdict = "(no row)"
-	case doc.Conflict:
-		verdict += " (rows conflict)"
-	}
-	b.WriteString("Verdict: " + verdict + "\n")
-	list("Artifacts:", doc.Artifacts, true)
-	list("Counter-checks:", doc.CounterChecks, true)
-	list("Evidence:", doc.Evidence, true)
-	if doc.Reason != "" {
-		b.WriteString("Reason: " + doc.Reason + "\n")
-	}
 	return b.String()
 }
 
@@ -215,12 +176,8 @@ func table(o options, stdout io.Writer) (int, error) {
 	}
 	spec := w.Spec
 	if len(o.positional) == 0 {
-		s, _, err := evaluate(w)
-		if err != nil {
-			return ExitFailed, err
-		}
-		doc := stateTable(spec, s)
-		return output(o, stdout, doc, stateTableText(doc))
+		doc := specTable(spec)
+		return output(o, stdout, doc, specTableText(doc))
 	}
 	t, err := document(spec, o.positional[0])
 	if err != nil {
@@ -273,31 +230,27 @@ func tableText(doc tableDocument) string {
 	return b.String()
 }
 
-// stateTable is every document of the spec with its verdict and artifacts:
-// the state as a table. The type is "" and the columns are Verdict and
-// Artifacts.
-func stateTable(spec *lang.Spec, s *state.Status) tableDocument {
-	doc := tableDocument{header: newHeader("table"), Columns: []string{"Verdict", "Artifacts"}, Rows: []tableRow{}}
+// specTable is every document of the spec with its type: the type of the
+// table is "" and its only column is Type; the rows are sorted by path.
+func specTable(spec *lang.Spec) tableDocument {
+	doc := tableDocument{header: newHeader("table"), Columns: []string{"Type"}, Rows: []tableRow{}}
 	for _, d := range spec.Documents {
-		verdict, artifacts := "", ""
-		if row, conflict, ok := s.Row(d.Path); ok {
-			verdict, artifacts = row.Verdict, strings.Join(row.Files(), ", ")
-			if conflict {
-				verdict += " (rows conflict)"
-			}
+		typ := ""
+		if d.HasType() {
+			typ = d.TypePath
 		}
-		doc.Rows = append(doc.Rows, tableRow{Path: d.Path, Title: d.Title, Cells: []string{verdict, artifacts}})
+		doc.Rows = append(doc.Rows, tableRow{Path: d.Path, Title: d.Title, Cells: []string{typ}})
 	}
 	return doc
 }
 
-func stateTableText(doc tableDocument) string {
+func specTableText(doc tableDocument) string {
 	var b strings.Builder
-	b.WriteString("| Document | Verdict | Artifacts |\n| --- | --- | --- |\n")
+	b.WriteString("| Document | Type | Title |\n| --- | --- | --- |\n")
 	for _, r := range doc.Rows {
-		cells := []string{r.Path}
-		for _, c := range r.Cells {
-			cells = append(cells, strings.ReplaceAll(c, "|", `\|`))
+		cells := []string{r.Path, r.Cells[0], r.Title}
+		for i, c := range cells {
+			cells[i] = strings.ReplaceAll(c, "|", `\|`)
 		}
 		b.WriteString("| " + strings.Join(cells, " | ") + " |\n")
 	}

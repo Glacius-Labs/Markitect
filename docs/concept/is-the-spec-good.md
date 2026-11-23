@@ -12,7 +12,7 @@
 
 A document should hold a part of its own when that part has facts of its own, is needed by several documents, changes at its own pace, or has a rule of its own. It should not for a value only that document relies on, or the spec falls apart into tiny documents. The type decides: where its section asks for a link, every document links.
 
-**Not in the list.** *Correct*, whether the spec says what is meant, no reader can judge without the people who decide; it shows only in use. *Ranked* is a priority, which is work. *Traceable* is the state's ([§6](the-state.md)). *Modifiable* is in consistent and structured. Coupling, cohesion, abstractness and link density are no measures: folders carry no rules, a folder sorted by kind is not worse, and a high fan-in is natural for a role everyone names.
+**Not in the list.** *Correct*, whether the spec says what is meant, no reader can judge without the people who decide; it shows only in use. *Ranked* is a priority, which is work. *Traceable*, which artifact realizes which statement, is the project's way of working. *Modifiable* is in consistent and structured. Coupling, cohesion, abstractness and link density are no measures: folders carry no rules, a folder sorted by kind is not worse, and a high fan-in is natural for a role everyone names.
 
 ## Four sources
 
@@ -21,9 +21,9 @@ No source suffices alone, and the spec shows what is missing only as far as one 
 | Source | Shows mainly | Means |
 |---|---|---|
 | **The spec itself** | Necessary, consistent, unambiguous, structured; complete as far as the questions reach | Check, show, read and question, below |
-| **Its changes** | Consistent, structured, unambiguous | Six signals from the history ([below](#its-changes)) |
-| **What is built from it** | Complete, unambiguous, consistent, verifiable, necessary, and correct | Findings of builders, reviewers and counter-checks, and a person looking at a result |
-| **The questions it raises** | Complete, unambiguous, consistent, structured | Findings ([§9](the-work.md)) |
+| **Its changes** | Consistent, structured, unambiguous | Six signals in the repository's history ([below](#its-changes)) |
+| **What is built from it** | Complete, unambiguous, consistent, verifiable, necessary, and correct | What those who build and check find, and a person looking at a result |
+| **The questions it raises** | Complete, unambiguous, consistent, structured | What those who work with it have to ask |
 
 ## The spec itself
 
@@ -55,7 +55,7 @@ Four steps, as a person who reviews a spec would take them:
 
 ## Its changes
 
-A good link catches a change: when each fact stands in one place, only that place changes. When a change reaches far all the same, a fact is scattered or misplaced. The history gives the data ([§6](the-state.md#the-history)); each signal is compared with the project's other changes, and mechanical changes, such as a `move`, do not count.
+A good link catches a change: when each fact stands in one place, only that place changes. When a change reaches far all the same, a fact is scattered or misplaced. The repository's history gives the data, read by an agent from the project's version control; each signal is compared with the project's other changes, and mechanical changes, such as the links rewritten for a moved document, do not count. The tool computes none of these signals ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)).
 
 | Signal | Usually means | Points at |
 |---|---|---|
@@ -70,7 +70,7 @@ A high fan-in alone is no problem: a stable vocabulary may be linked much. Only 
 
 ## What is built, and the questions raised
 
-Every finding names its place and the property it violates:
+Everything found names its place and the property it violates:
 
 | What happens | Means | Property |
 |---|---|---|
@@ -82,12 +82,12 @@ Every finding names its place and the property it violates:
 | An answer was found only in an unexpected place | Misplaced | Structured |
 | A person sees the result and says it was not meant so | Wrongly stated | Correct |
 
-Three signals follow: repeated findings at the same place show a bad place; a finding closed without a change of the spec leaves the spec incomplete there; and each answered question becomes a fixed question. These findings are also the touchstone for everything above: whether the signals pointed at these places beforehand, whether a reference spec is really proven, and whether a project converges, with fewer findings per part over time.
+Three signals follow: problems found again and again at the same place show a bad place; a problem settled without a change of the spec leaves the spec incomplete there; and each answered question becomes a fixed question. These problems are also the touchstone for everything above: whether the signals pointed at these places beforehand, whether a reference spec is really proven, and whether a project converges, with fewer problems per part over time.
 
 ## Writing it well
 
-The properties say what a good spec is; a few habits keep a spec there as it grows, because links are what `status` follows ([§6](the-state.md#the-honest-limit)).
+The properties say what a good spec is; a few habits keep a spec there as it grows, because links are how a change of one document reaches those that rely on it.
 
-- **Link what a document relies on, and only that.** A link reaches one step in both directions: a link the document does not need makes it suspect for changes it does not care about, and a missing one lets a change pass unseen. Link the smallest document that holds what is used, and a document whose title stands in the text without a link is a gap, which the signal "mention without a link" shows.
+- **Link what a document relies on, and only that.** A link the document does not need ties it to changes it does not care about, and a missing one lets a change pass unseen. Link the smallest document that holds what is used, and a document whose title stands in the text without a link is a gap, which the signal "mention without a link" shows.
 - **One fact in one place, linked where it is used** ([the writing rule](../vision.md#founding-intent)). When a fact stands in several places, they move apart with every change; a wide change or a hotspot points at a fact that is scattered or mixed.
-- **Only what is fixed.** What a date, an amount or an email address is, nobody relies on the spec for: a document that restates it is one more to confirm and keep true, and it is not necessary.
+- **Only what is fixed.** What a date, an amount or an email address is, nobody relies on the spec for: a document that restates it is one more to keep true, and it is not necessary.

@@ -36,14 +36,14 @@ Markitect gives the project that statement, and agents build to it.
 
 **You architect in Markdown.** The spec is the plan of the whole project: one place you own, where what is written is binding. You decide what the project is, how it is divided and which rules hold, and an agent writes it down with you. The spec is a typed, declarative specification language in Markdown: documents with a type and ordinary links, which say what should hold, not how. The `markitect` tool checks its structure, never its meaning.
 
-**Agents build to spec.** `markitect status` computes from the spec and a state of what was confirmed which documents a change reaches, so the list of work does not depend on an agent's memory. A builder agent makes code, tests, configuration and documentation match the spec, and a reviewer agent with fresh context confirms each document with evidence, so nobody has to read the work to trust it.
+**Agents build to spec.** Code, tests, configuration and documentation are the implementations of the spec, and where they differ from it, the spec is right. Agents build to it, and their work is checked against it, so that nobody has to read the work to trust it.
 
-**Your team works in one circle around the spec.** What anyone notices lands as a report and becomes a finding; what follows from what was decided is recorded without a question; what needs a decision reaches people in a short briefing, and they decide in conversation. People plan with an agent; agents build, review and merge; whoever accepts tries the result. By default one role, the Admin, does all a person does. That way of working stands in the spec too, and skills in your repository realize it, for Claude Code and Codex alike.
+**Your way of working is yours.** How your team works, how you plan, what a story or a report is and where the work lies, you describe in your spec too, with general types; skills, agents and scripts in your repository realize it. Markitect ships the language, a default of packages and templates to start from, and the `markitect` tool, which checks the spec, analyses it and helps reading it. The tool never writes and keeps no state.
 
-Markitect builds on Terraform's declared state, requirements traceability with suspect links, and quality management, and it works with the coding agents' own skills, subagents and scheduled tasks. The [vision](docs/vision.md#why-markitect-exists) gives the full reasoning.
+Markitect builds on Terraform's declared configuration, static typing and the characteristics of good requirements, and a project's way of working uses the coding agents' own skills, subagents and scheduled tasks. The [vision](docs/vision.md#why-markitect-exists) gives the full reasoning.
 
 > [!IMPORTANT]
-> **Early access.** The tool and the skills of the standard are built on Main, and the [concept](docs/concept/README.md) describes them. No release of them exists yet: the latest release and the plugin in the marketplace are still the earlier 0.34.0, of an earlier concept. Until the first release, build the tool from source; the plugin on Main is a development version, whose launcher starts that build ([install](#install)). No skill has run on a real project yet, and commands, files and skills will change. Try it on a small project you can throw away, read the [limits](#limits), and tell us in [Issues](https://github.com/Glacius-Labs/Markitect/issues) what worked and what broke.
+> **Early access.** The tool on Main is described by the [concept](docs/concept/README.md). No release of it exists yet: the latest release and the plugin in the marketplace are still the earlier 0.34.0, of an earlier concept. Until the first release, build the tool from source; the plugin on Main is a development version, whose launcher starts that build ([install](#install)). Commands and files may still change. Try it on a small project you can throw away, read the [limits](#limits), and tell us in [Issues](https://github.com/Glacius-Labs/Markitect/issues) what worked and what broke.
 
 ## Quick start
 
@@ -53,25 +53,24 @@ Build the tool from source, with Go 1.27.1 or newer, and put Go's `bin` folder o
 go install github.com/Glacius-Labs/Markitect/cmd/markitect@main
 ```
 
-For a new project, make an empty folder, run `git init` in it, and then:
+A project is set up by hand. In an empty folder:
 
-1. **Set it up.** `markitect init` writes `.markitect/` with the folders of the work, the spec folder `docs/spec/` with the four templates `project`, `product`, `architecture` and `factory`, the skills of the standard in `.claude/skills/` and `.agents/skills/`, and an entry in `AGENTS.md`. It commits nothing.
-2. **See what is left to fill.** `markitect check` lists the sections the templates leave empty: the work still to do. A further template goes into a folder of its own, such as `markitect apply company company`.
-3. **Start with the Assistant.** In a new session of Claude Code or Codex in the folder, start the skill `markitect-assistant`. It tells you what is critical and what waits for you, and starts the session that fits your work: for a new project the Architect, who works out the spec as a whole with you and leads you through planning, and for an existing one extracts its spec.
+1. **Name the spec folder.** Write the file `.markitect/spec` with the one line `docs/spec`.
+2. **Copy the default.** From a clone of this repository, copy `internal/library/packages/` to `docs/spec/packages/` and a template, such as `internal/library/templates/project/`, to `docs/spec/templates/project/`. The template's links into the packages assume that layout.
+3. **Check it.** `markitect check` lists the sections the template leaves empty: the work still to do. Fill them with your agent until `check` reports nothing.
 
-The plugin in [`plugin/`](plugin/) only fetches the tool for Claude Code ([the plugin](docs/guides/plugin.md)). The [language reference](docs/guides/language-reference.md) lists every command, and the [library](docs/guides/library.md#the-skills-of-the-standard) the skills.
+The [project reference](docs/guides/project-reference.md#setting-up-a-project-by-hand) gives the details, the [library](docs/guides/library.md) the packages and templates of the default, and the [language reference](docs/guides/language-reference.md) every command. The plugin in [`plugin/`](plugin/) only fetches the tool for Claude Code ([the plugin](docs/guides/plugin.md)).
 
 ## How it works
 
 The [concept](docs/concept/README.md) describes the whole; this is the short form.
 
-1. **You change the spec** with an agent, the Architect. A document is an ordinary Markdown file: a title, a type line that links its type, and the sections the type asks for.
-2. **`markitect status` makes the list.** From the spec and the state of what was confirmed, it lists the documents that changed, those suspect because a document they link to, or that links to them, changed, and the files no document explains. It only shows.
-3. **Agents do the work.** A builder realizes a planned story on its branch, the spec change and the code together, and a reviewer with fresh context checks it and confirms each document with evidence, `ok`, `fail` or `skip`, which `markitect confirm` binds to the state it judged.
-4. **What anyone notices becomes a finding.** Reports land in `.markitect/context/`; the Triager files findings; what follows from what was decided is recorded without a question, and what needs a decision reaches you in the briefing.
-5. **The way of working is part of the spec.** Its `factory` part says who does what, and the skills in the repository realize it.
+1. **You write the spec** with an agent. A document is an ordinary Markdown file: a title, a type line that links its type, and the sections the type asks for.
+2. **`markitect check` checks its structure:** titles, types, missing or empty sections and links that point to no document. It never judges meaning.
+3. **The tool helps reading it.** `show` gives a document with what it links to and what links to it, `table` every document of a type, `topic` everything about a document, a type or a folder with the signals that say where reading pays off, and `questions` the competency questions of the packages you use.
+4. **Agents build to it,** in the way of working your spec describes. A change to the spec is seen in the repository's diff like every change, and `markitect diff` shows it document by document against another state of the project.
 
-The state, `.markitect/state.jsonl`, works like Go's test cache: a verdict holds until one of its inputs changes, so a later change puts back on the list only what it reaches. No `markitect` command starts an agent or uses Git.
+No `markitect` command writes a file or starts an agent.
 
 ## Example: one rule changes
 
@@ -89,44 +88,53 @@ Type: [Rule](../packages/core/rule.md)
 A member has at most five open loans.
 ```
 
-You change five to three. `markitect status` lists the rule as changed and every document that links to it, or that it links to, as suspect, such as borrowing:
+`markitect show lending/loan-limit` shows what relies on it, with the section the link stands in:
 
 ```text
-changed: lending/loan-limit.md@3f85f260: self
-  look at: docs/spec/lending/loan-limit.md, src/loans.go, tests/loans_test.go, tests/loans_test.go:5
-suspect: lending/borrow.md@fde1ae8e: link:lending/loan-limit.md
-  look at: docs/spec/lending/borrow.md, src/loans.go, tests/loans_test.go, tests/loans_test.go:5
-1 changed, 1 suspect, 0 unexplained
+lending/loan-limit.md
+Title: Loan limit
+Type: packages/core/rule.md
+Sections:
+  Applies to
+  Rule
+Links to:
+  lending/borrow.md
+Linked from:
+  lending/borrow.md (Refused when)
 ```
 
-A build has the builder realize the changed rule, and the reviewer judges the suspect documents against it, mostly without a builder. Documents the change does not reach are not listed.
+You change five to three. Borrowing names the limit in its answer to a refused call, so it is the document to read again, and the agent that realizes the change starts from both. A link with a typo, `[loan limit](loan-limt.md)`, would not pass `check`:
+
+```text
+lending/borrow.md:15: link.unresolved: no document at "loan-limt.md"
+1 error in 31 documents
+```
 
 ## Install
 
-The tool runs anywhere Go runs, on Windows, Linux and macOS; the skills are written for Claude Code and Codex alike.
+The tool runs anywhere Go runs, on Windows, Linux and macOS.
 
-- **From source,** as in the [quick start](#quick-start): `go install github.com/Glacius-Labs/Markitect/cmd/markitect@main`. Each project pins the tool's version in `.markitect/version`, and `markitect version` says whether the tool on your `PATH` is that version.
+- **From source,** as in the [quick start](#quick-start): `go install github.com/Glacius-Labs/Markitect/cmd/markitect@main`. `markitect version` names the version and build of the tool on your `PATH`.
 - **The Claude Code plugin** in [`plugin/`](plugin/) brings the tool and nothing else: its launcher downloads the binary of the plugin's version on first use and checks it against the release's checksums. The plugin on Main is a development version, which has no release binary: load the repository's `plugin/` folder as a local plugin, and its launcher starts the next `markitect` on the PATH after the plugin's own `bin/`, the build from source ([the plugin](docs/guides/plugin.md#the-launcher)).
 
 ## Status
 
-The tool and the skills of the standard are built on Main and covered by tests and a command smoke. No skill has run on a project yet: the roadmap runs a finding around the circle on a test project, extracts the spec of an existing project, and then runs a lab test and a proof on a project that is not ours ([roadmap](docs/roadmap.md#current-steps)).
+The tool and the default are built on Main and covered by tests and a command smoke. Markitect ships no way of working yet; the [roadmap](docs/roadmap.md#next) names what comes next.
 
 ### Limits
 
-- **Not run yet.** The skills of the standard have not run on a real project, for Claude Code or for Codex.
-- **Your machine, your rights.** In a session the agents run with your permissions, so they may stop to ask. Don't let them read untrusted input, such as issue text or web pages, without an isolated machine with limited rights around them.
-- **No spending or time limit.** A Builder works until its story lands or is aborted, with at most five review rounds. Nothing else limits the time or the quota it uses. You stop it.
-- **Confirmed is not proven.** An empty `markitect status` means every document was confirmed at its current state, with evidence. It reaches one step along declared links, and a verdict can be wrong; control samples, which come later, will measure how often.
+- **Set up by hand.** Nothing creates a project or copies the default for you.
+- **Structure only.** `check` sees titles, types, sections and links. Whether the spec says what you meant, readers and use show, and whether the project realizes it, your way of working has to check.
+- **Your machine, your rights.** Agents run with your permissions. Don't let them read untrusted input, such as issue text or web pages, without an isolated machine with limited rights around them.
 
 ## Documentation
 
 | Page | Covers |
 | --- | --- |
 | [Language reference](docs/guides/language-reference.md) | The spec language and every command |
-| [Project reference](docs/guides/project-reference.md) | The project, the state, `status`, `confirm`, `move`, the history and `compare` |
+| [Project reference](docs/guides/project-reference.md) | The project, setting one up by hand, `version` and `diff` |
 | [The plugin](docs/guides/plugin.md) | The launcher that fetches the tool, and its start hooks |
-| [Library](docs/guides/library.md), [Signals](docs/guides/signals.md) | The packages, templates and skills, and the signals of a spec |
+| [Library](docs/guides/library.md), [Signals](docs/guides/signals.md) | The packages and templates, and the signals of a spec |
 | [Concept](docs/concept/README.md) | The one description of the product |
 | [Vision](docs/vision.md) | Why Markitect exists and what it leaves to people |
 | [Decisions](docs/decisions.md) | What holds today, and the open questions |

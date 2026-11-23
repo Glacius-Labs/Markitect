@@ -6,28 +6,25 @@ The image is an interface: it says what holds and hides how it is done, as a mod
 
 The test keeps the spec short. For software, what whoever relies on it depends on is fixed: inputs and their validation, data shapes, the answer to a refused call, stored data. Detail one can observe but not reasonably depend on, such as the wording of a message or the format of an identifier, is free unless the project fixes it. Loops and data structures are the agents'. For a business, prices, who may do what and opening hours are fixed.
 
-So it is clear what a defect is. Where something differs from what the spec states, it is a defect of the artifact. Where something someone relies on is missing, it is a defect of the spec, and it becomes a finding ([§9](the-work.md)).
+So it is clear what a defect is. Where something differs from what the spec states, it is a defect of the artifact. Where something someone relies on is missing, it is a defect of the spec.
 
 ## The end state, not the way
 
-The spec describes the project as it should be now, as if it came from an ideal process; the way there is in Git. It describes what should hold, not the work that changes the spec: a backlog, a plan, the tasks towards a goal and the risks of the project stay out. What a running operation does belongs in: its processes and recurring tasks, the way of working of the project, and goals with a date, which say what should hold by then.
+The spec describes the project as it should be now, as if it came from an ideal process; the way there is in the repository's history. It describes what should hold, not the work that changes the spec: a backlog, a plan, the tasks towards a goal and the risks of the project stay out. What a running operation does belongs in: its processes and recurring tasks, the way of working of the project, and goals with a date, which say what should hold by then.
 
-**Plan items are work.** A Feature, a Story, a finding or a report is the occasion for a change, not the target: it changes its state all the time and would make everything it links to suspect, and a finished item is history. So the documents of the work lie in `.markitect/`, while their types stand in the spec, in its `factory` part ([§9](the-work.md)). They are written in the same language, and `check` checks them.
+**The work is not the target.** A plan item, a ticket or a report is the occasion for a change: it changes its state all the time, and a finished one is history. How a project keeps its work, in which form and where, is part of its way of working, which its spec states with general types ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
 
-## Four templates
+## Three templates
 
-A spec starts from four small templates, which `init` lays out; each is a part of the spec, a folder whose README is its table of contents ([§3](the-language.md#parts)).
+The default has five templates. A software project's spec starts from three small ones; each is a part of the spec, a folder whose README is its table of contents ([§3](the-language.md#parts)). The other two are `software`, a checklist for the `project` part ([below](#the-content-model)), and `company`, which a business starts from instead.
 
 | Template | Says |
 |---|---|
 | **`project`** | Why the project exists and what is given: its purpose, its context, its guiding principles and its quality |
 | **`product`** | What the product can do for its users, by capability: each a folder with a README of the type Capability of the `software` package. It has no fixed chapters, and it is structured, never flat |
 | **`architecture`** | How it is built: its building blocks and the rules for building |
-| **`factory`** | How the team works: roles and persons, the agents, the circle, meetings, dashboards and handbooks, the planning with its Areas and classes, and the types of the work. It is not empty: it holds the way of working as a standard, which the project changes like any part of its spec ([§8](the-circle.md)) |
 
-Areas belong to the planning, not to the architecture: one may want to plan differently from how the system is built, although they usually follow it. An Area is a document of its own in the `factory` part, with its owner, what it covers and its class, never a folder of the spec. It has no spec of its own: it names the parts of the product and the building blocks of the architecture it covers, and every change to them lands through a story.
-
-A business has the parts of the `company` package instead: its offer, its processes, its rules and its team. A business case, scenarios and operational tasks of a software project wait until a project needs them.
+A business has the parts of the `company` template instead: its offer, its processes, its rules and its team. A business case, scenarios and operational tasks of a software project wait until a project needs them.
 
 ## The content model
 

@@ -10,8 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
-	"github.com/Glacius-Labs/Markitect/internal/state"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
 func run(args ...string) (int, string, string) {
@@ -20,29 +19,47 @@ func run(args ...string) (int, string, string) {
 	return code, out.String(), errOut.String()
 }
 
-// initialized is a new project with the files of .markitect/ that init writes
-// and an empty spec folder, without the templates and skills init lays out:
-// the project the tests of the commands start from.
+// initialized is a new project: a folder with the file .markitect/spec, which
+// names docs/spec, and that empty spec folder. The tests of the commands start
+// from it.
 func initialized(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	markitectFiles(t, dir)
+	markitectFile(t, dir)
 	if err := os.MkdirAll(specOf(dir), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	return dir
 }
 
-// markitectFiles writes the files of .markitect/ that init writes into dir.
-func markitectFiles(t *testing.T, dir string) {
+// markitectFile writes .markitect/spec into dir.
+func markitectFile(t *testing.T, dir string) {
 	t.Helper()
-	for _, f := range state.InitFiles(buildinfo.Version(), state.DefaultSpec) {
-		write(t, dir, f.Path, string(f.Data))
+	write(t, dir, project.SpecFile, "docs/spec\n")
+}
+
+// specOf is the spec folder of a project made by initialized.
+func specOf(dir string) string { return filepath.Join(dir, "docs", "spec") }
+
+func write(t *testing.T, dir, p, text string) {
+	t.Helper()
+	file := filepath.Join(dir, filepath.FromSlash(p))
+	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(file, []byte(text), 0o644); err != nil {
+		t.Fatal(err)
 	}
 }
 
-// specOf is the spec folder of a project that init set up.
-func specOf(project string) string { return filepath.Join(project, "docs", "spec") }
+func read(t *testing.T, dir, p string) string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(dir, filepath.FromSlash(p)))
+	if err != nil && !os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+	return string(data)
+}
 
 // spec sets up a project whose spec holds files and returns its folder.
 func spec(t *testing.T, files map[string]string) string {
@@ -95,7 +112,7 @@ func TestCheckJSON(t *testing.T) {
 			t.Fatalf("%v: %s", err, out)
 		}
 		want := map[string]any{
-			"format_version": float64(1), "kind": "check", "documents": float64(2), "work": float64(0),
+			"format_version": float64(1), "kind": "check", "documents": float64(2),
 			"diagnostics": []any{map[string]any{"file": "sub/b.md", "line": float64(3), "code": "link.unresolved", "message": `no document at "../ghost.md"`}},
 		}
 		if code != ExitFound || !reflect.DeepEqual(doc, want) {
@@ -108,12 +125,12 @@ func TestCheckJSON(t *testing.T) {
 	}
 }
 
-// The help groups the commands under five headings, in the order of the
-// concept, and names every command once.
+// The help groups the commands under three headings and names every command
+// once.
 func TestHelpGroupsTheCommands(t *testing.T) {
 	_, out, _ := run("help")
 	at := -1
-	for _, heading := range []string{"Look", "Check", "Change the spec", "Confirm", "Set up"} {
+	for _, heading := range []string{"Look", "Check", "Tool"} {
 		i := strings.Index(out, "\n"+heading+"\n")
 		if i <= at {
 			t.Fatalf("heading %s is missing or out of order in\n%s", heading, out)
@@ -125,13 +142,13 @@ func TestHelpGroupsTheCommands(t *testing.T) {
 			t.Errorf("the help names %s %d times", name, n)
 		}
 	}
-	// The commands are exactly the fourteen of the concept.
+	// The commands are exactly these eight.
 	var names []string
 	for name := range commands {
 		names = append(names, name)
 	}
 	sort.Strings(names)
-	const want = "apply check compare confirm init licenses move new questions show status table topic version"
+	const want = "check diff licenses questions show table topic version"
 	if got := strings.Join(names, " "); got != want {
 		t.Errorf("the commands are %s, want %s", got, want)
 	}
@@ -151,12 +168,19 @@ func TestUsage(t *testing.T) {
 		{[]string{"check", "-C", dir, "--strict"}, "unknown flag --strict"},
 		{[]string{"check", "-C"}, "flag -C needs a value"},
 		{[]string{"check", "-C", ""}, "flag -C needs a folder"},
-		{[]string{"check", "-C", dir, "--spec", "x"}, "--spec is a flag of init"},
-		{[]string{"init", "--spec"}, "flag --spec needs a value"},
-		{[]string{"status", "-C", dir, "--all"}, "--all is a flag of topic"},
+		{[]string{"check", "-C", dir, "--spec", "x"}, "unknown flag --spec"},
+		{[]string{"check", "-C", dir, "--all"}, "--all is a flag of topic"},
+		{[]string{"check", "-C", dir, "--file", "a.md"}, "unknown flag --file"},
+		{[]string{"init", "-C", dir}, `unknown command "init"`},
+		{[]string{"apply", "-C", dir}, `unknown command "apply"`},
+		{[]string{"new", "-C", dir}, `unknown command "new"`},
+		{[]string{"status", "-C", dir}, `unknown command "status"`},
+		{[]string{"confirm", "-C", dir}, `unknown command "confirm"`},
+		{[]string{"move", "-C", dir}, `unknown command "move"`},
+		{[]string{"compare", "-C", dir}, `unknown command "compare"`},
 		{[]string{"check", "-C", filepath.Join(dir, "missing")}, "not a folder"},
 		{[]string{"check", "-C", file}, "not a folder"},
-		{[]string{"check", "-C", specOf(dir)}, "holds no .markitect/version; markitect init makes one"},
+		{[]string{"check", "-C", specOf(dir)}, "holds no .markitect/spec; that file holds one line, the path of the spec folder below the project folder"},
 	} {
 		code, out, errOut := run(tc.args...)
 		if code != ExitFailed || out != "" || !strings.Contains(errOut, tc.want) {
@@ -164,13 +188,13 @@ func TestUsage(t *testing.T) {
 		}
 	}
 	for _, help := range []string{"help", "-h", "--help"} {
-		if code, out, _ := run(help); code != ExitOK || !strings.Contains(out, "init [--spec PATH]") {
+		if code, out, _ := run(help); code != ExitOK || !strings.Contains(out, "diff OLD [NEW]") {
 			t.Errorf("%s: %d %q", help, code, out)
 		}
 	}
 }
 
-// The flags may stand before the command, as Git's do, and between its
+// The flags may stand before the command, as in markitect -C PROJECT check, and between its
 // arguments.
 func TestFlagsMayStandBeforeTheCommand(t *testing.T) {
 	dir := spec(t, map[string]string{"a.md": "# A\n"})
@@ -181,10 +205,10 @@ func TestFlagsMayStandBeforeTheCommand(t *testing.T) {
 		{"-C", dir, "show", "a"},
 		{"--json", "-C", dir, "show", "a"},
 		{"-C", dir, "table"},
-		{"-C", dir, "status", "--json"},
+		{"-C", dir, "table", "--json"},
 	} {
 		code, out, errOut := run(args...)
-		if code != ExitOK && !(args[len(args)-1] == "status" || args[len(args)-2] == "status") || errOut != "" || out == "" {
+		if code != ExitOK || errOut != "" || out == "" {
 			t.Errorf("%v: %d %q %q", args, code, out, errOut)
 		}
 	}
@@ -207,14 +231,13 @@ func TestFlagsMayStandBeforeTheCommand(t *testing.T) {
 func TestWrongArgumentsPrintOneLineOfUsage(t *testing.T) {
 	dir := spec(t, map[string]string{"a.md": "# A\n"})
 	for args, want := range map[string]string{
-		"show":         "usage: markitect show DOCUMENT [-C PROJECT] [--json]",
-		"confirm a.md": "usage: markitect confirm DOCUMENT@FINGERPRINT VERDICT",
-		"check extra":  "usage: markitect check [-C PROJECT] [--json]",
-		"move a":       "usage: markitect move OLD NEW",
+		"show":        "usage: markitect show DOCUMENT [-C PROJECT] [--json]",
+		"check extra": "usage: markitect check [-C PROJECT] [--json]",
+		"diff":        "usage: markitect diff OLD [NEW]",
 	} {
 		code, out, errOut := run(append(strings.Fields(args), "-C", dir)...)
 		if code != ExitFailed || out != "" || !strings.HasPrefix(errOut, "markitect "+strings.Fields(args)[0]+": wrong number of arguments\n") ||
-			!strings.Contains(errOut, want) || strings.Count(errOut, "\n") > 4 || strings.Contains(errOut, "Change the spec") {
+			!strings.Contains(errOut, want) || strings.Count(errOut, "\n") > 4 {
 			t.Errorf("%s: %d %q", args, code, errOut)
 		}
 	}
@@ -228,7 +251,7 @@ func TestWrongArgumentsPrintOneLineOfUsage(t *testing.T) {
 func TestFlagsBeforeTheCommandAreRead(t *testing.T) {
 	parent := t.TempDir()
 	project := filepath.Join(parent, "check")
-	markitectFiles(t, project)
+	markitectFile(t, project)
 	if err := os.MkdirAll(filepath.Join(project, "docs", "spec"), 0o755); err != nil {
 		t.Fatal(err)
 	}

@@ -1,6 +1,6 @@
 # Releasing
 
-How a release is made, what it publishes and how to cut one ([DEC-153](decisions.md#dec-153-markitect-holds-the-work-init-lays-out-templates-and-skills-and-the-plugin-fetches-its-own-version)). Releases start with `0.15.0`. The 18 versions `v0.1.0` to `v0.14.1` belong to retired releases of an earlier product and must not be reused; their tags no longer exist, and the commit behind each is in the [retired release mapping](https://github.com/Glacius-Labs/Markitect/blob/d0c23a31efc928e95f3acc0633deb01a5f887884/docs/validation/retired-releases-20261017.json).
+How a release is made, what it publishes and how to cut one ([DEC-135](decisions.md#dec-135-the-tool-stays-in-go-and-is-rebuilt-for-the-language)). Releases start with `0.15.0`. The 18 versions `v0.1.0` to `v0.14.1` belong to retired releases of an earlier product and must not be reused; their tags no longer exist, and the commit behind each is in the [retired release mapping](https://github.com/Glacius-Labs/Markitect/blob/d0c23a31efc928e95f3acc0633deb01a5f887884/docs/validation/retired-releases-20261017.json).
 
 ## What a tag publishes
 

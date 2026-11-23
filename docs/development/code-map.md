@@ -16,11 +16,10 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|---|
 | `build` | Version identity and embedded license notices. | nothing | 1 |
 | `language` | The spec language over a supplied file system: documents, types, sections, links and check. | nothing | 1 |
-| `library` | The library built into the tool: packages, templates, the skills of the standard, reference values and question catalogs. | nothing | 1 |
-| `editing` | The change sets of the commands that write a spec: new, move and apply, over supplied file systems. | `language` | 1 |
+| `library` | The library of packages and templates, and the reference values and question catalogs built into the tool. | nothing | 1 |
 | `signals` | The statements of a spec, its signals and the topic view, over a parsed spec. | `language` | 1 |
-| `state` | A project over a supplied file system: the .markitect/ layout, the project loaded with its spec, the walk of its files, file hashes, the state with status, confirm and move, the history, the documents of the work with their check, the comparison of two projects and the change signals. | `language` | 1 |
-| `command-line` | The command line: its arguments, the project it works in, init with its templates, skills and entry in AGENTS.md, version and licenses, the spec folder and the state it reads and writes, the lock of the state, and its text and JSON output. | `build`, `language`, `library`, `editing`, `signals`, `state` | 1 |
+| `project` | A project over a supplied file system: the file .markitect/spec, the project loaded with its spec and the difference between the specs of two projects. | `language` | 1 |
+| `command-line` | The command line: its arguments, the project it works in, the commands that read its spec, version and licenses, and the text and JSON output. It writes nothing. | `build`, `language`, `library`, `signals`, `project` | 1 |
 | `entrypoint` | The thin entrypoint of markitect. | `command-line` | 1 |
 | `maintenance` | The import gate and the code map, separate from product execution. | nothing | 1 |
 | `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 1 |
@@ -42,13 +41,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/library` | Package library is the library built into the tool: the packages of types, the templates that apply and init copy into a spec, the skills of the standard that init copies into a project, and per package its reference values and its question catalog, which the tool reads and never copies. | [docs/guides/library.md](../guides/library.md) |
-
-## Editing
-
-| Package | Summary | Owning document |
-|---|---|---|
-| `internal/edit` | Package edit computes the changes of the commands that write a spec: new, move and apply. | [docs/guides/language-reference.md#commands-that-write](../guides/language-reference.md#commands-that-write) |
+| `internal/library` | Package library is the library of Markitect: the packages of types and the templates that a person copies into a spec by hand, and per package its reference values and its question catalog, which the tool reads and never copies. | [docs/guides/library.md](../guides/library.md) |
 
 ## Signals
 
@@ -56,23 +49,23 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|
 | `internal/signals` | Package signals finds where reading a spec pays off: it splits the prose of the documents into statements, finds the marker words in them, computes the eight signals of the spec itself and gathers the topic view of a document, a type or a folder. | [docs/guides/signals.md](../guides/signals.md) |
 
-## Project and state
+## Project
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/state` | Package state is a Markitect project, over a file system rooted at the project folder: the layout of .markitect/, the project loaded with its spec, the files of the project without what its ignore files exclude, the hash of a file, the state: its rows, what status lists and the rows a confirm or a move leaves, the history, the documents of the work with what check finds in them, the comparison of two projects and the change signals of the history. | [docs/guides/project-reference.md](../guides/project-reference.md) |
+| `internal/project` | Package project is a Markitect project, over a file system rooted at the project folder: the file .markitect/spec that makes a folder a project and names its spec folder, the project loaded with its spec, and the difference between the specs of two projects. | [docs/guides/project-reference.md](../guides/project-reference.md) |
 
 ## Command line
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/cli` | Package cli is the command line of markitect: it parses the arguments, finds the project they work in, sets one up with init, reads its spec and the documents of its work, prints what the language finds, as text or as JSON, and applies the changes of the commands that write. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
+| `internal/cli` | Package cli is the command line of markitect: it parses the arguments, finds the project they work in, reads its spec and prints what the language finds, as text or as JSON. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
 
 ## Entrypoint
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `cmd/markitect` | Command markitect is the Markitect tool: show, table, topic, questions and compare to look; check and status to check; new, apply and move to change the spec; confirm; and init, version and licenses to set up. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
+| `cmd/markitect` | Command markitect is the Markitect tool: show, table, topic, questions and diff to look; check to check; and version and licenses about the tool itself. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
 
 ## Maintenance
 
@@ -90,4 +83,4 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `tools/smoke` | Command smoke builds markitect from the repository and drives its commands over a small fresh project with exact assertions. | [docs/architecture.md#distribution](../architecture.md#distribution) |
+| `tools/smoke` | Command smoke builds markitect from the repository and drives its commands over a small project that it builds by hand, the way a person does: an empty folder, the packages and templates of the library copied into a spec folder, and the file .markitect/spec. | [docs/architecture.md#distribution](../architecture.md#distribution) |

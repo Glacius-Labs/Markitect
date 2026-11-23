@@ -75,22 +75,22 @@ func TestPackagesFollowGoListRules(t *testing.T) {
 func TestCheckInventoryReportsEveryProblem(t *testing.T) {
 	root := t.TempDir()
 	writeFixture(t, root, map[string]string{
-		"go.mod":                      "module example\n",
-		"internal/lang/c.go":          "package lang\n",
-		"internal/state/h.go":         "package state\n",
-		"internal/state/missing/m.go": "package missing\n",
-		"docs/owner.md":               "# Owner\n\n## Real section\n\n```text\n# Not a heading\n```\n\n<a id=\"explicit\"></a>\n",
+		"go.mod":                        "module example\n",
+		"internal/lang/c.go":            "package lang\n",
+		"internal/project/h.go":         "package project\n",
+		"internal/project/missing/m.go": "package missing\n",
+		"docs/owner.md":                 "# Owner\n\n## Real section\n\n```text\n# Not a heading\n```\n\n<a id=\"explicit\"></a>\n",
 	})
 	valid := Rules{Layers: Table.Layers, Packages: []Package{
 		{"internal/lang", "language", "docs/owner.md#real-section"},
-		{"internal/state", "state", "docs/owner.md#explicit"},
+		{"internal/project", "project", "docs/owner.md#explicit"},
 	}}
-	if problems, err := valid.CheckInventory(root); err != nil || len(problems) != 1 || problems[0] != "missing package internal/state/missing: add a row to the rule table" {
+	if problems, err := valid.CheckInventory(root); err != nil || len(problems) != 1 || problems[0] != "missing package internal/project/missing: add a row to the rule table" {
 		t.Fatalf("valid rows: %v %v", problems, err)
 	}
 	bad := Rules{Layers: Table.Layers, Packages: []Package{
 		{"internal/lang", "language", "docs/owner.md#not-a-heading"},
-		{"internal/state", "state", "docs/owner.md"},
+		{"internal/project", "project", "docs/owner.md"},
 		{"internal/gone", "maintenance", "docs/absent.md"},
 		{"internal/other", "maintenance", "../outside.md"},
 	}}
@@ -103,7 +103,7 @@ func TestCheckInventoryReportsEveryProblem(t *testing.T) {
 		"package internal/lang: owning document: docs/owner.md has no anchor #not-a-heading",
 		"package internal/gone: owning document: docs/absent.md does not exist",
 		`package internal/other: owning document: "../outside.md" is not a clean repository-relative path`,
-		"missing package internal/state/missing: add a row to the rule table",
+		"missing package internal/project/missing: add a row to the rule table",
 		"extra row internal/gone: no Go package exists there; remove it from the rule table",
 		"extra row internal/other: no Go package exists there; remove it from the rule table",
 	} {

@@ -1,32 +1,35 @@
 # The tool
 
-**The `markitect` program computes and checks; whoever starts an agent acts** ([DEC-142](../decisions.md#dec-142-the-tool-computes-and-checks-a-runner-acts)). It checks the spec and the documents of the work, computes the state and what is to verify, and binds verdicts. It starts no agent, keeps no run open, imposes no order, counts no rounds and keeps no state between commands outside the project. It uses no Git ([DEC-097](../decisions.md#dec-097-markitect-uses-no-git)): it reads the project by walking its folder, skipping what the project's `.gitignore` files exclude, and agents and people make every Git step. So it does not know where it runs, and gives the same answer in a session and in CI.
-
-The tool informs; it steers nothing ([DEC-148](../decisions.md#dec-148-markitect-is-a-tool-a-spec-with-templates-and-skills)). The way of working stands in the spec and the skills realize it ([§8](the-circle.md)); nothing of it is enforced through the tool, and `status` is never a gate. Each command does one thing on its own: `status`, `confirm` and `move` never refuse because of what `check` finds ([DEC-152](../decisions.md#dec-152-each-command-run-skill-and-agent-does-one-thing-on-its-own)). The way of working uses the tool wherever it helps, `check` and `status` while building included.
+**The `markitect` program checks the spec, analyses it and helps reading it** ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)). It never writes and keeps no state. It starts no agent and steers nothing. It neither needs nor knows Git or any other version control ([DEC-097](../decisions.md#dec-097-markitect-neither-needs-nor-knows-version-control)): it reads folders, `.markitect/spec` and the spec folder it names, and nothing else of the project. So it does not know where it runs, and gives the same answer in a session and in CI. Anything more is a separate tool or a script of the project.
 
 ## Commands
 
-The commands are flat, as Git's are. The help groups them.
+The commands are flat, and each does one thing on its own. The help groups them.
 
 | Group | Command | Does |
 |---|---|---|
-| Look | `show DOCUMENT` | A document with its type, its sections, what it links to and what links to it with the section the link stands in, its artifacts and its verdict; for a type, its documents |
-| | `table [TYPE]` | Every document of a type as a table, one column per section; without a type, every document with its verdict and artifacts |
-| | `topic [TOPIC]` | The topic view: a document, a type or a folder as one text with everything that belongs to it, and the signals that say where reading pays off; without a topic, the signals of the whole spec ([§5](is-the-spec-good.md#the-spec-itself)) and the change signals of its history ([§5](is-the-spec-good.md#its-changes)) |
-| | `questions` | The competency questions of the packages and templates the spec uses ([§5](is-the-spec-good.md#the-spec-itself)) |
-| | `compare OLD [NEW]` | Compares two states, each a folder with a spec, a state and the work: what is new, gone, changed or suspect, with the old and the new text ([§10](overview.md#comparing-two-states)) |
-| Check | `check` | Checks the spec, titles, types, sections and links ([§3](the-language.md#what-check-catches)), and the documents of the work in `.markitect/` against their types |
-| | `status [PATH]...` | What is changed, suspect or unexplained, for the documents, files and folders named or for all ([§6](the-state.md#what-status-lists)). It only shows |
-| Change the spec | `new TYPE PATH [TITLE]` | Creates a document of a type, with its title, the type line and the type's required sections |
-| | `apply TEMPLATE [TARGET]` | Copies a template from the library into the spec, with every package it needs; a package the spec has is never overwritten, and a path that exists stops it ([§3](the-language.md#packages-and-templates)) |
-| | `move OLD NEW` | Moves or renames a document, rewrites every link to it, in the spec and in the work, and the links inside it, carries its row in the state and records the move ([§6](the-state.md#moving-a-document)) |
-| Confirm | `confirm DOCUMENT@FINGERPRINT VERDICT` | Binds `ok`, `fail` or `skip`, with the files that realize the document, all of them, and the evidence or the reason, to the state `status` showed; a later `confirm` replaces the list of files ([§6](the-state.md#binding-a-verdict)) |
-| Set up | `init` | Sets up a project: `.markitect/` with its empty folders for the work, the spec with the four templates, and the skills of the standard ([§12](the-project.md)) |
-| | `version` | The tool's version, and whether it is the one the project pins |
+| Look | `show DOCUMENT` | A document with its type, its sections, what it links to and what links to it with the section the link stands in; for a type, its documents |
+| | `table [TYPE]` | Every document of a type as a table, one column per section; without a type, every document with its type and title |
+| | `topic [TOPIC]` | The topic view: a document, a type or a folder as one text with everything that belongs to it, and the signals that say where reading pays off; without a topic, the signals of the whole spec ([§5](is-the-spec-good.md#the-spec-itself)) |
+| | `questions` | The competency questions of the packages the spec has ([§5](is-the-spec-good.md#the-spec-itself)) |
+| | `diff OLD [NEW]` | What is new, gone or changed in the spec of NEW, by default this project, against the project OLD, with a diff for what changed |
+| Check | `check` | Checks the spec: titles, types, sections and links ([§3](the-language.md#what-check-catches)) |
+| Tool | `version` | The tool's version and build |
 | | `licenses` | The third-party notices |
 
-**What the tool writes.** Of the state and the history it writes only what it binds: `confirm` a verdict row and its history entry, `move` the moved row and its history entry. `init`, `apply`, `new` and `move` write documents on request, and `move` also rewrites the links in the documents of the work to the document it moves. Plan items, findings, reports and briefings are otherwise files that agents write and `check` checks. There is no command to report, to start or end a run, to land a branch or to steer anything, and no settings file.
+## Reading the spec
+
+**The tool shows, the agent explains** ([DEC-131](../decisions.md#dec-131-the-tool-shows-claude-explains)). What people should not have to take on an agent's word does not come from an agent. The tool, and the project's version control where changes are concerned, show: completely, deterministically, with numbers that add up. The agent tells and explains, with a citation for each statement, and ends by naming what it did not cover.
+
+The image is a building model. Floor plan, section and bill of materials are generated from one model, never drawn twice. The spec is the model, and every view is generated from it.
+
+- **What is the project?** The spec itself, the topic view and the table per type, explained by the agent. An explanation of the whole, a part, a document or a question comes only from the spec, with a citation for each statement, and otherwise says "not stated", as a competency question is answered ([§5](is-the-spec-good.md#the-spec-itself)). "Explain the whole" goes through the parts in the order of their tables of contents. A picture, such as the states of a concept, the agent draws only from what documents say, and names them below it.
+- **What changed?** A change to the spec is seen through the ordinary diff of the repository, like every change. `diff` compares the specs of two folders, such as the project and a copy of an older state of it, however its owner made that copy, and names what is new, gone or changed.
+
+Views are generic and come from the language, so they work for every spec: the topic view, a table per type, `show` and `diff`. Views particular to a package come with a user interface. A dashboard or a handbook that a project wants is an artifact of the project, built from its spec like any other.
+
+There is no user interface of Markitect for now. The spec is readable Markdown, the tool runs natively, and people ask their agent. A user interface comes once Markitect is proven ([§8](what-is-shown.md)).
 
 ## Output and exit codes
 
-A diagnostic is one line, `file:line: code: message`. With `--json`, a command prints one document that starts with a `format_version` and a `kind`. Exit 0 means all is well, 1 that the command found something, and 2 that it could not run.
+A diagnostic is one line, `file:line: code: message`. With `--json`, a command prints one document that starts with a `format_version` and a `kind`. Exit 0 means all is well, 1 that the command found something, and 2 that it could not run. The [language reference](../guides/language-reference.md#commands) gives every command exactly.
