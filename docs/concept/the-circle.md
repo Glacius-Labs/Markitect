@@ -48,7 +48,7 @@ An agent is a fresh session that runs exactly one skill, named `markitect-` and 
 | `markitect-analyze` | Work through a Smell story and write a report | The Housekeeper | No |
 | `markitect-accept` | Polish and accept a Feature or a Story with the person who accepts | Norman | Yes |
 | `markitect-observe` | Watch one topic and write a report | The Housekeeper | No |
-| `markitect-create-observer` | Set up a new observer, on a story | A person | Yes |
+| `markitect-create-observer` | Set up a new observer, on a story | Norman, for a person | Yes |
 | `markitect-triage` | Turn new reports into findings, classify and file them | The Housekeeper | No |
 | `markitect-record` | Carry out decisions and turn findings into plan items | The Housekeeper | No |
 | `markitect-brief` | Write the briefings: daily, weekly and for each meeting | The Housekeeper | No |
@@ -60,7 +60,7 @@ An agent is a fresh session that runs exactly one skill, named `markitect-` and 
 
 **Observers** are general and come with the standard: what was dropped into the context, how the plan moves, deviations on the main branch, hotspots, what is built twice, and `status`, which reports what `markitect status` shows anew. A project adds observers for its own sources with `markitect-create-observer`, each on a story like every other change to the spec.
 
-**Meetings** stand in the spec: rhythm, time, participants and what they cover. The Briefer writes a briefing for each in time, and Norman says in the morning which meeting is today. Decisions are made in the conversation; its transcript goes into the context.
+**Meetings** stand in the spec: rhythm, time, participants and what they cover. The Briefer writes a briefing for each in time, and Norman says in the morning which meeting is today. Decisions are made in conversation: in a meeting, whose transcript goes into the context, or by one person telling their agent, which drops the decision there.
 
 ## Planning
 

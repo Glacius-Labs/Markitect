@@ -44,6 +44,7 @@ You add a new observer, with a person, on its story, in a session of your own th
 7. Once the person is content, run `markitect check`, and have a fresh Reviewer check the change to the spec, in rounds as in building: for each round start a fresh subagent that runs exactly the skill `markitect-review`, with the model and effort that `SPEC/factory/agents/review.md` names under Model on the line of the provider you run on, read at that moment. Tell it: `create-observer` as who started it; the person; the story; that the row of its table is a change to the spec, and that once you agree it confirms the observer's document and the README as a document no file realizes, `skip` with `-m` giving that reason; that the result lies on the story's branch, in the folder where it is checked out; which round it is; and, from the second round on, the earlier comments and your answers. Answer its comments with the person, until no comment that counts remains; there are at most five rounds, and from the third on nitpicks no longer count. Then bring the branch to `main` as one merge whose commit names the story, and push. Set the story `done` and release its claim, by writing `none` into Claimed by in the same step. From then on the Housekeeper runs the observer when it is due.
 8. When the person drops the observer, or you do not agree with the Reviewer within five rounds, the story goes back to `draft` with your report, as after an abort: on `main`, set it to `draft`, write `none` into its Claimed by and put a relative link to your report into its Result.
 9. Whatever strikes you outside your task, drop with `markitect-capture`, one drop per observation: what, where, and what you were doing.
+10. When the person tells you what they decided on a finding, drop the decision with `markitect-capture`, naming the finding by its link.
 
 ## What you never do
 
@@ -89,3 +90,4 @@ You add a new observer, with a person, on its story, in a session of your own th
 - `agents/norman.md`
 - `agents/record.md`
 - `../packages/factory/observer.md`
+- `rules/briefing/decide-in-conversation.md`
