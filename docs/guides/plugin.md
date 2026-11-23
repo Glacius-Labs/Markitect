@@ -1,6 +1,6 @@
 # The plugin
 
-The Claude Code plugin `markitect` only fetches the tool: it brings the `markitect` command into a session. It holds no skill, no agent and no job. [The project](../concept/the-project.md#the-plugin-and-the-version) in the concept and [DEC-135](../decisions.md#dec-135-the-tool-stays-in-go-and-is-rebuilt-for-the-language) say why; this page says what the plugin holds, how its launcher gets the tool and how firm that is.
+The Claude Code plugin `markitect` only fetches the tool: it brings the `markitect` command into a session. It holds no skill and no agent. [The project](../concept/the-project.md#the-plugin-and-the-version) in the concept and [DEC-135](../decisions.md#dec-135-the-tool-stays-in-go-and-is-rebuilt-for-the-language) say why; this page says what the plugin holds, how its launcher gets the tool and how firm that is.
 
 ## What it holds
 
@@ -42,4 +42,4 @@ The plugin brings the tool and nothing else, so it checks and steers nothing in 
 
 ## The check of the plugin
 
-The tests of the command line, `internal/cli/launcher_test.go`, serve a release under the file names the workflow builds and run the launcher against it: the fetch and the checksum, calls at the same time, the data folder of an installed plugin, the development launcher, both hooks and the shim for Windows. They also check that the plugin has the version of the source and holds no skills, agents or jobs.
+The tests of the command line, `internal/cli/launcher_test.go`, serve a release under the file names the workflow builds and run the launcher against it: the fetch and the checksum, calls at the same time, the data folder of an installed plugin, the development launcher, both hooks and the shim for Windows. They also check that the plugin has the version of the source and holds no skills or agents.

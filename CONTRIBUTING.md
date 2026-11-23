@@ -1,6 +1,6 @@
 # Contributing
 
-Markitect is a small Go tool with a Claude Code plugin, developed as an ordinary project: agentic coding, tests and ordinary documentation, with no spec of itself ([DEC-076](docs/decisions.md#dec-076-markitect-is-developed-as-an-ordinary-software-project)). This page is the whole development process: how to make, check, review and land a change, and where things go.
+Markitect is a language, the default of packages and templates that ships with it, and a small Go tool with a Claude Code plugin ([DEC-154](docs/decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)), developed as an ordinary project: agentic coding, tests and ordinary documentation, with no spec of itself ([DEC-076](docs/decisions.md#dec-076-markitect-is-developed-as-an-ordinary-software-project)). This page is the whole development process: how to make, check, review and land a change, and where things go.
 
 ## Make a change
 
@@ -30,7 +30,7 @@ Product code and tests that handle a project's `.markitect/spec` use fixtures, n
 | The product as a whole | [Concept](docs/concept/README.md) |
 | Decisions in force and open questions | [Decisions](docs/decisions.md) |
 | The spec language and the commands | [Language reference](docs/guides/language-reference.md) |
-| The library: the packages and templates of the default | [Library](docs/guides/library.md) |
+| The default, its packages and templates, and the library folder that holds them | [Library](docs/guides/library.md) |
 | The signals, the topic view, reference values and question catalogs | [Signals](docs/guides/signals.md) |
 | The project: finding it, `.markitect/spec`, setting one up by hand, `version` and `diff` | [Project reference](docs/guides/project-reference.md) |
 | The plugin as built: the launcher that fetches the tool, and its start hooks | [The plugin](docs/guides/plugin.md) |

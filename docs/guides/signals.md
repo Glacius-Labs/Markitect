@@ -8,9 +8,9 @@ How the tool `markitect` shows where reading a spec pays off: the statements it 
 |---|---|
 | `markitect topic` | The signals of the whole spec. The text shows the first ten findings of each signal; `--all` shows every one, and `--json` always does |
 | `markitect topic TOPIC` | The topic view of a document, a type or a folder, with every finding |
-| `markitect questions` | The question catalogs of the library packages the spec has in `packages/` |
+| `markitect questions` | The question catalogs of the packages of the default that the spec has in `packages/` |
 
-A finding reads `path:line: signal: detail`. With `--json`, `topic` prints `topic`, `topic_kind` (`spec`, `document`, `type` or `folder`), `documents`, `strong`, `linked_from` and `mentions` as lists of statements with `file`, `line`, `section` and `text`, and `signals`, each signal's list of findings with `file`, `line` and `detail`; for a type also `typed_documents`. `questions` prints `packages`, each with `package` and `questions`.
+A finding reads `path:line: signal: detail`. With `--json`, `topic` prints `topic`, `topic_kind` (`spec`, `document`, `type` or `folder`), `documents`, the paths of the documents of the topic, `strong`, `linked_from` and `mentions` as lists of statements with `file`, `line`, `section` and `text`, and `signals`, each signal's list of findings with `file`, `line` and `detail`; for a type also `typed_documents`. `questions` prints `packages`, each with `package` and `questions`.
 
 ## Statements
 
@@ -49,7 +49,7 @@ Each signal is a list sorted strongest first; equal ones stand in path and line 
 
 **Mention without a link.** A title is found as whole words, without regard to case; at each word the longest title counts. One-word titles shorter than four letters do not count, nor do the titles of types, which stand in prose as ordinary words, such as "the role". A document does not mention itself.
 
-**Two references.** Where a signal shows a number, it shows the project's values beside it, and the reference value of the document's type when the type is a type of a library package: `packages/software/operation.md` matches the `software` package's `operation`. A project's own types have no reference value and show only the project's values.
+**Two references.** Where a signal shows a number, it shows the project's values beside it, and the reference value of the document's type when the type is a type of a package of the default: `packages/software/operation.md` matches the `software` package's `operation`. A project's own types have no reference value and show only the project's values.
 
 ## The topic view
 
@@ -65,8 +65,8 @@ A link to the README of a folder that holds a topic document counts as a link to
 
 ## Reference values
 
-The reference values ship inside the tool, one file per package of the library, `references/PACKAGE.md`, and are not copied into a spec. Each holds a Markdown table with a row per type: its name, the statements per document and the words per statement, each as low–high. Every type starts with 1–5 statements per document, since a document of more than a few sentences is too big, and 5–25 words per statement. These are first values, to be replaced by values measured on proven reference specs, those that the people who answer for them name as a reference.
+The reference values ship inside the tool, one file per package of the default, `references/PACKAGE.md` in the library folder, and are not copied into a spec. Each holds a Markdown table with a row per type: its name, the statements per document and the words per statement, each as low–high. Every type starts with 1–5 statements per document, since a document of more than a few sentences is too big, and 5–25 words per statement. These are first values, to be replaced by values measured on proven reference specs, those that the people who answer for them name as a reference.
 
 ## Question catalogs
 
-Each package has a catalog of competency questions in the library, `questions/PACKAGE.md`: five to ten questions across documents that a spec built on that package should answer, generic and in English. `questions` prints the catalogs of the library packages the spec has. A template may bring a catalog of its own; the shipped templates rely on the catalogs of their packages. Answering them, each from the spec alone with a citation, is the work of an agent; a project keeps its own questions beside the spec, not in it.
+Each package of the default has a catalog of competency questions, `questions/PACKAGE.md` in the library folder: five to ten questions across documents that a spec built on that package should answer, generic and in English. `questions` prints the catalogs of the packages of the default that the spec has. A template may bring a catalog of its own; the shipped templates rely on the catalogs of their packages. Answering them, each from the spec alone with a citation, is the work of an agent; a project keeps its own questions beside the spec, not in it.

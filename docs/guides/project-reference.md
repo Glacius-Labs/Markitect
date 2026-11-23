@@ -20,7 +20,7 @@ The tool reads nothing else from `.markitect/` and nothing of the project outsid
 
 ## Setting up a project by hand
 
-Nothing sets up a project: a person writes `.markitect/spec` and copies the default from Markitect's repository. The packages and templates lie in [`internal/library/`](../../internal/library/) ([library](library.md)). A template's documents link into the packages by relative paths, such as `../../packages/software/architecture.md`, which assume the library's layout, so the copy keeps it: the packages in `packages/` and each template in `templates/NAME/` below the spec folder. Nothing rewrites links, so a template moved elsewhere needs its links to the packages adjusted by hand.
+Nothing sets up a project: a person writes `.markitect/spec` and copies the default from Markitect's repository. The packages and templates lie in [`internal/library/`](../../internal/library/) ([library](library.md)). A template's documents link into the packages by relative paths, such as `../../packages/software/architecture.md`, which assume the library's layout, so the copy keeps it: the packages in `packages/` and each template in `templates/NAME/` below the spec folder. A copied template may stay there. To move its documents elsewhere in the spec, adjust their links to the packages by hand: nothing rewrites links, and `check` names every one that is off, as `type.unresolved` or `link.unresolved`.
 
 From an empty folder, with the spec in `docs/spec/` and the template `project`:
 

@@ -40,7 +40,7 @@ Markitect gives the project that statement, and agents build to it.
 
 **Your way of working is yours.** How your team works, how you plan, what a story or a report is and where the work lies, you describe in your spec too, with general types; skills, agents and scripts in your repository realize it. Markitect ships the language, a default of packages and templates to start from, and the `markitect` tool, which checks the spec, analyses it and helps reading it. The tool never writes and keeps no state.
 
-Markitect builds on Terraform's declared configuration, static typing and the characteristics of good requirements, and it works with the coding agents' own skills, subagents and scheduled tasks. The [vision](docs/vision.md#why-markitect-exists) gives the full reasoning.
+Markitect builds on Terraform's declared configuration, static typing and the characteristics of good requirements, and a project's way of working uses the coding agents' own skills, subagents and scheduled tasks. The [vision](docs/vision.md#why-markitect-exists) gives the full reasoning.
 
 > [!IMPORTANT]
 > **Early access.** The tool on Main is described by the [concept](docs/concept/README.md). No release of it exists yet: the latest release and the plugin in the marketplace are still the earlier 0.34.0, of an earlier concept. Until the first release, build the tool from source; the plugin on Main is a development version, whose launcher starts that build ([install](#install)). Commands and files may still change. Try it on a small project you can throw away, read the [limits](#limits), and tell us in [Issues](https://github.com/Glacius-Labs/Markitect/issues) what worked and what broke.
@@ -59,7 +59,7 @@ A project is set up by hand. In an empty folder:
 2. **Copy the default.** From a clone of this repository, copy `internal/library/packages/` to `docs/spec/packages/` and a template, such as `internal/library/templates/project/`, to `docs/spec/templates/project/`. The template's links into the packages assume that layout.
 3. **Check it.** `markitect check` lists the sections the template leaves empty: the work still to do. Fill them with your agent until `check` reports nothing.
 
-The [project reference](docs/guides/project-reference.md#setting-up-a-project-by-hand) gives the details, the [library](docs/guides/library.md) the packages and templates, and the [language reference](docs/guides/language-reference.md) every command. The plugin in [`plugin/`](plugin/) only fetches the tool for Claude Code ([the plugin](docs/guides/plugin.md)).
+The [project reference](docs/guides/project-reference.md#setting-up-a-project-by-hand) gives the details, the [library](docs/guides/library.md) the packages and templates of the default, and the [language reference](docs/guides/language-reference.md) every command. The plugin in [`plugin/`](plugin/) only fetches the tool for Claude Code ([the plugin](docs/guides/plugin.md)).
 
 ## How it works
 

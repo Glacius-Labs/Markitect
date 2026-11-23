@@ -16,7 +16,7 @@ The spec describes the project as it should be now, as if it came from an ideal 
 
 ## Three templates
 
-A spec starts from three small templates; each is a part of the spec, a folder whose README is its table of contents ([§3](the-language.md#parts)).
+The default has five templates. A software project's spec starts from three small ones; each is a part of the spec, a folder whose README is its table of contents ([§3](the-language.md#parts)). The other two are `software`, a checklist for the `project` part ([below](#the-content-model)), and `company`, which a business starts from instead.
 
 | Template | Says |
 |---|---|
@@ -24,7 +24,7 @@ A spec starts from three small templates; each is a part of the spec, a folder w
 | **`product`** | What the product can do for its users, by capability: each a folder with a README of the type Capability of the `software` package. It has no fixed chapters, and it is structured, never flat |
 | **`architecture`** | How it is built: its building blocks and the rules for building |
 
-A business has the parts of the `company` package instead: its offer, its processes, its rules and its team. A business case, scenarios and operational tasks of a software project wait until a project needs them.
+A business has the parts of the `company` template instead: its offer, its processes, its rules and its team. A business case, scenarios and operational tasks of a software project wait until a project needs them.
 
 ## The content model
 

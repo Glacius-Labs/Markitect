@@ -89,7 +89,7 @@ A flag may stand anywhere, before the command as well, as in `markitect -C PROJE
 | Look | `markitect show DOCUMENT` | The document's title, its type, its sections (a type's with their `(optional)` marker), the documents it links to, the documents that link to it with the section each link stands in, and for a type its documents |
 | | `markitect table [TYPE]` | Every document of the type as a Markdown table: the title, then one column per section of the type. Without a type, every document with its type and title |
 | | `markitect topic [TOPIC] [--all]` | The signals of the spec, or the topic view of a document, a type or a folder ([signals](signals.md)) |
-| | `markitect questions` | The question catalogs of the library packages the spec has ([signals](signals.md#question-catalogs)) |
+| | `markitect questions` | The question catalogs of the packages of the default that the spec has ([signals](signals.md#question-catalogs)) |
 | | `markitect diff OLD [NEW]` | What is new, gone or changed in the spec of NEW, by default this project, against the project OLD, with a diff for what changed ([project reference](project-reference.md#diff)) |
 | Check | `markitect check` | Checks the spec by the rules above |
 | Tool | `markitect version` | The tool's version and build ([project reference](project-reference.md#version)) |
@@ -109,7 +109,7 @@ roles/member.md:5: section.empty: empty section "Does"
 2 errors in 9 documents
 ```
 
-**`show`** prints the document's path, `Title:`, `Type:` (the type's path, `(none)`, `(invalid line)` for a type line that is not one link, or the path with `(missing)`), then the lists `Sections:`, `Links to:`, with `(missing)` after a path that names no document, and `Linked from:`, each `(none)` when empty, and `Documents:` only for a type that has some. `Links to:` holds each path once; `Linked from:` holds one entry per linking document and section, `path (Section)`, so a document that links from two sections appears twice. Both are sorted without regard to case.
+**`show`** prints the document's path, `Title:`, `Type:` (the type's path, `(none)`, `(invalid line)` for a type line that is not one link, or the path with `(missing)`), then the lists `Sections:`, `Links to:`, with `(missing)` after a path that names no document, and `Linked from:`, each `(none)` when empty, and `Documents:` only for a type that has some. `Links to:` holds each path once; `Linked from:` holds one entry per linking document and section, `path (Section)`, or the bare path for a link that stands before any section, so a document that links from two sections appears twice. Both are sorted without regard to case.
 
 **`table`** prints a row per document of the type, in path order. A cell holds the first line of the section's text as plain text: markup, list markers, HTML tags and comments are dropped, and links, reference links and images show as their text. A section that starts with code shows its first code line, one that starts with a table its first row, cells separated by ` | `. `|` is escaped, and a cell is empty when the section has no text or the document leaves an optional section out. A row's title is the document's title, or its path. Without a type, `table` prints every document of the spec in path order as `| Document | Type | Title |`: its path, the path of its type, empty without one, and its title.
 
@@ -120,7 +120,7 @@ With `--json`, every command prints one document that starts with `format_versio
 | Kind | Fields |
 |---|---|
 | `check` | `documents`, the number of documents of the spec, and `diagnostics`, a list, empty when nothing is found, of objects with `file`, `line`, `code` and `message` |
-| `show` | `path`, `title`, `type`, `type_state` (`none`, `invalid`, `missing` or `ok`), `sections` with `heading`, `links_to` with `path` and `missing`, `linked_from` with `path` and `section`, and `documents` |
+| `show` | `path`, `title`, `type`, `type_state` (`none`, `invalid`, `missing` or `ok`), `sections` with `heading`, `links_to` with `path` and `missing`, `linked_from` with `path` and `section`, and `documents`; an empty `section` and a `missing` that is false are left out |
 | `table` | `type`, `columns`, and `rows` with `path`, `title` and `cells`; without a type, `type` is empty and the one column is `Type` |
 | `version`, `diff` | As the [project reference](project-reference.md) says |
 | `licenses` | `notices` |

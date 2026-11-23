@@ -6,7 +6,7 @@ Deleting `.markitect/spec` and the tool leaves an ordinary repository with its d
 
 ## Setting up a project
 
-A project is set up by hand: write `.markitect/spec`, copy the packages and the templates the project starts from into the spec folder, and run `check`. A template's documents link into the packages by relative links, so the two are copied side by side as they lie in Markitect's repository. `check` then lists the sections the templates leave empty: that list is the work still to do, and once it is done, `check` reports nothing. The [project reference](../guides/project-reference.md#setting-up-a-project-by-hand) gives the steps.
+A project is set up by hand: write `.markitect/spec`, copy the packages and the templates the project starts from into the spec folder, and run `check`. A template's documents link into the packages by relative links, so the two are copied side by side as they lie in Markitect's repository; a template may stay where it was copied, or move once its links are adjusted. `check` then lists the sections the templates leave empty: that list is the work still to do, and once it is done, `check` reports nothing. The [project reference](../guides/project-reference.md#setting-up-a-project-by-hand) gives the steps.
 
 ## The default
 
@@ -17,7 +17,7 @@ The default is the packages and templates that ship with Markitect, and per pack
 
 ## The way of working
 
-How the people and agents of a project work is the project's own. It describes that way of working in its spec, with general types, and skills, agents and scripts realize it, as code realizes the product. Markitect ships no way of working, no skill and no folder for the work.
+A way of working is always the project's own, also when it starts from one that a default ships; today the default ships none. The project describes how its people and agents work in its spec, with the general types of the default, such as Role, Rule and Decision of the `core` package and Process, Step and Task of the `company` package, and skills, agents and scripts realize it, as code realizes the product ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)). Markitect ships no skill and no folder for the work.
 
 ## The plugin and the version
 

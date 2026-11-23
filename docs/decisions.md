@@ -24,30 +24,32 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 - Markitect is three things: the language in which a spec is written and built up ([DEC-121](#dec-121-a-spec-is-plain-markdown-with-types-packages-and-templates)); the default that ships with it, the packages `core`, `software` and `company` and the templates `project`, `product`, `architecture`, `software` and `company`, with the reference values and the question catalog of each package; and the tool `markitect`, which helps working with the spec.
 - The tool checks the spec, analyses it and helps reading it. It never writes and keeps no state. Anything more is a separate tool or a script of a project. Its commands are flat, as Git's are, and each does one thing on its own: `check`, `show`, `table`, `topic`, `questions`, `diff`, `version` and `licenses`.
-- `diff OLD [NEW]` names what is new, gone or changed in the spec of NEW against the project OLD, with a diff for what changed, and nothing else. It is the plain comparison of two states of a spec that stays when `status` goes, renamed from `compare` so that its name says what it does.
+- `diff OLD [NEW]` names what is new, gone or changed in the spec of NEW against the project OLD, with a diff for what changed, and nothing else: the plain comparison of two states of a spec, under a name that says what it does, where it was `compare` before.
 - Diagnostics read `file:line: code: message`; `--json` prints one document with a `format_version` and a `kind`; exit 0 means all is well, 1 that the command found something, 2 that it could not run. Commands are named after what they do.
 - A project is the nearest folder upward that holds the file `.markitect/spec`, whose one line names the spec folder. A person writes that file, and nothing creates it. The tool reads nothing else from `.markitect/`.
 - The packages and templates are plain files in the repository, which a person copies into a spec folder; the spec owns its copy. The reference values and the question catalogs are read from the tool's version and never copied.
-- The way a project works is not part of Markitect. Findings, briefings, meetings, stories, features, reports, where the work lies and how planning goes are a project's process: the project describes it in its own spec, with general types, and skills, agents and scripts realize that spec.
+- The way a project works is not part of Markitect. Findings, briefings, meetings, stories, features, reports, reviewing, accepting, where the work lies and how planning goes belong to a project's way of working: the project describes it in its own spec, with general types, and skills, agents and scripts realize that spec.
 - A change to a spec is seen through the ordinary diff of the repository, like every change.
+- Nothing of Markitect stands in an artifact or in the spec: no comment in code, no front matter. Deleting `.markitect/spec` and the tool leaves an ordinary repository, with its documentation in Markdown.
 - So the tool has no `status`, `confirm`, `move`, `init`, `apply` or `new`, and no state, history, verdicts, fingerprints, evidence, counter-checks, change signals of a history, lock, pinned version, ignore file or work folders. The `factory` package, the `factory` template and the skills of the standard leave the library until a way of working is designed anew as part of the default.
 - The plugin is unchanged: its launcher fetches the tool's release and starts it ([DEC-135](#dec-135-the-tool-stays-in-go-and-is-rebuilt-for-the-language)).
-- The lab test and the four figures of [DEC-120](#dec-120-how-markitect-is-judged-and-when-it-is-proven) measured a way of working that is no longer Markitect's, and leave with it ([OQ-015](#open-questions)).
+- Reopen when a project cannot tell from the spec and the repository's diff what a change reaches without a stored state; or when setting up a project, by hand or by a skill, proves too error-prone for a tool that never writes.
 
 <a id="dec-001-delegated-realization-is-central-to-the-product"></a>
 
 ### DEC-001 Delegated realization is the purpose
 
 - People maintain the spec. Agents realize it in code, tests, configuration and documentation, and verify the result. The tool checks the spec, so that people and agents work from a spec that is sound in its structure; how the project realizes and verifies it is the project's own way of working ([DEC-154](#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
-- Judge Markitect as a way of developing software, not as a linter or a context tool. Removing delegated realization as scope creep contradicts this decision.
+- Delegated realization is the purpose the spec serves: the spec is there to be built from, not to be a validator's input for its own sake. Markitect makes it possible with the language, the default and the tool, and ships none of the realization; a project's way of working does it.
+- Judge Markitect as a way of developing software, not as a linter or a context tool.
 
 <a id="dec-002-trust-is-measured-against-todays-practice"></a><a id="cpt-001-trust-comes-from-structure"></a><a id="cpt-001-federalism"></a>
 
 ### DEC-137 Trust is measured against today's practice
 
 - The baseline is common practice: an agent implements a task, another AI reviews the pull request, and the human approval is often given almost blind. Markitect aims to earn more trust than that, not compiler-grade guarantees.
-- Trust comes from structure, not from infallible agents: one binding spec, checked by a tool, against which every result can be checked, and measurements of how well that check works ([DEC-125](#dec-125-trust-is-measured-not-granted)).
-- Claims read "more reliable than the baseline", never "correct". Use the smallest process that earns the trust: more report fields or completeness declarations do not by themselves make work more correct.
+- Trust comes from structure, not from infallible agents: one binding spec, checked by a tool, against which every result can be checked. Measuring how well that check works is the work of a project's way of working ([DEC-125](#dec-125-trust-is-measured-not-granted)).
+- Claims read "more reliable than the baseline", never "correct". Use the smallest way of working that earns the trust: more report fields or completeness declarations do not by themselves make work more correct.
 
 <a id="dec-003-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart"></a><a id="dec-003-the-compiler-is-a-borrowed-concept"></a><a id="cpt-003-two-parts-of-the-promise"></a><a id="cpt-002-tests-are-the-projects-and-they-are-realizations-too"></a><a id="cpt-002-tests-are-realizations-too"></a>
 
@@ -63,7 +65,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 - The aim is one clean and simple version that works reliably, not to prove that one version beats another.
 - The long-term questions: when people develop against a spec, can it be realized reliably and can that be checked; does the repository stay consistent and clean; does agentic coding become more trustworthy; are rules followed instead of overlooked; can people move their attention to architecture?
-- The method is judged apart from any runtime: a failure of Markitect's own tool or default is a product finding, a runner or environment failure a limit of the measurement.
+- The method is judged apart from any runtime: a failure of Markitect's own tool or default is a product finding, a failure of the environment it runs in a limit of the measurement.
 - Being proven unlocks the conduits that wait for it ([DEC-136](#dec-136-later-ideas-wait-as-conduits-with-a-trigger)). When Markitect counts as proven is open ([OQ-015](#open-questions)). The [concept](concept/what-is-shown.md) says what is shown and what is not.
 
 <a id="dec-032-quality-simplicity-and-stability-over-effort-and-compatibility"></a><a id="dec-014-compatibility-does-not-drive-decisions"></a><a id="dec-016-a-clean-stable-testable-main-and-uniform-structure-first"></a><a id="dec-038-learn-through-complete-workflows"></a>
@@ -107,7 +109,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - What belongs in it follows from what it describes, not from who reads it. For software the binding part is what whoever relies on it depends on: inputs and their validation, data shapes, the answer to a refused call, stored data. Detail one can observe but not reasonably depend on, such as message wording or identifier formats, is free unless the project fixes it.
 - The spec describes the end state, not the way there, and not the work that changes it: a backlog, a plan, tasks towards a goal or a project risk stay out. Running processes and tasks of an operation, the way of working of a project and goals with a date belong in, since they say what should hold. Where the work itself lies and in which form is part of that way of working ([DEC-154](#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
 - Where an artifact differs from the spec, the artifact is wrong: code, tests, documentation, pipelines, configuration and skills alike. A project rule found outside the spec, in configuration or agent instructions, belongs in the spec.
-- A spec starts from three templates: `project`, with purpose, context, guiding principles and quality; `product`, with capabilities, what the product can do for its users, each of the type Capability of the `software` package, structured but with no fixed chapters; and `architecture`, with building blocks and the rules for building. The `software` template, with Purpose, Context, Domain, Interfaces, Quality and Architecture, is a checklist for `project`, not an outline. The software package holds Assumptions in Context, with who ensures each and what is therefore not built; the answer the caller gets for each condition under which an Operation is refused; the nine characteristics of ISO/IEC 25010 as optional sections of Quality, which a template lists empty so that `check` names each until it says what it asks or why nothing; and Deployment in Architecture. The Decision type has an optional section "Reopen when".
+- A software project's spec starts from three of the five templates: `project`, with purpose, context, guiding principles and quality; `product`, with capabilities, what the product can do for its users, each of the type Capability of the `software` package, structured but with no fixed chapters; and `architecture`, with building blocks and the rules for building. A business starts from the `company` template instead. The `software` template, with Purpose, Context, Domain, Interfaces, Quality and Architecture, is a checklist for `project`, not an outline. The software package holds Assumptions in Context, with who ensures each and what is therefore not built; the answer the caller gets for each condition under which an Operation is refused; the nine characteristics of ISO/IEC 25010 as optional sections of Quality, which a template lists empty so that `check` names each until it says what it asks or why nothing; and Deployment in Architecture. The Decision type has an optional section "Reopen when".
 - A business case, scenarios and operational tasks wait until a project needs them.
 - The [content](concept/what-goes-in-a-spec.md) page describes it.
 - Reopen when a builder or reviewer in a software project misses something about operation that the spec should have said; when a section of the software package stays empty or says only "nothing" in real projects, which removes it; or when plans or task lists appear in a spec and go stale after every change.
@@ -127,10 +129,10 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 ### DEC-125 Trust is measured, not granted
 
-- There are no approvals, and no trust comes from a person looking through the work. A mechanism counts only when it delivers a fact that can turn out negative without anyone reading: a run, a figure, a difference between artifact and spec. Another agent's opinion is no such fact. The image is a testing laboratory.
+- Markitect aims at trust without approvals: no trust comes from a person looking through the work. A mechanism counts only when it delivers a fact that can turn out negative without anyone reading: a run, a figure, a difference between artifact and spec. Another agent's opinion is no such fact. The image is a testing laboratory.
 - The question has two halves. Whether the artifacts match the spec can be secured without people. Whether the spec says what is meant shows only in use.
 - Trust comes from convergence over time, not from a perfect run: a single run may leave errors, and the measure is that the differences between artifacts and spec shrink.
-- Which mechanisms earn that trust in a project is part of its way of working, which the project states in its spec ([DEC-154](#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
+- Which mechanisms earn that trust in a project, and how they are measured, is part of its way of working, which the project states in its spec ([DEC-154](#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
 - Reopen when problems found in use repeatedly show late that the spec said something other than was meant, which gives the second half a building block of its own, never an approval.
 
 ## Overview
@@ -152,21 +154,14 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - It reads `.markitect/spec` and the spec folder it names, as they lie in the folder, and nothing else of the project.
 - A change to a spec is seen through the repository's ordinary diff. `diff` compares two folders that a person or an agent lays out, such as a worktree of another commit ([DEC-154](#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
 
-<a id="dec-092-a-command-uses-the-users-own-sign-in"></a>
-
-### DEC-134 Agents run on the user's subscription, with or without a session
-
-- Agents run on the login of the user's subscription: in their own session, as a scheduled task, as a cloud task, or in CI with a token that `claude setup-token` makes for a runner without a session. API keys are never used. The token belongs to the subscription of whoever made it.
-- The tool runs natively on Windows, Linux and macOS, and Windows is a main path. Agents run with the rights of whoever runs them, so work that reads untrusted input needs an isolated machine with limited rights around it.
-- Reopen when Anthropic rules out or throttles subscription logins for unattended runs. Then scheduled tasks stay on the user's own machine, and CI waits.
-
 ### DEC-135 The tool stays in Go and is rebuilt for the language
 
 - The tool is rebuilt for the language of [DEC-121](#dec-121-a-spec-is-plain-markdown-with-types-packages-and-templates), in Go. It must be one program without a runtime that runs on Windows, Linux and macOS and that the plugin and CI download simply, and the release path, checksums and conventions exist.
+- The tool runs natively on Windows, Linux and macOS, and Windows is a main path. It needs no key and no account.
 - A shared language for a user interface and an agent SDK does not count: the tool starts no agent and there is no user interface.
 - A tag `vX.Y.Z` on a commit of Main whose source and plugin version are `X.Y.Z` publishes binaries for Linux, macOS and Windows on amd64 and arm64, a checksums file and a provenance file as a GitHub release. Between releases the source says `-dev`. The retired versions 0.1.0 to 0.14.1 stay unused. The download is checked against checksums of the same release, which guards against a damaged file, not against a release by someone who controls the repository.
 - The plugin only fetches the tool: its launcher fetches the release of the plugin's own version, which is the tool's version, and starts it.
-- Reopen when a user interface comes and needs the same code as the tool, or skills need an agent SDK that Go lacks. Then the language of the skills is chosen anew, not that of the tool.
+- Reopen when a user interface comes and needs the same code as the tool.
 
 ## Outlook
 
@@ -188,7 +183,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - Markitect's own repository keeps no spec of itself: agentic coding, tests and ordinary documentation, with one page per topic. Target projects keep their spec and `.markitect/spec`; product code and tests that handle them use fixtures.
 - Markitect uses any library that helps; the architecture gate restricts only imports between its own packages.
 - Sessions work in parallel where their files do not overlap; shared files have one writer at a time.
-- CI runs on Linux only, with the race detector, started on request. Markitect's own tests run on Linux; for users, Windows is a main path ([DEC-134](#dec-134-agents-run-on-the-users-subscription-with-or-without-a-session)).
+- CI runs on Linux only, with the race detector, started on request. Markitect's own tests run on Linux; for users, Windows is a main path ([DEC-135](#dec-135-the-tool-stays-in-go-and-is-rebuilt-for-the-language)).
 - [CONTRIBUTING](../CONTRIBUTING.md) is the development process.
 
 ### DEC-069 Documentation is written in English
@@ -206,4 +201,4 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 | ID | Question | Related |
 |---|---|---|
-| OQ-015 | When does Markitect count as proven, now that the lab test and the four figures, which measured a way of working that is no longer Markitect's, are gone? A user interface and telemetry for reference values wait for it. | [DEC-120](#dec-120-how-markitect-is-judged-and-when-it-is-proven), [DEC-154](#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec) |
+| OQ-015 | When does Markitect count as proven? A user interface and telemetry for reference values wait for it. | [DEC-120](#dec-120-how-markitect-is-judged-and-when-it-is-proven), [DEC-154](#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec) |

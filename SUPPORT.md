@@ -4,7 +4,7 @@
 
 For general questions about Markitect, open a GitHub issue and describe what you are trying to do. Include the Markitect version, operating system, relevant command, and a minimal example when possible. Remove credentials, secrets, and private repository content before posting.
 
-For unexpected behavior, choose the **Bug report** issue form. For a proposed capability or improvement, choose **Feature request**. Start with the [documentation](README.md#documentation): the [plugin](docs/guides/plugin.md) describes how to use Markitect, with troubleshooting for getting the tool, and [CONTRIBUTING](CONTRIBUTING.md) how it is developed.
+For unexpected behavior, choose the **Bug report** issue form. For a proposed capability or improvement, choose **Feature request**. Start with the [documentation](README.md#documentation): the [quick start](README.md#quick-start) and the [language reference](docs/guides/language-reference.md) describe how to use Markitect, the [plugin](docs/guides/plugin.md) helps with getting the tool, and [CONTRIBUTING](CONTRIBUTING.md) says how it is developed.
 
 ## Project-specific questions
 
