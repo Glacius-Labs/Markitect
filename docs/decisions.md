@@ -75,7 +75,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - Clean architecture, simplicity and stability come first. Effort is no criterion, and neither is compatibility with old versions while Markitect is early. Compatibility counts from the first project run by people who do not develop Markitect. Released files stay immutable; that is a fact, not a promise of support.
 - Choose the clean design even when it is more work. Add no aliases, adapters or legacy paths. Delete what is obsolete, source, tests and documents together.
 - Main stays clean, stable and testable: tests check Markitect itself, not provider or environment quirks, and the repository has a uniform structure.
-- Simpler is more robust, and simplicity is earned through insight. Markitect works with the coding agents' own features, skills and `AGENTS.md`, rather than building machinery around them.
+- Simpler is more robust, and simplicity is earned through insight. A project's way of working uses the coding agents' own features, skills and `AGENTS.md`, and Markitect builds no machinery around them.
 - A substantial redesign names the new observation behind it and the result that would show it is better, and asks first whether a mechanism is needed at all or something simpler would do.
 
 <a id="dec-098-one-concept-describes-the-product"></a>
