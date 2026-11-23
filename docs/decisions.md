@@ -23,7 +23,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 ### DEC-154 Markitect is a language, its default and a tool that only reads the spec
 
 - Markitect is three things: the language in which a spec is written and built up ([DEC-121](#dec-121-a-spec-is-plain-markdown-with-types-packages-and-templates)); the default that ships with it, the packages `core`, `software` and `company` and the templates `project`, `product`, `architecture`, `software` and `company`, with the reference values and the question catalog of each package; and the tool `markitect`, which helps working with the spec.
-- The tool checks the spec, analyses it and helps reading it. It never writes and keeps no state. Anything more is a separate tool or a script of a project. Its commands are flat, as Git's are, and each does one thing on its own: `check`, `show`, `table`, `topic`, `questions`, `diff`, `version` and `licenses`.
+- The tool checks the spec, analyses it and helps reading it. It never writes and keeps no state. Anything more is a separate tool or a script of a project. Its commands are flat, and each does one thing on its own: `check`, `show`, `table`, `topic`, `questions`, `diff`, `version` and `licenses`.
 - `diff OLD [NEW]` names what is new, gone or changed in the spec of NEW against the project OLD, with a diff for what changed, and nothing else: the plain comparison of two states of a spec, under a name that says what it does, where it was `compare` before.
 - Diagnostics read `file:line: code: message`; `--json` prints one document with a `format_version` and a `kind`; exit 0 means all is well, 1 that the command found something, 2 that it could not run. Commands are named after what they do.
 - A project is the nearest folder upward that holds the file `.markitect/spec`, whose one line names the spec folder. A person writes that file, and nothing creates it. The tool reads nothing else from `.markitect/`.
@@ -140,7 +140,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 ### DEC-131 The tool shows, Claude explains
 
 - There is no user interface for now. The spec is readable, the tool runs natively, and the agent describes what the tool shows. A user interface comes once Markitect is proven ([DEC-120](#dec-120-how-markitect-is-judged-and-when-it-is-proven)). A dashboard or a handbook that a project wants is an artifact of the project, built from its spec, not a user interface of Markitect.
-- What people should not have to take on an agent's word does not come from an agent. The tool, and Git where changes and branches are concerned, show; the agent explains, with a citation for each statement, and says what it did not cover.
+- What people should not have to take on an agent's word does not come from an agent. The tool, and the project's version control where changes are concerned, show; the agent explains, with a citation for each statement, and says what it did not cover.
 - An explanation of the whole, a part, a document or a question comes only from the spec, with citations, and otherwise says "not stated".
 - Views are generic and come from the language: the topic view, a table per type, a document with its links, and `diff`. They work for every spec. Views per package come with a user interface.
 - The [tool](concept/the-tool.md) page describes it.
@@ -148,11 +148,13 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 ## The tool and its delivery
 
-### DEC-097 Markitect uses no Git
+<a id="dec-097-markitect-uses-no-git"></a>
 
-- The tool makes no repository, commits nothing, keeps no branches, lands nothing and reads no Git history. Agents and people do every Git step.
-- It reads `.markitect/spec` and the spec folder it names, as they lie in the folder, and nothing else of the project.
-- A change to a spec is seen through the repository's ordinary diff. `diff` compares two folders that a person or an agent lays out, such as a worktree of another commit ([DEC-154](#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
+### DEC-097 Markitect neither needs nor knows version control
+
+- Markitect neither needs nor knows Git or any other version control. The tool makes no repository, commits nothing and reads no history; whoever works on the project takes every step of its version control.
+- The tool reads folders: `.markitect/spec` and the spec folder it names, as they lie, and nothing else of the project.
+- A change to a spec is seen through the repository's ordinary diff. `diff` compares two folders, however their owner made the older one ([DEC-154](#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
 
 ### DEC-135 The tool stays in Go and is rebuilt for the language
 

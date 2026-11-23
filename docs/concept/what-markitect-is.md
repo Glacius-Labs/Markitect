@@ -25,7 +25,7 @@ Markitect has three parts ([DEC-154](../decisions.md#dec-154-markitect-is-a-lang
 |---|---|
 | **The language** | Documents with a type and ordinary links, in plain Markdown ([§3](the-language.md)) |
 | **The default** | The packages `core`, `software` and `company` and the templates `project`, `product`, `architecture`, `software` and `company`, with the reference values and question catalog of each package; plain files that a person copies into a spec ([§4](what-goes-in-a-spec.md), [§7](the-project.md)) |
-| **The tool** | One program, `markitect`. It checks the spec, analyses it and helps reading it. It never writes, keeps no state, starts no agent and uses no Git ([§6](the-tool.md)) |
+| **The tool** | One program, `markitect`. It checks the spec, analyses it and helps reading it. It never writes, keeps no state and starts no agent ([§6](the-tool.md)) |
 
 ## Words
 

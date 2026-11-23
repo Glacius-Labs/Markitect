@@ -21,7 +21,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 ## The spec in the repository
 
-**Taken.** Documentation is written, versioned and reviewed with the tools of code, beside the code: Markdown in the repository, changed by pull request (Write the Docs). The spec states the project as it should be now, as if it came from an ideal process, and leaves the way there to Git, as Parnas and Clements (1986) advise for design documents. The same rule holds for Markitect's own pages ([DEC-071](decisions.md#dec-071-main-holds-only-the-current-state)).
+**Taken.** Documentation is written, versioned and reviewed with the tools of code, beside the code: Markdown in the repository, changed by pull request (Write the Docs). The spec states the project as it should be now, as if it came from an ideal process, and leaves the way there to the repository's history, as Parnas and Clements (1986) advise for design documents. The same rule holds for Markitect's own pages ([DEC-071](decisions.md#dec-071-main-holds-only-the-current-state)).
 
 **Differs.** In docs as code, documentation sits beside the code and follows it. The spec has authority over the code: where they differ, the code is wrong ([DEC-122](decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)).
 
@@ -50,7 +50,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 **Differs.**
 
 - The properties are judged by readers, guided by signals with no fixed thresholds. Each number stands beside the reference value of its type and the rest of the project.
-- A hotspot weighs how often a document changed by how many documents link to it, not by its complexity. The tool computes no signal of the changes: an agent reads them from Git.
+- A hotspot weighs how often a document changed by how many documents link to it, not by its complexity. The tool computes no signal of the changes: an agent reads them from the repository's history.
 - Correctness, whether the spec says what is meant, is not among the properties a reader checks: only use shows it.
 
 ## Purpose, world and system
@@ -83,7 +83,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 **Differs.**
 
-- A decision has no status: the spec holds what is decided now, and Git keeps what was superseded. It may say what would reopen it.
+- A decision has no status: the spec holds what is decided now, and the repository's history keeps what was superseded. It may say what would reopen it.
 - Views are not declared. ISO/IEC/IEEE 42010:2022 and Views and Beyond describe an architecture through views written for their readers; Markitect generates every view from the spec, so each fact is stated once ([DEC-131](decisions.md#dec-131-the-tool-shows-claude-explains)).
 - arc42's risks and technical debt have no place: they describe the work, not the system as it should be.
 

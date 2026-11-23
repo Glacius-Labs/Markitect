@@ -70,7 +70,7 @@ The [concept](docs/concept/README.md) describes the whole; this is the short for
 3. **The tool helps reading it.** `show` gives a document with what it links to and what links to it, `table` every document of a type, `topic` everything about a document, a type or a folder with the signals that say where reading pays off, and `questions` the competency questions of the packages you use.
 4. **Agents build to it,** in the way of working your spec describes. A change to the spec is seen in the repository's diff like every change, and `markitect diff` shows it document by document against another state of the project.
 
-No `markitect` command writes a file, starts an agent or uses Git.
+No `markitect` command writes a file or starts an agent.
 
 ## Example: one rule changes
 

@@ -4,7 +4,7 @@ How the tool `markitect` finds a project and its spec, how a project is set up b
 
 ## The project
 
-A project is a folder that holds the file `.markitect/spec`. Every command but `version` and `licenses` works in one: the folder `-C PROJECT` names, which must hold that file, or else the nearest folder, from the working directory upward, that holds it. `.markitect/spec` must be a regular file; a `.markitect/` folder without it, such as `~/.markitect/` in a home folder, is no project and is passed over. The tool uses no Git to find the project, and a folder that holds `.markitect/spec` is a project wherever it lies.
+A project is a folder that holds the file `.markitect/spec`. Every command but `version` and `licenses` works in one: the folder `-C PROJECT` names, which must hold that file, or else the nearest folder, from the working directory upward, that holds it. `.markitect/spec` must be a regular file; a `.markitect/` folder without it, such as `~/.markitect/` in a home folder, is no project and is passed over. A folder that holds `.markitect/spec` is a project wherever it lies ([DEC-097](../decisions.md#dec-097-markitect-neither-needs-nor-knows-version-control)).
 
 Without a project, a command exits 2 and says what it looked for:
 
@@ -14,7 +14,7 @@ markitect check: no folder from C:\work\library upward holds .markitect/spec; th
 
 With `-C PROJECT`, the message names that folder: `PROJECT holds no .markitect/spec; …`. Where `.markitect/spec` exists but is no regular file, such as a folder, the command exits 2 as well and says so: `FOLDER: .markitect/spec is no file, but a project needs one there; …`.
 
-**The file.** `.markitect/spec` holds one line: the spec folder, a path below the project folder, such as `docs/spec`. A byte order mark, white space and the line end around it are dropped, so a checkout with CRLF reads the same. An empty file or a second line stops every command that reads it. The spec folder is a relative path with `/` or `\`; it may not be empty, absolute, the project folder itself, outside it, in `.markitect/` or in a `.git` folder. `.markitect` and `.git` count in any case, as a file system that ignores case reads them, so a spec folder `.Markitect/docs` is refused too. Nor may it lie outside the project through a symbolic link or a Windows junction: the tool resolves the folder, or the nearest folder above it that exists, and refuses one that lands outside. A spec folder that does not exist, or that is a file, stops every command that reads the spec.
+**The file.** `.markitect/spec` holds one line: the spec folder, a path below the project folder, such as `docs/spec`. A byte order mark, white space and the line end around it are dropped, so a copy with CRLF line ends reads the same. An empty file or a second line stops every command that reads it. The spec folder is a relative path with `/` or `\`; it may not be empty, absolute, the project folder itself, outside it or in `.markitect/`. `.markitect` counts in any case, as a file system that ignores case reads it, so a spec folder `.Markitect/docs` is refused too. Nor may it lie outside the project through a symbolic link or a Windows junction: the tool resolves the folder, or the nearest folder above it that exists, and refuses one that lands outside. A spec folder that does not exist, or that is a file, stops every command that reads the spec.
 
 The tool reads nothing else from `.markitect/` and nothing of the project outside the spec folder. It writes no file. It names a document by its path below the spec folder, with `/` on every system.
 
@@ -37,7 +37,7 @@ The spec owns its copy: a project may change its packages and templates like any
 
 ## diff
 
-`markitect diff OLD [NEW]` compares the specs of two projects, each a folder that holds `.markitect/spec` ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)). NEW is by default the project the command works in. The tool uses no Git: whoever compares lays out OLD, such as a Git worktree or an export of a commit. A change to a spec is otherwise seen through the repository's ordinary diff, like every change; `diff` shows it document by document, by the paths below each spec folder. It reads both specs and changes nothing. It names, each list sorted by path:
+`markitect diff OLD [NEW]` compares the specs of two projects, each a folder that holds `.markitect/spec` ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)). NEW is by default the project the command works in. OLD is any folder that holds `.markitect/spec`, however its owner made it, such as a copy of an older state of the project ([DEC-097](../decisions.md#dec-097-markitect-neither-needs-nor-knows-version-control)). A change to a spec is otherwise seen through the repository's ordinary diff, like every change; `diff` shows it document by document, by the paths below each spec folder. It reads both specs and changes nothing. It names, each list sorted by path:
 
 | Section | Lists |
 |---|---|

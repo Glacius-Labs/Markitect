@@ -55,7 +55,7 @@ Four steps, as a person who reviews a spec would take them:
 
 ## Its changes
 
-A good link catches a change: when each fact stands in one place, only that place changes. When a change reaches far all the same, a fact is scattered or misplaced. The repository's history gives the data, read from Git by an agent; each signal is compared with the project's other changes, and mechanical changes, such as the links rewritten for a moved document, do not count. The tool computes none of these signals ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)).
+A good link catches a change: when each fact stands in one place, only that place changes. When a change reaches far all the same, a fact is scattered or misplaced. The repository's history gives the data, read by an agent from the project's version control; each signal is compared with the project's other changes, and mechanical changes, such as the links rewritten for a moved document, do not count. The tool computes none of these signals ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)).
 
 | Signal | Usually means | Points at |
 |---|---|---|
