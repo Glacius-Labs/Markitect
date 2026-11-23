@@ -9,11 +9,11 @@ This page owns the package contracts and the repository layout. The [language re
 `cmd/markitect → internal/cli → internal/project, internal/signals, internal/library → internal/lang`.
 
 - `cmd/markitect` only calls `cli.Run` with the arguments and the output streams.
-- The command line (`internal/cli`) parses the arguments, finds the project, the nearest folder upward that holds `.markitect/spec` or the one `-C` names, makes sure its spec folder lies inside it, runs the command that reads the spec, and prints text or JSON. It prints the version and the license notices from `internal/buildinfo`. It writes no file.
-- The project (`internal/project`) loads a project through the `os.DirFS` of its folder: the file `.markitect/spec`, the spec it names, and the difference between the specs of two projects that `diff` prints. It reads and returns.
+- The command line (`internal/cli`) parses the arguments, finds the project, the nearest folder upward that holds `.markitect/spec` or the one `-C` names, makes sure its spec folder lies inside it, runs the command, and prints text or JSON. It prints the version and the license notices from `internal/buildinfo`. It writes no file.
+- The project (`internal/project`) loads a project through the `os.DirFS` of its folder: the file `.markitect/spec`, the spec it names, the ignore file `.markitect/ignore`, and the difference between two projects that `diff` prints: their specs and, for each module, its files. It reads and returns.
 - The signals (`internal/signals`) read a parsed spec: its statements, the eight signals and the topic view.
 - The library (`internal/library`) holds the default's module `core` as plain files, and builds into the binary only its reference values and question catalog.
-- The language (`internal/lang`) parses and checks the documents of the file system it is handed and writes nothing.
+- The language (`internal/lang`) parses and checks the documents of the file system it is handed, and reads the path patterns under `Realized in` that say where each module is built; it writes nothing.
 
 None of the commands writes a file, starts an agent or a process, uses the network or needs credentials. The [language reference](guides/language-reference.md#commands) gives their arguments and exit codes.
 
@@ -24,11 +24,11 @@ All Go packages use one root Go module. One rule table in [`internal/tooling/arc
 | Responsibility | Packages | Depends on |
 | --- | --- | --- |
 | Version and license notices | `internal/buildinfo` | No other Markitect package |
-| The spec language over a supplied file system: documents, types, sections, links, modules and `check` ([language reference](guides/language-reference.md)) | `internal/lang` | No other Markitect package |
+| The spec language over a supplied file system: documents, types, sections, links, modules with their path patterns, and `check` ([language reference](guides/language-reference.md)) | `internal/lang` | No other Markitect package |
 | The library: the default's module `core` as plain files, and its reference values and question catalog built into the tool ([library](guides/library.md)) | `internal/library` | No other Markitect package |
 | The statements, signals and topic view over a parsed spec ([signals](guides/signals.md)) | `internal/signals` | The language |
-| The project over a supplied file system: the file `.markitect/spec`, the project loaded with its spec, and the difference between the specs of two projects ([project reference](guides/project-reference.md)) | `internal/project` | The language |
-| The command line: arguments, the project it works in, the commands that read its spec, `version` and `licenses`, and the text and JSON output; it writes nothing | `internal/cli` | Every layer above, and build data |
+| The project over a supplied file system: the file `.markitect/spec`, the project loaded with its spec, its ignore file, and the difference between two projects: their specs and, for each module, its files ([project reference](guides/project-reference.md)) | `internal/project` | The language |
+| The command line: arguments, the project it works in, the commands that read it, `version` and `licenses`, and the text and JSON output; it writes nothing | `internal/cli` | Every layer above, and build data |
 | The entrypoint, `markitect` | `cmd/markitect` | The command line |
 | Maintenance: the import gate and the code map | `internal/tooling/architecture` | No other Markitect package; separate from product execution |
 | Test support, test files only: temporary folders | `internal/testkit` | No Markitect package |

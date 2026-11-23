@@ -1,6 +1,6 @@
 # Contributing
 
-Markitect is a language, the default that ships with it, and a small Go tool with a Claude Code plugin ([DEC-154](docs/decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)), developed as an ordinary project: agentic coding, tests and ordinary documentation, with no spec of itself ([DEC-076](docs/decisions.md#dec-076-markitect-is-developed-as-an-ordinary-software-project)). This page is the whole development process: how to make, check, review and land a change, and where things go.
+Markitect is a language, the default that ships with it, and a small Go tool with a Claude Code plugin ([DEC-154](docs/decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads)), developed as an ordinary project: agentic coding, tests and ordinary documentation, with no spec of itself ([DEC-076](docs/decisions.md#dec-076-markitect-is-developed-as-an-ordinary-software-project)). This page is the whole development process: how to make, check, review and land a change, and where things go.
 
 ## Make a change
 
@@ -9,7 +9,7 @@ Markitect is a language, the default that ships with it, and a small Go tool wit
 3. **Keep it simple.** Choose the clean design even when it is more work, add no aliases or compatibility paths, and delete what is obsolete together with its tests and pages ([DEC-139](docs/decisions.md#dec-139-quality-simplicity-and-stability-over-effort-and-compatibility)).
 4. **Work in parallel only apart.** Several sessions may work at once when their files do not overlap. Shared files, such as `go.mod`, the [architecture rule table](internal/tooling/architecture/rules.go) and generated pages, have one writer at a time.
 
-Product code and tests that handle a project's `.markitect/spec` use fixtures, never this repository's own files.
+Product code and tests that handle a project's `.markitect/spec` or `.markitect/ignore` use fixtures, never this repository's own files.
 
 ## Where things go
 
@@ -32,7 +32,7 @@ Product code and tests that handle a project's `.markitect/spec` use fixtures, n
 | The spec language and the commands | [Language reference](docs/guides/language-reference.md) |
 | The default, its modules, and the library folder that holds them | [Library](docs/guides/library.md) |
 | The signals, the topic view, reference values and question catalogs | [Signals](docs/guides/signals.md) |
-| The project: finding it, `.markitect/spec`, setting one up by hand, `version` and `diff` | [Project reference](docs/guides/project-reference.md) |
+| The project: finding it, `.markitect/spec` and `.markitect/ignore`, setting one up by hand, `version` and `diff` | [Project reference](docs/guides/project-reference.md) |
 | The plugin as built: the launcher that fetches the tool, and its start hooks | [The plugin](docs/guides/plugin.md) |
 | What makes a good spec, and how to write one | [Is the spec good?](docs/concept/is-the-spec-good.md) |
 | Go packages, layers and the repository layout | [Architecture](docs/architecture.md) and the generated [code map](docs/development/code-map.md) |
