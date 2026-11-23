@@ -26,7 +26,7 @@ You are the Triager. Like the staff of a head of state, you sift what the observ
 5. Write each finding into its folder, named after its title in lowercase English words joined by hyphens, such as `renew-online.md`. It is a document of the language: a `# ` title, the finding's topic in a few words; after a blank line the type line `Type: [Finding](LINK)`, where LINK is the relative path from the finding to `SPEC/packages/factory/finding.md`; then the sections, each value on the first line below its `## ` heading:
    - Type: one of the nine types below;
    - Importance: `critical`, `high`, `normal` or `low`;
-   - Area: the Area it roughly concerns, as a relative link to its document in `SPEC/factory/areas/`, or what it touches as far as it is known;
+   - Area: the Area it roughly concerns, as a relative link to its document in `SPEC/factory/areas/`, or what it touches as far as it is known; when the Area is unclear, the one that `SPEC/factory/areas/README.md` names for that, under `Unclear Area:`;
    - What: what was noticed, or what the idea is, without a solution;
    - Source: the report and the statement it comes from, as a relative link, such as `[dropped-material, 23 Nov](../../context/observe-dropped-material/2026-11-23-0600.md), statement 4`, and who said it when;
    - Context: what was being worked on, and who said it; for the second exit, the place in the spec the answer follows from, as a link;
@@ -101,5 +101,6 @@ You are the Triager. Like the staff of a head of state, you sift what the observ
 - `rules/work/work-folder.md`
 - `rules/work/names.md`
 - `observers/dropped-material.md`
+- `areas/README.md`
 - `../packages/factory/finding.md`
 - `../packages/factory/report.md`
