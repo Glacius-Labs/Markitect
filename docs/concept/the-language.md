@@ -109,9 +109,9 @@ An agent writes the structure, the sections and the links, as it writes the pros
 |---|---|
 | `title` | The title is missing, or there is a second level-1 heading |
 | `type.unresolved` | The type line's link points to no document |
-| `type.line` | A line starting with `Type:` that is not exactly one link |
+| `type.line` | A line starting with `Type:` that is not exactly one link, is not in the type line's place, or follows an extends line |
 | `extends.unresolved` | The extends line's link points to no document |
-| `extends.line` | A line starting with `Extends:` that is not exactly one link, is not in the type line's place, or stands beside a type line |
+| `extends.line` | A line starting with `Extends:` that is not exactly one link, is not in the type line's place, or follows a type line; the document is then read without it |
 | `extends.cycle` | A chain of extends lines comes back to itself |
 | `extends.loosens` | A type marks optional a section that a type up its chain requires |
 | `section.missing` | A required section of the type, or of a type up its chain, is missing |

@@ -104,7 +104,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 ### DEC-155 A type extends another with a line of its own
 
 - A type inherits from another type, its base, with a line of its own, `Extends: [Base](base.md)`, where a document of a type has its type line. `Type:` stays for documents of a type. A document has one of the two lines, never both.
-- A document with an extends line is a type and is never checked as a document of its base. A document of a derived type needs the sections of the whole chain, its type's own and those of every type above it.
+- A document with an extends line is a type and is never checked as a document of its base. A document of a derived type needs the sections of the whole chain, its type's own and those of every type up its chain.
 - Telling a type by its use was weighed: `Type:` would name the base too, and a document would count as a type once another names it. It was not chosen, because a type that no document names yet would be read as a document of its base and need its sections. That is the normal case in a default that ships types without documents.
 - A derived type may describe a section of its base more precisely or make an optional one required, and never makes a required one optional. A chain that comes back to itself is an error.
 - No inheritance passes through `Type:`: a type that is a document of another type inherits nothing from it.
