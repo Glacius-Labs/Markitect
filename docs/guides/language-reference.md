@@ -127,7 +127,8 @@ A README is a document, read and checked by the rules above, with a form of its 
 
 - **No type line and no extends line.** Either line in a README is `readme.type`, and the README is read without it: a README is never an object and never a type, and `show` prints `Type: (none)` for it. A type line, an extends line or a property type line of another document that names a README is `readme.type` as well. A property type line in a README is `property.line`.
 - **Text before the first section** says what the module is for.
-- **`Responsible`**, optional, names the role that answers for the module, as a link; without it, the role of the module above answers. **`Realized in`**, optional, says where in the project the module is built. `check` checks neither.
+- **`Responsible`**, optional, names the role that answers for the module, as a link; without it, the role of the module above answers. `check` does not check it.
+- **`Realized in`**, optional, says where in the project the module is built, by path patterns ([below](#realized-in)).
 - **`Contents`** is every section of the README whose level-2 heading is `Contents`, without regard to case; when there are two, the links of both count. `Contents` is not required, and a README without it shows nothing but itself.
 
 **What `Contents` shows.** Every counted link in `Contents`, one with a `#section` included, that points to a document of the README's own folder or to the README of a module directly below. Such a document is **public** in the module, and so is the README itself. A link in `Contents` to anything else shows nothing and is checked as any other link of the README: one to a document inside a module below is itself `link.internal` unless that module shows it.
@@ -143,13 +144,26 @@ How members borrow copies and bring them back.
 [Librarian](../team/librarian.md)
 
 ## Realized in
-The loan service and its database.
+- `src/lending/`, the loan service
+- `db/migrations/*-loans.sql`
 
 ## Contents
 - [Borrow](borrow.md)
 - [Fines](fines/README.md)
 - `notice-*.md`
 ```
+
+### Realized in
+
+`Realized in` is every section of a README whose level-2 heading is `Realized in`, without regard to case; when there are two, the patterns of both count ([DEC-158](../decisions.md#dec-158-a-module-says-where-it-is-built-and-diff-compares-its-spec-and-its-files)). Every code span in it is a **path pattern**, in list items and block quotes too; fenced and indented code blocks do not count, and text around a code span, such as the words after `src/lending/` above, is free. `check` reads the patterns; only [`diff`](project-reference.md#diff) uses them.
+
+- **Relative to the project folder.** A path pattern names files by their path below the project folder, the folder that holds `.markitect/spec`, with `/` between folders, not relative to the README as a link is. `src/lending/` in the README above is the folder `src/lending` beside `.markitect/`, wherever the spec folder lies.
+- **Wildcards.** `*` stands for any run of characters, `?` for one character and a class such as `[a-z]` for one of a set, or `[^a-z]` for one outside it, as in the patterns under `Contents`. None of them matches across a `/`: each matches within one folder name or the file name. Everything else matches itself, case included.
+- **Files.** A pattern that does not end with `/` names the files whose whole path matches it: `db/migrations/*-loans.sql` names `db/migrations/0042-loans.sql`, and not `db/migrations/old/0001-loans.sql`.
+- **Folders.** A pattern that ends with `/` names a folder and every file below it, at any depth: `src/lending/` names `src/lending/borrow.go` and `src/lending/store/sql.go`.
+- **Not valid.** A pattern that is empty or only white space, absolute, starts with a drive such as `C:`, holds a backslash, has an empty folder name or `.` or `..` as a folder name, has a folder or file name that starts with a dot, such as `` `.github/workflows/` ``, or is malformed, such as `` `src/[a.go` ``, is `readme.pattern` and names nothing. A name that starts with a dot is always left out of the project's files, so a pattern with one could name nothing.
+
+`check` does not check whether a path exists: it reads only the spec, and a pattern that names no file is no error. A pattern never names a file in the spec folder or what the project's ignore file leaves out ([project reference](project-reference.md#the-ignore-file)).
 
 ### Visibility
 
@@ -210,7 +224,7 @@ Each step names its kind: `is of type` for a type line, `extends` for an extends
 | `link.internal` | A counted link, those of the type line, the extends line and a property type line included, points to a document of a module that does not show the way to it ([visibility](#visibility)): `"PATH" is internal to MODULE: MODULE/README.md does not list it under Contents`, for the first module of the way that does not show its step, or `… does not list MODULE/BELOW/README.md under Contents` when that step is the README of a module below; when a module on the way has no README, `"PATH" is internal to MODULE: BELOW has no README.md`, where BELOW is that module, MODULE itself or one below it. PATH is the target below the spec folder | The link's first line |
 | `module.readme` | A folder that holds a document directly has no `README.md`: `the folder FOLDER holds documents and has no README.md`, or for the spec folder `the spec folder holds documents and has no README.md`. Once per folder | Line 1 of the README's path, such as `shop/README.md:1` or `README.md:1` |
 | `module.cycle` | Modules depend on each other in a cycle ([dependencies and cycles](#dependencies-and-cycles)): `module cycle MODULE -> MODULE -> MODULE: PATH:LINE STEP PATH, ...`, where STEP names the kind of the step, once per group of modules that all reach each other, with one shortest cycle and one link per step | The link of the first step |
-| `readme.pattern` | A code span in a README's `Contents` without `/` is no valid pattern: `bad pattern "TEXT": a pattern uses the wildcards *, ? and [a-z]` | The code span's line |
+| `readme.pattern` | A code span in a README's `Contents` without `/` is no valid pattern: `bad pattern "TEXT": a pattern uses the wildcards *, ? and [a-z]`. A code span in a README's `Realized in` is no valid path pattern ([Realized in](#realized-in)): `bad pattern "TEXT": REASON`, where REASON is `a pattern is not empty`, `a pattern separates folders with /, not \`, `a pattern is relative to the project folder and has no drive`, `a pattern is relative to the project folder, not absolute`, `a pattern stays below the project folder, without ..`, `a pattern has no empty folder name and no .`, `a name that starts with a dot is always left out, so a pattern with one names nothing` or `a pattern uses the wildcards *, ? and [a-z]`, as in `shop/README.md:7: readme.pattern: bad pattern "../shop": a pattern stays below the project folder, without ..` | The code span's line |
 | `readme.type` | A README has a type line or an extends line: `a README has no type line` or `a README has no extends line`, once for each line it has. A type line, an extends line or a property type line names a README: `"PATH" is a README, which is no type` | That line |
 
 A document reports each unresolved or internal target once, at its first link, where its type line or extends line comes first: `[the archive](archive.md)`, `[its rules](archive.md#rules)` and `[again](./archive.md)` are one report. Each property is reported at most once, and a document at most one `title`. The diagnostics are sorted by path, then by line.
@@ -227,14 +241,14 @@ A flag may stand anywhere, before the command as well, as in `markitect -C PROJE
 | | `markitect table [TYPE]` | Every object of the type and of every type that extends it as a Markdown table: the title, then one column per section of the type's chain. Without a type, every document with its type and title |
 | | `markitect topic [TOPIC] [--all]` | The signals of the spec, or the topic view of a document, a type or a folder ([signals](signals.md)) |
 | | `markitect questions` | The question catalog of the default's module `core`, when the spec has it ([signals](signals.md#question-catalogs)) |
-| | `markitect diff OLD [NEW]` | What is new, gone or changed in the spec of NEW, by default this project, against the project OLD, with a diff for what changed ([project reference](project-reference.md#diff)) |
+| | `markitect diff OLD [NEW]` | What is new, gone or changed in the spec of NEW, by default this project, against the project OLD, with a diff for what changed; for each module whether its spec, its files or both changed; and the files that no module names ([project reference](project-reference.md#diff)) |
 | Check | `markitect check` | Checks the spec by the rules above |
 | Tool | `markitect version` | The tool's version and build ([project reference](project-reference.md#version)) |
 | | `markitect licenses` | The license notices of the Go modules the tool is built from |
 
 The commands only read: none writes a file, keeps a state, starts an agent or steers work, and each does one thing on its own.
 
-**Exit codes.** 0 when all is well, 1 when `check` or `diff` found something, and 2 when the command could not run: an unknown command or flag, a flag without its value, no command at all, a wrong number of arguments, no project, a `.markitect/spec` that cannot be read or names a spec folder it may not, a spec folder that does not exist, a document, type or topic that the spec does not have, or a file that cannot be read.
+**Exit codes.** 0 when all is well, 1 when `check` or `diff` found something, and 2 when the command could not run: an unknown command or flag, a flag without its value, no command at all, a wrong number of arguments, no project, a `.markitect/spec` that cannot be read or names a spec folder it may not, a spec folder that does not exist, a document, type or topic that the spec does not have, an ignore file with a line that is no valid pattern, or a file that cannot be read.
 
 ### Commands that read
 

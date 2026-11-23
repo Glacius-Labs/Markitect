@@ -95,7 +95,7 @@ func TestDiff(t *testing.T) {
 	}
 	// A project against itself, or its CRLF copy, differs in nothing.
 	code, out, _ = run("diff", older, copyTree(t, older, true))
-	if code != ExitOK || strings.Count(out, "(none)") != 3 {
+	if code != ExitOK || strings.Count(out, "(none)") != 5 {
 		t.Error(code, out)
 	}
 	if code, _, errOut := run("diff", t.TempDir()); code != ExitFailed || !strings.Contains(errOut, "holds no .markitect/spec") {
@@ -118,7 +118,7 @@ func TestDiffIgnoresAByteOrderMarkAndLineEnds(t *testing.T) {
 	older := spec(t, map[string]string{"a.md": "# A\n\nOne.\n"})
 	newer := spec(t, map[string]string{"a.md": "\xef\xbb\xbf# A\r\n\r\nOne.\r\n"})
 	code, out, errOut := run("diff", "-C", newer, older)
-	if code != ExitOK || errOut != "" || strings.Count(out, "(none)") != 3 {
+	if code != ExitOK || errOut != "" || strings.Count(out, "(none)") != 5 {
 		t.Errorf("%d %q %q", code, out, errOut)
 	}
 }

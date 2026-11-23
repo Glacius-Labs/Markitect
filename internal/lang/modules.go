@@ -13,11 +13,16 @@ import (
 // transparent: it counts as no level between two modules. The manifest of a
 // module is its README.md; the section Contents of it lists what the module
 // shows to the modules outside it: by links, and by code spans, which are
-// patterns over the file names of the documents directly in its folder.
+// patterns over the file names of the documents directly in its folder. Its
+// sections Realized in list path patterns over the files of the project that
+// build the module.
 
 const (
 	readmeName      = "README.md"
 	contentsSection = "Contents"
+	// realizedSection is the section of a README that says where in the project
+	// the module is built.
+	realizedSection = "Realized in"
 	// specFolder is the name of the spec folder as a module folder.
 	specFolder = "."
 )
@@ -181,6 +186,11 @@ func checkPatterns(d *Document) []Diagnostic {
 		}
 	}
 	return out
+}
+
+// SortModules sorts module folders by path, the spec folder first.
+func SortModules(modules []string) {
+	sort.Slice(modules, func(i, j int) bool { return moduleLess(modules[i], modules[j]) })
 }
 
 // checkModules reports every module without a README.md, at the path the

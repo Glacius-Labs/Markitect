@@ -69,7 +69,7 @@ The [concept](docs/concept/README.md) describes the whole; this is the short for
 1. **You write the spec** with an agent. A document is an ordinary Markdown file: a title, a type line that links its type, and the sections the type asks for. Folders group documents into modules, and each module's README says what the others may link.
 2. **`markitect check` checks its structure:** titles, types, missing or empty sections, references and values that do not fit their property, links that point to no document, links into what a module keeps internal, and cycles between modules. It never judges meaning.
 3. **The tool helps reading it.** `show` gives a document with what it links to and what links to it, `table` every object of a type, `topic` everything about a document, a type or a folder with the signals that say where reading pays off, and `questions` the competency questions of the default's types.
-4. **Agents build to it,** in the way of working your spec describes. A change to the spec is seen in the repository's diff like every change, and `markitect diff` shows it document by document against another state of the project.
+4. **Agents build to it,** in the way of working your spec describes. A change to the spec is seen in the repository's diff like every change. Each module's README can name under `Realized in` where the module is built, and `markitect diff` compares the project with another state of it: document by document, and for each module whether its spec, its files or both changed.
 
 No `markitect` command writes a file or starts an agent.
 
@@ -133,7 +133,7 @@ The tool and the default are built on Main and covered by tests and a command sm
 | Page | Covers |
 | --- | --- |
 | [Language reference](docs/guides/language-reference.md) | The spec language and every command |
-| [Project reference](docs/guides/project-reference.md) | The project, setting one up by hand, `version` and `diff` |
+| [Project reference](docs/guides/project-reference.md) | The project, its ignore file, setting one up by hand, `version` and `diff` |
 | [The plugin](docs/guides/plugin.md) | The launcher that fetches the tool, and its start hooks |
 | [Library](docs/guides/library.md), [Signals](docs/guides/signals.md) | The default, and the signals of a spec |
 | [Concept](docs/concept/README.md) | The one description of the product |

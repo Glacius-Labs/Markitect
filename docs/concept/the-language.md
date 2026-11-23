@@ -116,7 +116,7 @@ The property's type gives a value its form. A fixed value, such as the status of
 
 - The text before its first section says what the module is for.
 - `Responsible`, optional, links the role that answers for the module. Without it, the role of the module above answers.
-- `Realized in`, optional, says where in the project the module is built.
+- `Realized in`, optional, says where in the project the module is built: paths written as code, relative to the project folder, with the wildcards of the patterns below; a path that ends with `/` is a folder with everything below it ([DEC-158](../decisions.md#dec-158-a-module-says-where-it-is-built-and-diff-compares-its-spec-and-its-files)). `diff` reads them to report for each module whether its spec, its files or both changed ([§6](the-tool.md#reading-the-spec)).
 - `Contents` lists what the module shows to the other modules.
 
 A README is never itself the thing it describes: in a module `shop`, the shop is a document `shop/shop.md` of its own, and the README says what the module holds.
@@ -149,11 +149,15 @@ docs/spec/
 
 How members borrow copies and bring them back.
 
+## Realized in
+- `src/lending/`, the loan service
+- `db/migrations/*-loans.sql`
+
 ## Contents
 - [Borrow](borrow.md)
 ```
 
-`borrow.md` may link `loan-limit.md`, and so may the README: they are inside the module. In `members/card.md`, `[Borrow](../lending/borrow.md)` is right, and `[Loan limit](../lending/loan-limit.md)` is an error of `check`, `link.internal`: the rule is internal to `lending`. The rule's type line, `Type: [Rule](../core/rule.md)`, is right, since `core` shows Rule.
+The loan service is built in the folder `src/lending/` of the project, at any depth below it, and its tables in the migrations whose names end in `-loans.sql`. `borrow.md` may link `loan-limit.md`, and so may the README: they are inside the module. In `members/card.md`, `[Borrow](../lending/borrow.md)` is right, and `[Loan limit](../lending/loan-limit.md)` is an error of `check`, `link.internal`: the rule is internal to `lending`. The rule's type line, `Type: [Rule](../core/rule.md)`, is right, since `core` shows Rule.
 
 **No cycle.** Modules do not depend on each other in a cycle ([DEC-157](../decisions.md#dec-157-a-property-names-its-type-and-modules-depend-on-each-other-without-a-cycle)). A module depends on another when one of its objects names a type of the other in its type line, one of its types extends a type of the other or links one in a property type line, or one of its objects has a reference to a document of the other. A parent module and a module below it count like any two, although the module below may link what is internal to the one above. A mention never counts, and neither do the links of a README. The library above has none: `lending` depends on `types`, `members` and `core`, `types` and `members` on `core`, and the link from `members/card.md` to Borrow is a mention. A cycle arises when a type in each of two modules names the other in a property type line, each type listed under `Contents` in the README of its module, so that both links are public:
 
@@ -192,7 +196,7 @@ An agent writes the structure, the sections and the links, as it writes the pros
 | `link.internal` | A link, a type line, an extends line or a property type line from outside a module points to a document that the module's README does not show under `Contents` |
 | `module.readme` | A folder that holds a document directly has no README |
 | `module.cycle` | Modules depend on each other in a cycle |
-| `readme.pattern` | A pattern in a README's `Contents` is not valid |
+| `readme.pattern` | A pattern in a README's `Contents` or `Realized in` is not valid |
 | `readme.type` | A README has a type line or an extends line, or a type line, an extends line or a property type line names a README |
 
 What the language does not catch, contradictions between values, gaps and wrong values, a reader finds ([§5](is-the-spec-good.md)). Beyond references and fixed values there are no value forms, and there are no check rules: something new joins only when a real project needs it.

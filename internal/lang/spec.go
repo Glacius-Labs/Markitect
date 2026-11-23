@@ -200,6 +200,7 @@ func Check(s *Spec) []Diagnostic {
 		out = append(out, s.checkRetyped(d)...)
 		out = append(out, s.checkReadmeType(d)...)
 		out = append(out, checkPatterns(d)...)
+		out = append(out, checkRealized(d)...)
 		out = append(out, s.checkInternal(d, shown)...)
 		seen := map[string]bool{}
 		for _, l := range d.Links {

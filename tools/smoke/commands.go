@@ -394,7 +394,64 @@ func (s *smoke) projectCommands() error {
 	if err := sameFiles(changed, after); err != nil {
 		return fmt.Errorf("a command wrote into the project: %w", err)
 	}
-	return nil
+	return s.diffFiles(project)
+}
+
+// diffFiles drives diff over the files of a project: a module whose README says
+// under Realized in where it is built, a file that changed, one that is new, one
+// that no module names, one that the ignore file leaves out, and a bad line of
+// the ignore file. It works on copies of the project, so that the check that no
+// command wrote into the project stands.
+func (s *smoke) diffFiles(project string) error {
+	older := filepath.Join(s.work, "lending-files-before")
+	newer := filepath.Join(s.work, "lending-files-after")
+	if err := copyTree(project, older); err != nil {
+		return err
+	}
+	readme := readFile(older, "docs/spec/domain/README.md") + "\n## Realized in\n- `src/borrow/`\n"
+	for name, content := range map[string]string{
+		"docs/spec/domain/README.md": readme,
+		"src/borrow/borrow.go":       "package borrow\n",
+		"tools/build.sh":             "#!/bin/sh\n",
+		"out/result.txt":             "one\n",
+		".markitect/ignore":          "# build output\nout/\n",
+	} {
+		if err := writeFile(older, name, content); err != nil {
+			return err
+		}
+	}
+	if err := copyTree(older, newer); err != nil {
+		return err
+	}
+	if _, err := s.exit(newer, 0, "diff", older); err != nil {
+		return fmt.Errorf("two copies of a project with files: %w", err)
+	}
+	for name, content := range map[string]string{
+		"src/borrow/borrow.go": "package borrow // three weeks\n",
+		"src/borrow/renew.go":  "package borrow\n",
+		"tools/build.sh":       "#!/bin/sh\nset -e\n",
+		"out/result.txt":       "two\n",
+	} {
+		if err := writeFile(newer, name, content); err != nil {
+			return err
+		}
+	}
+	if out, err := s.exit(newer, 1, "diff", older); err != nil {
+		return err
+	} else if err := requireContains(out, "## Modules (1)\n\ndomain: files changed (2)\n  changed src/borrow/borrow.go\n  new     src/borrow/renew.go\n\n",
+		"## Files no module names (1)\n\nchanged tools/build.sh\n\nFiles of NEW that no module names: 1\n"); err != nil {
+		return err
+	}
+	if out, err := s.exit(newer, 1, "diff", older, "--json"); err != nil {
+		return err
+	} else if err := requireContains(out, `"module": "domain"`, `"changed_files": [`, `"change": "changed"`, `"total": 1`); err != nil {
+		return err
+	}
+	// A bad line of the ignore file of NEW stops diff, and names file and line.
+	if err := writeFile(newer, ".markitect/ignore", "out/\n../x\n"); err != nil {
+		return err
+	}
+	return s.refused(newer, `.markitect/ignore:2: bad pattern "../x"`, "diff", older)
 }
 
 // exit runs the built markitect in dir and checks its exit code.

@@ -35,8 +35,9 @@ Look
   topic [TOPIC] [--all]       the signals of the spec, or everything about a
                               document, a type or a folder
   questions                   the questions of the modules the spec has
-  diff OLD [NEW]              what is new, gone or changed in the spec of NEW,
-                              by default this project, against the project OLD
+  diff OLD [NEW]              what is new, gone or changed in the spec and the
+                              files of NEW, by default this project, against
+                              the project OLD
 
 Check
   check                       check the spec
