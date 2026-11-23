@@ -90,12 +90,15 @@ func move(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	if blocked := blockers(w, problems); len(blocked) > 0 {
+	// What check finds in the spec does not stop a move. A line of the state
+	// that cannot be read does: the move carries the state and writes it
+	// again, and would lose it.
+	if unreadable := stateProblems(problems); len(unreadable) > 0 {
 		r := &edit.Refusal{}
-		for _, d := range blocked {
+		for _, d := range unreadable {
 			r.Problems = append(r.Problems, d.String())
 		}
-		r.Problems = append(r.Problems, "nothing is moved while the spec or the state has errors")
+		r.Problems = append(r.Problems, "nothing is moved while the state has lines it cannot read: moving would lose them")
 		return ExitFailed, r
 	}
 	m, err := edit.MoveDocument(w.Spec, w.SpecFS, o.positional[0], o.positional[1])

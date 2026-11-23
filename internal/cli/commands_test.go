@@ -104,13 +104,7 @@ func TestNewAndMove(t *testing.T) {
 	if code, out, errOut := run("new", "-C", dir, "types/member", "members/ada"); code != ExitFailed || out != "" || !strings.Contains(errOut, "already exists") {
 		t.Error(code, out, errOut)
 	}
-	// Its empty sections are errors, which stop a move.
-	if code, _, errOut := run("move", "-C", dir, "places/central", "places/main hall"); code != ExitFailed || !strings.Contains(errOut, "nothing is moved while the spec or the state has errors") {
-		t.Error(code, errOut)
-	}
-	if err := os.Remove(filepath.Join(specOf(dir), "members", "alan.md")); err != nil {
-		t.Fatal(err)
-	}
+	// Its empty sections are errors of check, which stop no move.
 	before = files(t, dir)
 	code, out, _ = run("move", "-C", dir, "places/central", "places/main hall")
 	if code != ExitOK || out != "moved places/central.md -> places/main hall.md\nchanged members/ada.md\nchanged members/grace.md\n" {

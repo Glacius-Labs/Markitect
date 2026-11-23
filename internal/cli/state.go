@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/edit"
-	"github.com/Glacius-Labs/Markitect/internal/lang"
 	"github.com/Glacius-Labs/Markitect/internal/state"
 )
 
@@ -73,18 +72,6 @@ func stateProblems(problems []state.Problem) []diagnostic {
 		out = append(out, diagnostic{File: state.StateFile, Line: p.Line, Code: state.CodeUnreadable, Message: p.Message})
 	}
 	return out
-}
-
-// blockers are the errors of check in the spec and the unreadable lines of
-// the state, which keep move from writing: it rewrites the links of the spec
-// and carries the state. The documents of the work are no part of the spec:
-// their errors block nothing.
-func blockers(w *workspace, problems []state.Problem) []diagnostic {
-	out := []diagnostic{}
-	for _, d := range lang.Check(w.Spec) {
-		out = append(out, diagnostic{File: d.Path, Line: d.Line, Code: d.Code, Message: d.Message})
-	}
-	return append(out, stateProblems(problems)...)
 }
 
 func (d diagnostic) String() string {

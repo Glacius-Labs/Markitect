@@ -195,3 +195,51 @@ func TestMoveCreatesNoErrorInTheSpec(t *testing.T) {
 		t.Errorf("check after the move: %d %s", code, out)
 	}
 }
+
+// brokenSpec is a spec check finds fault in everywhere: an empty and a missing
+// section, a dead link, a type that is no file and a type line of no link.
+var brokenSpec = map[string]string{
+	"kind.md":      "# Kind\n\nA kind.\n\n## Rule\nWhat holds.\n",
+	"a/empty.md":   "# Empty\n\nType: [Kind](../kind.md)\n\n## Rule\n\n",
+	"a/missing.md": "# Missing\n\nType: [Kind](../kind.md)\n",
+	"a/dead.md":    "# Dead\n\nSee [nothing](gone.md) and [the target](target.md).\n",
+	"a/ghost.md":   "# Ghost\n\nType: [Ghost](../ghost.md)\n\nSee [the target](target.md#x).\n",
+	"a/nolink.md":  "# No link\n\nType: none\n\n[the target](./target.md)\n",
+	"a/target.md":  "# Target\n\nType: [Kind](../kind.md)\n\n## Rule\n\n",
+}
+
+// None of the commands that write the spec refuses for what check finds: a
+// move rewrites the links to the document wherever they stand, and new and
+// apply add to the spec as it is.
+func TestMoveNewAndApplyTakeASpecCheckFindsFaultIn(t *testing.T) {
+	dir := spec(t, brokenSpec)
+	_, before, _ := run("check", "-C", dir)
+	code, out, errOut := run("move", "-C", dir, "a/target", "b/moved")
+	if code != ExitOK || out != "moved a/target.md -> b/moved.md\nchanged a/dead.md\nchanged a/ghost.md\nchanged a/nolink.md\n" {
+		t.Fatalf("move: %d %s %s", code, out, errOut)
+	}
+	if got := read(t, dir, "docs/spec/a/ghost.md"); got != "# Ghost\n\nType: [Ghost](../ghost.md)\n\nSee [the target](../b/moved.md#x).\n" {
+		t.Errorf("ghost.md is %q", got)
+	}
+	if got := read(t, dir, "docs/spec/a/nolink.md"); got != "# No link\n\nType: none\n\n[the target](../b/moved.md)\n" {
+		t.Errorf("nolink.md is %q", got)
+	}
+	// The faults are still there, and only those: the move made none.
+	_, after, _ := run("check", "-C", dir)
+	if strings.Count(before, "\n") != strings.Count(after, "\n") || !strings.Contains(after, "a/dead.md:3: link.unresolved") || !strings.Contains(after, "b/moved.md:5: section.empty") {
+		t.Errorf("check before\n%s\nafter\n%s", before, after)
+	}
+	// What the move itself must do still refuses: a target that exists.
+	if code, out, _ := run("move", "-C", dir, "a/dead", "b/moved"); code != ExitFailed || out != "" {
+		t.Errorf("a move onto a document: %d %q", code, out)
+	}
+	if code, out, errOut := run("new", "-C", dir, "kind", "a/fresh"); code != ExitOK || out != "created a/fresh.md\n" {
+		t.Errorf("new: %d %s %s", code, out, errOut)
+	}
+	if code, out, _ := run("new", "-C", dir, "kind", "a/fresh"); code != ExitFailed || out != "" {
+		t.Errorf("new onto a document: %d %q", code, out)
+	}
+	if code, out, errOut := run("apply", "-C", dir, "software/domain", "dom"); code != ExitOK || !strings.Contains(out, "copied dom/README.md\n") {
+		t.Errorf("apply: %d %s %s", code, out, errOut)
+	}
+}
