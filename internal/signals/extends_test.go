@@ -58,3 +58,21 @@ func TestTopicOfDerivedTypes(t *testing.T) {
 		}
 	}
 }
+
+func TestInvalidExtendsLineIsNoType(t *testing.T) {
+	a := Analyze(spec(t, map[string]string{
+		"rules.md": "# Rules\n\nExtends: the borrowing rules of the house\n\nThe rules.\n\n## Rule\nEvery loan ends.\n",
+		"lost.md":  "# Lost\n\nExtends: [Nowhere](nowhere.md)\n\nA type.\n\n## Rule\nEvery loan ends.\n",
+	}), References{})
+	if topic, _ := a.Topic("rules"); topic.Kind != "document" {
+		t.Errorf("rules is %s", topic.Kind)
+	}
+	if topic, _ := a.Topic("lost"); topic.Kind != "type" {
+		t.Errorf("lost is %s", topic.Kind)
+	}
+	var got []string
+	for _, st := range a.Statements {
+		got = append(got, st.Doc+"|"+st.Text)
+	}
+	eq(t, got, []string{"lost.md|A type.", "rules.md|The rules.", "rules.md|Every loan ends."})
+}

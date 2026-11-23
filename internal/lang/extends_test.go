@@ -193,6 +193,10 @@ func TestExtendsLineErrors(t *testing.T) {
 		"later.md":    "# A\n\nWhat this is.\n\nExtends: [Artifact](ghost.md)\n",
 		// Beside a type line, in either order.
 		"type-first.md":    "# A\n\nType: [Role](role.md)\nExtends: [Artifact](ghost.md)\n\n## Owner\nO.\n",
+		"typed-after.md":   "# A\n\nType: [Role](role.md)\n\nExtends: [Artifact](ghost.md)\n\n## Owner\nO.\n",
+		"typed-deep.md":    "# A\n\nType: [Role](role.md)\n\n## Owner\nO.\n\ntext\nExtends: [Artifact](ghost.md)\n",
+		"typed-list.md":    "# A\n\nType: [Role](role.md)\n\n- Extends: [Artifact](ghost.md)\n\n## Owner\nO.\n",
+		"type-second.md":   "# A\n\nExtends: [Artifact](artifact.md)\n\nType: [Role](ghost.md)\n",
 		"extends-first.md": "# A\n\nExtends: [Artifact](artifact.md)\nType: [Role](ghost.md)\n",
 		// In code, in lower case or indented as code, it is text.
 		"fenced.md":   "# A\n\n```\nExtends: [Artifact](ghost.md)\n```\n\n    Extends: [Artifact](ghost2.md)\n",
@@ -203,7 +207,7 @@ func TestExtendsLineErrors(t *testing.T) {
 		"angle.md:3: extends.line: "+bad,
 		"code.md:3: extends.line: "+bad,
 		"empty.md:3: extends.line: "+bad,
-		"extends-first.md:4: type.line: a type line stands only on the first line after the title",
+		"extends-first.md:4: type.line: "+both,
 		"extra.md:3: extends.line: "+bad,
 		"image.md:3: extends.line: "+bad,
 		"late.md:4: extends.line: "+stray,
@@ -212,6 +216,10 @@ func TestExtendsLineErrors(t *testing.T) {
 		`lower.md:3: link.unresolved: no document at "ghost-lower.md"`,
 		"second.md:5: extends.line: "+stray,
 		"type-first.md:4: extends.line: "+both,
+		"type-second.md:5: type.line: a type line stands only on the first line after the title",
+		"typed-after.md:5: extends.line: "+stray,
+		"typed-deep.md:9: extends.line: "+stray,
+		"typed-list.md:5: extends.line: "+stray,
 		`unresolved.md:3: extends.unresolved: no document at "ghost-base.md"`,
 		"untitled.md:1: title: missing level-1 title",
 		"untitled.md:2: extends.line: "+stray,
@@ -272,4 +280,30 @@ func TestSectionsMatchWithoutCase(t *testing.T) {
 		got = append(got, strings.Join([]string{c.Name, c.DeclaredBy, c.RequiredBy}, "/"))
 	}
 	expect(t, got, "DUE DATE/derived.md/derived.md", "Notes/derived.md/", "Own/derived.md/derived.md")
+}
+
+func TestInvalidExtendsLineMakesNoType(t *testing.T) {
+	files := map[string]string{
+		"base.md":   "# Base\n\nB.\n\n## One\nO.\n",
+		"bad.md":    "# Bad\n\nExtends: the borrowing rules of the house\n\n## Two\nT.\n",
+		"lost.md":   "# Lost\n\nExtends: [Nowhere](nowhere.md)\n\n## Three\nT.\n",
+		"fine.md":   "# Fine\n\nExtends: [Base](base.md)\n",
+		"object.md": "# Object\n\nType: [Bad](bad.md)\n",
+	}
+	expect(t, checkFiles(t, files),
+		"bad.md:3: extends.line: extends line must be exactly one link to a document",
+		`lost.md:3: extends.unresolved: no document at "nowhere.md"`,
+		`object.md:3: section.missing: missing section "Two" required by bad.md`,
+	)
+	s := specOf(t, files)
+	// bad.md is a type only because object.md names it.
+	for p, want := range map[string]bool{"base.md": true, "fine.md": true, "lost.md": true, "bad.md": true, "object.md": false} {
+		if got := s.IsType(mustDoc(t, s, p)); got != want {
+			t.Errorf("IsType(%s) = %v", p, got)
+		}
+	}
+	solo := specOf(t, map[string]string{"bad.md": files["bad.md"]})
+	if solo.IsType(mustDoc(t, solo, "bad.md")) {
+		t.Error("an invalid extends line makes a type")
+	}
 }

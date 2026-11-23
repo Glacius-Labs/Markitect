@@ -70,7 +70,7 @@ func (s *Spec) ChainSections(t *Document) []ChainSection {
 }
 
 // IsType reports whether d is a type: a document that another document names
-// in its type line or its extends line, or one with an extends line.
+// in its type line or its extends line, or one whose extends line is a link.
 func (s *Spec) IsType(d *Document) bool { return s.types[d.Path] }
 
 // Objects returns the documents whose type is t or a type that extends t,
@@ -115,6 +115,15 @@ func (s *Spec) inCycle(d *Document) bool {
 	return false
 }
 
+// bothLines is the message of the second of a type line and an extends line in
+// the head block.
+const bothLines = "a document has a type line or an extends line, not both"
+
+// inHead reports whether a line stands in the head block of the document.
+func (d *Document) inHead(line int) bool {
+	return d.HeadFirst != 0 && line >= d.HeadFirst && line <= d.HeadLast
+}
+
 // checkExtends checks the extends line of a type: the line, its base, the
 // cycle and the sections the type loosens.
 func (s *Spec) checkExtends(d *Document) []Diagnostic {
@@ -136,8 +145,8 @@ func (s *Spec) checkExtends(d *Document) []Diagnostic {
 		out = append(out, s.loosened(d)...)
 	}
 	for _, line := range d.StrayExtendsLines {
-		if d.TypeLine != 0 {
-			out = append(out, add(line, CodeExtendsLine, "a document has a type line or an extends line, not both"))
+		if d.TypeLine != 0 && d.inHead(line) {
+			out = append(out, add(line, CodeExtendsLine, bothLines))
 		} else {
 			out = append(out, add(line, CodeExtendsLine, "an extends line stands only on the first line after the title"))
 		}

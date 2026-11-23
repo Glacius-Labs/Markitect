@@ -60,6 +60,21 @@ func TestShowDerivedType(t *testing.T) {
 		!strings.HasSuffix(out, "Documents:\n  sites/home.md\n  sites/news.md\n  things/logo.md\n") {
 		t.Error(out)
 	}
+	// A base lists the types that extend it directly, after its sections.
+	_, out, _ = run("show", "-C", dir, "types/artifact")
+	want = "types/artifact.md\nTitle: Artifact\nType: (none)\nSections:\n  Owner\n  Notes (optional)\nExtended by:\n  types/website.md\n" +
+		"Links to: (none)\nLinked from: (none)\nDocuments:\n  sites/home.md\n  sites/news.md\n  things/logo.md\n"
+	if out != want {
+		t.Errorf("got\n%s\nwant\n%s", out, want)
+	}
+	_, out, _ = run("show", "-C", dir, "types/artifact", "--json")
+	if !strings.Contains(out, "\"extended_by\": [\n    \"types/website.md\"\n  ]") {
+		t.Error(out)
+	}
+	_, out, _ = run("show", "-C", dir, "types/blog", "--json")
+	if strings.Contains(out, "extended_by") {
+		t.Error(out)
+	}
 	_, out, _ = run("show", "-C", dir, "types/website", "--json")
 	var doc struct {
 		Type         string
@@ -91,15 +106,15 @@ func TestShowDerivedType(t *testing.T) {
 	if out != "sites/home.md\nTitle: Home\nType: types/website.md\nSections:\n  Owner\n  Pages\nLinks to: (none)\nLinked from: (none)\n" {
 		t.Error(out)
 	}
-	// A base that is no document, and an extends line that is no link.
+	// A base that is no document; an extends line that is no link counts for nothing.
 	dir = spec(t, map[string]string{
 		"lost.md": "# Lost\n\nExtends: [Nowhere](nowhere.md)\n\n## Own\nO.\n",
-		"bad.md":  "# Bad\n\nExtends: nowhere\n",
+		"bad.md":  "# Bad\n\nExtends: nowhere\n\n## Own\nO.\n",
 	})
 	if _, out, _ := run("show", "-C", dir, "lost"); !strings.HasPrefix(out, "lost.md\nTitle: Lost\nExtends: nowhere.md (missing)\nSections:\n  Own\n") {
 		t.Error(out)
 	}
-	if _, out, _ := run("show", "-C", dir, "bad"); !strings.HasPrefix(out, "bad.md\nTitle: Bad\nExtends: (invalid line)\nSections: (none)\n") {
+	if _, out, _ := run("show", "-C", dir, "bad"); !strings.HasPrefix(out, "bad.md\nTitle: Bad\nType: (none)\nSections:\n  Own\n") {
 		t.Error(out)
 	}
 	_, out, _ = run("show", "-C", dir, "lost", "--json")

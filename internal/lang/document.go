@@ -56,7 +56,11 @@ type Document struct {
 	ExtendsPath string
 	// StrayExtendsLines are the other lines of text that start with "Extends:".
 	StrayExtendsLines []int
-	Sections          []Section
+	// HeadFirst and HeadLast are the first and the last line of the head block,
+	// the paragraph right after the title where the type line or the extends
+	// line belongs; both are 0 when that block is no paragraph.
+	HeadFirst, HeadLast int
+	Sections            []Section
 	// Links are the links to .md paths outside type and extends lines.
 	Links []Link
 	// Refs are all destinations of links to .md paths, type and extends lines,
@@ -204,6 +208,7 @@ func (p *parser) read(root ast.Node) {
 	if d.TitleLine != 0 {
 		if para, ok := nextBlock(first.NextSibling()).(*ast.Paragraph); ok {
 			seg := para.Lines().At(0)
+			d.HeadFirst, d.HeadLast = p.line(seg.Start), p.line(para.Lines().At(para.Lines().Len()-1).Start)
 			switch line := p.lineText(seg); {
 			case strings.HasPrefix(line, typePrefix):
 				d.TypeLine = p.line(seg.Start)

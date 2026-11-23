@@ -19,13 +19,16 @@ type showDocument struct {
 	Type      string `json:"type"`
 	TypeState string `json:"type_state"`
 	// Extends and ExtendsState are the base of a type that extends another and
-	// the state of its extends line, as Type and TypeState are for a document
-	// of a type; both are left out for any other document.
+	// the state of its extends line, "missing" or "ok", as Type and TypeState are
+	// for a document of a type; both are left out for any other document. An
+	// extends line that is not one link counts for nothing.
 	Extends      string        `json:"extends,omitempty"`
 	ExtendsState string        `json:"extends_state,omitempty"`
 	Sections     []showSection `json:"sections"`
-	LinksTo      []showLink    `json:"links_to"`
-	LinkedFrom   []showLink    `json:"linked_from"`
+	// ExtendedBy are the types that extend this type directly.
+	ExtendedBy []string   `json:"extended_by,omitempty"`
+	LinksTo    []showLink `json:"links_to"`
+	LinkedFrom []showLink `json:"linked_from"`
 	// Documents are the documents whose type this document is, or a type that
 	// extends it.
 	Documents []string `json:"documents"`
@@ -66,14 +69,11 @@ func show(o options, stdout io.Writer) (int, error) {
 	default:
 		doc.TypeState = "ok"
 	}
-	if d.ExtendsLine != 0 {
+	if d.HasExtends() {
 		doc.Extends = d.ExtendsPath
-		doc.ExtendsState = "invalid"
-		if d.HasExtends() {
-			doc.ExtendsState = "ok"
-			if _, ok := spec.Document(d.ExtendsPath); !ok {
-				doc.ExtendsState = "missing"
-			}
+		doc.ExtendsState = "ok"
+		if _, ok := spec.Document(d.ExtendsPath); !ok {
+			doc.ExtendsState = "missing"
 		}
 		for _, s := range spec.ChainSections(d) {
 			heading := s.Name
@@ -106,6 +106,11 @@ func show(o options, stdout io.Writer) (int, error) {
 				seen[l.Section] = true
 				doc.LinkedFrom = append(doc.LinkedFrom, showLink{Path: other.Path, Section: l.Section})
 			}
+		}
+	}
+	for _, other := range spec.Documents {
+		if other.HasExtends() && other.ExtendsPath == d.Path {
+			doc.ExtendedBy = append(doc.ExtendedBy, other.Path)
 		}
 	}
 	for _, other := range spec.Objects(d) {
@@ -151,10 +156,7 @@ func showText(doc showDocument) string {
 	label := "Type: "
 	if doc.ExtendsState != "" {
 		label, kind = "Extends: ", doc.Extends
-		switch doc.ExtendsState {
-		case "invalid":
-			kind = "(invalid line)"
-		case "missing":
+		if doc.ExtendsState == "missing" {
 			kind += " (missing)"
 		}
 	}
@@ -194,6 +196,7 @@ func showText(doc showDocument) string {
 		}
 	}
 	list("Sections:", sections, true)
+	list("Extended by:", doc.ExtendedBy, false)
 	list("Links to:", to, true)
 	list("Linked from:", from, true)
 	list("Documents:", doc.Documents, false)

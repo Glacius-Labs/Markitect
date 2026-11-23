@@ -26,7 +26,7 @@ func NewSpec(docs []*Document) *Spec {
 		if d.HasExtends() {
 			s.types[d.ExtendsPath] = true
 		}
-		if d.ExtendsLine != 0 {
+		if d.HasExtends() {
 			s.types[d.Path] = true
 		}
 	}
@@ -156,7 +156,11 @@ func Check(s *Spec) []Diagnostic {
 			out = append(out, s.checkSections(d, t, d.TypeLine)...)
 		}
 		for _, line := range d.StrayTypeLines {
-			add(line, CodeTypeLine, "a type line stands only on the first line after the title")
+			if d.ExtendsLine != 0 && d.inHead(line) {
+				add(line, CodeTypeLine, bothLines)
+			} else {
+				add(line, CodeTypeLine, "a type line stands only on the first line after the title")
+			}
 		}
 		out = append(out, s.checkExtends(d)...)
 		seen := map[string]bool{}
