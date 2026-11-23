@@ -228,7 +228,7 @@ func TestSections(t *testing.T) {
 		"twice.md": "# A\n\nType: [Role](role.md)\n\n## Duty\n\n## Duty\nsecond\n## Size ##\nz\n",
 		// No-break space is white space.
 		"blank.md": "# A\n\nType: [Role](role.md)\n\n## Duty\n\u00a0\n## Size\nz\n",
-		// HTML comments are no text, so a template's placeholder stays empty.
+		// HTML comments are no text, so a section holding only a placeholder stays empty.
 		"comment.md": "# A\n\nType: [Role](role.md)\n\n## Duty\n<!-- to do -->\n## Size\nz\n",
 		// Headings in code are no sections.
 		"code.md": "# A\n\nType: [Role](role.md)\n\n```\n## Duty\na sample\n```\n\n`## Size ##`\n",

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -11,11 +12,11 @@ import (
 )
 
 // libraryFolder is the library as plain files, the way a person finds it: the
-// packages and templates they copy into a spec by hand.
+// module core, which they copy into a spec by hand.
 func libraryFolder() fs.FS { return os.DirFS(filepath.Join("..", "library")) }
 
-// copyFromLibrary copies folders of the library, such as packages or
-// templates/product, to the same paths below the spec folder of a project.
+// copyFromLibrary copies folders of the library, such as core, to the same
+// paths below the spec folder of a project.
 func copyFromLibrary(t *testing.T, project string, folders ...string) {
 	t.Helper()
 	for _, folder := range folders {
@@ -36,107 +37,42 @@ func copyFromLibrary(t *testing.T, project string, folders ...string) {
 	}
 }
 
-// templates lists the templates of the library: the folders below templates/.
-func templates(t *testing.T) []string {
-	t.Helper()
-	entries, err := fs.ReadDir(libraryFolder(), "templates")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var out []string
-	for _, e := range entries {
-		if e.IsDir() {
-			out = append(out, e.Name())
-		}
-	}
-	return out
-}
-
-// A template laid beside the packages it uses, in a spec folder that holds
-// packages/ and templates/NAME/, loads, and check finds in it only what an
-// unfilled template has: empty sections. The commands that read the spec
-// work on it.
-func TestEveryTemplateLoadsBesideThePackages(t *testing.T) {
-	names := templates(t)
-	if len(names) < 5 {
-		t.Fatalf("templates %v", names)
-	}
-	for _, name := range names {
-		t.Run(name, func(t *testing.T) {
-			dir := initialized(t)
-			copyFromLibrary(t, dir, "packages", "templates/"+name)
-			s, err := lang.Load(os.DirFS(specOf(dir)))
-			if err != nil {
-				t.Fatal(err)
-			}
-			filled := 0
-			for _, d := range s.Documents {
-				if strings.HasPrefix(d.Path, "templates/"+name+"/") {
-					filled++
-				}
-			}
-			if filled == 0 {
-				t.Fatalf("template %s holds no document", name)
-			}
-			for _, d := range lang.Check(s) {
-				if d.Code != lang.CodeSectionEmpty || !strings.HasPrefix(d.Path, "templates/"+name+"/") {
-					t.Errorf("%s: %s", name, d)
-				}
-			}
-			for _, args := range [][]string{{"check"}, {"table"}, {"topic"}, {"questions"}} {
-				if code, _, errOut := run(append(args, "-C", dir)...); code == ExitFailed {
-					t.Errorf("%v: %s", args, errOut)
-				}
-			}
-		})
-	}
-}
-
-// The packages and templates of the library, as one spec: only the templates
-// have empty sections.
+// The library as one spec: the module core, whose types are well-formed, and
+// the reference values and question catalogs beside it, which are plain
+// documents. check finds nothing in it.
 func TestLibrary(t *testing.T) {
 	s, err := lang.Load(libraryFolder())
 	if err != nil {
 		t.Fatal(err)
 	}
-	var packages []string
-	for _, d := range s.Documents {
-		if strings.HasPrefix(d.Path, "packages/") {
-			packages = append(packages, strings.Split(d.Path, "/")[1])
-		}
-	}
-	if got := strings.Join(unique(packages), " "); got != "company core software" {
-		t.Errorf("packages %s", got)
-	}
 	for _, d := range lang.Check(s) {
-		if d.Code != lang.CodeSectionEmpty || !strings.HasPrefix(d.Path, "templates/") {
-			t.Error(d)
+		t.Error(d)
+	}
+	core := 0
+	for _, d := range s.Documents {
+		if strings.HasPrefix(d.Path, "core/") {
+			core++
 		}
 	}
-	quality, _ := s.Document("packages/software/quality.md")
-	if n := len(quality.Declared()); n != 10 {
-		t.Errorf("quality declares %d sections", n)
+	if core != 6 {
+		t.Errorf("core holds %d documents", core)
+	}
+	concept, _ := s.Document("core/concept.md")
+	if n := len(concept.Declared()); n != 4 {
+		t.Errorf("concept declares %d sections", n)
 	}
 }
 
-func unique(list []string) []string {
-	var out []string
-	for _, s := range list {
-		if len(out) == 0 || out[len(out)-1] != s {
-			out = append(out, s)
-		}
-	}
-	return out
-}
-
-// The reference values name a value for every type of every package.
+// The reference values name a value for every type of core.
 func TestReferenceValuesCoverEveryType(t *testing.T) {
 	refs, err := references()
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = fs.WalkDir(libraryFolder(), "packages", func(p string, e fs.DirEntry, err error) error {
+	n := 0
+	err = fs.WalkDir(libraryFolder(), "core", func(p string, e fs.DirEntry, err error) error {
 		if err == nil && !e.IsDir() {
+			n++
 			if _, ok := refs.For(p); !ok {
 				t.Errorf("no reference value for %s", p)
 			}
@@ -145,5 +81,86 @@ func TestReferenceValuesCoverEveryType(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatal(err)
+	}
+	if n != 6 {
+		t.Errorf("%d types", n)
+	}
+}
+
+// A project laid out by hand, the way a person does: core copied into the spec
+// folder, and a module of their own whose documents are of core's types. The
+// questions of core are found by the folder name core directly below the spec
+// folder, and so are core's reference values, which topic shows beside the
+// numbers of a document; a module of the project's own has neither.
+func TestAHandLaidProjectHasTheQuestionsAndReferenceValuesOfCore(t *testing.T) {
+	dir := initialized(t)
+	copyFromLibrary(t, dir, "core")
+	write(t, dir, "docs/spec/lending/README.md", "# Lending\n\nHow books are lent.\n")
+	write(t, dir, "docs/spec/lending/loan.md", "# Loan\n\nType: [Concept](../core/concept.md)\n\n## Definition\nA member keeps a copy for three weeks. The copy goes back to the shelf. A fee is due after that. The librarian waives it.\n\n## Rules (optional)\nA copy is on loan to one member. A member holds five loans. Nothing else.\n")
+	write(t, dir, "docs/spec/lending/own-type.md", "# Own type\n\nSomething of the project.\n\n## Part\nIt.\n")
+	write(t, dir, "docs/spec/lending/thing.md", "# Thing\n\nType: [Own type](own-type.md)\n\n## Part\nA part.\n")
+
+	code, out, errOut := run("check", "-C", dir)
+	if code != ExitOK {
+		t.Fatalf("check: %d\n%s%s", code, out, errOut)
+	}
+
+	code, out, _ = run("questions", "-C", dir)
+	if code != ExitOK || !strings.HasPrefix(out, "## core\n\n1. Which role is responsible for each rule, and does that role exist?\n") || strings.Contains(out, "## lending") {
+		t.Errorf("questions: %d\n%s", code, out)
+	}
+	_, out, _ = run("questions", "-C", dir, "--json")
+	var q struct {
+		Kind    string
+		Modules []struct {
+			Module    string
+			Questions []string
+		}
+	}
+	if err := json.Unmarshal([]byte(out), &q); err != nil {
+		t.Fatal(err)
+	}
+	if q.Kind != "questions" || len(q.Modules) != 1 || q.Modules[0].Module != "core" || len(q.Modules[0].Questions) != 6 {
+		t.Errorf("questions --json: %s", out)
+	}
+
+	// The loan has seven statements, and core's reference values for a concept
+	// are 1 to 5 statements of 5 to 25 words, which topic shows beside them. A
+	// type of the project's own has no reference values.
+	_, out, _ = run("topic", "-C", dir, "--json")
+	var topic struct {
+		Signals map[string][]struct {
+			File   string
+			Detail string
+		}
+	}
+	if err := json.Unmarshal([]byte(out), &topic); err != nil {
+		t.Fatal(err)
+	}
+	details := map[string][]string{}
+	for _, signal := range []string{"size", "complexity"} {
+		for _, f := range topic.Signals[signal] {
+			details[signal+" "+f.File] = append(details[signal+" "+f.File], f.Detail)
+		}
+	}
+	wantSize := "7 statements (documents of type core/concept.md: median 7, range 7–7, 1 document; reference 1–5)"
+	if got := details["size lending/loan.md"]; len(got) != 1 || got[0] != wantSize {
+		t.Errorf("size of the loan: %v, want %s", got, wantSize)
+	}
+	if got := details["complexity lending/loan.md"]; len(got) != 7 || !strings.HasSuffix(strings.Split(got[0], ", 0 terms")[0], "; reference 5–25)") {
+		t.Errorf("complexity of the loan: %v", got)
+	}
+	if got := details["size lending/thing.md"]; len(got) != 1 || strings.Contains(got[0], "reference") {
+		t.Errorf("size of a document of the project's own type: %v", got)
+	}
+
+	// The folder of core is found only directly below the spec folder.
+	moved := initialized(t)
+	copyFromLibrary(t, moved, "core")
+	if err := os.Rename(filepath.Join(specOf(moved), "core"), filepath.Join(specOf(moved), "elsewhere")); err != nil {
+		t.Fatal(err)
+	}
+	if code, out, _ := run("questions", "-C", moved); code != ExitOK || !strings.Contains(out, "The spec has no module of the library, so there are no questions.") {
+		t.Errorf("a folder of another name: %d %s", code, out)
 	}
 }

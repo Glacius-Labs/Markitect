@@ -16,7 +16,7 @@ import (
 // spec shows; --all shows every one, and --json always does.
 const shownPerSignal = 10
 
-// references reads the reference values of every package of the library.
+// references reads the reference values of every module of the library.
 func references() (signals.References, error) {
 	refs := signals.References{}
 	entries, err := fs.ReadDir(library.FS(), "references")
@@ -170,11 +170,11 @@ func text(d *lang.Document) string {
 // questionsDocument is the JSON document of questions.
 type questionsDocument struct {
 	header
-	Packages []packageQuestions `json:"packages"`
+	Modules []moduleQuestions `json:"modules"`
 }
 
-type packageQuestions struct {
-	Package   string   `json:"package"`
+type moduleQuestions struct {
+	Module    string   `json:"module"`
 	Questions []string `json:"questions"`
 }
 
@@ -184,8 +184,8 @@ func questions(o options, stdout io.Writer) (int, error) {
 		return ExitFailed, err
 	}
 	fsys := w.SpecFS
-	doc := questionsDocument{header: newHeader("questions"), Packages: []packageQuestions{}}
-	entries, _ := fs.ReadDir(fsys, "packages")
+	doc := questionsDocument{header: newHeader("questions"), Modules: []moduleQuestions{}}
+	entries, _ := fs.ReadDir(fsys, ".")
 	var b strings.Builder
 	for _, e := range entries {
 		if !e.IsDir() {
@@ -195,21 +195,21 @@ func questions(o options, stdout io.Writer) (int, error) {
 		if err != nil {
 			continue
 		}
-		pq := packageQuestions{Package: e.Name(), Questions: []string{}}
+		mq := moduleQuestions{Module: e.Name(), Questions: []string{}}
 		for _, line := range strings.Split(string(data), "\n") {
 			if q, ok := strings.CutPrefix(strings.TrimSpace(line), "- "); ok {
-				pq.Questions = append(pq.Questions, q)
+				mq.Questions = append(mq.Questions, q)
 			}
 		}
-		doc.Packages = append(doc.Packages, pq)
-		fmt.Fprintf(&b, "## %s\n\n", pq.Package)
-		for i, q := range pq.Questions {
+		doc.Modules = append(doc.Modules, mq)
+		fmt.Fprintf(&b, "## %s\n\n", mq.Module)
+		for i, q := range mq.Questions {
 			fmt.Fprintf(&b, "%d. %s\n", i+1, q)
 		}
 		b.WriteString("\n")
 	}
-	if len(doc.Packages) == 0 {
-		b.WriteString("The spec has no package of the library, so there are no questions.\n")
+	if len(doc.Modules) == 0 {
+		b.WriteString("The spec has no module of the library, so there are no questions.\n")
 	}
 	return output(o, stdout, doc, strings.TrimSuffix(b.String(), "\n\n")+"\n")
 }

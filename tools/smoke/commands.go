@@ -24,13 +24,14 @@ func (s *smoke) version() error {
 }
 
 // smokeFiles are the documents of a small lending library that a person writes
-// by hand into the spec: a domain, a concept and an operation of the types of
-// the packages, and a type of its own that extends another with a document of
-// it.
+// by hand into the spec beside the module core: a concept of core's type, a
+// type of their own with an operation of it, and a type that extends another
+// with a document of it.
 var smokeFiles = map[string]string{
-	"docs/spec/domain/README.md":       "# Domain\n\nType: [Domain](../packages/software/domain.md)\n\n## Concepts\n- [Member](member.md)\n\n## Operations\n- [Borrow](borrow.md)\n",
-	"docs/spec/domain/member.md":       "# Member\n\nType: [Concept](../packages/core/concept.md)\n\n## Definition\nA person with a library card.\n",
-	"docs/spec/domain/borrow.md":       "# Borrow\n\nType: [Operation](../packages/software/operation.md)\n\n## Does\nLends a book to a member for three weeks.\n\n## Who\nA [member](member.md).\n\n## Given\nThe book and the card.\n",
+	"docs/spec/domain/README.md":       "# Domain\n\n## Concepts\n- [Member](member.md)\n\n## Operations\n- [Borrow](borrow.md)\n",
+	"docs/spec/domain/member.md":       "# Member\n\nType: [Concept](../core/concept.md)\n\n## Definition\nA person with a library card.\n",
+	"docs/spec/domain/operation.md":    "# Operation\n\nSomething a member can do.\n\n## Does\nWhat happens.\n\n## Who\nWho may do it.\n\n## Given\nWhat it needs.\n",
+	"docs/spec/domain/borrow.md":       "# Borrow\n\nType: [Operation](operation.md)\n\n## Does\nLends a book to a member for three weeks.\n\n## Who\nA [member](member.md).\n\n## Given\nThe book and the card.\n",
 	"docs/spec/domain/artifact.md":     "# Artifact\n\nSomething the library keeps.\n\n## Owner\nWho answers for it.\n",
 	"docs/spec/domain/catalog.md":      "# Catalog\n\nExtends: [Artifact](artifact.md)\n\nA list of books.\n\n## Entries\nThe books it lists.\n",
 	"docs/spec/domain/main-catalog.md": "# Main catalog\n\nType: [Catalog](catalog.md)\n\n## Owner\nThe head librarian.\n\n## Entries\nEvery book.\n",
@@ -76,18 +77,6 @@ func sameFiles(before, after map[string]string) error {
 	return nil
 }
 
-// codes returns the code of every diagnostic line of a check, and the file
-// each stands in.
-func codes(out string) (found, files []string) {
-	for _, line := range strings.Split(out, "\n") {
-		if parts := strings.SplitN(line, ": ", 3); len(parts) == 3 && strings.Contains(parts[0], ":") {
-			found = append(found, parts[1])
-			files = append(files, parts[0])
-		}
-	}
-	return found, files
-}
-
 // documents is the number of documents of the spec that check counts.
 func documents(markitect func(int, ...string) (string, error), want int) (int, error) {
 	out, err := markitect(want, "check", "--json")
@@ -102,19 +91,14 @@ func documents(markitect func(int, ...string) (string, error), want int) (int, e
 }
 
 // layOut builds a project by hand, the way a person does since no command lays
-// one out: an empty folder, the packages and the templates copied from the
-// library of the repository into a spec folder, docs/spec, and the file
-// .markitect/spec that names that folder.
+// one out: an empty folder, the module core copied from the library of the
+// repository into a spec folder, docs/spec, and the file .markitect/spec that
+// names that folder.
 func layOut(repo, project string) error {
 	library := filepath.Join(repo, "internal", "library")
 	spec := filepath.Join(project, "docs", "spec")
-	if err := copyTree(filepath.Join(library, "packages"), filepath.Join(spec, "packages")); err != nil {
+	if err := copyTree(filepath.Join(library, "core"), filepath.Join(spec, "core")); err != nil {
 		return err
-	}
-	for _, template := range []string{"project", "product", "architecture", "software", "company"} {
-		if err := copyTree(filepath.Join(library, "templates", template), filepath.Join(spec, "templates", template)); err != nil {
-			return err
-		}
 	}
 	return writeFile(project, ".markitect/spec", "docs/spec\n")
 }
@@ -143,8 +127,7 @@ func (s *smoke) projectCommands() error {
 	if err := layOut(s.repo, project); err != nil {
 		return err
 	}
-	if err := requirePresent(project, ".markitect/spec", "docs/spec/packages/core/concept.md", "docs/spec/packages/software/operation.md",
-		"docs/spec/templates/project/README.md", "docs/spec/templates/product/README.md"); err != nil {
+	if err := requirePresent(project, ".markitect/spec", "docs/spec/core/concept.md", "docs/spec/core/term.md"); err != nil {
 		return err
 	}
 	if entries, err := os.ReadDir(filepath.Join(project, ".markitect")); err != nil {
@@ -153,35 +136,23 @@ func (s *smoke) projectCommands() error {
 		return fmt.Errorf(".markitect/ holds %d entries, not only spec", len(entries))
 	}
 
-	// The spec passes check but for the sections a project fills.
-	out, err := markitect(1, "check")
-	if err != nil {
+	// The module alone passes check, and table lists its documents, sorted by
+	// path, with their type and title.
+	if out, err := markitect(0, "check"); err != nil {
 		return err
+	} else if out != "0 errors in 6 documents\n" {
+		return fmt.Errorf("check over the module core: %s", tail(out))
 	}
-	found, files := codes(out)
-	if len(found) == 0 {
-		return fmt.Errorf("check finds nothing in the templates:\n%s", tail(out))
-	}
-	for i, code := range found {
-		if code != "section.empty" || !strings.HasPrefix(files[i], "templates/") {
-			return fmt.Errorf("check after laying out finds %s in %s", code, files[i])
-		}
-	}
-	// table lists every document, sorted by path, with its type and title.
 	if out, err := markitect(0, "table"); err != nil {
 		return err
-	} else if err := requireContains(out, "| Document | Type | Title |\n| --- | --- | --- |\n", "| templates/product/README.md | ", "| templates/project/README.md | "); err != nil {
-		return err
-	}
-
-	// A small project of its own: the templates go, the packages stay.
-	if err := os.RemoveAll(filepath.Join(project, "docs", "spec", "templates")); err != nil {
+	} else if err := requireContains(out, "| Document | Type | Title |\n| --- | --- | --- |\n", "| core/concept.md |  | Concept |\n", "| core/term.md |  | Term |\n"); err != nil {
 		return err
 	}
 	base, err := documents(markitect, 0)
 	if err != nil {
 		return err
 	}
+
 	for name, content := range smokeFiles {
 		if err := writeFile(project, name, content); err != nil {
 			return err
@@ -249,17 +220,17 @@ func (s *smoke) projectCommands() error {
 	}
 	if out, err := markitect(0, "show", "domain/borrow"); err != nil {
 		return err
-	} else if err := requireContains(out, "domain/borrow.md\nTitle: Borrow\n", "Type: packages/software/operation.md\n", "Linked from:\n  domain/README.md (Operations)\n"); err != nil {
+	} else if err := requireContains(out, "domain/borrow.md\nTitle: Borrow\n", "Type: domain/operation.md\n", "Linked from:\n  domain/README.md (Operations)\n"); err != nil {
 		return err
 	}
 	if out, err := markitect(0, "table"); err != nil {
 		return err
-	} else if err := requireContains(out, "| Document | Type | Title |\n", "| domain/borrow.md | packages/software/operation.md | Borrow |\n", "| domain/member.md | packages/core/concept.md | Member |\n"); err != nil {
+	} else if err := requireContains(out, "| Document | Type | Title |\n", "| domain/borrow.md | domain/operation.md | Borrow |\n", "| domain/member.md | core/concept.md | Member |\n"); err != nil {
 		return err
 	}
-	if out, err := markitect(0, "table", "packages/software/operation"); err != nil {
+	if out, err := markitect(0, "table", "domain/operation"); err != nil {
 		return err
-	} else if err := requireContains(out, "| Title | Does | Who | Given | Refused when | Returns |\n", "| Borrow | Lends a book to a member for three weeks. | A member. |"); err != nil {
+	} else if err := requireContains(out, "| Title | Does | Who | Given |\n", "| Borrow | Lends a book to a member for three weeks. | A member. |"); err != nil {
 		return err
 	}
 	// A type that extends another: show names the base and where each section
@@ -282,7 +253,7 @@ func (s *smoke) projectCommands() error {
 	}
 	if out, err := markitect(0, "questions"); err != nil {
 		return err
-	} else if err := requireContains(out, "## core\n\n1. ", "## software\n\n1. "); err != nil {
+	} else if err := requireContains(out, "## core\n\n1. Which role is responsible for each rule"); err != nil {
 		return err
 	}
 	if out, err := markitect(0, "licenses"); err != nil {
@@ -337,7 +308,7 @@ func (s *smoke) projectCommands() error {
 	if err := os.Remove(filepath.Join(project, "docs", "spec", "domain", "draft.md")); err != nil {
 		return err
 	}
-	if err := writeFile(project, "docs/spec/domain/fine.md", "# Fine\n\nType: [Concept](../packages/core/concept.md)\n\n## Definition\nWhat a late book costs.\n"); err != nil {
+	if err := writeFile(project, "docs/spec/domain/fine.md", "# Fine\n\nType: [Concept](../core/concept.md)\n\n## Definition\nWhat a late book costs.\n"); err != nil {
 		return err
 	}
 	if err := writeFile(project, "docs/spec/domain/borrow.md", strings.Replace(readFile(project, "docs/spec/domain/borrow.md"), "three weeks", "two weeks", 1)); err != nil {

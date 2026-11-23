@@ -121,13 +121,13 @@ func TestTopicAndQuestions(t *testing.T) {
 		t.Error(code, errOut)
 	}
 	code, out, _ = run("questions", "-C", dir)
-	if code != ExitOK || !strings.Contains(out, "no package of the library") {
+	if code != ExitOK || !strings.Contains(out, "no module of the library") {
 		t.Error(code, out)
 	}
 	applied := initialized(t)
-	copyFromLibrary(t, applied, "packages/core", "packages/software")
+	copyFromLibrary(t, applied, "core")
 	_, out, _ = run("questions", "-C", applied)
-	if !strings.HasPrefix(out, "## core\n\n1. ") || !strings.Contains(out, "\n## software\n\n1. Who may call each operation") {
+	if !strings.HasPrefix(out, "## core\n\n1. ") || strings.Contains(out, "\n## ") {
 		t.Error(out)
 	}
 	if code, out, _ := run("topic", "-C", applied, "--json"); code != ExitOK || !strings.Contains(out, `"topic_kind": "spec"`) {

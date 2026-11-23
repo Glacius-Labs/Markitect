@@ -111,7 +111,7 @@ func TestComplexityAndSize(t *testing.T) {
 	}
 	files := map[string]string{}
 	for k, v := range branches {
-		files[strings.Replace(k, "types/member.md", "packages/lib/member.md", 1)] = strings.ReplaceAll(v, "../types/member.md", "../packages/lib/member.md")
+		files[strings.Replace(k, "types/member.md", "lib/member.md", 1)] = strings.ReplaceAll(v, "../types/member.md", "../lib/member.md")
 	}
 	a := Analyze(spec(t, files), refs)
 	c := findings(a, Complexity)
@@ -124,10 +124,10 @@ func TestComplexityAndSize(t *testing.T) {
 	eq(t, len(c), len(a.Statements))
 	// Size ranks by the ratio to the median of the type, then by path.
 	eq(t, findings(a, Size), []string{
-		"members/ada.md:1: size: 4 statements (documents of type packages/lib/member.md: median 3, range 2–4, 3 documents; reference 1–2)",
+		"members/ada.md:1: size: 4 statements (documents of type lib/member.md: median 3, range 2–4, 3 documents; reference 1–2)",
 		"rules/loans.md:1: size: 2 statements (documents of type types/policy.md: median 1.5, range 1–2, 2 documents)",
-		"members/alan.md:1: size: 3 statements (documents of type packages/lib/member.md: median 3, range 2–4, 3 documents; reference 1–2)",
-		"members/grace.md:1: size: 2 statements (documents of type packages/lib/member.md: median 3, range 2–4, 3 documents; reference 1–2)",
+		"members/alan.md:1: size: 3 statements (documents of type lib/member.md: median 3, range 2–4, 3 documents; reference 1–2)",
+		"members/grace.md:1: size: 2 statements (documents of type lib/member.md: median 3, range 2–4, 3 documents; reference 1–2)",
 		"rules/fees.md:1: size: 1 statement (documents of type types/policy.md: median 1.5, range 1–2, 2 documents)",
 	})
 }
@@ -186,14 +186,16 @@ func TestTopic(t *testing.T) {
 
 func TestReferences(t *testing.T) {
 	refs := References{}
-	if err := ParseReferences("software", []byte("# Values\n\n| Type | Statements per document | Words per statement |\n|---|---|---|\n| operation | 1–5 | 5–25 |\n"), refs); err != nil {
+	if err := ParseReferences("core", []byte("# Values\n\n| Type | Statements per document | Words per statement |\n|---|---|---|\n| concept | 1–5 | 5–25 |\n"), refs); err != nil {
 		t.Fatal(err)
 	}
-	r, ok := refs.For("packages/software/operation.md")
+	r, ok := refs.For("core/concept.md")
 	eq(t, ok, true)
 	eq(t, r, Reference{Statements: [2]int{1, 5}, Words: [2]int{5, 25}})
-	if _, ok := refs.For("types/operation.md"); ok {
-		t.Error("a project's own type has a reference")
+	for _, own := range []string{"types/concept.md", "core/deeper/concept.md", "concept.md"} {
+		if _, ok := refs.For(own); ok {
+			t.Errorf("%s has a reference", own)
+		}
 	}
 	if err := ParseReferences("x", []byte("| a | 5–1 | 1–2 |\n"), refs); err == nil {
 		t.Error("a reversed range")
