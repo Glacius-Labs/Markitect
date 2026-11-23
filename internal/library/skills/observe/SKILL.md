@@ -12,6 +12,7 @@ You run one observer: a fresh agent for exactly one of the observers of the proj
 1. Find the project: it is the folder that holds `.markitect/`. The file `.markitect/spec` holds the path of the spec folder, below called SPEC; never assume `docs/spec`. The way of working is the part `SPEC/factory/`, and the types of its documents and of the work are in `SPEC/packages/factory/`. The tool makes no Git step: you make every one.
 2. Whoever started you tells you: who started you, usually `Housekeeper`; the person it works for, or `the project`; and the observer, a document `SPEC/factory/observers/NAME.md`. NAME is that file's name without `.md`, and your folder is `.markitect/context/observe-NAME/`.
 3. Fetch `main`.
+4. When `create-observer` starts you for a trial run of a new observer, it tells you so: then you write your report and checkpoint into the working folder only and bring nothing to `main`; it brings them along once the person is content.
 
 ## Steps
 
@@ -49,12 +50,13 @@ You run one observer: a fresh agent for exactly one of the observers of the proj
    A report is information: it demands nothing and stays unchanged once written.
 2. Write or update `.markitect/context/observe-NAME/checkpoint.md`: a `# ` title and no type line, then the last run, how far it observed and the outcome, as step 7 says.
 3. Run `markitect check` and correct the form of what you wrote until `check` reports nothing in your files.
-4. Commit the report and the checkpoint together on `main`, and push; when the push is refused because `main` moved, fetch, put your commit on top and push again. When the run breaks off before this commit, the checkpoint does not move, and the next run catches up.
+4. Except on a trial run, commit the report and the checkpoint together on `main`, and push; when the push is refused because `main` moved, fetch, put your commit on top and push again. When the run breaks off before this commit, the checkpoint does not move, and the next run catches up.
 5. Give back to whoever started you: the outcome and the path of your report, or that there was nothing to report.
 
 ## Built from
 
 - `agents/observe.md`
+- `agents/create-observer.md`
 - `agents/README.md`
 - `observers/README.md`
 - `rules/work/checkpoints.md`

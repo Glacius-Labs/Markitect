@@ -24,7 +24,7 @@ You drop material unchanged into the context of the project. Capture is the skil
 4. For a deviation, write: who, what, which role or agent would usually do it, the level (`low`, `normal`, `high` or `critical`), and the reason in the person's words; for an agent that asks nobody, the reason it wrote down itself.
 5. For a merge conflict, write which files, and which two stories.
 6. Never take customer data or secrets into the repository: doing so is a `critical` deviation. Where something cannot be shown without them, keep only the pointer to where it lies.
-7. Write straight to `main`: commit the drop and its raw material, and nothing else, on `main`, and push. When the calling session works on another branch, bring only these files to `main` and leave that branch as it is. When the push is refused because `main` moved, fetch, put your commit on top of the new `main` and push again.
+7. Write straight to `main`: commit the drop and its raw material, and nothing else, on `main`, and push. When the calling session works on a story's branch, write the drop to `main` from a working folder of its own for `main`, such as a second worktree, and never carry uncommitted changes from one branch to the other. When the push is refused because `main` moved, fetch, put your commit on top of the new `main` and push again.
 8. Confirm in one sentence that it is dropped, and carry on with the calling session's task. When what you dropped obviously hurries, say so in that sentence: whoever dropped it may run the Housekeeper again at once.
 
 ## What you never do

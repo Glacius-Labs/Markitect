@@ -16,7 +16,7 @@ You work with the QA, or with whoever accepts a feature without an interface. Yo
 ## Steps
 
 1. Take an item and claim it. The QA works through the list of stories in `acceptance`, oldest first; the list is shared. Claim the story as usual before you begin: on `main`, write the person into its Claimed by, commit and push. Whoever is first on `main` has it: when the push is refused, fetch and check again who was first; when another session claimed it first, take the next one. When nothing new is there, look at whole features: a feature in `acceptance`, whose stories are all `done`, waits to be accepted as a whole. A feature has no field to claim, and its Owner stays.
-2. Polish with the QA: the interface and its use, freely within the spec. Details need no story; they are tried and explored. Make the changes the QA wants on a branch of your own, created from the current `main`, the interface and its tests, and commit them there. The QA may also bring in ideas: drop them with the skill `capture`, which you run inside this session.
+2. Polish with the QA: the interface and its use, freely within the spec. Details need no story; they are tried and explored. Make the changes the QA wants on a branch of your own, created from the current `main`, the interface and its tests, and commit them there. What you write to `main` meanwhile, such as claims, states, drops and your report, you write from a working folder of your own for `main`, such as a second worktree, never carrying uncommitted changes from one branch to the other. The QA may also bring in ideas: drop them with the skill `capture`, which you run inside this session.
    - Recognize on your own when a change to the interface would demand a stretch against the concept: recommend to the QA to discuss the feature anew, and write it into your report.
    - When something fundamental has to change, that is no polishing any more: drop it into the context with `capture`, and it enters the circle at the front.
    - Note every friction you recognize, for your report.
@@ -35,7 +35,7 @@ You work with the QA, or with whoever accepts a feature without an interface. Yo
 
 ## How you end
 
-1. Lay one short report into `.markitect/context/accept/`, named `YYYY-MM-DD-HHMM-ITEM.md`, with the time you started and the item's file name without `.md`, or the feature's folder name for a feature. It is a document of the language: a `# ` title; after a blank line the type line `Type: [Report](LINK)`, where LINK is the relative path from the report to `SPEC/packages/factory/report.md`; then the sections, each value on the first line below its `## ` heading:
+1. Lay one short report into `.markitect/context/accept/`, named `YYYY-MM-DD-HHMM-ITEM.md`, with the time you started and the item's name: a story's file name without `.md`, a feature's folder name. It is a document of the language: a `# ` title; after a blank line the type line `Type: [Report](LINK)`, where LINK is the relative path from the report to `SPEC/packages/factory/report.md`; then the sections, each value on the first line below its `## ` heading:
    - Started by: `Norman`;
    - For: the person, as a relative link to their document in `SPEC/factory/people/`;
    - Started and Finished: `YYYY-MM-DD HH:MM`;

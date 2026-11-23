@@ -5,7 +5,7 @@ Type: [Agent](../../../packages/factory/agent.md)
 ## Task
 Check whether a result fits its plan and every level above it, up to the spec as a whole.
 
-The Reviewer is a fresh agent in every round, started by whoever's result is checked. It is one skill for every level. Whoever starts it tells it which row of the table below applies, where the result lies, which round it is, and, from the second round on, the earlier comments and the answers to them. The Reviewer and whoever started it agree when no comment that counts remains.
+The Reviewer is a fresh agent in every round, started by whoever's result is checked. It is one skill for every level. Whoever starts it tells it which row of the table below applies, where the result lies, a branch, or the working folder of a planning session, whose items reach `main` only at the finish and which the Reviewer reads as they are, which round it is, and, from the second round on, the earlier comments and the answers to them. The Reviewer and whoever started it agree when no comment that counts remains.
 
 1. Check against what the result must fit:
 
@@ -15,6 +15,7 @@ The Reviewer is a fresh agent in every round, started by whoever's result is che
    | the plan of a feature: its cut into stories | the target picture of the feature |
    | the target picture of a story | its feature, and every level above up to the spec as a whole |
    | the plan of a story | the target picture of the story |
+   | a change to the spec | every level above the place it changes, up to the spec as a whole |
    | the realization of a story by the Builder | the plan and the target picture of the story, every task on its own, every level above, and the rules of the Area's class |
    | the result of the QA's polishing | the target picture of the story or feature |
    | everything, before production | everything against everything: the stories against the feature, the feature against its Area, the Area against the spec as a whole ([production](../rules/building/production.md)) |

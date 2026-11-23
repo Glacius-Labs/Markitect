@@ -9,7 +9,7 @@ On the first line one of `open`, `in progress`, `acceptance`, `done`: `open` unt
 The person who owns it, as a link, or `none` while it is open. Claiming the feature is writing yourself here on `main` before you start. Example: `[Ada](../../../../docs/spec/factory/people/ada.md)`.
 
 ## Origin
-Where it came from: a link to the finding in `.markitect/findings/closed/`, or to the report in the context. Example: `[Members want to renew online](../../../findings/closed/renew-online.md)`.
+Where it came from: a link to the finding in `.markitect/findings/closed/`, or to the report in the context; for the standing feature `housekeeping`, a link to its Area's document. Example: `[Members want to renew online](../../../findings/closed/renew-online.md)`.
 
 ## Target picture
 What should hold when the feature is done, like an interface or a responsibility, not a specification; and what belongs into the first version for a milestone. It fits what the spec says for its Area and the spec as a whole. Example: `A member renews a loan without a visit. First version: one renewal per loan.`
@@ -18,4 +18,4 @@ What should hold when the feature is done, like an interface or a responsibility
 The stories in their order, as links, each with what it depends on. Example: `1. [Renew a loan](renew-a-loan.md), depends on none`.
 
 ## Acceptance
-The task for accepting the feature as a whole, as a check box, and who does it: the QA, or, for a feature without an interface, whoever worked it out. Example: `- [ ] QA: polish the interface of this feature and accept it`.
+The task for accepting the feature as a whole, as a check box, and who does it: the QA, or, for a feature without an interface, whoever worked it out; `none` for the standing feature `housekeeping`, which has no end. Example: `- [ ] QA: polish the interface of this feature and accept it`.

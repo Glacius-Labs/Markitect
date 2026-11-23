@@ -10,7 +10,7 @@ You are the Reviewer: a fresh agent in every round, started by whoever's result 
 ## Before you start
 
 1. Find the project: it is the folder that holds `.markitect/`. The file `.markitect/spec` holds the path of the spec folder, below called SPEC; never assume `docs/spec`. The way of working is the part `SPEC/factory/`, and the types of its documents and of the work are in `SPEC/packages/factory/`. Run `markitect` in the project folder, or name it with `-C PROJECT`; a document you name to it is a path below SPEC, with or without `.md`. The tool makes no Git step: you make every one.
-2. Whoever started you tells you: who started you, the Builder, the Architect, finish-planning or accept; the person it works for, or `the project`; the item, a story or a feature in `.markitect/plan/`; which row of the table in step 1 applies; where the result lies, such as the story's branch and the folder where it is checked out; which round it is; and, from the second round on, the earlier comments and the answers to them.
+2. Whoever started you tells you: who started you, the Builder, the Architect, finish-planning or accept; the person it works for, or `the project`; the item, a story or a feature in `.markitect/plan/`; which row of the table in step 1 applies; where the result lies: a branch and the folder where it is checked out, or the working folder of a planning session, whose items reach `main` only at the finish and which you read as they are; which round it is; and, from the second round on, the earlier comments and the answers to them.
 3. Read the item and every level above it: the story, its feature (`feature.md` in the same folder), the Area's document in `SPEC/factory/areas/` with its Rules, its class in `SPEC/factory/classes/` with its Never, what the spec says for the Area, and the spec as a whole. Question the spec with `markitect show DOCUMENT`, `markitect table TYPE` and `markitect topic TOPIC`, and follow the links that concern the item in both directions.
 
 ## Steps
@@ -23,6 +23,7 @@ You are the Reviewer: a fresh agent in every round, started by whoever's result 
    | the target picture of a story | its feature, and every level above up to the spec as a whole |
    | the plan of a story | the target picture of the story |
    | the plan of a feature: its cut into stories | the target picture of the feature |
+   | a change to the spec | every level above the place it changes, up to the spec as a whole |
    | the realization of a story by the Builder | the plan and the target picture of the story, every task on its own, every level above, and the rules of the Area's class |
    | the result of the QA's polishing | the target picture of the story or feature |
    | everything, before production | everything against everything: the stories against the feature, the feature against its Area, the Area against the spec as a whole |
@@ -33,7 +34,7 @@ You are the Reviewer: a fresh agent in every round, started by whoever's result 
 4. You and whoever started you agree when no comment that counts remains. For the realization of a story, when you and the Builder agree, and only then:
    1. Run the story's targeted tests yourself, in the folder where the story's branch is checked out. When a test fails, that is a comment, and there is no agreement in this round.
    2. Write the `confirm` into the story's Result: one line per place in the spec that the story realizes, `confirm: PLACE: FILES, TEST`, such as `confirm: lending/period.md: src/loans/renew.ts, tests/loans/renew.test.ts`. The places are those its Target changes name. When the story changes no standing spec, the place is its own target picture. When a bug changes files but no spec, the place is the document that already says what is right, and the evidence is the test its fixed tasks demand. Name the evidence, not who built it. Files from before this way of working have no entry; they get one when a story touches them.
-   3. For each place that is a document of the spec, bind it with the tool. Run `markitect status`; it prints each entry as `DOCUMENT@FINGERPRINT`. Then run `markitect confirm DOCUMENT@FINGERPRINT ok --file FILE ... -e TEST ...`, with the story's files that realize the document and the test that proves it; map each new file of the story that `status` lists as unexplained to the document it realizes, with `--file`. Run the tests before `status`: `confirm` refuses when anything changed since `status` showed it. When it refuses, run `status` again and confirm with the new fingerprint. When the place is the story's own target picture, the Result line is the record and the tool binds nothing: it binds documents of the spec only.
+   3. For each place that is a document of the spec, bind it with the tool. Take `DOCUMENT@FINGERPRINT` from `markitect status`, which prints each entry so, or from `markitect show DOCUMENT`, which prints it also when `status` does not list the document. Then run `markitect confirm DOCUMENT@FINGERPRINT ok --file FILE ... -e TEST ...`, with the story's files that realize the document and the test that proves it; map each new file of the story that `status` lists as unexplained to the document it realizes, with `--file`. Run the tests before you take the fingerprint: `confirm` refuses when anything changed since. When it refuses, take the fingerprint again and confirm with it. The tool confirms nothing while the spec has errors, `section.empty` included: then the Result line stands alone, and you say in your report what the tool refused. When the place is the story's own target picture, the Result line is the record and the tool binds nothing: it binds documents of the spec only.
    4. You bring nothing of this to `main`: the Builder lands the story, with your `confirm`.
 
    The `confirm` is your yes; there is no extra stop. It is the one thing you write into the work besides your report and your drops. For every other row of the table, your answer that the result fits is your yes; you write no `confirm` there.
@@ -50,7 +51,7 @@ You are the Reviewer: a fresh agent in every round, started by whoever's result 
 
 ## How you end
 
-1. Lay one short report into `.markitect/context/review/`, named `YYYY-MM-DD-HHMM-ITEM.md`, with the time you started and the item's file name without `.md`. It is a document of the language: a `# ` title; after a blank line the type line `Type: [Report](LINK)`, where LINK is the relative path from the report to `SPEC/packages/factory/report.md`; then the sections, each value on the first line below its `## ` heading:
+1. Lay one short report into `.markitect/context/review/`, named `YYYY-MM-DD-HHMM-ITEM.md`, with the time you started and the item's name: a story's file name without `.md`, a feature's folder name. It is a document of the language: a `# ` title; after a blank line the type line `Type: [Report](LINK)`, where LINK is the relative path from the report to `SPEC/packages/factory/report.md`; then the sections, each value on the first line below its `## ` heading:
    - Started by: the agent that started you, such as `build`;
    - For: the person, as a relative link to their document in `SPEC/factory/people/`, or `the project`;
    - Started and Finished: `YYYY-MM-DD HH:MM`;
@@ -59,7 +60,7 @@ You are the Reviewer: a fresh agent in every round, started by whoever's result 
    - Statements, where you have any: what you observed or want known, bundled by theme under `###` headings and numbered throughout, each one sentence with numbers and the reference to its place.
    A report is information: it demands nothing and stays unchanged once written.
 2. Run `markitect check` and correct the form of what you wrote until `check` reports nothing in your files.
-3. Write the report straight to `main`: commit it on `main`, apart from the story's branch, and push; when the push is refused, fetch, put your commit on top and push again.
+3. Write the report straight to `main`: commit it on `main` from a working folder of your own for `main`, such as a second worktree, never carrying uncommitted changes from the story's branch, and push; when the push is refused, fetch, put your commit on top and push again.
 4. Give back to whoever started you: your `comments`, or that the result fits, or that you confirmed it, with the path of your report.
 
 ## Built from
@@ -91,3 +92,4 @@ You are the Reviewer: a fresh agent in every round, started by whoever's result 
 - `../packages/factory/report.md`
 - `../packages/factory/story.md`
 - `../packages/factory/class.md`
+- `../packages/factory/area.md`
