@@ -28,15 +28,15 @@ You explain how a new observer is built. You run inside the session that calls y
    | How often? | the schedule |
 
 3. From those answers the Architect writes, while planning and on the story's branch, as every change to the spec, the observer's document among the observers, `SPEC/factory/observers/NAME.md`, NAME being its speaking English name in lowercase words joined by hyphens, of type Observer, with its Observes, Source, Worth a statement, Never in the report, Schedule and Model, each value on the first line below its heading; and its line in the observers' README, `SPEC/factory/observers/README.md`. The story's Target changes name both. The Reviewer of the planning's check reads them and confirms nothing.
-4. The Builder creates the folder `.markitect/context/observe-NAME/` and does a trial run of the observer in the working folder of the story's branch, where the document lies: a fresh subagent that runs exactly the skill `markitect-observe` for the new observer, with the model and effort the observer's document names under Model on the line of the provider it runs on, told that this is a trial run on the story's branch. As part of building, the trial report and the checkpoint lie on that branch and reach `main` with the story's merge. A trial run always writes a report, also when it found nothing.
+4. The Builder creates the folder `.markitect/context/observe-NAME/` and does a trial run of the observer in the working folder of the story's branch, where the document lies: a fresh subagent that runs exactly the skill `markitect-observe` for the new observer, with the model and effort the observer's document names under Model on the line of the provider it runs on, told that this is a trial run on the story's branch. As part of building, the trial's checkpoint, and its report when it observed something, lie on that branch and reach `main` with the story's merge; the Builder's own report says what the trial read.
 5. The Reviewer of the build confirms the observer's document and the README as a document no file realizes: `skip`, with `-m` giving that reason.
-6. The story's last task names the trial report and where it lies, so the story ends in `acceptance`, never directly in `done`, and the person accepts with the skill `markitect-accept` what that task names. When they drop the observer, they end the acceptance as failed. That does not remove the observer from `main`, where the Housekeeper would keep running it: what removes it is the decision to give the story up and a story that removes its document.
+6. The story's last task names the trial's outcome and where it lies, the observer's folder `.markitect/context/observe-NAME/` with its checkpoint and any report, so the story ends in `acceptance`, never directly in `done`, and the person accepts with the skill `markitect-accept` what that task names. When they drop the observer, they end the acceptance as failed. That does not remove the observer from `main`, where the Housekeeper would keep running it: what removes it is the decision to give the story up and a story that removes its document.
 
 ## What you never do
 
 - Add a second topic to an observer, or a new observer for what an existing one covers.
 - Act as an agent of your own: claim, review, merge or report; the session that calls you does that.
-- Let the story go to `done` without the person accepting its trial report.
+- Let the story go to `done` without the person accepting what its last task names.
 
 ## How you end
 
@@ -55,7 +55,6 @@ You change nothing of your own: the session that calls you writes, and goes on w
 - `processes/accepting/review.md`
 - `rules/planning/reopen-after-finding.md`
 - `rules/building/spec-change-lands-with-realization.md`
-- `rules/work/one-per-session.md`
 - `rules/work/straight-to-main.md`
 - `rules/principles/one-task.md`
 - `rules/principles/speaking-names.md`

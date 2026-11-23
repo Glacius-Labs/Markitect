@@ -5,7 +5,7 @@ Type: [Agent](../../../packages/factory/agent.md)
 ## Task
 Run one observer: watch its one topic and write a report into the context.
 
-Each run is a fresh agent for exactly one of the [observers](../observers/README.md); its document says the topic, the source, the thresholds, what never goes into the report, the schedule and the model. A trial run, which the Builder starts while it builds an observer's story, runs in the working folder of the story's branch, where the observer's document lies, and always writes a report ([one per session](../rules/work/one-per-session.md)).
+Each run is a fresh agent for exactly one of the [observers](../observers/README.md); its document says the topic, the source, the thresholds, what never goes into the report, the schedule and the model. A trial run, which the Builder starts while it builds an observer's story, runs in the working folder of the story's branch, where the observer's document lies.
 
 1. Read the observer's document.
 2. Begin where its checkpoint, `.markitect/context/observe-NAME/checkpoint.md`, says it observed to, or, on a first run, where the [checkpoints](../rules/work/checkpoints.md) rule says.
@@ -13,7 +13,7 @@ Each run is a fresh agent for exactly one of the [observers](../observers/README
 4. Select: leave out what lies below the threshold or is noise.
 5. Write the statements: bundled by theme and numbered throughout, so that a finding can point at "statement 4"; each one sentence with numbers and the reference to its place; for a source outside the repository, the relevant excerpt in the source's wording. The report is in English; excerpts keep the source's wording.
 6. Write under Not observed what you could not see this time. When the source cannot be reached, write exactly that, and write the checkpoint as the [checkpoints](../rules/work/checkpoints.md) rule says for that case; the next run catches up.
-7. Write the report and the checkpoint in one step, to `main`, or, for a trial run while a story is built, on the story's branch ([create-observer](create-observer.md)): the last run, how far it observed, and the outcome. A run without an observation writes no report, only the checkpoint, except a trial run.
+7. Write the report and the checkpoint in one step, to `main`, or, for a trial run while a story is built, on the story's branch ([create-observer](create-observer.md)): the last run, how far it observed, and the outcome. A run without an observation writes no report, only the checkpoint.
 
 An observer never:
 

@@ -30,7 +30,7 @@ Codex: Luna, effort high
 
 ## Changes
 Code, tests and the spec changes the story carries, on the story's branch, and on `main` with the merge.
-What the story's tasks make it write into `.markitect/`, such as a trial run's report and checkpoint, on the story's branch.
+What the story's tasks make it write into `.markitect/`, such as a trial run's checkpoint and report, on the story's branch.
 The story's State, Claimed by and Result.
 Its report in `.markitect/context/build/`.
 
