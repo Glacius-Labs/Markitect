@@ -1,6 +1,6 @@
 # Markitect agent entrypoint
 
-With Markitect, people architect their project in a typed, declarative specification language in Markdown ([DEC-119](docs/decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)). They maintain one spec of it, its way of working included: a circle for a team, which skills in the repository realize. The `markitect` tool checks the spec and computes what is built and verified; it steers nothing. The tool and the skills of the standard are built on Main; no skill has run on a test project yet ([roadmap](docs/roadmap.md#where-main-is)).
+With Markitect, people architect their project in a typed, declarative specification language in Markdown ([DEC-119](docs/decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)). They maintain one spec of it, its way of working included, which is the project's own. Markitect is the language, the default of packages and templates that ships with it, and the `markitect` tool, which checks the spec, analyses it and helps reading it; the tool never writes and keeps no state ([DEC-154](docs/decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec), [roadmap](docs/roadmap.md#where-main-is)).
 
 **Before you assess or change the product's direction,** read, in this order:
 
@@ -12,9 +12,7 @@ With Markitect, people architect their project in a typed, declarative specifica
 
 **Easy to miss:**
 
-- Markitect itself has no spec. `.markitect/` in code and tests belongs to a target project and is handled with fixtures.
-- A failure in how agents work with Markitect is fixed in the way of working, the `factory` template, and the skill built from it, not with prompt text beside them ([DEC-147](docs/decisions.md#dec-147-the-way-of-working-stands-in-the-spec-and-skills-realize-it)).
-- The skills of the standard, `markitect-assistant`, `markitect-capture`, `markitect-architect`, `markitect-finish-planning`, `markitect-build`, `markitect-review`, `markitect-analyze`, `markitect-accept`, `markitect-observe`, `markitect-create-observer`, `markitect-triage`, `markitect-record`, `markitect-brief` and `markitect-housekeeper`, run real agents in a project set up with `init`: run them only on a committed test project, bounded, with the product owner's word, as CONTRIBUTING says.
+- Markitect itself has no spec. `.markitect/spec` in code and tests belongs to a target project and is handled with fixtures.
 - Documentation is in English and describes only the current state, with one concept and no quotes.
 
-[CONTRIBUTING](CONTRIBUTING.md#where-things-go) names the page for every topic, and the [roadmap](docs/roadmap.md) the current steps.
+[CONTRIBUTING](CONTRIBUTING.md#where-things-go) names the page for every topic, and the [roadmap](docs/roadmap.md) what comes next.

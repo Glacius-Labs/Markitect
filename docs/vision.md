@@ -6,31 +6,30 @@ This page says why Markitect exists, where its trust comes from and what it leav
 
 Read this section first, then [Why Markitect exists](#why-markitect-exists), [Founding intent](#founding-intent) and [Common misreadings](#common-misreadings).
 
-**What it is: a way to architect a project in Markdown** ([DEC-119](decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)). An architect draws the plan, builders build to it, and an inspection checks the building against the plan. A change of plan goes through the architect. Markitect works the same way, with two differences: the plan lives and moves with every change, and the inspection is an independent check whose quality is measured, not the client's acceptance. The spec is the plan, and it is binding. Agents build to it, and a reviewer checks the result against it. Architecture is the whole design: what the project's concepts are and mean, how they relate, its interfaces, structure, rules and way of working. The Architect is an agent that works out the spec with a person: it drafts, analyses and proposes; what follows from earlier decisions is recorded without a question, and people make the new decisions in conversation ([DEC-145](decisions.md#dec-145-triage-has-three-exits-and-what-follows-from-what-was-decided-is-recorded-without-a-question)).
+**What it is: a way to architect a project in Markdown** ([DEC-119](decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)). An architect draws the plan, builders build to it, and an inspection checks the building against the plan. A change of plan goes through the architect. Markitect works the same way, with one difference: the plan lives and moves with every change. The spec is the plan, and it is binding. Agents build to it, and the result is checked against it. Architecture is the whole design: what the project's concepts are and mean, how they relate, its interfaces, structure, rules and way of working.
 
 **The parts.**
 - People maintain one authoritative place per project: the spec. It is a typed, declarative specification language in Markdown: documents with a type, ordinary links, and types from packages, started from a few small templates. It states what is fixed about the project: its concepts, rules, boundaries, interfaces, structure and way of working.
 - Code, tests, configuration, documentation and the agents' skills are implementations of the spec. Where they differ from it, the spec is right.
-- Around the spec, a team works in one circle: what happens is observed, sorted into findings, briefed, decided in conversation and planned; agents build, review and confirm; people plan with an agent and accept, and approve nothing ([DEC-150](decisions.md#dec-150-the-way-of-working-is-one-circle-the-same-in-every-area-with-one-role-by-default)). The way of working stands in the spec too, and skills in the repository realize it ([DEC-147](decisions.md#dec-147-the-way-of-working-stands-in-the-spec-and-skills-realize-it)).
-- A deterministic tool, the `markitect` program, checks the spec, keeps a state of which artifacts realize which document and when that was last confirmed, and computes what is to verify. It informs and steers nothing.
+- How the team works is the project's own. The project describes its way of working in its spec, with general types, and skills, agents and scripts in the repository realize it ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
+- Markitect itself is the language, the default that ships with it, packages of types and templates, and a deterministic tool, the `markitect` program, that checks the spec, analyses it and helps reading it. The tool never writes, keeps no state and steers nothing.
 
 Markitect expects people's work to move from writing code to architecture: designing, defining and modeling. What matters in code matters there too: consistency, cleanliness, an overview of the project without reading its code, and knowing what should be as against what is.
 
 > **Humans architect the system of work. AI performs the work. Markitect keeps them aligned.**
 
 **What it builds on: proven practice.**
-- **Declared state.** Terraform makes infrastructure match a configuration, keeps a state of what exists, and shows in a plan what would change, drift included, which one keeps by changing the configuration or reverts. The spec is the configuration, the state maps artifacts to documents, and `markitect status` is the plan.
-- **Requirements traceability.** Tools such as IBM DOORS and Polarion keep a traceability matrix that links requirements to what realizes them, in both directions, and mark a link suspect when either end changes; DO-178C, ISO 26262 and IEC 62304 require such traceability. In Markitect the state is the matrix, `status` lists what changed and what is suspect, and a reviewer's verdict clears it.
-- **Quality management.** Good requirements are judged by the characteristics of ISO/IEC/IEEE 29148, nonconformities are handled by corrective actions as ISO 9001 describes, and a testing laboratory earns trust with control samples. Markitect's spec, findings and checks follow them.
+- **Declared configuration.** Terraform makes infrastructure match a configuration that states what should exist, and leaves the steps to its providers. The spec is that configuration for the intent of a project, and agents are its providers.
+- **Typing.** A statically typed language reports a contradiction before the program runs. The spec has a small type system of its own, and `markitect check` is its type checker.
+- **Good requirements.** Good requirements are judged by the characteristics of ISO/IEC/IEEE 29148. Markitect's properties of a good spec and the signals that say where reading pays off follow them.
 
 **What is new.**
-- The traceability is plain text in the repository, beside the code: Markdown that people and agents read directly, checked deterministically, with no database and no separate tool to keep in step.
-- AI does not take everything off the developer's hands, but it makes affordable what ordinary software projects dropped because of the manual effort and cost: a traceability matrix, independent checks derived from the specification, and control samples of the checking itself.
-- A verdict holds until something it rests on changes, so a change puts back on the list only what it reaches.
+- The statement of what the project should be is plain text in the repository, beside the code: Markdown that people and agents read directly, checked deterministically, with no database and no separate tool to keep in step.
+- It covers the whole project, not one change, and it stays current after each change is built.
 
-**The approach: lighter and simpler.** Markitect works with the coding agents' own features rather than against them: skills in the repository and `AGENTS.md`, which Claude Code and Codex share, subagents, and scheduled and cloud tasks. The tool starts no agent, steers no work and uses no Git. The simpler version is the more robust one, and simplicity is earned through insight ([DEC-139](decisions.md#dec-139-quality-simplicity-and-stability-over-effort-and-compatibility)).
+**The approach: lighter and simpler.** Markitect works with the coding agents' own features rather than against them: a project's way of working uses skills in the repository and `AGENTS.md`, which Claude Code and Codex share, subagents, and scheduled and cloud tasks. The tool starts no agent, steers no work, writes nothing and uses no Git. The simpler version is the more robust one, and simplicity is earned through insight ([DEC-139](decisions.md#dec-139-quality-simplicity-and-stability-over-effort-and-compatibility)).
 
-**The honest limit.** "Complete" means complete for the links. `status` follows a document's own text, its artifacts and evidence, its type and the documents linked to it in either direction, one step deep; it does not read the code's imports. Prose that names a document without linking it is a gap: a change to that document does not reach the one that names it. A signal shows such mentions, and spot checks and full reviews are the net. An empty `status` says that every document was confirmed at its current state, not that every verdict is right.
+**The honest limit.** `check` sees structure only. An empty `check` says that the spec is sound in its titles, types, sections and links, not that it says what was meant, and not that the project realizes it. Prose that names a document without linking it is a gap that no check sees; a signal shows such mentions.
 
 ## Why Markitect exists
 
@@ -47,18 +46,18 @@ Reading everything again would bring both back, and it would make people the bot
 
 **A standing statement of what should be is missing.** A prompt, a user story and most specs in spec-driven development describe one change or one part of the project. They age once the change is made, and nobody maintains them. People work from their conversations with the agent, and nothing in those is settled for good. At no moment is it written down what the project as a whole should be. The project stays nebulous, without a clear outline, and what exists has nothing to converge on. An agent cannot tell how far the project has moved from what was wanted, cannot find differences that crept in earlier, and cannot tell a bug from intended behavior. It guesses, and each guess makes the result less reliable. Getting what one wants takes knowing what one wants and saying it.
 
-**The spec is that statement.** It is the one place where what the project should be is written down, and what is written there is binding. The spec is what a person works on: they decide what should be, and an agent writes it down with them. Code, tests, configuration and documentation are the agents' work: a reviewer confirms each document, and counter-checks and control samples measure that checking. The aim is work that nobody has to watch and nobody signs off. Today such approvals are mostly nodded through unread, which helps nobody; trust comes instead from facts that can turn out negative without anyone reading. A question an agent should not settle for itself shows that the spec leaves out or contradicts something that matters. It becomes a finding, and where it needs a new decision, people decide in conversation.
+**The spec is that statement.** It is the one place where what the project should be is written down, and what is written there is binding. The spec is what a person works on: they decide what should be, and an agent writes it down with them. Code, tests, configuration and documentation are the agents' work, checked against the spec. The aim is work that nobody has to watch and nobody signs off. Today such approvals are mostly nodded through unread, which helps nobody; trust comes instead from facts that can turn out negative without anyone reading. A question an agent should not settle for itself shows that the spec leaves out or contradicts something that matters, and the spec is the place to settle it.
 
 Trust and overview are rebuilt on the spec:
 
 | Question | Markitect's answer |
 |---|---|
-| Was something forgotten? | `status` computes from the spec and the state what is changed, suspect or unexplained, like a checklist. Surgeons use checklists for the same reason: they know every step and can still skip one |
-| Was it understood correctly? | A fresh reviewer confirms each document with evidence. Counter-checks, derived from the spec alone before anything is built, catch a misreading that builder and reviewer share, and control samples measure how much the reviewer finds |
-| Does the spec say what was meant? | The person answers for the spec and develops it in conversation with an agent. Use shows the rest: every finding names the property it violates, "correct" among them, and new decisions come to people in the briefing. `check` finds structural errors, and readers and competency questions find contradictions, gaps and unclear statements |
-| How does the project stand, and what changed? | The tool shows, and the agent explains with a citation for each statement: the briefing, explanations from the spec, and what changed since the person last looked. Agents record what follows from earlier decisions, so the spec changes without the person too, and the comparison with their last look is the core |
+| Was something forgotten? | The spec states the whole project in one place, with links between what relies on what, so what a change reaches can be followed instead of remembered |
+| Was it understood correctly? | Every result is checked against the spec, not against a prompt or a memory of a conversation |
+| Does the spec say what was meant? | The person answers for the spec and develops it in conversation with an agent. `check` finds structural errors, signals say where reading pays off, and readers and competency questions find contradictions, gaps and unclear statements; use shows the rest |
+| How does the project stand, and what changed? | The tool shows the spec, and the agent explains it with a citation for each statement. A change to the spec is seen in the repository's diff, like every change |
 
-[Where trust comes from](#where-trust-comes-from) lists the mechanisms, and [Expected outcomes](#expected-outcomes) says what is still to be shown.
+How a project checks its results, and measures that checking, is its way of working, which its spec states ([Where trust comes from](#where-trust-comes-from)). [Expected outcomes](#expected-outcomes) says what is still to be shown.
 
 ## Founding intent
 
@@ -80,39 +79,28 @@ Trust and overview are rebuilt on the spec:
 | reference | an ordinary Markdown link |
 | standard library | packages, copied into the spec, which owns its copy |
 | type checker, `validate` | `markitect check`: structure only, never meaning |
-| `plan` against the state | `markitect status` |
-| test cache | the state in `.markitect/`, which binds each verdict to what it rests on |
 
 - The core stays small. Projects define their own types and so form their own vocabulary; packages supply common ones, so that no project reinvents them.
-- The tool checks structure. Meaning is judged by agents: the reviewer judges the artifacts against the spec, readers judge the spec itself, and counter-checks test the artifacts against what the spec alone says.
+- The tool checks structure. Meaning is judged by agents and people: readers judge the spec itself, and whoever checks the project judges its artifacts against the spec.
 - People decide intent and answer for the spec. Agents write it with them in conversation, and ask first when something is open.
 
 **Design against drift.** A check sees structure. It cannot see that the same fact stands in several places, and such places move apart with every change until it is unclear again what should be. So the spec has a writing rule: every fact stands in one place, and everywhere else links to it. A good spec is necessary, complete, consistent, unambiguous and verifiable, and structured, after the characteristics of good requirements in ISO/IEC/IEEE 29148 ([DEC-123](decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)). Clean code holds that good code reads like well-written prose. Markitect asks the reverse: prose that is built like clean code. Results of Markitect are only as good as the spec they use.
 
-**What the spec is for.** The typed spec is the foundation, and applying it is the purpose. One source settles which side is right when the spec and the project differ. Making them agree takes reconciliation, as Terraform does it with a declared state: compute what a change reaches, realize it, confirm it, repeat. Each pass sees from one angle, so Markitect keeps the kinds of run apart, each with its own question: build, review, cleanup, improve, bug hunt, and reading the spec. With the spec as their measure, they are meant to run on a schedule, without waiting for someone to think of them: observers do so from the start, and the general runs, cleanup, improve and bug hunt, come later ([roadmap](roadmap.md#current-steps)). No single pass has to find everything: a later one can catch what an earlier one missed, and trust grows as the project converges on its spec and the measurements show that the checking works.
+**What the spec is for.** The typed spec is the foundation, and applying it is the purpose. One source settles which side is right when the spec and the project differ. Making them agree takes reconciliation: find what a change reaches, realize it, check it, repeat. How a project does that, and which runs it keeps, is its way of working, which it states in its spec. With the spec as their measure, such runs need not wait for someone to think of them. No single pass has to find everything: a later one can catch what an earlier one missed, and trust grows as the project converges on its spec.
 
 ## Where trust comes from
 
-Markitect does not try to make agents infallible. It changes the structure they work in, and measures it ([DEC-137](decisions.md#dec-137-trust-is-measured-against-todays-practice), [DEC-125](decisions.md#dec-125-trust-is-measured-not-granted)). Each mechanism below replaces something that today's practice leaves to chance; [the concept](concept/trust.md) says how firm each one is.
+Markitect does not try to make agents infallible. Trust comes from structure and is measured, not granted ([DEC-137](decisions.md#dec-137-trust-is-measured-against-todays-practice), [DEC-125](decisions.md#dec-125-trust-is-measured-not-granted)): one binding spec, checked by a tool, against which every result can be checked, and facts that can turn out negative without anyone reading. Which mechanisms earn that trust in a project, such as an independent review or checks derived from the spec alone, is part of its way of working, which the project states in its spec.
 
-| Markitect mechanism | What it replaces in today's practice |
-|---|---|
-| **A list computed from the spec.** `status` lists every document whose text, artifacts, evidence, type or linked documents changed since a reviewer confirmed it, and every file that is mapped to no document. | An agent deciding from memory which files might be relevant |
-| **Roles as fresh sessions.** Each agent is a fresh session that runs one skill: the builder realizes, the reviewer checks and changes nothing it reviews, and only the reviewer writes `confirm`. | One agent that writes, judges and records its own work |
-| **Independent review with fresh context.** The reviewer takes its list from `status`, reads each document, what it links to and the artifacts, runs the tests, and later the counter-checks, and treats what the builder tells it as claims to check. | Self-review in the same thread, or one generic pull-request review |
-| **Checks derived from the spec alone.** A counter-checker writes tests or questions from the spec before anything is built, and the builder may not change them. Where a rule names modules, they are architecture tests. They come with the runs. | Tests written by the same agent that wrote the code |
-| **Measured checking.** Control samples plant known errors and give the reviewer's hit rate; spot checks check confirmed documents again, and a contradiction on an unchanged document is a fact. They come with the runs. | Trusting a review because it said everything is fine |
-| **One trace.** A story names its origin and the places in the spec it changes, `confirm` names the files and the test that show it, and the commit names the story. | Not knowing where it says that something should be so |
-
-Two claims stay apart ([DEC-138](decisions.md#dec-138-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)): *nothing in the spec's scope is overlooked* can be computed for links and the mapping of every file; *everything is realized correctly* can only be supported by evidence. The tests a builder writes belong to the realization and can be as wrong as the code; counter-checks come from the spec alone.
+Two claims stay apart ([DEC-138](decisions.md#dec-138-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)): *the spec is sound in its structure* is checked by the tool; *the project realizes the spec correctly* can only be supported by evidence. The tests a builder writes belong to the realization and can be as wrong as the code.
 
 ## Who does what
 
 | Role | Responsibility |
 |---|---|
-| People | Decide what should exist and why; choose concepts, architecture, boundaries, rules and processes; plan with an agent and give the go; make the new decisions in conversation; accept what has a surface; answer for what the spec means. |
-| Markitect | Check the spec and the documents of the work, map every file, say which documents are changed or suspect, and bind each verdict to the state the reviewer read; ship templates and the skills of a standard way of working. The tool starts no agent, steers no work and uses no Git. |
-| Agents | Write the spec with people and record what follows from earlier decisions, observe and sort what happens, brief people, realize the spec, confirm with evidence, and later derive counter-checks and plant control samples. An agent's report is not a person's approval. |
+| People | Decide what should exist and why; choose concepts, architecture, boundaries, rules and processes, the way of working included; answer for what the spec means. |
+| Markitect | Ship the language and a default of packages and templates; check the spec, analyse it and help reading it. The tool writes nothing, keeps no state, starts no agent, steers no work and uses no Git. |
+| Agents | Write the spec with people, realize it and check the result, as the project's way of working says. An agent's report is not a person's approval. |
 
 A real change of intent changes the spec first. When intent is unchanged, a bug or a stale file is repaired against the same spec; no artificial spec edit is needed. The target human role is specification and engineering judgment, not being a permanent agent scheduler, prompt supervisor or reader of every routine diff. Whether that work can actually be reduced is what Markitect has to show.
 
@@ -120,7 +108,7 @@ A real change of intent changes the spec first. When intent is unchanged, a bug 
 
 Target outcomes, each to be validated; none is an established result.
 
-- Nothing in the spec's scope is silently forgotten: what is to verify comes from the spec and the state, not from an agent's memory. This covers links; dependencies in code are narrowed by architecture tests where the spec's rules name modules, and unlinked mentions are known gaps.
+- Nothing in the spec's scope is silently forgotten: what a change reaches follows from the spec's links, not from an agent's memory. Unlinked mentions are known gaps.
 - Rules are applied where they matter.
 - The repository stays consistent, contradiction-free, uniform and clean through many changes, so cleanups and refactorings become dependable.
 - Software becomes understandable: the spec states what the system does and should do, and people can reason over it without reading the code.
@@ -136,22 +124,17 @@ Why the method should help, and what would show that it does not.
 | Assumption | What would challenge it |
 |---|---|
 | An agent that is told fully what is wanted, what matters and what belongs to the task builds what was meant | Results match the intent no better with a complete spec than with a short prompt |
-| A person can answer for a spec written with an agent, from the conversations, the briefing and the findings from use | Wrong statements stay unnoticed in the spec, are realized faithfully and are found only in the product |
-| One authoritative spec with maintained links reduces the mistakes of keeping things in step | Contradictions still pile up, or keeping the spec and the state costs as much as the consolidation it replaces |
+| A person can answer for a spec written with an agent, from the conversations and what use shows | Wrong statements stay unnoticed in the spec, are realized faithfully and are found only in the product |
+| One authoritative spec with maintained links reduces the mistakes of keeping things in step | Contradictions still pile up, or keeping the spec costs as much as the consolidation it replaces |
 | Typing catches useful structural errors before agents work | Most consequential failures pass `check` and still need the same late investigation |
-| A list computed from links keeps continuing obligations in view | What a change really affects falls outside the list, or the list grows to nearly the whole spec on every change |
-| A reviewer with fresh context finds mistakes the builder misses, even on the same model | Control samples show a low hit rate, or reviewers keep accepting the same omissions |
-| Checks derived from the spec alone catch the misreadings that builder and reviewer share | Counter-checks pass where all three read the spec the same wrong way, and the error shows only in use |
 | Forgetting, rather than misunderstanding, is the main problem | Most failures turn out to be wrong readings of a document the agent did see |
-| What works in human teams and testing laboratories transfers to agents: separate roles, clear responsibility and control samples | Separate roles add hand-offs and cost without catching more |
-| The state, its evidence and the measured checking remove the need to read every routine diff | People still need to review every diff, cannot tell what is unverified, or trade that work for equally costly supervision of the spec |
 
 ## How to judge it
 
 - Judge Markitect's trust against today's practice, not against a compiler's guarantees ([DEC-137](decisions.md#dec-137-trust-is-measured-against-todays-practice)).
 - "Compiler" names a borrowed idea. The spec's structure is checked deterministically; realization by agents is not deterministic ([DEC-138](decisions.md#dec-138-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)).
 - Delegated realization is central to the product. It is not an optional layer on top of a validator ([DEC-001](decisions.md#dec-001-delegated-realization-is-the-purpose)).
-- The aim is one simple version that works reliably, shown first in a lab test and then proven on a project run by people who do not develop Markitect ([DEC-120](decisions.md#dec-120-how-markitect-is-judged-and-when-it-is-proven)).
+- The aim is one simple version that works reliably; when it counts as proven is open ([DEC-120](decisions.md#dec-120-how-markitect-is-judged-and-when-it-is-proven)).
 
 ## Common misreadings
 
@@ -160,25 +143,24 @@ Check an assessment against this table before treating one of these as a finding
 | Misreading | Correct reading |
 |---|---|
 | Markitect is a linter or context tool for AI instructions such as rules, skills and `AGENTS.md`. | That is where the project began. With Markitect, people architect the whole project in Markdown, and agents realize it. Agent instructions are one kind of realization among many. |
-| Markitect is a tool for architecture documentation. | The spec is the plan the project is built from, and it is binding: agents realize it, and a reviewer verifies the result against it. Architecture covers the domain too: what a concept is, what can be done with it and how things relate. |
+| Markitect is a tool for architecture documentation. | The spec is the plan the project is built from, and it is binding: agents realize it, and the result is checked against it. Architecture covers the domain too: what a concept is, what can be done with it and how things relate. |
 | Markitect is a programming language. | Nothing in the spec is executed. It is a typed, declarative specification language, as TLA+ and Alloy are specification languages: its structure is checked, and agents realize its content ([DEC-119](decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language), [DEC-138](decisions.md#dec-138-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)). People's work is architecture, and agents write the code. |
-| Markitect is a new, unproven formalism. | It builds on proven practice: declared state as Terraform keeps it, requirements traceability with suspect links, and quality management with corrective actions and control samples. What is new is that the traceability is plain text checked deterministically, and that agents realize the spec, check it and are measured doing so. |
+| Markitect is a new, unproven formalism. | It builds on proven practice: a declared configuration as Terraform has it, static typing, and the characteristics of good requirements. What is new is that the statement of what the whole project should be is plain text checked deterministically, and that agents realize it. |
 | The deterministic parts are the product, and agent work is scope creep. | Delegated realization is the purpose, and the tool supports it ([DEC-001](decisions.md#dec-001-delegated-realization-is-the-purpose)). |
-| Markitect steers the agents through its tool. | The tool checks, computes and binds verdicts, and steers nothing. The way of working stands in the spec and the skills realize it; who starts which agent stands at the agent's document, and every Git step belongs to agents and people ([DEC-142](decisions.md#dec-142-the-tool-computes-and-checks-a-runner-acts), [DEC-147](decisions.md#dec-147-the-way-of-working-stands-in-the-spec-and-skills-realize-it)). |
-| Markitect needs API keys or a platform of its own. | Agents run on the user's subscription, in their own session, as a scheduled or cloud task, or in CI with a token of that subscription; API keys are never used. The tool uses no Git, and agents and people make every Git step ([DEC-134](decisions.md#dec-134-agents-run-on-the-users-subscription-with-or-without-a-session), [DEC-097](decisions.md#dec-097-markitect-uses-no-git)). |
-| A person approves every change. | There are no approvals. People plan with the Architect and give their go, and make new decisions in conversation; a story reaches the main branch without a person once builder and reviewer agree, and what follows from what was decided is recorded without a question ([DEC-125](decisions.md#dec-125-trust-is-measured-not-granted), [DEC-150](decisions.md#dec-150-the-way-of-working-is-one-circle-the-same-in-every-area-with-one-role-by-default), [DEC-145](decisions.md#dec-145-triage-has-three-exits-and-what-follows-from-what-was-decided-is-recorded-without-a-question)). |
-| `status` is a gate in CI. | `status` only shows, and what it shows becomes a finding ([DEC-146](decisions.md#dec-146-a-spec-change-lands-with-its-realization-and-status-only-shows)). |
-| The way of working is a framework forced on the project. | The `factory` template is a standard way of working that the project owns and changes like any part of its spec. Nothing is forbidden: work outside the usual way is a deviation with a level, and only at `critical` does an agent stop and ask ([DEC-150](decisions.md#dec-150-the-way-of-working-is-one-circle-the-same-in-every-area-with-one-role-by-default)). |
-| Stories and findings belong in the spec. | Plan items, findings and reports are work: their documents lie in `.markitect/`, and only their types stand in the spec ([DEC-151](decisions.md#dec-151-reports-findings-and-plan-items-hold-the-work-and-every-story-names-the-places-its-files-realize)). |
-| An empty `markitect status` proves the project correct. | It means that the spec is correct in itself and every document was confirmed at its current state. That is complete for the links only, and a verdict is evidence a reviewer gave, not a proof ([concept, §7](concept/trust.md)). |
+| Markitect steers the agents through its tool. | The tool checks the spec, analyses it and helps reading it, and steers nothing: it writes nothing and keeps no state. How agents work is the project's way of working, which its spec states and its skills realize; every Git step belongs to agents and people ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec), [DEC-097](decisions.md#dec-097-markitect-uses-no-git)). |
+| Markitect needs API keys or a platform of its own. | The tool runs natively and starts no agent. Agents run on the user's subscription, in their own session, as a scheduled or cloud task, or in CI with a token of that subscription; API keys are never used ([DEC-134](decisions.md#dec-134-agents-run-on-the-users-subscription-with-or-without-a-session), [DEC-097](decisions.md#dec-097-markitect-uses-no-git)). |
+| A person approves every change. | There are no approvals: trust comes from facts that can turn out negative without anyone reading ([DEC-125](decisions.md#dec-125-trust-is-measured-not-granted)). People keep the intent and the new decisions. |
+| Markitect forces a way of working on the project. | Markitect ships no way of working. A project states its own in its spec, with general types, and owns and changes it like any part of the spec ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)). |
+| Stories and findings belong in the spec. | They are the work that changes the spec, not its target. How a project keeps them, in which form and where, is part of its way of working ([DEC-122](decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)). |
+| An empty `markitect check` proves the project correct. | It means that the spec is sound in its structure: titles, types, sections and links. Readers judge its meaning, and only evidence supports that the project realizes it ([DEC-138](decisions.md#dec-138-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)). |
 | Without compiler-grade guarantees the idea fails. | The compiler is a borrowed idea, and the trust bar is today's practice ([DEC-137](decisions.md#dec-137-trust-is-measured-against-todays-practice), [DEC-138](decisions.md#dec-138-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)). |
-| The spec has to mirror the code. | It states only what is fixed; what nobody relies on stays free, and one document may have many artifacts ([DEC-122](decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface), [DEC-124](decisions.md#dec-124-a-state-maps-each-document-to-its-artifacts-and-status-is-the-plan)). |
-| Green agent-written tests prove the realization. | The tests a builder writes are realizations too. Counter-checks come from the spec alone, before the code, and the builder may not change them ([DEC-125](decisions.md#dec-125-trust-is-measured-not-granted)). |
-| Removing routine human code review removes the four-eyes principle. | A fresh reviewer, checks derived from the spec alone, measured checking and one trace from origin to file are the means to earn that trust. People keep the intent, the plan and the new decisions. |
+| The spec has to mirror the code. | It states only what is fixed; what nobody relies on stays free, and one document may have many artifacts ([DEC-122](decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)). |
+| Green agent-written tests prove the realization. | The tests a builder writes are realizations too, and can be as wrong as the code: they are evidence, not proof ([DEC-138](decisions.md#dec-138-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)). |
+| Removing routine human code review removes the four-eyes principle. | An independent check against the spec and measured checking are the means to earn that trust, as the project's way of working sets them up. People keep the intent and the new decisions. |
 
 ## What Markitect leaves to people
 
-Markitect does not decide which architecture is right, which business goal matters, whether a rule is desirable, whether evidence is representative or which risk to accept. It does not understand arbitrary source code, guarantee correctness or the absence of drift, or replace human product and architecture judgment. People keep those decisions; what follows from what they decided is recorded for them and shown; machine evidence states only what its inputs and checks establish.
+Markitect does not decide which architecture is right, which business goal matters, whether a rule is desirable, whether evidence is representative or which risk to accept. It does not understand arbitrary source code, guarantee correctness or the absence of drift, or replace human product and architecture judgment. People keep those decisions; machine evidence states only what its inputs and checks establish.
 
 ## Origin of the name
 

@@ -11,7 +11,7 @@ A spec is a folder, by default `docs/spec/`, and every `.md` file in it, at any 
 - **Sections.** Each level-2 heading `## …` opens a section.
 - **Links.** A link is an ordinary Markdown link with a relative path to a `.md` file, `[Member](../roles/member.md)`, optionally with a section, `[Member](../roles/member.md#who-counts)`. Every such link must point to a document of the spec. Web addresses, `mailto:` and a bare `#section` are not checked, and links in code are text.
 
-A link is no import. It says that one document concerns another, and a change at either end makes the other suspect ([§6](the-state.md)). A link from a document of the work into the spec makes nothing in the spec suspect. No section means anything special to the tool.
+A link is no import. It says that one document concerns another. No section means anything special to the tool.
 
 ## Types
 
@@ -53,15 +53,15 @@ Where a type says that a section holds a link to something, each document links 
 
 ## Packages and templates
 
-- **A package** is a folder of types, such as `core` (concept, decision, goal, role, rule, term), `software`, `company` or `factory`. A type in one package may link to types of another.
-- **A template** is a folder of documents that name their types by links into the packages and leave empty the sections a project has to fill. A folder of a template is a template of its own when its documents link nowhere outside it, so a template applies at any level: a whole project, one part of the domain, or a field such as fire protection. Its README says what the part is for and how to fill it. A template may also come filled, as `factory` does with the way of working.
-- **`apply`** copies a template into the spec, together with every package its documents need. A package the spec already has is never overwritten: the spec owns its copy and may change it. After `apply`, `check` lists the sections left empty, and that list is the work still to do.
+- **A package** is a folder of types, such as `core` (concept, decision, goal, role, rule, term), `software` or `company`. A type in one package may link to types of another.
+- **A template** is a folder of documents that name their types by links into the packages and leave empty the sections a project has to fill. A folder of a template is a template of its own when its documents link nowhere outside it, so a template applies at any level: a whole project, one part of the domain, or a field such as fire protection. Its README says what the part is for and how to fill it.
+- **Copying.** A person copies a template into the spec, together with the packages its documents need, placed so that the template's links find them ([§7](the-project.md#setting-up-a-project)). The spec owns its copy and may change it. Then `check` lists the sections left empty, and that list is the work still to do.
 
-Each type says before its sections what it is and when to use it, and under each section what belongs there, with an example. The library of packages and templates, the reference values and the question catalogs ship inside the tool, in its version ([§12](the-project.md)).
+Each type says before its sections what it is and when to use it, and under each section what belongs there, with an example. The packages and templates are plain files in Markitect's repository; the reference values and the question catalogs ship inside the tool, in its version ([§7](the-project.md#the-default)).
 
 ## Values
 
-A value, such as the state of a story or the owner of an Area, stands in the first line of its section, `## State` with `ready` under it. There are no lines in the head but the type line. So plan items, findings and reports are written in the same language as the spec, and `check` checks them like any document ([§9](the-work.md)).
+A value, such as the state of a concept or the owner of a process, stands in the first line of its section, `## Owner` with a link to a role under it. There are no lines in the head but the type line.
 
 ## Parts
 
