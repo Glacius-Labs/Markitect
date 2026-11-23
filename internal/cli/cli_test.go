@@ -194,7 +194,7 @@ func TestFlagsMayStandBeforeTheCommand(t *testing.T) {
 		t.Errorf("%s differs from %s", after, before)
 	}
 	// A value of a flag is no command, and a missing command is an error.
-	if code, _, errOut := run("-C", dir); code != ExitFailed || !strings.Contains(errOut, "unknown command") {
+	if code, _, errOut := run("-C", dir); code != ExitFailed || !strings.Contains(errOut, "flag -C needs a value") && !strings.Contains(errOut, "no command given") {
 		t.Errorf("%d %q", code, errOut)
 	}
 	if code, _, errOut := run("-C", dir, "show"); code != ExitFailed || !strings.Contains(errOut, "usage: markitect show DOCUMENT") {
@@ -220,5 +220,46 @@ func TestWrongArgumentsPrintOneLineOfUsage(t *testing.T) {
 	}
 	if code, _, errOut := run("frobnicate"); code != ExitFailed || strings.Count(errOut, "\n") != 1 || !strings.Contains(errOut, "markitect --help") {
 		t.Errorf("%d %q", code, errOut)
+	}
+}
+
+// A flag's value may be named like a command, and what stands before the
+// command is told as plainly as what stands after it.
+func TestFlagsBeforeTheCommandAreRead(t *testing.T) {
+	parent := t.TempDir()
+	project := filepath.Join(parent, "check")
+	markitectFiles(t, project)
+	if err := os.MkdirAll(filepath.Join(project, "docs", "spec"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(parent)
+	if code, out, errOut := run("-C", "check", "check"); code != ExitOK || out != "0 errors in 0 documents\n" {
+		t.Errorf("-C check check: %d %q %q", code, out, errOut)
+	}
+	for _, tc := range []struct {
+		args []string
+		code int
+		want string // in the error, or in the output when the code is 0
+	}{
+		{[]string{"--version"}, ExitFailed, "unknown flag --version"},
+		{[]string{"-x"}, ExitFailed, "unknown flag -x"},
+		{[]string{"-C"}, ExitFailed, "flag -C needs a value"},
+		{[]string{"--frob", "p1", "check"}, ExitFailed, "unknown flag --frob"},
+		{[]string{"--json"}, ExitFailed, "no command given"},
+		{[]string{"-C", "check"}, ExitFailed, "no command given"},
+		{[]string{"-C", "p1", "--help"}, ExitOK, "usage: markitect COMMAND"},
+		{[]string{"--json", "help"}, ExitOK, "usage: markitect COMMAND"},
+		{[]string{"check", "--help"}, ExitOK, "usage: markitect COMMAND"},
+		{[]string{"show", "a", "-h"}, ExitOK, "usage: markitect COMMAND"},
+		{[]string{"-C", "check", "frobnicate"}, ExitFailed, `unknown command "frobnicate"`},
+	} {
+		code, out, errOut := run(tc.args...)
+		got := errOut
+		if tc.code == ExitOK {
+			got = out
+		}
+		if code != tc.code || !strings.Contains(got, tc.want) || strings.Contains(errOut, `command ""`) {
+			t.Errorf("%v: %d %q %q", tc.args, code, out, errOut)
+		}
 	}
 }

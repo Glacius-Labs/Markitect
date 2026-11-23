@@ -111,14 +111,22 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprint(stderr, usage)
 		return ExitFailed
 	}
-	switch args[0] {
-	case "help", "-h", "-help", "--help":
+	// --help, -h and the command help print the usage, wherever they stand.
+	if wantsHelp(args) {
 		fmt.Fprint(stdout, usage)
 		return ExitOK
 	}
 	// The flags may stand before the command, as Git's do: markitect -C
 	// PROJECT check.
-	name, rest := splitCommand(args)
+	name, rest, err := splitCommand(args)
+	if err != nil {
+		fmt.Fprintf(stderr, "markitect: %v; markitect --help lists the commands and flags\n", err)
+		return ExitFailed
+	}
+	if name == "help" {
+		fmt.Fprint(stdout, usage)
+		return ExitOK
+	}
 	c, ok := commands[name]
 	if !ok {
 		fmt.Fprintf(stderr, "markitect: unknown command %q; markitect --help lists the commands\n", name)
@@ -152,24 +160,48 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	return code
 }
 
+// wantsHelp says whether the arguments ask for the usage: help, -h, -help or
+// --help, not as the value of a flag and not after --.
+func wantsHelp(args []string) bool {
+	for i := 0; i < len(args); i++ {
+		switch a := args[i]; {
+		case a == "--":
+			return false
+		case a == "help" && i == 0 || a == "-h" || a == "-help" || a == "--help":
+			return true
+		case flagWithValue[a]:
+			i++
+		}
+	}
+	return false
+}
+
 // splitCommand finds the command among the arguments: the first that is no
 // flag and no value of a flag, whatever flags stand before it. It returns the
-// command, "" when there is none, and the other arguments in their order.
-func splitCommand(args []string) (string, []string) {
+// command and the other arguments in their order. It fails for a flag that no
+// command has, for a flag without its value and when there is no command.
+func splitCommand(args []string) (string, []string, error) {
 	for i := 0; i < len(args); i++ {
 		a := args[i]
 		switch {
 		case a == "--":
-			return "", args
+			return "", nil, errors.New("no command given")
 		case flagWithValue[a]:
-			i++
+			if i++; i >= len(args) {
+				return "", nil, fmt.Errorf("flag %s needs a value", a)
+			}
+		case flagWithoutValue[a] || strings.HasPrefix(a, "--spec=") || strings.HasPrefix(a, "-spec="):
 		case strings.HasPrefix(a, "-") && a != "-":
+			return "", nil, fmt.Errorf("unknown flag %s", a)
 		default:
-			return a, append(append([]string{}, args[:i]...), args[i+1:]...)
+			return a, append(append([]string{}, args[:i]...), args[i+1:]...), nil
 		}
 	}
-	return "", args
+	return "", nil, errors.New("no command given")
 }
+
+// flagWithoutValue are the flags that stand alone.
+var flagWithoutValue = map[string]bool{"--json": true, "-json": true, "--all": true, "-all": true}
 
 // flagWithValue are the flags that take the argument after them as a value.
 var flagWithValue = map[string]bool{

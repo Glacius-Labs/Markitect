@@ -336,3 +336,118 @@ func TestCompareFollowsASwapOfNames(t *testing.T) {
 	}
 	same(t, "rewritten", doc.Rewritten, []string{})
 }
+
+// componentsProject is a confirmed project of three components, one of which
+// links the other two, and a copy of it to change.
+func componentsProject(t *testing.T) (older, newer string) {
+	t.Helper()
+	clock(t)
+	older = project(t, map[string]string{
+		"docs/spec/components/fines.md": "# Fines\n\nA late book costs a fee.\n",
+		"docs/spec/components/loans.md": "# Loans\n\nA loan runs three weeks; see [fines](fines.md) and [other](other.md).\n",
+		"docs/spec/components/other.md": "# Other\n\nSomething else entirely.\n",
+		"src/x.go":                      "package lending\n",
+	})
+	for _, doc := range []string{"fines", "loans", "other"} {
+		verdict(t, older, "components/"+doc+".md", "ok", "-e", "src/x.go")
+	}
+	return older, copyTree(t, older, false)
+}
+
+// movedOf lists the compare of two projects as "from -> to" for what moved, the
+// documents that are new, gone and changed, and what the text says of them.
+func movedOf(t *testing.T, older, newer string) (moved []string, doc compareDocument) {
+	t.Helper()
+	code, out, _ := run("compare", older, newer, "--json")
+	if err := json.Unmarshal([]byte(out), &doc); err != nil || code != ExitFound {
+		t.Fatal(code, out)
+	}
+	for _, m := range doc.Moved {
+		moved = append(moved, m.From+" -> "+m.To)
+	}
+	return moved, doc
+}
+
+// A name freed by a deletion and taken by a move: the document that held it is
+// gone, the one that moved there is moved, and nothing is changed.
+func TestCompareFollowsAMoveOntoADeletedName(t *testing.T) {
+	older, newer := componentsProject(t)
+	if err := os.Remove(filepath.Join(newer, "docs", "spec", "components", "other.md")); err != nil {
+		t.Fatal(err)
+	}
+	if code, _, errOut := run("move", "-C", newer, "components/fines.md", "components/other.md"); code != ExitOK {
+		t.Fatal(errOut)
+	}
+	moved, doc := movedOf(t, older, newer)
+	same(t, "moved", moved, []string{"components/fines.md -> components/other.md"})
+	same(t, "gone", doc.Gone, []string{"components/other.md"})
+	// The loans document links the moved one: only its links were rewritten.
+	same(t, "rewritten", doc.Rewritten, []string{"components/loans.md"})
+	if len(doc.New) != 0 || len(doc.Changed) != 0 {
+		t.Errorf("new %v changed %v", doc.New, doc.Changed)
+	}
+	if m := doc.Moved[0]; m.Diff != "" || !m.Mechanical {
+		t.Errorf("a move that changed no text: %+v", m)
+	}
+}
+
+// A document moved away and deleted, and another moved to the same name: the
+// first is gone, the second is moved there.
+func TestCompareFollowsAMoveOntoTheNameOfADeletedMove(t *testing.T) {
+	older, newer := componentsProject(t)
+	if code, _, errOut := run("move", "-C", newer, "components/fines.md", "components/f2.md"); code != ExitOK {
+		t.Fatal(errOut)
+	}
+	if err := os.Remove(filepath.Join(newer, "docs", "spec", "components", "f2.md")); err != nil {
+		t.Fatal(err)
+	}
+	if code, _, errOut := run("move", "-C", newer, "components/other.md", "components/f2.md"); code != ExitOK {
+		t.Fatal(errOut)
+	}
+	moved, doc := movedOf(t, older, newer)
+	same(t, "moved", moved, []string{"components/other.md -> components/f2.md"})
+	same(t, "gone", doc.Gone, []string{"components/fines.md"})
+	same(t, "rewritten", doc.Rewritten, []string{"components/loans.md"})
+	if len(doc.New) != 0 || len(doc.Changed) != 0 {
+		t.Errorf("new %v changed %v", doc.New, doc.Changed)
+	}
+}
+
+// A document moved away and deleted, and a new one written at its old path
+// without a move: the old one is gone and the new one is new.
+func TestCompareFindsAMovedAndDeletedDocumentGone(t *testing.T) {
+	older, newer := componentsProject(t)
+	if code, _, errOut := run("move", "-C", newer, "components/fines.md", "components/f2.md"); code != ExitOK {
+		t.Fatal(errOut)
+	}
+	if err := os.Remove(filepath.Join(newer, "docs", "spec", "components", "f2.md")); err != nil {
+		t.Fatal(err)
+	}
+	write(t, newer, "docs/spec/components/fines.md", "# Fines, again\n\nA different document.\n")
+	moved, doc := movedOf(t, older, newer)
+	if len(moved) != 0 {
+		t.Errorf("moved %v", moved)
+	}
+	same(t, "gone", doc.Gone, []string{"components/fines.md"})
+	same(t, "new", doc.New, []string{"components/fines.md"})
+}
+
+// A document that is deleted, with no move, is gone, and a document that moves
+// and is then deleted too.
+func TestCompareFindsDeletedDocumentsGone(t *testing.T) {
+	older, newer := componentsProject(t)
+	if err := os.Remove(filepath.Join(newer, "docs", "spec", "components", "other.md")); err != nil {
+		t.Fatal(err)
+	}
+	if code, _, errOut := run("move", "-C", newer, "components/fines.md", "components/f2.md"); code != ExitOK {
+		t.Fatal(errOut)
+	}
+	if err := os.Remove(filepath.Join(newer, "docs", "spec", "components", "f2.md")); err != nil {
+		t.Fatal(err)
+	}
+	moved, doc := movedOf(t, older, newer)
+	if len(moved) != 0 || len(doc.New) != 0 {
+		t.Errorf("moved %v new %v", moved, doc.New)
+	}
+	same(t, "gone", doc.Gone, []string{"components/fines.md", "components/other.md"})
+}

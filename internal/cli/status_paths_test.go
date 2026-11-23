@@ -203,3 +203,31 @@ func TestConfirmReplacesTheListOfFiles(t *testing.T) {
 		t.Errorf("the usage does not say that --file replaces:\n%s", usage)
 	}
 }
+
+// confirm knows a document that is gone from the spec while it has a row, and
+// binds ok to it, which removes the row; one that was never known is unknown, as
+// to show and status, and a wrong fingerprint is a refusal.
+func TestConfirmOfAGoneDocumentAndOfAnUnknownOne(t *testing.T) {
+	dir := confirmed(t)
+	if err := os.Remove(filepath.Join(specOf(dir), "lending", "return.md")); err != nil {
+		t.Fatal(err)
+	}
+	fp := fingerprint(t, dir, "lending/return.md")
+	if code, _, errOut := run("confirm", "-C", dir, "lending/return.md@"+fp, "skip", "-m", "x"); code != ExitFound || !strings.Contains(errOut, "is gone from the spec") {
+		t.Errorf("skip: %d %q", code, errOut)
+	}
+	if code, _, errOut := run("confirm", "-C", dir, "lending/return.md@00000000", "ok"); code != ExitFound || !strings.Contains(errOut, "is not the state now") {
+		t.Errorf("wrong fingerprint: %d %q", code, errOut)
+	}
+	if code, out, errOut := run("confirm", "-C", dir, "lending/return.md@"+fp, "ok"); code != ExitOK || !strings.HasPrefix(out, "removed the row of lending/return.md") {
+		t.Errorf("ok: %d %q %q", code, out, errOut)
+	}
+	for _, doc := range []string{"lending/return.md@" + fp, "never/was.md@" + fp} {
+		if code, out, errOut := run("confirm", "-C", dir, doc, "ok"); code != ExitFailed || out != "" || !strings.Contains(errOut, "unknown document") {
+			t.Errorf("%s: %d %q %q", doc, code, out, errOut)
+		}
+	}
+	if code, _, _ := run("show", "-C", dir, "never/was"); code != ExitFailed {
+		t.Errorf("show: %d", code)
+	}
+}

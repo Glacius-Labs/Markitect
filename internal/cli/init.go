@@ -73,13 +73,14 @@ func initProject(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	// A project inside a project is laid out all the same, with a warning:
-	// the commands find the nearest one.
-	if outer, ok := findProject(filepath.Dir(dir), isProject); ok && o.stderr != nil {
-		fmt.Fprintf(o.stderr, "markitect init: warning: %s lies inside the project at %s; the commands of this folder will find the new project, not that one\n", dir, outer)
-	}
 	if err := applyChanges(dir, plan.changes); err != nil {
 		return ExitFailed, err
+	}
+	// A project inside a project is laid out all the same, with a warning:
+	// the commands find the nearest one. The warning follows the writing, so that
+	// a failed init warns of nothing.
+	if outer, ok := findProject(filepath.Dir(dir), isProject); ok && o.stderr != nil {
+		fmt.Fprintf(o.stderr, "markitect init: warning: %s lies inside the project at %s; the commands of this folder will find the new project, not that one\n", dir, outer)
 	}
 	text := ""
 	for _, c := range plan.created {

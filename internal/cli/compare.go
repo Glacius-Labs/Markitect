@@ -250,6 +250,10 @@ func replay(older, newer *state.Snapshot) map[string][]byte {
 		if e.Type != state.EventMove {
 			continue
 		}
+		// The path the move went to was free, or the move would have been
+		// refused: whatever the older project's texts hold there was deleted.
+		delete(texts, e.To)
+		delete(rewritten, e.To)
 		fsys := fstest.MapFS{}
 		var docs []*lang.Document
 		for p, text := range texts {

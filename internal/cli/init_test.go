@@ -435,3 +435,23 @@ func TestInitInsideAProjectWarns(t *testing.T) {
 		t.Errorf("%v %d %v %q", err, code, doc, errOut)
 	}
 }
+
+// A warning comes after the writing: an init that fails warns of nothing.
+func TestAFailedInitInsideAProjectWarnsOfNothing(t *testing.T) {
+	outer := initialized(t)
+	inner := filepath.Join(outer, "services")
+	if err := os.MkdirAll(inner, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	fault = func(step int) error {
+		if step == 5 {
+			return errors.New("injected")
+		}
+		return nil
+	}
+	t.Cleanup(func() { fault = nil })
+	code, out, errOut := run("init", "-C", inner)
+	if code != ExitFailed || out != "" || !strings.Contains(errOut, "injected") || strings.Contains(errOut, "warning") {
+		t.Errorf("%d %q %q", code, out, errOut)
+	}
+}

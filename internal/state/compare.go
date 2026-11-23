@@ -98,20 +98,45 @@ func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 	// Where each document of the older project went: its own path, or where
 	// the newer history's moves led it. Only the moves the older history lacks
 	// count: a document moved away in the older history and back in the newer
-	// is where it was. The moves are followed in their order, each applied to
-	// the document that holds its path at that moment, so that a name vacated
-	// and taken by another document leads each to its own place.
-	events := NewEvents(older.History, newer.History)
-	movedTo := map[string]string{}
+	// is where it was. The moves are replayed once, in their order, over the
+	// documents by the path each holds: a move takes the document at its From
+	// path to its To path, and a document that held the To path, which a
+	// deletion freed, is lost. So a name vacated and taken by another document
+	// leads each to its own place, and a document whose name was taken is gone.
+	occupant := map[string]string{} // the path now -> the path in the older project
 	for _, d := range oldSpec.Documents {
-		at := d.Path
-		for _, e := range events {
-			if e.Type == EventMove && e.From == at {
-				at = e.To
-			}
+		occupant[d.Path] = d.Path
+	}
+	for _, e := range NewEvents(older.History, newer.History) {
+		if e.Type != EventMove {
+			continue
 		}
-		if _, there := newSpec.Document(at); there && at != d.Path {
-			movedTo[d.Path] = at
+		if was, ok := occupant[e.From]; ok {
+			delete(occupant, e.From)
+			occupant[e.To] = was
+		} else {
+			// A document of the newer project moved: it displaces any
+			// document of the older one whose name it takes.
+			delete(occupant, e.To)
+		}
+	}
+	at := map[string]string{} // the path in the older project -> the path now
+	for now, was := range occupant {
+		at[was] = now
+	}
+	// departed are the documents of the older project that no longer hold
+	// their path: moved, or gone with their name taken or their move undone by
+	// a deletion.
+	movedTo, departed := map[string]string{}, map[string]bool{}
+	for _, d := range oldSpec.Documents {
+		now, kept := at[d.Path]
+		_, there := newSpec.Document(now)
+		switch {
+		case kept && now == d.Path:
+		case kept && there:
+			movedTo[d.Path], departed[d.Path] = now, true
+		default:
+			departed[d.Path] = true
 		}
 	}
 	movedFrom := map[string]string{}
@@ -127,14 +152,20 @@ func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 		to, moved := movedTo[d.Path]
 		n, same := newSpec.Document(d.Path)
 		switch {
+		case departed[d.Path] && !moved:
+			c.Gone = append(c.Gone, d.Path)
+			touched[d.Path] = true
 		case moved:
 			nd, _ := newSpec.Document(to)
 			if mechanical(nd) {
 				c.Moved = append(c.Moved, MovedDoc{From: d.Path, To: to, Mechanical: true})
 				continue
 			}
-			c.Moved = append(c.Moved, MovedDoc{From: d.Path, To: to, Diff: textDiff(older, newer, d, nd)})
-			touched[d.Path], touched[to] = true, true
+			diff := textDiff(older, newer, d, nd)
+			c.Moved = append(c.Moved, MovedDoc{From: d.Path, To: to, Diff: diff, Mechanical: diff == ""})
+			if diff != "" {
+				touched[d.Path], touched[to] = true, true
+			}
 		case !same:
 			c.Gone = append(c.Gone, d.Path)
 			touched[d.Path] = true
@@ -148,7 +179,7 @@ func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 	}
 	for _, d := range newSpec.Documents {
 		_, before := oldSpec.Document(d.Path)
-		if _, wasMoved := movedTo[d.Path]; (!before || wasMoved) && movedFrom[d.Path] == "" {
+		if (!before || departed[d.Path]) && movedFrom[d.Path] == "" {
 			c.New = append(c.New, d.Path)
 			touched[d.Path] = true
 		}
