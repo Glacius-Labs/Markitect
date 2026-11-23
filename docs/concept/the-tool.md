@@ -11,9 +11,9 @@ The commands are flat, and each does one thing on its own. The help groups them.
 | Look | `show DOCUMENT` | A document with its type, or the type it extends, its sections, what it links to and what links to it with the section the link stands in; for a type, the types that extend it and its documents |
 | | `table [TYPE]` | Every document of a type, and of the types that extend it, as a table, one column per section; without a type, every document with its type and title |
 | | `topic [TOPIC]` | The topic view: a document, a type or a folder as one text with everything that belongs to it, and the signals that say where reading pays off; without a topic, the signals of the whole spec ([§5](is-the-spec-good.md#the-spec-itself)) |
-| | `questions` | The competency questions of the packages the spec has ([§5](is-the-spec-good.md#the-spec-itself)) |
+| | `questions` | The competency questions of the default's module `core`, when the spec has it ([§5](is-the-spec-good.md#the-spec-itself)) |
 | | `diff OLD [NEW]` | What is new, gone or changed in the spec of NEW, by default this project, against the project OLD, with a diff for what changed |
-| Check | `check` | Checks the spec: titles, types, sections and links ([§3](the-language.md#what-check-catches)) |
+| Check | `check` | Checks the spec: titles, types, sections, links and the READMEs of modules ([§3](the-language.md#what-check-catches)) |
 | Tool | `version` | The tool's version and build |
 | | `licenses` | The third-party notices |
 
@@ -23,10 +23,10 @@ The commands are flat, and each does one thing on its own. The help groups them.
 
 The image is a building model. Floor plan, section and bill of materials are generated from one model, never drawn twice. The spec is the model, and every view is generated from it.
 
-- **What is the project?** The spec itself, the topic view and the table per type, explained by the agent. An explanation of the whole, a part, a document or a question comes only from the spec, with a citation for each statement, and otherwise says "not stated", as a competency question is answered ([§5](is-the-spec-good.md#the-spec-itself)). "Explain the whole" goes through the parts in the order of their tables of contents. A picture, such as the states of a concept, the agent draws only from what documents say, and names them below it.
+- **What is the project?** The spec itself, the topic view and the table per type, explained by the agent. An explanation of the whole, a module, a document or a question comes only from the spec, with a citation for each statement, and otherwise says "not stated", as a competency question is answered ([§5](is-the-spec-good.md#the-spec-itself)). "Explain the whole" goes through the modules, each from its README. A picture, such as the states of a concept, the agent draws only from what documents say, and names them below it.
 - **What changed?** A change to the spec is seen through the ordinary diff of the repository, like every change. `diff` compares the specs of two folders, such as the project and a copy of an older state of it, however its owner made that copy, and names what is new, gone or changed.
 
-Views are generic and come from the language, so they work for every spec: the topic view, a table per type, `show` and `diff`. Views particular to a package come with a user interface. A dashboard or a handbook that a project wants is an artifact of the project, built from its spec like any other.
+Views are generic and come from the language, so they work for every spec: the topic view, a table per type, `show` and `diff`. Views particular to the types of the default come with a user interface. A dashboard or a handbook that a project wants is an artifact of the project, built from its spec like any other.
 
 There is no user interface of Markitect for now. The spec is readable Markdown, the tool runs natively, and people ask their agent. A user interface comes once Markitect is proven ([§8](what-is-shown.md)).
 

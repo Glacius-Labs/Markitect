@@ -20,16 +20,16 @@ The tool reads nothing else from `.markitect/` and nothing of the project outsid
 
 ## Setting up a project by hand
 
-Nothing sets up a project: a person writes `.markitect/spec` and copies the default from Markitect's repository. The packages and templates lie in [`internal/library/`](../../internal/library/) ([library](library.md)). A template's documents link into the packages by relative paths, such as `../../packages/software/architecture.md`, which assume the library's layout, so the copy keeps it: the packages in `packages/` and each template in `templates/NAME/` below the spec folder. A copied template may stay there. To move its documents elsewhere in the spec, adjust their links to the packages by hand: nothing rewrites links, and `check` names every one that is off, as `type.unresolved` or `link.unresolved`.
+Nothing sets up a project: a person writes `.markitect/spec`, copies the default from Markitect's repository and writes the project's own modules. The default is the module `core` in [`internal/library/core/`](../../internal/library/core/) ([library](library.md)). The tool knows it as the folder `core` directly below the spec folder, so the copy goes there. Nothing rewrites links: a document that names a type of `core` links it by its relative path, such as `../core/rule.md` from a module directly below the spec folder, and `check` names every link that is off.
 
-From an empty folder, with the spec in `docs/spec/` and the template `project`:
+From an empty folder, with the spec in `docs/spec/`:
 
 1. Write `.markitect/spec` with the one line `docs/spec`.
-2. Copy `internal/library/packages/` to `docs/spec/packages/`, and `internal/library/templates/project/` to `docs/spec/templates/project/`. Copy further templates the same way, each to `docs/spec/templates/NAME/`.
-3. Run `markitect check`. In a fresh copy it reports only `section.empty` for the sections the templates leave empty, such as `templates/project/quality/README.md:25: section.empty: empty section "Safety"`, and exits 1: that list is the work still to do.
-4. Fill each listed section. Once none is left, `check` prints `0 errors in N documents` and exits 0.
+2. Copy `internal/library/core/` to `docs/spec/core/`.
+3. Write the project's own modules, each a folder with a `README.md` ([language reference](language-reference.md#modules)), such as `docs/spec/lending/README.md`, and their documents beside it.
+4. Run `markitect check`, and fix what it reports until it prints `0 errors in N documents` and exits 0.
 
-The spec owns its copy: a project may change its packages and templates like any of its documents.
+The spec owns its copy: a project may change `core` like any of its modules.
 
 ## version
 

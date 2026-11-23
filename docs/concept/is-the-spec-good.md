@@ -10,9 +10,9 @@
 | **Unambiguous and verifiable** | Two readers understand the same, and a checker can say yes or no. Every statement is as strong as possible: general and without exceptions. A real exception is a statement of its own, not a clause | Each statement | "Only for simple cases": who decides what is simple? A quality without a measure |
 | **Structured** | One thing per document. Each fact stands in its section and on the level it holds for. What has facts of its own, or is needed by several, is a document of its own that others link | Each document | Facts in the text before the first section; general planning rules inside one task |
 
-A document should hold a part of its own when that part has facts of its own, is needed by several documents, changes at its own pace, or has a rule of its own. It should not for a value only that document relies on, or the spec falls apart into tiny documents. The type decides: where its section asks for a link, every document links.
+Something deserves a document of its own when it has facts of its own, is needed by several documents, changes at its own pace, or has a rule of its own. A value that only one document relies on does not, or the spec falls apart into tiny documents. The type decides: where its section asks for a link, every document links.
 
-**Not in the list.** *Correct*, whether the spec says what is meant, no reader can judge without the people who decide; it shows only in use. *Ranked* is a priority, which is work. *Traceable*, which artifact realizes which statement, is the project's way of working. *Modifiable* is in consistent and structured. Coupling, cohesion, abstractness and link density are no measures: folders carry no rules, a folder sorted by kind is not worse, and a high fan-in is natural for a role everyone names.
+**Not in the list.** *Correct*, whether the spec says what is meant, no reader can judge without the people who decide; it shows only in use. *Ranked* is a priority, which is work. *Traceable*, which artifact realizes which statement, is the project's way of working. *Modifiable* is in consistent and structured. Coupling, cohesion, abstractness and link density are no measures: a module only groups and shows, a module sorted by kind is not worse, and a high fan-in is natural for a role everyone names.
 
 ## Four sources
 
@@ -29,12 +29,12 @@ No source suffices alone, and the spec shows what is missing only as far as one 
 
 Four steps, as a person who reviews a spec would take them:
 
-1. **Check.** `check` finds what is technically wrong: titles, types, missing or empty sections and dead links ([§3](the-language.md#what-check-catches)). The type works as a checklist.
+1. **Check.** `check` finds what is technically wrong: titles, types, missing or empty sections, dead links and links into what a module keeps internal ([§3](the-language.md#what-check-catches)). The type works as a checklist.
 2. **Show.** The tool judges nothing; it gathers what has to be compared and says where reading pays off.
 3. **Read.** A person or an agent judges the meaning against the five properties. Only a reader sees whether something is right.
 4. **Question.** One asks the spec questions that a spec of its kind must answer, and sees how well it does. This is the one means that checks completeness on the spec itself.
 
-**The topic view.** A topic is a document, a type or a folder. The topic view shows it as one text with everything that belongs to it: what links to it, with the section the link stands in; the rules that hold for it, also through the README of a folder; and the places that name it without a link. The strong statements about the topic come first, since the single cases are checked against them. A table per type, `markitect table`, shows a column with the same value everywhere: that fact belongs a level higher.
+**The topic view.** A topic is a document, a type or a folder. The topic view shows it as one text with everything that belongs to it: what links to it, with the section the link stands in; the rules that hold for it, also through the README of a module that holds it; and the places that name it without a link. The strong statements about the topic come first, since the single cases are checked against them. A table per type, `markitect table`, shows a column with the same value everywhere: that fact belongs a level higher.
 
 **Signals** say where reading pays off. They have no fixed thresholds and give no warnings; each counts occurrences or compares with the rest of the spec, and the output is a sorted list for the whole spec or a topic. The reader decides.
 
@@ -49,9 +49,9 @@ Four steps, as a person who reviews a spec would take them:
 | | **Scattered rules:** one thing in many conditional or restricting statements across many documents, which belongs in one place | Structured, consistent |
 | Connections | **Mention without a link:** a document's title in another's text, unlinked | Consistent, structured |
 
-**Two references for every number** ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)). A value is shown beside the reference value of its type, which ships with the package, and beside the rest of the project: "documents of this type usually have 200 to 400 characters; all of yours do, and this one has 900". Both are needed: when every document of a project is too long, nothing stands out within it. Reference values come from proven specs, those named as a reference by the people who answer for them, and improve with each version of the package. Until there are enough, the package's values hold.
+**Two references for every number** ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)). A value is shown beside the reference value of its type, which ships with the default for its types, and beside the rest of the project: "documents of this type usually have 200 to 400 characters; all of yours do, and this one has 900". Both are needed: when every document of a project is too long, nothing stands out within it. Reference values come from proven specs, those named as a reference by the people who answer for them, and improve with each version of the default. Until there are enough, the default's first values hold.
 
-**Competency questions.** A spec is as good as it answers the questions it exists for. Valuable are questions across documents: "who may do this alone?", "what happens when someone fails to show up twice?". Each answer comes only from the spec, with a citation, and is rated answered, only inferred, two answers or not answered; anything without a citation is "not stated". The share of cleanly answered questions measures the spec by its purpose. Catalogs ship with packages and templates; a project's own questions lie beside the spec, not in it, as tests lie beside code. An answered question from use becomes a fixed question, a general one may move into the package, and a question stays while it finds something or people want to keep it.
+**Competency questions.** A spec is as good as it answers the questions it exists for. Valuable are questions across documents: "who may do this alone?", "what happens when someone fails to show up twice?". Each answer comes only from the spec, with a citation, and is rated answered, only inferred, two answers or not answered; anything without a citation is "not stated". The share of cleanly answered questions measures the spec by its purpose. Catalogs ship with the default; a project's own questions lie beside the spec, not in it, as tests lie beside code. An answered question from use becomes a fixed question, a general one may move into the default, and a question stays while it finds something or people want to keep it.
 
 ## Its changes
 
@@ -82,7 +82,7 @@ Everything found names its place and the property it violates:
 | An answer was found only in an unexpected place | Misplaced | Structured |
 | A person sees the result and says it was not meant so | Wrongly stated | Correct |
 
-Three signals follow: problems found again and again at the same place show a bad place; a problem settled without a change of the spec leaves the spec incomplete there; and each answered question becomes a fixed question. These problems are also the touchstone for everything above: whether the signals pointed at these places beforehand, whether a reference spec is really proven, and whether a project converges, with fewer problems per part over time.
+Three signals follow: problems found again and again at the same place show a bad place; a problem settled without a change of the spec leaves the spec incomplete there; and each answered question becomes a fixed question. These problems are also the touchstone for everything above: whether the signals pointed at these places beforehand, whether a reference spec is really proven, and whether a project converges, with fewer problems per module over time.
 
 ## Writing it well
 

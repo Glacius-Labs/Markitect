@@ -13,18 +13,18 @@ Terraform makes infrastructure match a configuration that states what should exi
 | Configuration | The spec | What should hold, like an interface ([§4](what-goes-in-a-spec.md)) |
 | `validate` | `check` | Is the spec correct in itself? |
 | Providers that make it so | Agents that realize it | The project's way of working says how |
-| Modules from the registry | Packages and templates of the default | Copied into the spec, which owns its copy ([§3](the-language.md#packages-and-templates)) |
+| Modules from the registry | The default's module `core` | Copied into the spec, which owns its copy ([§7](the-project.md#the-default)) |
 
 A compiler would be the other image. Terraform fits better, because the work is reconciling what should be with what is, not translating one into the other.
 
-## The parts
+## Three things
 
-Markitect has three parts ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
+Markitect is three things ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
 
-| Part | What it is |
+| Thing | What it is |
 |---|---|
-| **The language** | Documents with a type and ordinary links, in plain Markdown ([§3](the-language.md)) |
-| **The default** | The packages `core`, `software` and `company` and the templates `project`, `product`, `architecture`, `software` and `company`, with the reference values and question catalog of each package; plain files that a person copies into a spec ([§4](what-goes-in-a-spec.md), [§7](the-project.md)) |
+| **The language** | Documents with a type and ordinary links, grouped in modules, in plain Markdown ([§3](the-language.md)) |
+| **The default** | Today the one module `core`, with six general types, and its reference values and question catalog; plain files that a person copies into a spec ([§7](the-project.md#the-default)) |
 | **The tool** | One program, `markitect`. It checks the spec, analyses it and helps reading it. It never writes, keeps no state and starts no agent ([§6](the-tool.md)) |
 
 ## Words
@@ -32,10 +32,10 @@ Markitect has three parts ([DEC-154](../decisions.md#dec-154-markitect-is-a-lang
 | Word | Meaning |
 |---|---|
 | **Spec** | The one description of the project that has authority over its artifacts: the target |
-| **Document, type** | One Markdown file of the spec, and a document whose sections are the template of other documents |
-| **Package, template** | A folder of types, such as `software`; and a folder of documents with empty sections, copied to start a part of the spec |
-| **Default** | The packages and templates that ship with Markitect, with their reference values and question catalogs |
-| **Part** | A folder of the spec, with a README as its table of contents |
+| **Document, type** | One Markdown file of the spec, and a document that declares the sections of other documents |
+| **Module** | A folder of the spec that holds documents, with a README that says what it is for and what it shows to other modules |
+| **Public, internal** | What a module's README lists under `Contents`, which other modules may link; and everything else in the module |
+| **Default** | What ships with Markitect: today the module `core`, with its reference values and question catalog |
 | **Artifact** | Any file that comes from the spec: code, tests, configuration, a handbook, a skill. The artifacts are what is |
 | **Project** | The folder that holds `.markitect/spec`, which names its spec folder ([§7](the-project.md)) |
 
