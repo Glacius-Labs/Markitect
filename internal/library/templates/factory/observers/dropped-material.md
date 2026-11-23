@@ -18,4 +18,5 @@ Customer data and secrets; where a statement cannot be shown without them, only 
 daily
 
 ## Model
-Sonnet, effort high
+Claude: Sonnet, effort high
+Codex: Luna, effort high

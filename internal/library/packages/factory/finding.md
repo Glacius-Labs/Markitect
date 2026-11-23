@@ -9,7 +9,7 @@ On the first line one of `Requirement`, `Idea`, `Question`, which point at the s
 On the first line one of `critical`, `high`, `normal`, `low`. It decides when the finding is shown. Example: `high`.
 
 ## Area
-The Area of the plan it roughly concerns, as a link, or the module as far as it is known. Example: `[Lending](../../../docs/spec/factory/areas/lending.md)`.
+The Area of the plan it roughly concerns, as a link, or what it touches as far as it is known. Example: `[Lending](../../../docs/spec/factory/areas/lending.md)`.
 
 ## What
 What was noticed, or what the idea is, without a solution. Example: `Members cannot see when a loan is due without asking at the desk.`

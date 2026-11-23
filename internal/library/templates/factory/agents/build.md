@@ -11,7 +11,7 @@ The Builder is always fresh, never the session that planned the story. It follow
 2. [Claim](../processes/building/claim.md) it.
 3. [Build](../processes/building/build.md) it on its branch.
 4. Start a fresh [Reviewer](review.md) for each [review round](../processes/building/review-round.md) and answer its `comments`.
-5. When you and the Reviewer agree, it runs the targeted tests and writes the [confirm](../processes/building/confirm.md).
+5. When you and the Reviewer agree, it runs the targeted tests and [confirms](../processes/building/confirm.md).
 6. [Land](../processes/building/land.md) the story and release the claim.
 7. [Abort](../rules/building/abort.md) when that rule says so, and do what it says.
 8. Report a smell instead of building around it ([no workarounds](../rules/building/no-workarounds.md)), report the same thing built twice ([same thing twice](../rules/building/same-thing-twice.md)), and drop into the context what remains worth mentioning after the review rounds.
@@ -25,7 +25,8 @@ The Builder is always fresh, never the session that planned the story. It follow
 no
 
 ## Model
-Sonnet, effort high
+Claude: Sonnet, effort high
+Codex: Luna, effort high
 
 ## Changes
 Code, tests and the spec changes the story carries, on the story's branch, and on `main` with the merge.

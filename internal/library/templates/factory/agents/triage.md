@@ -24,7 +24,8 @@ The [Housekeeper](housekeeper.md).
 no
 
 ## Model
-Opus, effort high
+Claude: Opus, effort high
+Codex: Sol, effort high
 
 ## Changes
 Findings in `.markitect/findings/pending/`, `ready/` and `closed/`.

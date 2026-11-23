@@ -6,19 +6,19 @@ An agent that asks runs in a session of its own, which the person switches to; a
 
 | Agent | Skill |
 |---|---|
-| [Norman](norman.md) | `norman` |
-| [Capture](capture.md) | `capture` |
-| [Architect](architect.md) | `architect` |
-| [Finish planning](finish-planning.md) | `finish-planning` |
-| [Builder](build.md) | `build` |
-| [Reviewer](review.md) | `review` |
-| [Analyst](analyze.md) | `analyze` |
-| [Accept](accept.md) | `accept` |
-| [Observer](observe.md) | `observe` |
-| [Create observer](create-observer.md) | `create-observer` |
-| [Triager](triage.md) | `triage` |
-| [Recorder](record.md) | `record` |
-| [Briefer](brief.md) | `brief` |
-| [Housekeeper](housekeeper.md) | `housekeeper` |
+| [Norman](norman.md) | `markitect-norman` |
+| [Capture](capture.md) | `markitect-capture` |
+| [Architect](architect.md) | `markitect-architect` |
+| [Finish planning](finish-planning.md) | `markitect-finish-planning` |
+| [Builder](build.md) | `markitect-build` |
+| [Reviewer](review.md) | `markitect-review` |
+| [Analyst](analyze.md) | `markitect-analyze` |
+| [Accept](accept.md) | `markitect-accept` |
+| [Observer](observe.md) | `markitect-observe` |
+| [Create observer](create-observer.md) | `markitect-create-observer` |
+| [Triager](triage.md) | `markitect-triage` |
+| [Recorder](record.md) | `markitect-record` |
+| [Briefer](brief.md) | `markitect-brief` |
+| [Housekeeper](housekeeper.md) | `markitect-housekeeper` |
 
 To add an agent, write its document here and link it from this table; to change one, change its document through a finding of type Factory. What every agent does besides its task stands in the rules: [drop what you notice](../rules/work/drop-what-you-notice.md), [one per session](../rules/work/one-per-session.md), [claiming](../rules/plan/claiming.md), [deviations](../rules/deviations/README.md), and, for every session that fetches `main`, telling its person what is critical first ([when shown](../rules/briefing/when-shown.md)).

@@ -7,5 +7,6 @@ The observers of the way of working, one [observer](../../../packages/factory/ob
 - [deviations](deviations.md): what happened on `main` against the usual way of the roles.
 - [hotspots](hotspots.md): where development jams in the structure.
 - [duplication](duplication.md): what is built more than once.
+- [status](status.md): what moved between the spec and the files, new since its last run.
 
 A project adds the observers for its own sources with [create-observer](../agents/create-observer.md), each as a document here, linked from this list: for example the nightly full test suite on `main` in its pipeline, which every way of working with these rules needs ([tests](../rules/building/tests.md)), or later logs, alerts, metrics, dependencies or feedback from users, once they exist and can be read without customer data.

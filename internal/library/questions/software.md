@@ -8,5 +8,6 @@ Questions across documents that a software spec should answer. Each answer comes
 - Which stakeholder does each goal serve, and which operations reach it?
 - How is each quality characteristic measured, or why does it ask nothing of the system?
 - Which component realizes each operation, and which concepts does it change?
+- Which stakeholders does each capability serve, and which of its operations reach their goals?
 - Where and how does the system run, and who operates it?
 - Which data does the system keep, for how long, and who may see it?

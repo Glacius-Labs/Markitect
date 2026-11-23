@@ -5,7 +5,7 @@ The recurring sequences of the way of working. One folder per process: its READM
 - [The circle](circle/README.md): from what happens to findings, decisions and work, and back.
 - [Planning](planning/README.md): a person and the Architect work out one level of the plan.
 - [Building](building/README.md): a Builder and fresh Reviewers carry out a story.
-- [Accepting](accepting/README.md): the QA polishes and accepts what has landed.
+- [Accepting](accepting/README.md): the person who accepts polishes and accepts what has landed.
 
 The daily run that turns the circle stands in the document of the [Housekeeper](../agents/housekeeper.md).
 

@@ -9,4 +9,4 @@ Type: [Rule](../../../../packages/core/rule.md)
 The same procedure on every level. One rule that holds everywhere is better than three that each fit one case.
 
 ## Example
-Planning the spec as a whole, an Area, a feature and a story is one process, run by one agent.
+Planning the spec, a feature and a story is one process, run by one agent.

@@ -22,7 +22,8 @@ The [Housekeeper](housekeeper.md), for smell stories of priority `normal` or hig
 no
 
 ## Model
-Opus, effort high
+Claude: Opus, effort high
+Codex: Sol, effort high
 
 ## Changes
 The story's State, Claimed by and Result.

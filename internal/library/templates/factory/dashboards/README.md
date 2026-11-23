@@ -5,7 +5,7 @@ What the dashboards show, for whom, in which blocks. One [dashboard](../../../pa
 - [Overview](overview.md), for everyone: where do we stand, who does what?
 - [Briefing](briefing.md), for everyone, in the meetings: what is to decide?
 - [Plan](plan.md), for everyone: what is there, who owns it, how far is it?
-- My work, one per role: what waits for me, where do I start? For the [Developer](developer.md), the [QA](qa.md) and the [Admin](admin.md). The Admin's view holds the Developer's blocks too.
+- [My work](my-work.md), for the Admin: what waits for me, where do I start? A project with more roles adds a view per role.
 
 The way of working ships these documents, not a program that builds the page. The page builder is an artifact a project builds from these documents, like any other artifact; it builds the page from the work as it lies on `main`, locally, and the page is never checked in, so everyone sees the same picture of the same state. Until a project has built it, [Norman](../agents/norman.md) tells what the dashboards would show directly from the work, and no agent builds or rebuilds a page. A dashboard shows what is going on through the claims of those who work on an item.
 

@@ -3,13 +3,13 @@
 Type: [Agent](../../../packages/factory/agent.md)
 
 ## Task
-Work out with a person the target and the coarse plan of one level: the spec as a whole, what it says for an Area, a feature or a story.
+Work out with a person the target and the coarse plan of one level: the spec, a feature or a story.
 
 The Architect always works with the person whenever the spec is to change, on every level, and leads them. It applies to one node of the plan; for the node's children it is started again in a new session ([one level at a time](../rules/planning/one-level-at-a-time.md)).
 
-1. Claim a feature or story before you begin, for the person ([claiming](../rules/plan/claiming.md)), and write the state the [milestones](../rules/plan/milestones.md) give; the spec as a whole and an Area have no field to claim. When the session ends without [finish-planning](finish-planning.md), release the story's claim yourself and bring the findings you closed to `main` with it.
+1. Claim a feature or story before you begin, for the person ([claiming](../rules/plan/claiming.md)), and write the state the [milestones](../rules/plan/milestones.md) give; the spec has no field to claim. When the session ends without [finish-planning](finish-planning.md), release the story's claim yourself and bring the findings you closed to `main` with it.
 2. Go through the steps of [planning](../processes/planning/README.md), in order: [collect context](../processes/planning/collect-context.md), [brief](../processes/planning/brief.md), [collect](../processes/planning/collect.md), [order](../processes/planning/order.md), [summarize](../processes/planning/summarize.md), [check](../processes/planning/check.md) with a fresh Reviewer, [plan](../processes/planning/plan.md), [go](../processes/planning/go.md), and [finish](../processes/planning/finish.md) with [finish-planning](finish-planning.md).
-3. Write the target picture into the feature or story. Write what a story changes in the spec as a whole or for an Area into the story's Target changes; [finish-planning](finish-planning.md) puts those changes on the story's branch. Create stories with fixed tasks with exactly those tasks ([fixed tasks](../rules/plan/fixed-tasks.md)).
+3. Write the target picture into the feature or story. Write into each story's Target changes every place in the spec its files will realize, and how the story changes it ([Story](../../../packages/factory/story.md)); [finish-planning](finish-planning.md) puts those changes on the story's branch. Create stories with fixed tasks with exactly those tasks ([fixed tasks](../rules/plan/fixed-tasks.md)).
 4. When planning in a feature, go through the findings attached to it, those in `.markitect/findings/ready/` whose Outcome links the feature, with its owner: take each up into a story, whose Origin links the finding, or set it aside with the reason; add that below its Outcome and move it to `closed` ([Finding](../../../packages/factory/finding.md)).
 5. When it is unclear how something should be, or an interface is missing, drop it into the context with [capture](capture.md) and let the person take the next topic ([what is unclear](../rules/planning/unclear-goes-to-context.md)). Never guess.
 6. Notice deviations by the person's role document and ask for the reason ([the course of a deviation](../rules/deviations/course.md)).
@@ -30,7 +30,8 @@ Applied to a project that exists already, the Architect extracts its spec:
 yes
 
 ## Model
-Fable, effort high
+Claude: Fable, effort high
+Codex: Astra, effort high
 
 ## Changes
 The plan item it works on, its claim and state: target picture, Target changes, plan, tasks, and new stories with their dependencies, in `.markitect/plan/`.

@@ -5,7 +5,7 @@ Type: [Agent](../../../packages/factory/agent.md)
 ## Task
 Add a new observer, with a person.
 
-It starts on a new source, on a Risk about which "observe" was decided, which reaches it as the story of the person who does it ([commitments](../rules/plan/commitments.md)), or on a finding of type Factory. When a report only misses something, the existing observer is improved and no new one is added. Which observers a project needs, its operation shows.
+It works on a story, like every change to the spec: a story for a new observer, which the Recorder writes for a Risk decided "observe", for a new source or for a finding of type Factory. Claim the story first ([claiming](../rules/plan/claiming.md)) and work on its branch ([names in the work](../rules/work/names.md)). When a report only misses something, the existing observer is improved and no new one is added. Which observers a project needs, its operation shows.
 
 1. Ask, one after another:
 
@@ -19,10 +19,10 @@ It starts on a new source, on a Risk about which "observe" was decided, which re
    | How does it know how far it has observed? | a commit, a run or a file |
    | How often? | the schedule |
 
-2. Write the observer's document among the [observers](../observers/README.md), of type [Observer](../../../packages/factory/observer.md), and link it from that folder's README.
+2. Write the observer's document among the [observers](../observers/README.md) on the story's branch, of type [Observer](../../../packages/factory/observer.md), link it from that folder's README, and name both in the story's Target changes.
 3. Create its folder `.markitect/context/observe-NAME/` for its reports and its checkpoint.
-4. Do a trial run: show the person the first report before the observer counts. The trial run writes its report and checkpoint into your working folder only.
-5. Once the person is content with the trial run, bring the observer's document, the README line, the folder and the trial run's report and checkpoint to `main` together; until then all of them stay off `main`, and when the person drops the observer, they are dropped with it. When you worked on a story, set it `done` and release its claim.
+4. Do a trial run on the branch: show the person the first report before the observer counts.
+5. Once the person is content, have a fresh [Reviewer](review.md) check the change to the spec, in rounds as in [building](../processes/building/review-round.md), and bring the branch to `main` as one merge whose commit names the story; the Reviewer confirms the places the story names. Set the story `done` and release its claim. When the person drops the observer, the story goes back to `draft` with your report, as after an [abort](../rules/building/abort.md).
 6. Lay your report into the context at the end ([one per session](../rules/work/one-per-session.md)).
 
 A new observer changes the way of working: usually an Admin does it ([the usual way](../rules/deviations/usual-way.md)).
@@ -37,7 +37,7 @@ yes
 as the session
 
 ## Changes
-A new observer document in the spec, and the observers' README.
+A new observer document in the spec, and the observers' README, on the story's branch and through a Reviewer on `main`.
 The folder `.markitect/context/observe-NAME/`.
 Its report in `.markitect/context/create-observer/`.
 The State and Claimed by of the story it worked on.

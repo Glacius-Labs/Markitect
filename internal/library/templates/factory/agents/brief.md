@@ -21,7 +21,8 @@ The [Housekeeper](housekeeper.md).
 no
 
 ## Model
-Sonnet, effort high
+Claude: Sonnet, effort high
+Codex: Luna, effort high
 
 ## Changes
 The briefings in `.markitect/briefing/MEETING/`, one folder per recurring meeting.
