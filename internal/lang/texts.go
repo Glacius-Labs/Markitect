@@ -8,8 +8,9 @@ import (
 )
 
 // Text is one stretch of prose of a document: a paragraph, the text of a list
-// item or a table body row, rendered as plain text. Headings, the type and extends lines,
-// code, HTML, link reference definitions and footnotes hold none.
+// item or a table body row, rendered as plain text. Headings, the type, extends
+// and property type lines, code, HTML, link reference definitions and footnotes
+// hold none.
 type Text struct {
 	// Kind is "paragraph", "item" or "row".
 	Kind string
@@ -102,7 +103,8 @@ func (p *parser) keep(t *Text) {
 	}
 }
 
-// flow renders the inline content of n into t, leaving out type and extends lines.
+// flow renders the inline content of n into t, leaving out type, extends and
+// property type lines.
 func (p *parser) flow(n ast.Node, t *Text) {
 	anchor := func(offset int) {
 		line := p.line(offset)

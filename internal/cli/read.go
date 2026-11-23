@@ -39,6 +39,11 @@ type showDocument struct {
 type showSection struct {
 	Heading    string `json:"heading"`
 	DeclaredBy string `json:"declared_by,omitempty"`
+	// References are the types a reference property of a type refers to, and
+	// Values the fixed values of a property of fixed values; both are left out for
+	// a text property and for a document that is no type.
+	References []showLink `json:"references,omitempty"`
+	Values     []string   `json:"values,omitempty"`
 }
 
 type showLink struct {
@@ -84,11 +89,16 @@ func show(o options, stdout io.Writer) (int, error) {
 			if s.DeclaredBy != d.Path {
 				sec.DeclaredBy = s.DeclaredBy
 			}
+			propertyOf(spec, d, s.Name, &sec)
 			doc.Sections = append(doc.Sections, sec)
 		}
 	} else {
 		for _, s := range d.Sections {
-			doc.Sections = append(doc.Sections, showSection{Heading: s.Heading})
+			sec := showSection{Heading: s.Heading}
+			if spec.IsType(d) {
+				propertyOf(spec, d, lang.SectionName(s.Heading), &sec)
+			}
+			doc.Sections = append(doc.Sections, sec)
 		}
 	}
 	seen := map[string]bool{}
@@ -119,6 +129,17 @@ func show(o options, stdout io.Writer) (int, error) {
 	sortLinks(doc.LinksTo)
 	sortLinks(doc.LinkedFrom)
 	return output(o, stdout, doc, showText(doc))
+}
+
+// propertyOf sets the type of the property name of the type t on its section: the
+// types of a reference, the values of fixed values, nothing for text.
+func propertyOf(spec *lang.Spec, t *lang.Document, name string, sec *showSection) {
+	prop := spec.PropertyType(t, name)
+	for _, p := range prop.Refs {
+		_, ok := spec.Document(p)
+		sec.References = append(sec.References, showLink{Path: p, Missing: !ok})
+	}
+	sec.Values = prop.Values
 }
 
 // sortLinks sorts links by their text without regard to case, then as written.
@@ -175,11 +196,29 @@ func showText(doc showDocument) string {
 	}
 	var sections, to, from []string
 	for _, s := range doc.Sections {
+		line := s.Heading
 		if s.DeclaredBy != "" {
-			sections = append(sections, s.Heading+" (from "+s.DeclaredBy+")")
-		} else {
-			sections = append(sections, s.Heading)
+			line += " (from " + s.DeclaredBy + ")"
 		}
+		switch {
+		case len(s.References) > 0:
+			var refs []string
+			for _, r := range s.References {
+				if r.Missing {
+					refs = append(refs, r.Path+" (missing)")
+				} else {
+					refs = append(refs, r.Path)
+				}
+			}
+			line += ": reference to " + strings.Join(refs, ", ")
+		case len(s.Values) > 0:
+			quoted := make([]string, len(s.Values))
+			for i, v := range s.Values {
+				quoted[i] = "`" + v + "`"
+			}
+			line += ": one of " + strings.Join(quoted, ", ")
+		}
+		sections = append(sections, line)
 	}
 	for _, l := range doc.LinksTo {
 		if l.Missing {

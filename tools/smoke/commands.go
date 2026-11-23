@@ -246,6 +246,9 @@ func (s *smoke) projectCommands() error {
 	if err := os.Remove(filepath.Join(project, "docs", "spec", "domain", "loose.md")); err != nil {
 		return err
 	}
+	if err := s.propertyTypes(project, total); err != nil {
+		return fmt.Errorf("property types: %w", err)
+	}
 
 	// Everything from here on reads: nothing of the project may change.
 	before, err := snapshot(project)
