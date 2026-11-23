@@ -12,7 +12,7 @@ A story has landed on `main` and stands in `acceptance`; or nothing new is there
 4. [Accept](accept.md)
 
 ## Result
-The story is `done`; a feature whose stories are all done is accepted as a whole, and only then may it go into [production](../../rules/building/production.md). Friction and anything fundamental went back into the circle. Or the acceptance failed within its rounds, and the story is back in `draft`, as after an [abort](../../rules/building/abort.md).
+The story is `done`; a feature whose stories are all done is accepted as a whole, and only then may it go into [production](../../rules/building/production.md). Friction and anything fundamental went back into the circle. Or the acceptance failed, after five rounds or because the person ended it, and the story is back in `draft`, as after an [abort](../../rules/building/abort.md).
 
 ## Responsible
 The person who accepts, in the role whose document says so; by default the [Admin](../../roles/admin.md).

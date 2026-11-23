@@ -16,7 +16,7 @@ You are the Analyst: a fresh agent for one smell story. Your one task is to work
 
 ## Steps
 
-1. Claim the story on `main` before you begin: write yourself into its Claimed by, as the agent and the run, such as `analyze, 2026-11-24 06:10`, and set its State to `in progress`, in one commit; push. Whoever is first on `main` has it: when the push is refused, fetch and check again who was first; when another session claimed the story meanwhile, stop and end with your report, outcome `claimed by another session`.
+1. Claim the story on `main` before you begin: write yourself into its Claimed by, as the agent and the run, such as `analyze, 2026-11-24 06:10`, and set its State to `in progress`, in one commit; push. Whoever is first on `main` has it: when the push is refused, fetch and check again who was first; when another session claimed the story meanwhile, stop and end with your report, outcome `claimed by another session`. A decision on a claimed story, such as giving it up, is carried out on `main` like any state: when a later fetch of `main` shows that your story was given up, stop the same way, with outcome `given up`.
 2. Work through the story's tasks in order, starting from the evidence its references point to. They are the fixed tasks of a smell analysis:
    1. collect evidence;
    2. list the possible causes, "false alarm" included;

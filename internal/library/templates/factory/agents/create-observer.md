@@ -20,10 +20,10 @@ It runs inside the session that calls it: the [Architect](architect.md) when it 
    | How does it know how far it has observed? | a commit, a run or a file |
    | How often? | the schedule |
 
-3. The story's Target changes name the observer's document among the [observers](../observers/README.md) and the observers' README.
-4. The Builder writes the observer's document, of type [Observer](../../../packages/factory/observer.md), from the target picture, links it from the observers' README, and creates the folder `.markitect/context/observe-NAME/` for its reports and its checkpoint. It does a trial run of the observer with [observe](observe.md) on the story's branch: as part of building, the first report and the checkpoint lie on that branch, in that folder, and reach `main` with the story's merge ([straight to main](../rules/work/straight-to-main.md)).
-5. The Reviewer confirms the observer's document and the README as [one trace](../rules/building/one-trace.md) says for a document no file realizes.
-6. Such a story ends in `acceptance`, never directly in `done`: its Tasks end with accepting the first report, and the person sees that report and accepts it with [accept](accept.md). When they drop the observer, they end the acceptance as failed ([accepting](../processes/accepting/review.md)).
+3. From those answers the Architect writes, while planning and on the story's branch as every change to the spec, the observer's document among the [observers](../observers/README.md), of type [Observer](../../../packages/factory/observer.md), and its line in the observers' README; the story's Target changes name both ([spec change](../rules/building/spec-change-lands-with-realization.md)). The Reviewer of the planning's check reads them and confirms nothing.
+4. The Builder creates the folder `.markitect/context/observe-NAME/` and does a trial run of the observer with [observe](observe.md) in the working folder of the story's branch, where the document lies: as part of building, the trial report and the checkpoint lie on that branch and reach `main` with the story's merge ([straight to main](../rules/work/straight-to-main.md)).
+5. The Reviewer of the build confirms the observer's document and the README as [one trace](../rules/building/one-trace.md) says for a document no file realizes.
+6. The story's last task names the trial report and where it lies, so the story ends in `acceptance`, never directly in `done`, and the person accepts with [accept](accept.md) what that task names. When they drop the observer, they end the acceptance as failed ([accepting](../processes/accepting/review.md)); what removes it from `main`, where the Housekeeper would keep running it, is the decision to give the story up and a story that removes its document ([reopen after a finding](../rules/planning/reopen-after-finding.md)).
 
 ## Started by
 The [Architect](architect.md) and the [Builder](build.md), inside their sessions.

@@ -1,6 +1,6 @@
 ---
 name: markitect-create-observer
-description: Explains how a new observer of a Markitect project is planned and built through its story, which questions the target picture answers, what the story's Target changes name, what the Builder writes and how the first report is accepted. Runs inside the Architect's session when it plans such a story, and inside the Builder's when it builds one.
+description: Explains how a new observer of a Markitect project is planned and built through its story, which questions the target picture answers, what the Architect writes on the story's branch, how the Builder runs the trial and how its report is accepted. Runs inside the Architect's session when it plans such a story, and inside the Builder's when it builds one.
 ---
 
 # Create observer
@@ -27,16 +27,16 @@ You explain how a new observer is built. You run inside the session that calls y
    | How does it know how far it has observed? | a commit, a run or a file |
    | How often? | the schedule |
 
-3. The story's Target changes name the observer's document among the observers, `SPEC/factory/observers/NAME.md`, NAME being its speaking English name in lowercase words joined by hyphens, and the observers' README, `SPEC/factory/observers/README.md`.
-4. The Builder writes the observer's document, of type Observer, from the target picture: its Observes, Source, Worth a statement, Never in the report, Schedule and Model, each value on the first line below its heading. It links the document from the observers' README and creates the folder `.markitect/context/observe-NAME/` for the observer's reports and its checkpoint. It does a trial run of the observer on the story's branch: a fresh subagent that runs exactly the skill `markitect-observe` for the new observer, with the model and effort the observer's document names under Model on the line of the provider it runs on, told that this is a trial run on the story's branch. The trial run is part of building: its first report and checkpoint lie on the story's branch, in that folder, and reach `main` with the story's merge.
-5. The Reviewer confirms the observer's document and the README as a document no file realizes: `skip`, with `-m` giving that reason.
-6. Such a story ends in `acceptance`, never directly in `done`: its Tasks end with accepting the first report, and the person sees that report and accepts it with the skill `markitect-accept`. When they drop the observer, they end the acceptance as failed, as accepting allows at any round.
+3. From those answers the Architect writes, while planning and on the story's branch, as every change to the spec, the observer's document among the observers, `SPEC/factory/observers/NAME.md`, NAME being its speaking English name in lowercase words joined by hyphens, of type Observer, with its Observes, Source, Worth a statement, Never in the report, Schedule and Model, each value on the first line below its heading; and its line in the observers' README, `SPEC/factory/observers/README.md`. The story's Target changes name both. The Reviewer of the planning's check reads them and confirms nothing.
+4. The Builder creates the folder `.markitect/context/observe-NAME/` and does a trial run of the observer in the working folder of the story's branch, where the document lies: a fresh subagent that runs exactly the skill `markitect-observe` for the new observer, with the model and effort the observer's document names under Model on the line of the provider it runs on, told that this is a trial run on the story's branch. As part of building, the trial report and the checkpoint lie on that branch and reach `main` with the story's merge. A trial run always writes a report, also when it found nothing.
+5. The Reviewer of the build confirms the observer's document and the README as a document no file realizes: `skip`, with `-m` giving that reason.
+6. The story's last task names the trial report and where it lies, so the story ends in `acceptance`, never directly in `done`, and the person accepts with the skill `markitect-accept` what that task names. When they drop the observer, they end the acceptance as failed. That does not remove the observer from `main`, where the Housekeeper would keep running it: what removes it is the decision to give the story up and a story that removes its document.
 
 ## What you never do
 
 - Add a second topic to an observer, or a new observer for what an existing one covers.
 - Act as an agent of your own: claim, review, merge or report; the session that calls you does that.
-- Let the story go to `done` without the person accepting its first report.
+- Let the story go to `done` without the person accepting its trial report.
 
 ## How you end
 
@@ -53,6 +53,9 @@ You change nothing of your own: the session that calls you writes, and goes on w
 - `observers/README.md`
 - `rules/building/one-trace.md`
 - `processes/accepting/review.md`
+- `rules/planning/reopen-after-finding.md`
+- `rules/building/spec-change-lands-with-realization.md`
+- `rules/work/one-per-session.md`
 - `rules/work/straight-to-main.md`
 - `rules/principles/one-task.md`
 - `rules/principles/speaking-names.md`
