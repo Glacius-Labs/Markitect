@@ -46,7 +46,8 @@ Look
 
 Check
   check                       check the spec and the documents of the work
-  status                      what is changed, suspect or unexplained
+  status [PATH]...            what is changed, suspect or unexplained, for the
+                              documents, files and folders named, or for all
 
 Change the spec
   new TYPE PATH [TITLE]       create a document of a type
@@ -56,7 +57,9 @@ Change the spec
 Confirm
   confirm DOCUMENT@FINGERPRINT VERDICT [--file PATH]... [--check PATH]...
           [-e EVIDENCE]... [-m REASON]
-                              bind ok, fail or skip to the state status showed
+                              bind ok, fail or skip to the state status showed;
+                              --file names the files that realize the document,
+                              all of them: a later confirm replaces the list
 
 Set up
   init [--spec PATH]          set up a project: .markitect/, the spec folder, by
@@ -73,6 +76,10 @@ path:line: code: message. --json prints one document with format_version and
 kind. Exit codes: 0 when all is well, 1 when the command found something, 2
 when it could not run.
 `
+
+// maxArguments is no limit on the number of arguments of a command that takes
+// any.
+const maxArguments = 1 << 30
 
 // A command takes its positional arguments, between min and max of them.
 type command struct {
@@ -92,7 +99,7 @@ var commands = map[string]command{
 	"questions": {0, 0, questions},
 	"version":   {0, 0, version},
 	"licenses":  {0, 0, licenses},
-	"status":    {0, 0, status},
+	"status":    {0, maxArguments, status},
 	"confirm":   {2, 2, confirm},
 	"compare":   {1, 2, compare},
 }

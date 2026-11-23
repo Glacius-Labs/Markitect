@@ -212,7 +212,7 @@ func planInit(dir, spec string, specExists bool) (initPlan, error) {
 func agentsEntry(spec string) string {
 	return "## Markitect\n\n" +
 		"The spec of this project lies in `" + spec + "/`; `.markitect/spec` names the folder. The way of working stands in its `factory` part, `" + spec + "/factory/`.\n" +
-		"The skills of the standard lie in `.claude/skills/` and `.agents/skills/`. A person starts their work with the skill `norman`.\n"
+		"The skills of the standard lie in `.claude/skills/` and `.agents/skills/`. A person starts their work with the skill `markitect-norman`.\n"
 }
 
 // appendEntry returns existing with the entry as a section of its own at the

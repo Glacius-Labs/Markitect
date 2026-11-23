@@ -69,7 +69,7 @@ func read(t *testing.T, dir, p string) string {
 
 // listed is the JSON document of status.
 type listed struct {
-	Errors      []diagnostic  `json:"errors"`
+	State       []diagnostic  `json:"state"`
 	Changed     []statusEntry `json:"changed"`
 	Suspect     []statusEntry `json:"suspect"`
 	Unexplained []string      `json:"unexplained"`
@@ -380,29 +380,33 @@ func TestMergedStates(t *testing.T) {
 	}
 }
 
-// Scenario 10: while the spec has errors, status gives no list and exits 1,
-// and confirm refuses; so do both with a line of the state they cannot read.
-func TestErrorsGiveNoList(t *testing.T) {
+// Scenario 10: what check finds in the spec stops neither status nor confirm. A
+// line of the state that cannot be read is left out and noted, and confirm,
+// which would write the state again without it, refuses.
+func TestErrorsStopNeitherStatusNorConfirm(t *testing.T) {
 	dir := confirmed(t)
-	fp := fingerprint(t, dir, "roles/member.md")
 	write(t, dir, "docs/spec/lending/borrow.md", "# Borrow\n\nSee [the fines](fines.md).\n")
-	code, out, _ := run("status", "-C", dir)
-	if code != ExitFound || out != "lending/borrow.md:3: link.unresolved: no document at \"fines.md\"\nno list while the spec or the state has errors\n" {
-		t.Error(code, out)
+	if code, out, _ := run("check", "-C", dir); code != ExitFound || !strings.Contains(out, "link.unresolved") {
+		t.Fatal(code, out)
 	}
-	if code, _, errOut := run("confirm", "-C", dir, "roles/member.md@"+fp, "ok", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "link.unresolved") {
-		t.Error(code, errOut)
-	}
-	dir = confirmed(t)
-	fp = fingerprint(t, dir, "roles/member.md")
-	write(t, dir, ".markitect/state.jsonl", read(t, dir, ".markitect/state.jsonl")+"{\"doc\":\"x.md\"}\nnot json\n")
 	l := statusOf(t, dir)
-	if l.code != ExitFound || len(l.Errors) != 2 || l.Errors[0].String() != `.markitect/state.jsonl:5: state.unreadable: verdict "" is none of ok, fail and skip` ||
-		!strings.HasPrefix(l.Errors[1].String(), ".markitect/state.jsonl:6: state.unreadable: ") || len(l.Changed) != 0 {
-		t.Errorf("%d %v", l.code, l.Errors)
+	if e, kind := l.entry("lending/borrow.md"); kind != "changed" || e.Fingerprint == "" || l.code != ExitFound || len(l.State) != 0 {
+		t.Errorf("%d %v", l.code, l.summary())
+	}
+	if code, out, errOut := run("confirm", "-C", dir, "lending/borrow.md@"+fingerprint(t, dir, "lending/borrow.md"), "ok", "-e", "src/loans.go"); code != ExitOK {
+		t.Errorf("confirm: %d %s %s", code, out, errOut)
+	}
+
+	dir = confirmed(t)
+	fp := fingerprint(t, dir, "roles/member.md")
+	write(t, dir, ".markitect/state.jsonl", read(t, dir, ".markitect/state.jsonl")+"{\"doc\":\"x.md\"}\nnot json\n")
+	l = statusOf(t, dir)
+	if l.code != ExitOK || len(l.State) != 2 || l.State[0].String() != `.markitect/state.jsonl:5: state.unreadable: verdict "" is none of ok, fail and skip` ||
+		!strings.HasPrefix(l.State[1].String(), ".markitect/state.jsonl:6: state.unreadable: ") || len(l.Changed) != 0 {
+		t.Errorf("%d %v", l.code, l.State)
 	}
 	before := read(t, dir, ".markitect/state.jsonl")
-	if code, _, errOut := run("confirm", "-C", dir, "roles/member.md@"+fp, "ok", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "state.unreadable") {
+	if code, _, errOut := run("confirm", "-C", dir, "roles/member.md@"+fp, "ok", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "state.unreadable") || !strings.Contains(errOut, "would lose them") {
 		t.Error(code, errOut)
 	}
 	if read(t, dir, ".markitect/state.jsonl") != before {

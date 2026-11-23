@@ -2,6 +2,7 @@ package state
 
 import (
 	"errors"
+	"io/fs"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -158,7 +159,7 @@ type failingRead struct {
 
 func (f failingRead) ReadFile(name string) ([]byte, error) {
 	if name == f.bad {
-		return nil, errors.New("denied")
+		return nil, errDenied
 	}
 	return f.MapFS.ReadFile(name)
 }
@@ -194,5 +195,40 @@ func TestWorkLeavesOutWhatGitignoreExcludes(t *testing.T) {
 	w, err := ReadWork(p)
 	if err != nil || len(w.Documents) != 1 || w.Documents[0].Path != ".markitect/context/kept/n.md" || len(w.Diagnostics) != 0 {
 		t.Errorf("%v %+v", err, w)
+	}
+}
+
+var errDenied = errors.New("denied")
+
+// unreadable is a file system in which one file cannot be read; it exposes
+// nothing of the file system it wraps but Open, so that a sub file system
+// reads through it.
+type unreadable struct {
+	fs.FS
+	bad string
+}
+
+func (u unreadable) ReadFile(name string) ([]byte, error) {
+	if name == u.bad {
+		return nil, errDenied
+	}
+	return fs.ReadFile(u.FS, name)
+}
+
+// A document of the spec that cannot be read gives no project at all: every
+// fingerprint rests on it. Whatever it holds, once read, parses.
+func TestAnUnreadableDocumentOfTheSpecFailsTheProject(t *testing.T) {
+	files := fstest.MapFS{
+		".markitect/version":     {Data: []byte("1.0.0\n")},
+		".markitect/spec":        {Data: []byte("docs/spec\n")},
+		"docs/spec/a.md":         {Data: []byte("# A\n")},
+		"docs/spec/lending/b.md": {Data: []byte("# B\n")},
+	}
+	if _, err := Load(files); err != nil {
+		t.Fatal(err)
+	}
+	_, err := Load(unreadable{files, "docs/spec/lending/b.md"})
+	if err == nil || !errors.Is(err, errDenied) {
+		t.Errorf("got %v", err)
 	}
 }

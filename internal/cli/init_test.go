@@ -108,7 +108,7 @@ func TestInitLaysOutTheProject(t *testing.T) {
 
 	// AGENTS.md names the spec, the way of working, the skills and Norman.
 	agents := read(t, dir, "AGENTS.md")
-	for _, part := range []string{"## Markitect", "`docs/spec/`", "`docs/spec/factory/`", "`.claude/skills/`", "`.agents/skills/`", "skill `norman`"} {
+	for _, part := range []string{"## Markitect", "`docs/spec/`", "`docs/spec/factory/`", "`.claude/skills/`", "`.agents/skills/`", "skill `markitect-norman`"} {
 		if !strings.Contains(agents, part) {
 			t.Errorf("AGENTS.md lacks %s:\n%s", part, agents)
 		}
@@ -124,17 +124,27 @@ func TestInitLaysOutTheProject(t *testing.T) {
 	if strings.Contains(out, "\nfactory/") || strings.HasPrefix(out, "factory/") {
 		t.Errorf("check finds something in factory/:\n%s", out)
 	}
-	// status gives no list while the templates have empty sections: it prints
-	// the errors check printed, and says why.
-	var lines []string
-	for _, line := range strings.Split(out, "\n") {
-		if line != "" && !strings.Contains(line, " errors in ") {
-			lines = append(lines, line)
+	// check reports the empty sections of the templates, and status lists and
+	// confirm binds all the same: right after init, a reviewer can work.
+	l := statusOf(t, dir)
+	e, kind := l.entry("project/README.md")
+	if l.code != ExitFound || kind != "changed" || len(e.Fingerprint) != 8 || len(l.State) != 0 {
+		t.Fatalf("status: %d %v", l.code, l.summary())
+	}
+	if _, kind := l.entry("factory/README.md"); kind != "changed" {
+		t.Error("the way of working is not listed")
+	}
+	unexplained := strings.Join(l.Unexplained, " ")
+	for _, part := range []string{"AGENTS.md", ".claude/skills/markitect-norman/SKILL.md", ".agents/skills/markitect-norman/SKILL.md"} {
+		if !strings.Contains(unexplained, part) {
+			t.Errorf("%s is not unexplained: %s", part, unexplained)
 		}
 	}
-	code, statusOut, _ := run("status", "-C", dir)
-	if want := strings.Join(lines, "\n") + "\nno list while the spec or the state has errors\n"; code != ExitFound || statusOut != want {
-		t.Errorf("status: %d\n%s\nwant\n%s", code, statusOut, want)
+	if code, out, errOut := run("confirm", "-C", dir, "project/README.md@"+e.Fingerprint, "skip", "-m", "the sections are filled later"); code != ExitOK {
+		t.Fatalf("confirm: %d %s %s", code, out, errOut)
+	}
+	if _, kind := statusOf(t, dir).entry("project/README.md"); kind != "" {
+		t.Error("the confirmed document is still listed")
 	}
 }
 

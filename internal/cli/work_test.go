@@ -80,19 +80,14 @@ func TestEachDefectOfTheWorkHasItsDiagnostic(t *testing.T) {
 	if code != ExitFound || out != want || errOut != "" {
 		t.Errorf("got %d\n%s%s\nwant\n%s", code, out, errOut, want)
 	}
-	// The errors of the work block neither status nor confirm: both are about
-	// the spec and its artifacts.
+	// What check finds, in the work or in the spec, blocks neither status nor
+	// confirm: both are about the spec and its artifacts.
 	code, out, _ = run("status", "-C", dir)
 	if code != ExitFound || strings.Contains(out, ".markitect") || strings.Contains(out, "no list while") || !strings.Contains(out, "changed: lending/renew.md@") {
 		t.Errorf("status: %d %s", code, out)
 	}
 	if code, out, errOut := run("confirm", "-C", dir, "lending/renew.md@"+fingerprint(t, dir, "lending/renew.md"), "ok", "-e", "src/renew.go"); code != ExitOK {
 		t.Errorf("confirm: %d %s %s", code, out, errOut)
-	}
-	// The errors of the spec still block them.
-	write(t, dir, "docs/spec/lending/renew.md", "# Renew\n\nSee [nothing](gone.md).\n")
-	if code, out, _ := run("status", "-C", dir); code != ExitFound || !strings.HasSuffix(out, "no list while the spec or the state has errors\n") {
-		t.Errorf("status: %d %s", code, out)
 	}
 }
 

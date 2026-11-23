@@ -75,8 +75,8 @@ func TestSkillsAreFoldersWithASkillFileAndItsName(t *testing.T) {
 	}
 }
 
-// There is one skill for each Agent document of the factory template, no
-// more and no fewer.
+// There is one skill for each Agent document of the factory template, named
+// markitect- and the file name of the document, no more and no fewer.
 func TestSkillsAreTheAgentsOfTheFactoryTemplate(t *testing.T) {
 	entries, err := fs.ReadDir(FS(), "templates/factory/agents")
 	if err != nil {
@@ -85,7 +85,7 @@ func TestSkillsAreTheAgentsOfTheFactoryTemplate(t *testing.T) {
 	var agents []string
 	for _, e := range entries {
 		if name, ok := strings.CutSuffix(e.Name(), ".md"); ok && name != "README" {
-			agents = append(agents, name)
+			agents = append(agents, "markitect-"+name)
 		}
 	}
 	sort.Strings(agents)

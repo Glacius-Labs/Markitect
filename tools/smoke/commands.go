@@ -157,7 +157,7 @@ func (s *smoke) projectCommands() error {
 			return fmt.Errorf(".markitect/ holds %s", got)
 		}
 	}
-	if err := requireContains(readFile(repo, "AGENTS.md"), "skill `norman`", "`docs/spec/factory/`"); err != nil {
+	if err := requireContains(readFile(repo, "AGENTS.md"), "skill `markitect-norman`", "`docs/spec/factory/`"); err != nil {
 		return err
 	}
 	claude, err := skillsOf(repo, ".claude/skills")
@@ -195,9 +195,32 @@ func (s *smoke) projectCommands() error {
 			return fmt.Errorf("check after init finds %s in %s", code, files[i])
 		}
 	}
-	if out, err := markitect(1, "status"); err != nil {
+	// status lists and confirm binds although check reports the empty
+	// sections: each command does one thing. This runs in a project of its
+	// own, since the project below drops the templates.
+	fresh := filepath.Join(s.work, "after-init")
+	if err := os.MkdirAll(fresh, 0o755); err != nil {
 		return err
-	} else if err := requireContains(out, "no list while the spec or the state has errors"); err != nil {
+	}
+	if _, err := s.exit(fresh, 0, "init"); err != nil {
+		return err
+	}
+	list, err := s.exit(fresh, 1, "status")
+	if err != nil {
+		return err
+	}
+	if err := requireContains(list, "changed: project/README.md@", "changed: factory/README.md@", "unexplained: AGENTS.md\n"); err != nil {
+		return err
+	}
+	entry, _, _ := strings.Cut(list[strings.Index(list, "changed: project/README.md@")+len("changed: "):], ": ")
+	if out, err := s.exit(fresh, 0, "confirm", entry, "skip", "-m", "its sections are filled later"); err != nil {
+		return err
+	} else if err := requireContains(out, "confirmed project/README.md skip\n", "files that realize it, all of them: (none)\n"); err != nil {
+		return err
+	}
+	if out, err := s.exit(fresh, 0, "status", "project/README"); err != nil {
+		return err
+	} else if err := requireContains(out, "note: project/README.md: skip: its sections are filled later\n", "0 changed, 0 suspect, 0 unexplained\n"); err != nil {
 		return err
 	}
 
@@ -339,6 +362,20 @@ func (s *smoke) projectCommands() error {
 	} else if err := requireContains(out, "changed: domain/borrow.md@", ": self\n", "suspect: domain/card-holder.md@", ": link:domain/borrow.md\n", "1 changed, 2 suspect, 0 unexplained\n"); err != nil {
 		return err
 	}
+	// status for a path lists what lies there only, and its exit code follows.
+	if out, err := markitect(1, "status", "domain/borrow"); err != nil {
+		return err
+	} else if err := requireContains(out, "changed: domain/borrow.md@", "1 changed, 0 suspect, 0 unexplained\n"); err != nil {
+		return err
+	}
+	if out, err := markitect(0, "status", "src"); err != nil {
+		return err
+	} else if out != "0 changed, 0 suspect, 0 unexplained\n" {
+		return fmt.Errorf("status of src: %s", tail(out))
+	}
+	if _, err := markitect(2, "status", "nowhere/at/all"); err != nil {
+		return fmt.Errorf("status of an unknown path: %w", err)
+	}
 
 	// The work: a finding with a type line into the spec, a dropped note and
 	// a checkpoint without a type, and a hidden folder that is passed over.
@@ -440,7 +477,7 @@ func confirmAll(markitect func(int, ...string) (string, error), want int) error 
 			return err
 		}
 		name, _, _ := strings.Cut(doc, "@")
-		if out != "confirmed "+name+" ok\n" {
+		if !strings.HasPrefix(out, "confirmed "+name+" ok\n") {
 			return fmt.Errorf("confirm printed %q", out)
 		}
 		confirmed++
