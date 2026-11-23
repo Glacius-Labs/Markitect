@@ -9,4 +9,4 @@ The observers of the way of working, one [observer](../../../packages/factory/ob
 - [duplication](duplication.md): what is built more than once.
 - [status](status.md): what moved between the spec and the files, new since its last run.
 
-A project adds the observers for its own sources with [create-observer](../agents/create-observer.md), each as a document here, linked from this list: for example a regular run of the full test suite on `main`, where the project has one ([tests](../rules/building/tests.md)), or later logs, alerts, metrics, dependencies or feedback from users, once they exist and can be read without customer data.
+A project adds the observers for its own sources through stories like any other change, built as [create-observer](../agents/create-observer.md) explains, each as a document here, linked from this list: for example a regular run of the full test suite on `main`, where the project has one ([tests](../rules/building/tests.md)), or later logs, alerts, metrics, dependencies or feedback from users, once they exist and can be read without customer data.

@@ -6,7 +6,7 @@ One kind of agent of the way of working: a fresh session that runs exactly one s
 The one task, in one sentence, on the first line. Below it, the steps the agent takes, in order and complete enough to build its skill from. A step that a process, a step or a rule already states links there instead of repeating it. Example: `Carry out one story in the state ready.`, then `1. Claim the story ...`.
 
 ## Started by
-Who starts it, as links: a role, a person's session, another agent, or a routine. Example: `[Norman](norman.md) or the [Housekeeper](housekeeper.md)`.
+Who starts it, as links: a role, a person's session, another agent, or a routine. Example: `[the Assistant](assistant.md) or the [Housekeeper](housekeeper.md)`.
 
 ## Asks
 `yes` when the agent talks with a human during its session, `no` when it runs alone. Example: `no`.

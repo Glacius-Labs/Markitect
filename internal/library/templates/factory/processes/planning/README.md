@@ -3,7 +3,7 @@
 Type: [Process](../../../../packages/company/process.md)
 
 ## Trigger
-A person takes a level to work out: the spec, a feature or a story. [Norman](../../agents/norman.md) starts the [Architect](../../agents/architect.md) for it.
+A person takes a level to work out: the spec, a feature or a story. [The Assistant](../../agents/assistant.md) starts the [Architect](../../agents/architect.md) for it.
 
 ## Steps
 1. [Collect context](collect-context.md)

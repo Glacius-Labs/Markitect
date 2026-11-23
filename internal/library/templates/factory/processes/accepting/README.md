@@ -3,7 +3,7 @@
 Type: [Process](../../../../packages/company/process.md)
 
 ## Trigger
-A story has landed on `main` and stands in `acceptance`; or nothing new is there, and whole features wait to be looked at. [Norman](../../agents/norman.md) starts [accept](../../agents/accept.md) for the person who accepts.
+A story has landed on `main` and stands in `acceptance`; or nothing new is there, and whole features wait to be looked at. [The Assistant](../../agents/assistant.md) starts [accept](../../agents/accept.md) for the person who accepts.
 
 ## Steps
 1. [Take](take.md)

@@ -30,4 +30,4 @@ How it will be realized, coarse, in concepts and building blocks: no file names,
 The tasks as check boxes, in order, ticked when done; `not planned yet` while the story waits in `draft` for its planning. A story with fixed tasks has exactly those. A story with something to accept ends with the task for accepting it. Example: `- [ ] Polish, verify interface and use, accept`.
 
 ## Result (optional)
-What changed, written by the Builder, or, after an abort, a link to the report in the context. Nothing else: the Reviewer's `confirm` is the tool's and stands in the state. Example: `Loans can be renewed once; the member's page offers it.`
+What changed, written by the Builder, or, after an abort, a link to the report in the context; for a story given up, that it was given up, why, and a link to the decision. Nothing else: the Reviewer's `confirm` is the tool's and stands in the state. Example: `Loans can be renewed once; the member's page offers it.`

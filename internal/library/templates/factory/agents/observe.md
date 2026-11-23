@@ -13,7 +13,7 @@ Each run is a fresh agent for exactly one of the [observers](../observers/README
 4. Select: leave out what lies below the threshold or is noise.
 5. Write the statements: bundled by theme and numbered throughout, so that a finding can point at "statement 4"; each one sentence with numbers and the reference to its place; for a source outside the repository, the relevant excerpt in the source's wording. The report is in English; excerpts keep the source's wording.
 6. Write under Not observed what you could not see this time. When the source cannot be reached, write exactly that, and write the checkpoint as the [checkpoints](../rules/work/checkpoints.md) rule says for that case; the next run catches up.
-7. Write the report and the checkpoint in one step: the last run, how far it observed, and the outcome. A run without an observation writes no report, only the checkpoint.
+7. Write the report and the checkpoint in one step, to `main`, or, for a trial run while a story is built, on the story's branch ([create-observer](create-observer.md)): the last run, how far it observed, and the outcome. A run without an observation writes no report, only the checkpoint.
 
 An observer never:
 

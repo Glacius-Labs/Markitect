@@ -12,7 +12,7 @@ It runs at the end of a planning session, in that session, and does what the ste
 3. Set the states the step names, and release the claim of a planned story ([claiming](../rules/plan/claiming.md)).
 4. Bring the plan to `main` from the folder of `main`, with the findings the planning closed.
 5. Commit and push the changed documents of the spec on the branch of each story that carries them, in that branch's working folder, never on `main`, as the finish step says ([spec change](../rules/building/spec-change-lands-with-realization.md)).
-6. Tell the person that the plan is secured and the chat can be archived, and send them back to [Norman](norman.md).
+6. Tell the person that the plan is secured and the chat can be archived, and send them back to [the Assistant](assistant.md).
 
 ## Started by
 The planning session of the [Architect](architect.md).

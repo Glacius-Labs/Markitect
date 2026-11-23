@@ -19,4 +19,4 @@ What deserves attention is decided and in the plan, what needs no human went to 
 The [Housekeeper](../../agents/housekeeper.md), which turns stations 1 to 4 once a day.
 
 ## Involved
-Every person through their agent and [capture](../../agents/capture.md); the [Briefer](../../agents/brief.md) and [Norman](../../agents/norman.md), who bring what matters to the people; the people, who decide.
+Every person through their agent and [capture](../../agents/capture.md); the [Briefer](../../agents/brief.md) and [the Assistant](../../agents/assistant.md), who bring what matters to the people; the people, who decide.

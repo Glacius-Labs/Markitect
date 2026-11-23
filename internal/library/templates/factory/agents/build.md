@@ -9,7 +9,7 @@ The Builder is always fresh, never the session that planned the story. It follow
 
 1. Start only a story that may start ([when a story starts](../rules/plan/when-a-story-starts.md)).
 2. [Claim](../processes/building/claim.md) it.
-3. [Build](../processes/building/build.md) it on its branch.
+3. [Build](../processes/building/build.md) it on its branch; for a story that adds an observer, run [create-observer](create-observer.md) inside this session.
 4. Start a fresh [Reviewer](review.md) for each [review round](../processes/building/review-round.md) and answer its `comments`.
 5. When you and the Reviewer agree, it runs the targeted tests and [confirms](../processes/building/confirm.md).
 6. [Land](../processes/building/land.md) the story and release the claim.
@@ -19,7 +19,7 @@ The Builder is always fresh, never the session that planned the story. It follow
 10. Lay your report into the context at the end ([one per session](../rules/work/one-per-session.md)).
 
 ## Started by
-[Norman](norman.md), when a person comes back from planning, or the [Housekeeper](housekeeper.md).
+[The Assistant](assistant.md), when a person comes back from planning, or the [Housekeeper](housekeeper.md).
 
 ## Asks
 no

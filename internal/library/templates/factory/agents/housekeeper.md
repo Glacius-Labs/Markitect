@@ -17,7 +17,7 @@ The Housekeeper turns the [circle](../processes/circle/README.md) once a day. It
 Every agent keeps its checkpoint; when a run breaks off, the next one catches up. It asks nobody at a deviation ([agents that do not ask](../rules/deviations/agents-that-do-not-ask.md)).
 
 ## Started by
-A person, or a routine. [Norman](norman.md) offers to start it when today's briefing is missing.
+A person, or a routine. [The Assistant](assistant.md) offers to start it when today's briefing is missing.
 
 ## Asks
 no

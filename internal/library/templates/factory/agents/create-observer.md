@@ -3,12 +3,12 @@
 Type: [Agent](../../../packages/factory/agent.md)
 
 ## Task
-Add a new observer, with a person, on its story.
+Explain how a new observer is built.
 
-An observer is added like every change to the spec, through a story: the Recorder writes it, in `draft`, when "observe" was decided for a Risk, a new source or a finding of type Factory ([Recorder](record.md)), and Norman proposes it to the person. When a report only misses something, the existing observer is improved and no new one is added. Which observers a project needs, its operation shows. This agent plans and realizes the story in one session, through the states the [milestones](../rules/plan/milestones.md) name for it.
+It runs inside the session that calls it: the [Architect](architect.md) when it plans a story for a new observer, the [Builder](build.md) when it builds one. An observer is planned and built like everything else, through a story in the Area that covers the way of working.
 
-1. Claim the story ([claiming](../rules/plan/claiming.md)) and work on its branch ([names in the work](../rules/work/names.md)).
-2. Ask, one after another:
+1. A new observer is right when there is a topic worth watching again and again in one source, which no observer covers yet: one observer, one topic. When a report only misses something, the existing observer is improved instead, and when an existing observer covers the topic, it is extended: like every change to the spec, through a story, which a finding of type Factory leads to. Which observers a project needs, its operation shows.
+2. While planning, the Architect asks the person, one after another, and writes the answers into the story's target picture:
 
    | Question | What for |
    |---|---|
@@ -20,27 +20,19 @@ An observer is added like every change to the spec, through a story: the Recorde
    | How does it know how far it has observed? | a commit, a run or a file |
    | How often? | the schedule |
 
-3. Complete the story: its target picture, its Target changes, the observer's document and the observers' README, its Plan and Tasks; then set it as the milestones say.
-4. Write the observer's document among the [observers](../observers/README.md) on the story's branch, of type [Observer](../../../packages/factory/observer.md), and link it from that folder's README. Create its folder `.markitect/context/observe-NAME/` for its reports and its checkpoint.
-5. Do a trial run on the branch: show the person the first report before the observer counts.
-6. Once the person is content, run `markitect check` and have a fresh [Reviewer](review.md) check the change to the spec, in rounds as in [building](../processes/building/review-round.md); it confirms the observer's document and the README as [one trace](../rules/building/one-trace.md) says for a document no file realizes. Bring the branch to `main` as one merge whose commit names the story, set the story `done` and release its claim.
-7. When the person drops the observer, the story goes back to `draft` with your report, as after an [abort](../rules/building/abort.md).
-8. Lay your report into the context at the end ([one per session](../rules/work/one-per-session.md)).
-
-A new observer changes the way of working: usually an Admin does it ([the usual way](../rules/deviations/usual-way.md)).
+3. The story's Target changes name the observer's document among the [observers](../observers/README.md) and the observers' README.
+4. The Builder writes the observer's document, of type [Observer](../../../packages/factory/observer.md), from the target picture, links it from the observers' README, and creates the folder `.markitect/context/observe-NAME/` for its reports and its checkpoint. It does a trial run of the observer with [observe](observe.md) on the story's branch: as part of building, the first report and the checkpoint lie on that branch, in that folder, and reach `main` with the story's merge ([straight to main](../rules/work/straight-to-main.md)).
+5. The Reviewer confirms the observer's document and the README as [one trace](../rules/building/one-trace.md) says for a document no file realizes.
+6. Such a story ends in `acceptance`, never directly in `done`: its Tasks end with accepting the first report, and the person sees that report and accepts it with [accept](accept.md). When they drop the observer, they end the acceptance as failed ([accepting](../processes/accepting/review.md)).
 
 ## Started by
-[Norman](norman.md), for the person who takes the story.
+The [Architect](architect.md) and the [Builder](build.md), inside their sessions.
 
 ## Asks
-yes
+no
 
 ## Model
-Claude: Sonnet, effort high
-Codex: Luna, effort high
+as the session
 
 ## Changes
-The story's sections, State and Claimed by.
-A new observer document in the spec, and the observers' README, on the story's branch and through a Reviewer on `main`.
-The folder `.markitect/context/observe-NAME/`, with the trial run's report and checkpoint.
-Its report in `.markitect/context/create-observer/`.
+Nothing of its own: the session that calls it writes.

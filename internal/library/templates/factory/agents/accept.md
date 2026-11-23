@@ -15,7 +15,7 @@ It follows the process of [accepting](../processes/accepting/README.md), step by
 6. Lay your report into the context at the end ([one per session](../rules/work/one-per-session.md)), with any friction you recognized.
 
 ## Started by
-[Norman](norman.md), for the person who accepts.
+[The Assistant](assistant.md), for the person who accepts.
 
 ## Asks
 yes
