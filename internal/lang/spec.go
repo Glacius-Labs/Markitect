@@ -78,16 +78,8 @@ const (
 	CodeLinkUnresolved = "link.unresolved"
 )
 
-// CheckAgainst checks a document against a type it does not name, such as a
-// type the tool owns: its title, and the sections the type requires, which
-// must be there and hold text, as Check does. by names the type in the
-// messages.
-func CheckAgainst(d, t *Document, by string) []Diagnostic {
-	return append(checkTitle(d), checkSections(d, t, max(d.TitleLine, d.ContentLine, 1), by)...)
-}
-
-// checkTitle checks that the document starts with one level-1 title.
-func checkTitle(d *Document) []Diagnostic {
+// CheckTitle checks that the document starts with one level-1 title.
+func CheckTitle(d *Document) []Diagnostic {
 	switch {
 	case d.TitleLine == 0:
 		return []Diagnostic{{Path: d.Path, Line: max(d.ContentLine, 1), Code: CodeTitle, Message: "missing level-1 title"}}
@@ -97,9 +89,9 @@ func checkTitle(d *Document) []Diagnostic {
 	return nil
 }
 
-// checkSections checks the sections the type t declares: a required one
+// CheckSections checks the sections the type t declares: a required one
 // missing is reported at line, and one the document has must hold text.
-func checkSections(d, t *Document, line int, by string) []Diagnostic {
+func CheckSections(d, t *Document, line int, by string) []Diagnostic {
 	var out []Diagnostic
 	for _, want := range t.Declared() {
 		sec, has := d.Section(want.Name)
@@ -135,7 +127,7 @@ func Check(s *Spec) []Diagnostic {
 		add := func(line int, code, format string, args ...any) {
 			out = append(out, Diagnostic{Path: d.Path, Line: line, Code: code, Message: fmt.Sprintf(format, args...)})
 		}
-		out = append(out, checkTitle(d)...)
+		out = append(out, CheckTitle(d)...)
 		switch {
 		case d.TypeLine != 0 && !d.HasType():
 			add(d.TypeLine, CodeTypeLine, "type line must be exactly one link to a document")
@@ -145,7 +137,7 @@ func Check(s *Spec) []Diagnostic {
 				add(d.TypeLine, CodeTypeUnresolved, "no document at \"%s\"", d.TypeRaw)
 				break
 			}
-			out = append(out, checkSections(d, t, d.TypeLine, t.Path)...)
+			out = append(out, CheckSections(d, t, d.TypeLine, t.Path)...)
 		}
 		for _, line := range d.StrayTypeLines {
 			add(line, CodeTypeLine, "a type line stands only on the first line after the title")

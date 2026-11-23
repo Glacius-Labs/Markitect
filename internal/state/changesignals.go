@@ -9,10 +9,10 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/lang"
 )
 
-// The change signals the history gives, in the order figures shows them.
+// The change signals the history gives, in the order topic shows them.
 var ChangeSignals = []string{"wide-change", "unlinked-change", "dragged-links", "hotspot", "back-and-forth"}
 
-// Weakening is why figures does not compute the sixth change signal.
+// Weakening is why the change signals do not compute the sixth change signal.
 const Weakening = "not computed: a strong statement gathering conditions shows only in its old and new text, which an agent reads from Git; the history holds hashes"
 
 // CloseTime is how near in time a verdict must follow the one before it to
@@ -28,25 +28,25 @@ type Change struct {
 	Events int
 }
 
-// Figure is one finding of a change signal: the documents it is about, the
+// Signal is one finding of a change signal: the documents it is about, the
 // number it is ranked by, and what it means here.
-type Figure struct {
+type Signal struct {
 	Docs   []string
 	Count  int
 	Detail string
 }
 
-// Figures are the change signals computed from the history.
-type Figures struct {
+// HistorySignals are the change signals computed from the history.
+type HistorySignals struct {
 	// Verdicts and Moves count the events read; moves are left out.
 	Verdicts, Moves int
 	Changes         []Change
-	Signals         map[string][]Figure
+	Signals         map[string][]Signal
 	// Reference is the project's own reference for each signal.
 	Reference map[string]string
 }
 
-// ComputeFigures computes the change signals of the history against the
+// ComputeHistorySignals computes the change signals of the history against the
 // spec as it is.
 //
 // A change is the document of a verdict event and the documents its changed
@@ -60,8 +60,8 @@ type Figures struct {
 // of one change one after the other. Move events are no changes: the history
 // follows a document through its moves to its current path, and the
 // documents a move rewrote count only when a verdict names them.
-func ComputeFigures(spec *lang.Spec, events []Event) *Figures {
-	f := &Figures{Signals: map[string][]Figure{}, Reference: map[string]string{}}
+func ComputeHistorySignals(spec *lang.Spec, events []Event) *HistorySignals {
+	f := &HistorySignals{Signals: map[string][]Signal{}, Reference: map[string]string{}}
 	ids := map[string]int{}
 	var paths []string
 	id := func(p string) int {
@@ -152,7 +152,7 @@ func ComputeFigures(spec *lang.Spec, events []Event) *Figures {
 	f.backAndForth(selves, paths)
 	for _, s := range ChangeSignals {
 		if f.Signals[s] == nil {
-			f.Signals[s] = []Figure{}
+			f.Signals[s] = []Signal{}
 		}
 	}
 	return f
@@ -195,7 +195,7 @@ func pair(a, b string) [2]string {
 }
 
 // changesOf counts the changes each document is in.
-func (f *Figures) changesOf() map[string]int {
+func (f *HistorySignals) changesOf() map[string]int {
 	out := map[string]int{}
 	for _, c := range f.Changes {
 		for _, d := range c.Docs {
@@ -206,16 +206,16 @@ func (f *Figures) changesOf() map[string]int {
 }
 
 // wide ranks the changes by their size against the project's other changes.
-func (f *Figures) wide() {
+func (f *HistorySignals) wide() {
 	var sizes []int
 	for _, c := range f.Changes {
 		sizes = append(sizes, len(c.Docs))
 	}
 	ref := spread(sizes, "documents per change")
 	f.Reference["wide-change"] = ref
-	var out []Figure
+	var out []Signal
 	for _, c := range f.Changes {
-		out = append(out, Figure{Docs: c.Docs, Count: len(c.Docs),
+		out = append(out, Signal{Docs: c.Docs, Count: len(c.Docs),
 			Detail: fmt.Sprintf("%s changed together at %s (%s): %s", count(len(c.Docs), "document"), c.Time.UTC().Format(time.RFC3339), ref, strings.Join(c.Docs, ", "))})
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Count > out[j].Count })
@@ -224,7 +224,7 @@ func (f *Figures) wide() {
 
 // unlinked lists the pairs of documents of the spec that changed together in
 // two changes or more while no link joins them.
-func (f *Figures) unlinked(spec *lang.Spec, links map[[2]string]bool) {
+func (f *HistorySignals) unlinked(spec *lang.Spec, links map[[2]string]bool) {
 	together := map[[2]string]int{}
 	for _, c := range f.Changes {
 		for i, a := range c.Docs {
@@ -233,26 +233,26 @@ func (f *Figures) unlinked(spec *lang.Spec, links map[[2]string]bool) {
 			}
 		}
 	}
-	var out []Figure
+	var out []Signal
 	for p, n := range together {
 		_, okA := spec.Document(p[0])
 		_, okB := spec.Document(p[1])
 		if n < 2 || !okA || !okB || links[p] {
 			continue
 		}
-		out = append(out, Figure{Docs: []string{p[0], p[1]}, Count: n,
+		out = append(out, Signal{Docs: []string{p[0], p[1]}, Count: n,
 			Detail: fmt.Sprintf("%s and %s changed together in %d of %s, with no link between them", p[0], p[1], n, count(len(f.Changes), "change"))})
 	}
-	sortFigures(out)
+	sortSignals(out)
 	f.Reference["unlinked-change"] = count(len(f.Changes), "change")
 	f.Signals["unlinked-change"] = out
 }
 
 // dragged lists the documents of the spec whose changes came, two times or
 // more, with changes of documents that link to them.
-func (f *Figures) dragged(spec *lang.Spec, linkedFrom map[string]map[string]bool) {
+func (f *HistorySignals) dragged(spec *lang.Spec, linkedFrom map[string]map[string]bool) {
 	counts := f.changesOf()
-	var out []Figure
+	var out []Signal
 	for _, d := range spec.Documents {
 		n, with := 0, map[string]bool{}
 		for _, c := range f.Changes {
@@ -272,38 +272,38 @@ func (f *Figures) dragged(spec *lang.Spec, linkedFrom map[string]map[string]bool
 			}
 		}
 		if n >= 2 {
-			out = append(out, Figure{Docs: append([]string{d.Path}, sortedKeys(with)...), Count: n,
+			out = append(out, Signal{Docs: append([]string{d.Path}, sortedKeys(with)...), Count: n,
 				Detail: fmt.Sprintf("%s: %d of its %s came with documents that link to it: %s", d.Path, n, count(counts[d.Path], "change"), strings.Join(sortedKeys(with), ", "))})
 		}
 	}
-	sortFigures(out)
+	sortSignals(out)
 	f.Reference["dragged-links"] = count(len(f.Changes), "change")
 	f.Signals["dragged-links"] = out
 }
 
 // hotspots ranks the documents of the spec by how often they changed times
 // how many documents link to them.
-func (f *Figures) hotspots(spec *lang.Spec, linkedFrom map[string]map[string]bool) {
+func (f *HistorySignals) hotspots(spec *lang.Spec, linkedFrom map[string]map[string]bool) {
 	counts := f.changesOf()
 	var changed, linked []int
-	var out []Figure
+	var out []Signal
 	for _, d := range spec.Documents {
 		n, in := counts[d.Path], len(linkedFrom[d.Path])
 		changed, linked = append(changed, n), append(linked, in)
 		if n*in > 0 {
-			out = append(out, Figure{Docs: []string{d.Path}, Count: n * in,
+			out = append(out, Signal{Docs: []string{d.Path}, Count: n * in,
 				Detail: fmt.Sprintf("%s: changed %s × linked from %s = %d", d.Path, count(n, "time"), count(in, "document"), n*in)})
 		}
 	}
-	sortFigures(out)
+	sortSignals(out)
 	f.Reference["hotspot"] = fmt.Sprintf("changes per document: median %s; documents linking to one: median %s", median(changed), median(linked))
 	f.Signals["hotspot"] = out
 }
 
 // backAndForth lists the documents whose text returned to an earlier
 // version after another one.
-func (f *Figures) backAndForth(selves map[int][]string, paths []string) {
-	var out []Figure
+func (f *HistorySignals) backAndForth(selves map[int][]string, paths []string) {
+	var out []Signal
 	tracked := 0
 	for i, seq := range selves {
 		tracked++
@@ -315,11 +315,11 @@ func (f *Figures) backAndForth(selves map[int][]string, paths []string) {
 			seen[h] = true
 		}
 		if returns > 0 {
-			out = append(out, Figure{Docs: []string{paths[i]}, Count: returns,
+			out = append(out, Signal{Docs: []string{paths[i]}, Count: returns,
 				Detail: fmt.Sprintf("%s: its text returned to an earlier version %s in %s", paths[i], count(returns, "time"), count(len(seq), "version"))})
 		}
 	}
-	sortFigures(out)
+	sortSignals(out)
 	f.Reference["back-and-forth"] = count(tracked, "document") + " with versions in the history"
 	f.Signals["back-and-forth"] = out
 }
@@ -332,8 +332,8 @@ func count(n int, noun string) string {
 	return fmt.Sprintf("%d %ss", n, noun)
 }
 
-// sortFigures sorts by count, highest first, then by the documents.
-func sortFigures(list []Figure) {
+// sortSignals sorts by count, highest first, then by the documents.
+func sortSignals(list []Signal) {
 	sort.Slice(list, func(i, j int) bool {
 		if list[i].Count != list[j].Count {
 			return list[i].Count > list[j].Count

@@ -105,7 +105,7 @@ After `apply`, `check` reports nothing but `section.empty` for a template that l
 
 ## The types the tool owns
 
-Three types belong to the tool, since it reads their sections: the report type, `report.md`, the settings type, `settings.md`, and the sample type, `sample.md`. They lie outside `packages/`, so `apply` never copies them, and a spec does not hold them. Their documents lie in `.markitect/` and name no type: the folder says which type they are of. `check` checks them against these types and the forms of their values ([reports, settings and control samples](reports.md)).
+Three types belong to the tool, since it reads their sections: the report type, `report.md`, the settings type, `settings.md`, and the sample type, `sample.md`. They lie outside `packages/`, so `apply` never copies them, and a spec does not hold them. Their documents lie in `.markitect/` and name no type: the folder says which type they are of. `check` checks them against these types and the forms of their values (reports, settings and control samples).
 
 **The report type.** A report is a document of this type in `.markitect/reports/` ([where Main is](../roadmap.md#where-main-is)).
 

@@ -21,6 +21,9 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
+// pluginDir is the Claude Code plugin. It only fetches the tool.
+const pluginDir = "../../plugin"
+
 // The plugin brings the tool through its launcher, bin/markitect, which
 // downloads the release binary of the plugin's own version. The marketplace
 // that lists the plugin, and pins it to a release tag, is the repository
@@ -80,6 +83,21 @@ func TestPluginHasTheVersionOfTheSource(t *testing.T) {
 	}
 	if source := buildinfo.Version(); source != manifest.Version {
 		t.Fatalf("the source says %s but the plugin names %s; a release commit and the commit after it set both", source, manifest.Version)
+	}
+}
+
+// The plugin only fetches the tool: the skills of Markitect lie in the
+// project, as artifacts of its spec, never in the plugin.
+func TestPluginOnlyFetchesTheTool(t *testing.T) {
+	for _, name := range []string{"skills", "agents", "jobs.md"} {
+		if _, err := os.Stat(filepath.Join(pluginDir, name)); err == nil {
+			t.Errorf("the plugin holds %s", name)
+		}
+	}
+	var manifest struct{ Description string }
+	readJSON(t, filepath.Join(pluginDir, ".claude-plugin", "plugin.json"), &manifest)
+	if !strings.Contains(manifest.Description, "fetches the tool") {
+		t.Errorf("the plugin describes itself as %q", manifest.Description)
 	}
 }
 

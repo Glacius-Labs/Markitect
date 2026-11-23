@@ -128,9 +128,9 @@ The tool and the plugin on Main implement the previous concept and are covered b
 | Page | Covers |
 | --- | --- |
 | [Language reference](docs/guides/language-reference.md) | The spec language and every command |
-| [Project reference](docs/guides/project-reference.md) | The project, the state, `status`, `mark`, `move`, the history and `compare` |
-| [The plugin](docs/guides/plugin.md) | The skills, the agents, the launcher and how firm its checks are |
-| [Library](docs/guides/library.md), [Signals](docs/guides/signals.md), [Reports](docs/guides/reports.md), [Rights](docs/guides/rights.md) | The packages and templates, the signals of a spec, the reports, settings and control samples, and the landing rule |
+| [Project reference](docs/guides/project-reference.md) | The project, the state, `status`, `confirm`, `move`, the history and `compare` |
+| [The plugin](docs/guides/plugin.md) | The launcher that fetches the tool, and its start hooks |
+| [Library](docs/guides/library.md), [Signals](docs/guides/signals.md) | The packages, templates and skills, and the signals of a spec |
 | [Concept](docs/concept/README.md) | The one description of the product |
 | [Vision](docs/vision.md) | Why Markitect exists and what it leaves to people |
 | [Decisions](docs/decisions.md) | What holds today, and the open questions |

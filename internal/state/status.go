@@ -72,59 +72,20 @@ type Entry struct {
 	LookAt []string
 }
 
-// PlaceGone is an open report whose place is gone, by the report's name and
-// its place: a note, since a build or a move may take what a report names.
-type PlaceGone struct{ Report, Place string }
-
 // Note is a document that needs nothing but says something: a skip at its
 // current state.
 type Note struct {
 	Doc, Verdict, Reason string
 }
 
-// Waiting is a document that waits on open reports about the spec: it is
-// listed only as waiting, not as changed or suspect.
-type Waiting struct {
-	Doc, Fingerprint string
-	// Reports are the names of the open reports it waits on.
-	Reports []string
-	// Escalated says that every one of them escalated to the owner: the
-	// document waits on the owner, which does not make status fail.
-	Escalated bool
-	// Changes are what status would list for it otherwise, empty when
-	// nothing moved.
-	Changes []string
-}
-
-// Unexcused are the changes a report does not excuse: waiting excuses only
-// the need to build the document, having no row or a change of its own
-// text, its type or its links. A changed artifact, counter-check, evidence
-// or linked file, a fail and a conflict count as usual.
-func (w Waiting) Unexcused() []string {
-	var out []string
-	for _, c := range w.Changes {
-		if c != "no row" && c != InputSelf && !strings.HasPrefix(c, InputType) && !strings.HasPrefix(c, InputLink) {
-			out = append(out, c)
-		}
-	}
-	return out
-}
-
-// Counts says whether the entry makes status fail: it does not wait on the
-// owner, or it has changes the report does not excuse.
-func (w Waiting) Counts() bool { return !w.Escalated || len(w.Unexcused()) > 0 }
-
 // Status is what status lists, and the row it takes for each document.
 type Status struct {
 	Changed, Suspect []Entry
 	Unexplained      []string
-	Waiting          []Waiting
 	Notes            []Note
-	// Gone are the open reports whose place is gone.
-	Gone    []PlaceGone
-	docs    map[string]*docState
-	folder  *Folder
-	project *Project
+	docs             map[string]*docState
+	folder           *Folder
+	project          *Project
 	// files is the digest of every file of the walk outside the spec folder,
 	// computed once.
 	files string
@@ -146,69 +107,10 @@ type docState struct {
 	entry    *Entry
 }
 
-// Lists says whether the state has anything to list: an entry other than a
-// document waiting on the owner with nothing unexcused.
+// Lists says whether the state has anything to list: a changed, a suspect or
+// an unexplained entry.
 func (s *Status) Lists() bool {
-	n := len(s.Changed) + len(s.Suspect) + len(s.Unexplained)
-	for _, w := range s.Waiting {
-		if w.Counts() {
-			n++
-		}
-	}
-	return n > 0
-}
-
-// Wait notes the open reports whose place is gone, and lists as waiting
-// every document of the spec that an open report names as its place, unless the report's violated property is none, which says
-// that an artifact deviates from a spec that holds. Such a document leaves
-// the changed and suspect entries and the notes. reports should have no
-// errors of check.
-func (s *Status) Wait(reports []*Report) {
-	byDoc := map[string][]*Report{}
-	for _, r := range reports {
-		if r.Open() && r.PlaceGone {
-			s.Gone = append(s.Gone, PlaceGone{r.Name, r.Place})
-		}
-		if !r.Open() || r.Property == "" || r.Property == "none" {
-			continue
-		}
-		if doc, ok := r.SpecDoc(s.project); ok {
-			byDoc[doc] = append(byDoc[doc], r)
-		}
-	}
-	var docs []string
-	for doc := range byDoc {
-		docs = append(docs, doc)
-	}
-	sort.Strings(docs)
-	for _, doc := range docs {
-		w := Waiting{Doc: doc, Escalated: true, Changes: []string{}}
-		for _, r := range byDoc[doc] {
-			w.Reports = append(w.Reports, r.Name)
-			w.Escalated = w.Escalated && r.Escalated
-		}
-		sort.Strings(w.Reports)
-		take := func(list []Entry) []Entry {
-			var out []Entry
-			for _, e := range list {
-				if e.Doc == doc {
-					w.Changes = e.Changes
-				} else {
-					out = append(out, e)
-				}
-			}
-			return out
-		}
-		s.Changed, s.Suspect = take(s.Changed), take(s.Suspect)
-		var notes []Note
-		for _, n := range s.Notes {
-			if n.Doc != doc {
-				notes = append(notes, n)
-			}
-		}
-		s.Notes = notes
-		s.Waiting = append(s.Waiting, w)
-	}
+	return len(s.Changed)+len(s.Suspect)+len(s.Unexplained) > 0
 }
 
 // Row returns the row status takes for a document, and whether rows of it
@@ -310,13 +212,6 @@ func (s *Status) Fingerprints() error {
 			}
 			list[i].Fingerprint = fp
 		}
-	}
-	for i := range s.Waiting {
-		fp, _, err := s.Fingerprint(s.Waiting[i].Doc)
-		if err != nil {
-			return err
-		}
-		s.Waiting[i].Fingerprint = fp
 	}
 	return nil
 }
@@ -550,13 +445,13 @@ func (s *Status) lookAt(d *docState) []string {
 }
 
 // FingerprintLen is how many hexadecimal digits of the fingerprint status
-// prints and mark compares.
+// prints and confirm compares.
 const FingerprintLen = 8
 
 // fingerprint hashes what a verdict on the document will rest on, without
 // the evidence: its own inputs, the artifacts and counter-checks of the rows
 // taken as they are now, and the digest of every file of the walk outside the
-// spec folder. A mark changes only .markitect/, so marks leave one another's
+// spec folder. A confirm changes only .markitect/, so confirms leave one another's
 // fingerprints alone, and any edit of a project file changes them all.
 func (s *Status) fingerprint(d *docState) (string, error) {
 	var lines []string

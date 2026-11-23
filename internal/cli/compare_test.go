@@ -33,11 +33,11 @@ func copyTree(t *testing.T, from string, crlf bool) string {
 }
 
 // before and after are the lending project at a confirmed state and after a
-// series of edits, marks and moves.
+// series of edits, confirms and moves.
 func beforeAndAfter(t *testing.T) (string, string) {
 	t.Helper()
 	clock(t)
-	older := markedWith(t, withFlow())
+	older := confirmedWith(t, withFlow())
 	write(t, older, "docs/spec/lending/desk.md", "# Desk\n\nThe desk takes each [return](return.md).\n")
 	write(t, older, "docs/spec/lending/holds.md", "# Holds\n\nA member may hold a book until its [return](return.md).\n")
 	verdict(t, older, "lending/desk.md", "ok", "-e", "src/returns.go")
@@ -114,24 +114,30 @@ func TestCompare(t *testing.T) {
 	}
 }
 
-func TestFiguresOfTheLendingProject(t *testing.T) {
+// The change signals of the history stand in the topic of the whole spec, after
+// the signals of the spec itself.
+func TestTheTopicShowsTheChangeSignalsOfTheLendingProject(t *testing.T) {
 	_, newer := beforeAndAfter(t)
-	code, out, _ := run("figures", "-C", newer)
-	// The marks of the confirmed project are one change, the marks after
+	code, out, _ := run("topic", "-C", newer)
+	// The confirms of the confirmed project are one change, the confirms after
 	// the edits two more; the move is left out.
-	if code != ExitOK || !strings.HasPrefix(out, "# Figures from the history\n\n3 changes from 7 verdicts; moves left out, since they are mechanical: 1\n") ||
+	if code != ExitOK || !strings.HasPrefix(out, "# Signals of the spec\n") || !strings.Contains(out, "\n# Change signals of the history\n\n3 changes from 7 verdicts; moves left out, since they are mechanical: 1\n") ||
 		!strings.Contains(out, "\n### wide-change (3)\n\nreference: median 2, range 2–4 documents per change\n4 documents changed together at 2026-11-20T09:00:01Z") ||
 		!strings.Contains(out, "\n### hotspot (3)\n\nreference: changes per document: median 1; documents linking to one: median 0.5\nlending/return.md: changed 2 times × linked from 1 document = 2\n") ||
-		!strings.Contains(out, "\n### weakening\n\nnot computed: a strong statement gathering conditions shows only in its old and new text, which an agent reads from Git; the history holds hashes\n\n# Figures of the factory\n") {
+		!strings.Contains(out, "\n### weakening\n\nnot computed: a strong statement gathering conditions shows only in its old and new text, which an agent reads from Git; the history holds hashes\n") {
 		t.Error(code, out)
 	}
-	_, again, _ := run("figures", "-C", copyTree(t, newer, true))
+	_, again, _ := run("topic", "-C", copyTree(t, newer, true))
 	if again != out {
 		t.Errorf("CRLF differs:\n%s", again)
 	}
-	_, js, _ := run("figures", "-C", newer, "--json")
-	var doc figuresDocument
-	if err := json.Unmarshal([]byte(js), &doc); err != nil || doc.Kind != "figures" || doc.Moves != 1 || len(doc.Signals) != 5 || doc.Weakening == "" {
+	_, js, _ := run("topic", "-C", newer, "--json")
+	var doc topicDocument
+	if err := json.Unmarshal([]byte(js), &doc); err != nil || doc.Kind != "topic" || doc.Change == nil || doc.Change.Moves != 1 || len(doc.Change.Signals) != 5 || doc.Change.Weakening == "" {
+		t.Error(js)
+	}
+	// The change signals belong to the topic of the whole spec alone.
+	if _, js, _ := run("topic", "-C", newer, "lending/return", "--json"); strings.Contains(js, "change_signals") {
 		t.Error(js)
 	}
 }
@@ -139,7 +145,7 @@ func TestFiguresOfTheLendingProject(t *testing.T) {
 // A changed file of the spec folder makes the documents that link it
 // suspect; a line either side cannot read is a note.
 func TestCompareAssetsAndNotes(t *testing.T) {
-	older := markedWith(t, withFlow())
+	older := confirmedWith(t, withFlow())
 	newer := copyTree(t, older, false)
 	write(t, newer, "docs/spec/lending/flow.png", "\x89PNG another flow")
 	write(t, newer, ".markitect/history.jsonl", read(t, newer, ".markitect/history.jsonl")+"not json\n")
@@ -152,9 +158,9 @@ func TestCompareAssetsAndNotes(t *testing.T) {
 
 // Only a changed text counts: a document recorded fail stays in the changed
 // list of later verdicts, but counts in no later change while its text stays.
-func TestFiguresCountOnlyChangedText(t *testing.T) {
+func TestChangeSignalsCountOnlyChangedText(t *testing.T) {
 	clock(t)
-	dir := marked(t)
+	dir := confirmed(t)
 	verdict(t, dir, "roles/member.md", "fail", "--file", "src/member.go", "-m", "no card numbers yet")
 	saved := now
 	at := time.Date(2026, 11, 21, 9, 0, 0, 0, time.UTC)
@@ -167,7 +173,7 @@ func TestFiguresCountOnlyChangedText(t *testing.T) {
 	verdict(t, dir, "lending/return.md", "ok", "--file", "src/returns.go", "-e", "src/returns.go")
 	write(t, dir, "docs/spec/types/operation.md", read(t, dir, "docs/spec/types/operation.md")+"\nIt happens at the desk.\n")
 	verdict(t, dir, "types/operation.md", "ok", "-e", "docs/spec/types/operation.md")
-	_, out, _ := run("figures", "-C", dir, "--all")
+	_, out, _ := run("topic", "-C", dir, "--all")
 	for _, part := range []string{
 		"3 changes from 8 verdicts;",
 		"4 documents changed together at 2026-11-20T09:00:01Z (",
@@ -185,7 +191,7 @@ func TestFiguresCountOnlyChangedText(t *testing.T) {
 // makes its neighbours suspect.
 func TestRewrittenAndChanged(t *testing.T) {
 	clock(t)
-	older := markedWith(t, withFlow())
+	older := confirmedWith(t, withFlow())
 	newer := copyTree(t, older, false)
 	if code, _, errOut := run("move", "-C", newer, "lending/borrow.md", "loans/borrow.md"); code != ExitOK {
 		t.Fatal(errOut)
@@ -212,7 +218,7 @@ func TestRewrittenAndChanged(t *testing.T) {
 // it links changed, as status says.
 func TestMovedDocumentIsSuspect(t *testing.T) {
 	clock(t)
-	older := markedWith(t, withFlow())
+	older := confirmedWith(t, withFlow())
 	newer := copyTree(t, older, false)
 	if code, _, errOut := run("move", "-C", newer, "lending/borrow.md", "loans/borrow.md"); code != ExitOK {
 		t.Fatal(errOut)

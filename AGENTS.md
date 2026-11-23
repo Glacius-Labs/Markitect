@@ -14,7 +14,7 @@ With Markitect, people architect their project in a typed, declarative specifica
 
 - Markitect itself has no spec. `.markitect/` in code and tests belongs to a target project and is handled with fixtures.
 - A failure in how agents work with Markitect is fixed in the way of working, the `factory` template, and the skill built from it, not with prompt text beside them ([DEC-147](docs/decisions.md#dec-147-the-way-of-working-stands-in-the-spec-and-skills-realize-it)).
-- `/markitect-architect`, `/markitect-build`, `/markitect-review`, `/markitect-bughunt`, `/markitect-cleanup`, `/markitect-improve`, `/markitect-control-sample`, `/markitect-read`, `/markitect-triage` and `/markitect-intake` are the current plugin's and start real agents: run them only on a committed test project, bounded, as CONTRIBUTING says.
+- The skills of the standard, `norman`, `capture`, `architect`, `finish-planning`, `build`, `review`, `analyze`, `accept`, `observe`, `create-observer`, `triage`, `record`, `brief` and `housekeeper`, start real agents: run them only on a committed test project, bounded, as CONTRIBUTING says.
 - Documentation is in English and describes only the current state, with one concept and no quotes.
 
 [CONTRIBUTING](CONTRIBUTING.md#where-things-go) names the page for every topic, and the [roadmap](docs/roadmap.md) the current steps.

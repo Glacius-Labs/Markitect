@@ -14,7 +14,7 @@ type showDocument struct {
 	header
 	Path string `json:"path"`
 	// Fingerprint is the document's fingerprint as status computes it, so
-	// that a mark can name any document.
+	// that a confirm can name any document.
 	Fingerprint string `json:"fingerprint"`
 	Title       string `json:"title"`
 	// Type is the path of the type, "" without one; TypeState is "none",

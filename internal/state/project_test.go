@@ -12,11 +12,16 @@ func TestInitFiles(t *testing.T) {
 		got[f.Path] = string(f.Data)
 	}
 	want := map[string]string{
-		".markitect/version":        "1.2.3\n",
-		".markitect/spec":           "docs/spec\n",
-		".markitect/.gitattributes": "state.jsonl merge=union\nhistory.jsonl merge=union\n",
-		".markitect/ignore":         "",
-		".markitect/settings.md":    DefaultSettings,
+		".markitect/version":                   "1.2.3\n",
+		".markitect/spec":                      "docs/spec\n",
+		".markitect/.gitattributes":            "state.jsonl merge=union\nhistory.jsonl merge=union\n",
+		".markitect/ignore":                    "",
+		".markitect/context/.gitkeep":          "",
+		".markitect/findings/pending/.gitkeep": "",
+		".markitect/findings/ready/.gitkeep":   "",
+		".markitect/findings/closed/.gitkeep":  "",
+		".markitect/plan/.gitkeep":             "",
+		".markitect/briefing/.gitkeep":         "",
 	}
 	if len(got) != len(want) {
 		t.Fatalf("got %v", got)

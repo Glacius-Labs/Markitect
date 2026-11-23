@@ -8,22 +8,19 @@ import (
 	"strings"
 )
 
-// Refusal is a mark that cannot be made, with every reason found. Nothing is
+// Refusal is a confirm that cannot be made, with every reason found. Nothing is
 // written.
 type Refusal struct{ Problems []string }
 
 func (r *Refusal) Error() string { return strings.Join(r.Problems, "\n") }
 
-// MarkRequest is a verdict the reviewer binds: the document by its path below
+// ConfirmRequest is a verdict the reviewer binds: the document by its path below
 // the spec folder, the fingerprint status printed, the verdict, the artifacts,
 // counter-checks and evidence, below the project folder, and the reason.
-type MarkRequest struct {
+type ConfirmRequest struct {
 	Doc, Fingerprint, Verdict string
 	Files, Checks, Evidence   []string
 	Reason                    string
-	// CheckFolder is the counter-check folder the settings name, below the
-	// project folder; when it is set, a counter-check must lie in it.
-	CheckFolder string
 }
 
 // Fingerprint is the fingerprint of a document as status computes it, and
@@ -83,12 +80,12 @@ func InputsDigest(in Inputs) string {
 	return Hash([]byte(strings.Join(lines, "")))
 }
 
-// Mark binds a verdict to the document at the state status computed, and
+// Confirm binds a verdict to the document at the state status computed, and
 // returns the rows of the new state. It refuses when the fingerprint is not
 // the document's now, when the document is unknown or when a path is bad.
 // The new state holds one row per document, the one status takes, except
-// for the rows of a conflict, which stay until a mark settles it.
-func Mark(s *Status, req MarkRequest) ([]Row, error) {
+// for the rows of a conflict, which stay until a confirm settles it.
+func Confirm(s *Status, req ConfirmRequest) ([]Row, error) {
 	var problems []string
 	refuse := func(format string, args ...any) { problems = append(problems, fmt.Sprintf(format, args...)) }
 	d, ok := s.docs[req.Doc]
@@ -110,7 +107,7 @@ func Mark(s *Status, req MarkRequest) ([]Row, error) {
 			refuse("%s is gone from the spec: it takes no artifacts, counter-checks or evidence", req.Doc)
 		}
 	}
-	row := Row{Doc: req.Doc, Verdict: req.Verdict, Source: "mark", Inputs: Inputs{}, Evidence: []string{},
+	row := Row{Doc: req.Doc, Verdict: req.Verdict, Source: "confirm", Inputs: Inputs{}, Evidence: []string{},
 		Reason: strings.Join(strings.Fields(req.Reason), " ")}
 	for k, h := range d.current {
 		row.Inputs[k] = h
@@ -131,8 +128,6 @@ func Mark(s *Status, req MarkRequest) ([]Row, error) {
 				refuse("%s is no file of the project: it does not exist, lies in .markitect/ or is ignored", p)
 			case named[p] != "" && named[p] != list.kind:
 				refuse("%s is named as an artifact and as a counter-check", p)
-			case list.kind == InputCheck && req.CheckFolder != "" && !strings.HasPrefix(p, req.CheckFolder+"/"):
-				refuse("%s lies outside %s, the counter-check folder the settings name", p, req.CheckFolder)
 			default:
 				named[p] = list.kind
 				row.Inputs[list.kind+p], err = s.folder.hash(p)

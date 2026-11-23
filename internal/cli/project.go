@@ -7,7 +7,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/state"
@@ -120,93 +119,6 @@ func loadDir(dir string) (*workspace, error) {
 
 // specDir is the spec folder on disk.
 func (w *workspace) specDir() string { return filepath.Join(w.dir, filepath.FromSlash(w.SpecFolder)) }
-
-// initResult is the JSON document of init.
-type initResult struct {
-	header
-	Version string   `json:"version"`
-	Spec    string   `json:"spec"`
-	Created []string `json:"created"`
-}
-
-// initProject sets up the folder -C names, or the working directory: it
-// writes .markitect/ and creates the spec folder when it is missing. It
-// refuses when .markitect/ exists. It builds .markitect/ under a temporary
-// name and renames it into place, so that a failed init leaves nothing behind.
-func initProject(o options, stdout io.Writer) (code int, err error) {
-	dir, err := workingFolder(o)
-	if err != nil {
-		return ExitFailed, err
-	}
-	spec := state.DefaultSpec
-	if o.specSet {
-		if spec, err = state.SpecPath(o.spec); err != nil {
-			return ExitFailed, err
-		}
-	}
-	target := filepath.Join(dir, state.Dir)
-	if _, err := os.Lstat(target); err == nil {
-		return ExitFailed, fmt.Errorf("%s/ exists already in %s", state.Dir, dir)
-	}
-	if err := specInside(dir, spec); err != nil {
-		return ExitFailed, err
-	}
-	specDir := filepath.Join(dir, filepath.FromSlash(spec))
-	info, statErr := os.Stat(specDir)
-	if statErr == nil && !info.IsDir() {
-		return ExitFailed, fmt.Errorf("the spec folder %s is a file", spec)
-	}
-	t := &transaction{}
-	defer func() {
-		if err == nil {
-			t.commit()
-			return
-		}
-		if failed := t.rollback(); len(failed) > 0 {
-			err = fmt.Errorf("%w; undoing it failed: %s; left behind: %s", err, strings.Join(failed, "; "), strings.Join(t.leftovers(), ", "))
-		}
-	}()
-	created := []string{state.Dir + "/"}
-	if statErr != nil {
-		if err := t.mkdirAll(specDir); err != nil {
-			return ExitFailed, err
-		}
-		created = append(created, spec+"/")
-	}
-	if err := t.next(); err != nil {
-		return ExitFailed, err
-	}
-	temp, err := os.MkdirTemp(dir, ".markitect-*.tmp")
-	if err != nil {
-		return ExitFailed, err
-	}
-	t.files = append(t.files, temp)
-	t.undo = append(t.undo, func() error { return os.RemoveAll(temp) })
-	// A temporary folder is private; .markitect/ is not.
-	if err := os.Chmod(temp, 0o755); err != nil {
-		return ExitFailed, err
-	}
-	for _, f := range state.InitFiles(buildinfo.Version(), spec) {
-		if err := t.next(); err != nil {
-			return ExitFailed, err
-		}
-		name := filepath.Join(temp, filepath.FromSlash(strings.TrimPrefix(f.Path, state.Dir+"/")))
-		if err := os.WriteFile(name, f.Data, 0o644); err != nil {
-			return ExitFailed, err
-		}
-	}
-	if _, err := os.Lstat(target); err == nil {
-		return ExitFailed, fmt.Errorf("%s/ exists already in %s", state.Dir, dir)
-	}
-	if err := t.rename(temp, target); err != nil {
-		return ExitFailed, err
-	}
-	text := ""
-	for _, c := range created {
-		text += "created " + c + "\n"
-	}
-	return output(o, stdout, initResult{newHeader("init"), buildinfo.Version(), spec, created}, text)
-}
 
 // versionResult is the JSON document of version. Build is the version with
 // the source revision, when the build knows it; Pinned is the version the

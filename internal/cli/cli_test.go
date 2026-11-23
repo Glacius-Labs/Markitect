@@ -6,8 +6,12 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
+	"github.com/Glacius-Labs/Markitect/internal/state"
 )
 
 func run(args ...string) (int, string, string) {
@@ -16,17 +20,25 @@ func run(args ...string) (int, string, string) {
 	return code, out.String(), errOut.String()
 }
 
-// initialized is a new project that init set up.
+// initialized is a new project with the files of .markitect/ that init writes
+// and an empty spec folder, without the templates and skills init lays out:
+// the project the tests of the commands start from.
 func initialized(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	saved := fault
-	fault = nil
-	defer func() { fault = saved }()
-	if code, _, errOut := run("init", "-C", dir); code != ExitOK {
-		t.Fatal(errOut)
+	markitectFiles(t, dir)
+	if err := os.MkdirAll(specOf(dir), 0o755); err != nil {
+		t.Fatal(err)
 	}
 	return dir
+}
+
+// markitectFiles writes the files of .markitect/ that init writes into dir.
+func markitectFiles(t *testing.T, dir string) {
+	t.Helper()
+	for _, f := range state.InitFiles(buildinfo.Version(), state.DefaultSpec) {
+		write(t, dir, f.Path, string(f.Data))
+	}
 }
 
 // specOf is the spec folder of a project that init set up.
@@ -83,7 +95,7 @@ func TestCheckJSON(t *testing.T) {
 			t.Fatalf("%v: %s", err, out)
 		}
 		want := map[string]any{
-			"format_version": float64(1), "kind": "check", "documents": float64(2), "reports": float64(0), "samples": float64(0), "settings": true,
+			"format_version": float64(1), "kind": "check", "documents": float64(2), "work": float64(0),
 			"diagnostics": []any{map[string]any{"file": "sub/b.md", "line": float64(3), "code": "link.unresolved", "message": `no document at "../ghost.md"`}},
 		}
 		if code != ExitFound || !reflect.DeepEqual(doc, want) {
@@ -93,6 +105,35 @@ func TestCheckJSON(t *testing.T) {
 	clean := spec(t, map[string]string{"a.md": "# A\n"})
 	if code, out, _ := run("check", "--json", "-C", clean); code != ExitOK || !strings.Contains(out, `"diagnostics": []`) {
 		t.Errorf("got %d %s", code, out)
+	}
+}
+
+// The help groups the commands under five headings, in the order of the
+// concept, and names every command once.
+func TestHelpGroupsTheCommands(t *testing.T) {
+	_, out, _ := run("help")
+	at := -1
+	for _, heading := range []string{"Look", "Check", "Change the spec", "Confirm", "Set up"} {
+		i := strings.Index(out, "\n"+heading+"\n")
+		if i <= at {
+			t.Fatalf("heading %s is missing or out of order in\n%s", heading, out)
+		}
+		at = i
+	}
+	for name := range commands {
+		if n := strings.Count(out, "\n  "+name+" "); n != 1 {
+			t.Errorf("the help names %s %d times", name, n)
+		}
+	}
+	// The commands are exactly the fourteen of the concept.
+	var names []string
+	for name := range commands {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	const want = "apply check compare confirm init licenses move new questions show status table topic version"
+	if got := strings.Join(names, " "); got != want {
+		t.Errorf("the commands are %s, want %s", got, want)
 	}
 }
 
@@ -112,7 +153,7 @@ func TestUsage(t *testing.T) {
 		{[]string{"check", "-C", ""}, "flag -C needs a folder"},
 		{[]string{"check", "-C", dir, "--spec", "x"}, "--spec is a flag of init"},
 		{[]string{"init", "--spec"}, "flag --spec needs a value"},
-		{[]string{"status", "-C", dir, "--all"}, "--all is a flag of topic and figures"},
+		{[]string{"status", "-C", dir, "--all"}, "--all is a flag of topic"},
 		{[]string{"check", "-C", filepath.Join(dir, "missing")}, "not a folder"},
 		{[]string{"check", "-C", file}, "not a folder"},
 		{[]string{"check", "-C", specOf(dir)}, "holds no .markitect/version; markitect init makes one"},

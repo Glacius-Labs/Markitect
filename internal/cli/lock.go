@@ -19,8 +19,8 @@ import (
 // cacheDir is the user's cache folder, where the locks lie; tests replace it.
 var cacheDir = os.UserCacheDir
 
-// lockWait bounds how long mark waits for another mark of the same project;
-// tests shorten it.
+// lockWait bounds how long a command waits for another command that holds
+// the lock of the same project; tests shorten it.
 var lockWait = time.Minute
 
 // lockLifetime is the longest a lock can be held. An older lock is stale,
@@ -66,7 +66,7 @@ func lockProject(dir string) (*projectLock, error) {
 			continue
 		}
 		if time.Now().After(until) {
-			return nil, fmt.Errorf("another mark of this project holds the lock %s", l.file)
+			return nil, fmt.Errorf("another command of this project holds the lock %s", l.file)
 		}
 		time.Sleep(50 * time.Millisecond)
 	}

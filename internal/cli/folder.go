@@ -264,6 +264,9 @@ func (t *transaction) place(temp, path string, create bool) error {
 		if err := t.next(); err != nil {
 			return err
 		}
+		// A temporary file is private; a new file is as readable as an
+		// ordinary one.
+		_ = os.Chmod(temp, 0o644)
 		if err := createFrom(temp, path); err != nil {
 			return err
 		}
@@ -281,6 +284,10 @@ func (t *transaction) place(temp, path string, create bool) error {
 	if err := t.next(); err != nil {
 		os.Remove(backup)
 		return err
+	}
+	// The new file keeps the mode of the one it replaces.
+	if info, err := os.Stat(path); err == nil {
+		_ = os.Chmod(temp, info.Mode().Perm())
 	}
 	if err := os.Rename(path, backup); err != nil {
 		os.Remove(backup)

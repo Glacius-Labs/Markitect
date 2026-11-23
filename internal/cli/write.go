@@ -57,7 +57,7 @@ func newDocument(o options, stdout io.Writer) (int, error) {
 	return output(o, stdout, newResult{newHeader("new"), p}, "created "+p+"\n")
 }
 
-// move moves a document and carries the state: under the lock of mark, it
+// move moves a document and carries the state: under the lock of the state, it
 // writes the moved and rewritten files, the state and the history in one
 // change set, all or nothing.
 func move(o options, stdout io.Writer) (int, error) {
@@ -78,7 +78,7 @@ func move(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	if blocked := blockers(w, &state.Factory{}, problems); len(blocked) > 0 {
+	if blocked := blockers(w, nil, problems); len(blocked) > 0 {
 		r := &edit.Refusal{}
 		for _, d := range blocked {
 			r.Problems = append(r.Problems, d.String())
@@ -90,12 +90,7 @@ func move(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	f, err := factoryOf(w)
-	if err != nil {
-		return ExitFailed, err
-	}
-	places := state.MovePlaces(w.Project, f.Reports, m.From, m.To)
-	changes, err := carry(dir, w, m, rows, places)
+	changes, err := carry(dir, w, m, rows)
 	if err != nil {
 		return ExitFailed, err
 	}
@@ -107,9 +102,6 @@ func move(o options, stdout io.Writer) (int, error) {
 	}
 	text := "moved " + m.From + " -> " + m.To + "\n"
 	changed := append([]string{}, m.Changed...)
-	for _, p := range places {
-		changed = append(changed, p.Path)
-	}
 	for _, p := range changed {
 		text += "changed " + p + "\n"
 	}
@@ -147,9 +139,8 @@ func apply(o options, stdout io.Writer) (int, error) {
 }
 
 // carry turns a move's change set into one below the project folder that
-// also writes the reports whose place it rewrote, the state the move carries
-// and the move appended to the history.
-func carry(dir string, w *workspace, m edit.Moved, rows []state.Row, places []state.File) (edit.Changes, error) {
+// also writes the state the move carries and the move appended to the history.
+func carry(dir string, w *workspace, m edit.Moved, rows []state.Row) (edit.Changes, error) {
 	rewritten := map[string]state.Text{}
 	for _, wr := range m.Changes.Writes {
 		old := wr.Path
@@ -168,13 +159,8 @@ func carry(dir string, w *workspace, m edit.Moved, rows []state.Row, places []st
 	for _, wr := range m.Changes.Writes {
 		c.Writes = append(c.Writes, edit.Write{Path: in(wr.Path), Data: wr.Data, Create: wr.Create})
 	}
-	var reports []string
-	for _, p := range places {
-		c.Writes = append(c.Writes, edit.Write{Path: p.Path, Data: p.Data})
-		reports = append(reports, p.Path)
-	}
 	return withHistory(dir, c, state.MoveRows(rows, m.From, m.To, rewritten),
-		state.Event{Time: now(), Type: state.EventMove, From: m.From, To: m.To, Rewritten: m.Changed, Reports: reports})
+		state.Event{Time: now(), Type: state.EventMove, From: m.From, To: m.To, Rewritten: m.Changed})
 }
 
 // withHistory adds to a change set the state, rewritten from rows when the

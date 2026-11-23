@@ -210,62 +210,6 @@ func gitDir(fsys fs.FS, dir string) (fs.FS, string, bool) {
 	return host, name, ok && gitFolder(host, name)
 }
 
-// HeadCommit is the commit a nested repository's HEAD names, as Git records
-// it for the folder: the hash in HEAD, or the ref HEAD names resolved
-// through a loose ref or packed-refs, in its Git folder or the common
-// folder of a worktree. It is "" when the folder is no repository or HEAD
-// names a ref without a commit.
-func HeadCommit(fsys fs.FS, dir string) string {
-	host, git, ok := gitDir(fsys, dir)
-	if !ok {
-		return ""
-	}
-	common := git
-	if data, err := fs.ReadFile(host, path.Join(git, "commondir")); err == nil {
-		common = path.Join(git, filepath.ToSlash(strings.TrimSpace(string(data))))
-	}
-	head, err := fs.ReadFile(host, path.Join(git, "HEAD"))
-	if err != nil {
-		return ""
-	}
-	value := strings.TrimSpace(string(head))
-	// A ref may name another ref, as a symbolic ref does; Git follows five.
-	for depth := 0; depth <= maxRefDepth; depth++ {
-		ref, isRef := strings.CutPrefix(value, "ref:")
-		if !isRef {
-			return value
-		}
-		if value = resolveRef(host, git, common, strings.TrimSpace(ref)); value == "" {
-			return ""
-		}
-	}
-	return ""
-}
-
-// maxRefDepth is how many refs naming refs Git follows.
-const maxRefDepth = 5
-
-// resolveRef reads what a ref holds: a loose ref in the Git folder or the
-// common folder first, then a line of packed-refs. It is "" when it holds
-// nothing.
-func resolveRef(host fs.FS, git, common, ref string) string {
-	for _, d := range []string{git, common} {
-		if data, err := fs.ReadFile(host, path.Join(d, ref)); err == nil {
-			return strings.TrimSpace(string(data))
-		}
-	}
-	packed, err := fs.ReadFile(host, path.Join(common, "packed-refs"))
-	if err != nil {
-		return ""
-	}
-	for _, line := range strings.Split(string(packed), "\n") {
-		if hash, name, ok := strings.Cut(strings.TrimSpace(line), " "); ok && name == ref && !strings.HasPrefix(hash, "#") {
-			return hash
-		}
-	}
-	return ""
-}
-
 // validHead says whether a HEAD file is one Git accepts: "ref:" and a ref
 // below refs/, or a full object hash of SHA-1 or SHA-256.
 func validHead(data []byte) bool {

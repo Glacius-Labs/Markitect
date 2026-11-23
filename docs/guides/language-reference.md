@@ -85,7 +85,7 @@ Every command but `init`, `version` and `licenses` works in a project and finds 
 | Command | Does |
 |---|---|
 | `markitect init [--spec PATH]` | Sets up a project: `.markitect/` and the spec folder ([project reference](project-reference.md#init)) |
-| `markitect check` | Checks the spec by the rules above, and the [reports, settings and results of control samples](reports.md#what-check-reports) |
+| `markitect check` | Checks the spec by the rules above, and the reports, settings and results of control samples |
 | `markitect show DOCUMENT` | The document's title, its type, its sections (a type's with their `(optional)` marker), the documents it links to, the documents that link to it with the section each link stands in, for a type its documents, and its row in the state |
 | `markitect table [TYPE]` | Every document of the type as a Markdown table: the title, then one column per section of the type. Without a type, every document with its verdict and artifacts |
 | `markitect new TYPE PATH [TITLE]` | Creates a document of the type |
@@ -93,12 +93,12 @@ Every command but `init`, `version` and `licenses` works in a project and finds 
 | `markitect apply TEMPLATE [TARGET]` | Copies a template of the [library](library.md) into the spec |
 | `markitect topic [TOPIC]` | The signals of the spec, or the topic view of a document, a type or a folder ([signals](signals.md)) |
 | `markitect questions` | The question catalogs of the library packages the spec has ([signals](signals.md#question-catalogs)) |
-| `markitect status` | What is changed, suspect, unexplained or waiting on a report ([project reference](project-reference.md#status)); with `--step ROLE --before DIR`, what a step wrote against the write table, and with `--target DIR`, whether the branch lands ([rights and landing](rights.md)) |
+| `markitect status` | What is changed, suspect, unexplained or waiting on a report ([project reference](project-reference.md#status)); with `--step ROLE --before DIR`, what a step wrote against the write table, and with `--target DIR`, whether the branch lands (rights and landing) |
 | `markitect mark DOCUMENT@FINGERPRINT VERDICT` | Binds `ok`, `fail` or `skip`, with artifacts, counter-checks and evidence, to the state `status` showed ([project reference](project-reference.md#mark)) |
 | `markitect compare OLD [NEW]` | What is new, gone, moved, changed or suspect in NEW, by default this project, against OLD, with diffs, changed verdicts and the reports that are new, closed or changed ([project reference](project-reference.md#compare)) |
-| `markitect figures` | The signals of the spec's changes, from the history ([signals](signals.md#the-change-signals)), and the [figures of the factory](reports.md#the-figures-of-the-factory) |
-| `markitect reports [--open]` | The reports with the values of their sections, or only the open ones ([listing the reports](reports.md#listing-the-reports)) |
-| `markitect settings` | The settings: the model per role, the counter-check folder, the tests command, the cadence, the write table and the CI definition ([settings](reports.md#settings)) |
+| `markitect figures` | The signals of the spec's changes, from the history ([signals](signals.md#the-change-signals)), and the figures of the factory |
+| `markitect reports [--open]` | The reports with the values of their sections, or only the open ones (listing the reports) |
+| `markitect settings` | The settings: the model per role, the counter-check folder, the tests command, the cadence, the write table and the CI definition (settings) |
 | `markitect version` | The tool's build, and whether its version is the one the project pins ([project reference](project-reference.md#version)) |
 | `markitect licenses` | The license notices of the modules the tool is built from |
 
@@ -106,7 +106,7 @@ Every command but `init`, `version` and `licenses` works in a project and finds 
 
 ### Commands that read
 
-**`check`** prints one line per diagnostic, `path:line: code: message`, then a summary such as `2 errors in 14 documents`, to which [reports and samples](reports.md#what-check-reports) add their numbers when there are any:
+**`check`** prints one line per diagnostic, `path:line: code: message`, then a summary such as `2 errors in 14 documents`, to which reports and samples add their numbers when there are any:
 
 ```text
 lending/borrow.md:7: link.unresolved: no document at "loans/ghost.md"
@@ -123,7 +123,7 @@ lending/loans/4711.md:9: section.empty: empty section "Due"
 They compute every change first and check that nothing stands in the way: no file at a path to create, every file to rewrite writable, and every target folder writable. They then write each new content to a temporary file beside its target, make the moves and rename the temporary files into place, keeping each replaced file aside until the end. A new file is linked into place or created exclusively, so a file that appeared meanwhile is never replaced. When a step fails, every step done is undone, so the spec is as it was. Should an undo fail too, the error names the original failure, what could not be undone and every temporary or backup file left behind (`.markitect-*.tmp`, `.markitect-*.bak`), so that the spec can be restored by hand.
 
 - **`new`** writes `# TITLE`, by default the file name, the type line with a relative link to the type, percent-encoded where the path needs it, and an empty level-2 heading for each section the type requires. It refuses when `PATH` exists, as a document or as anything else.
-- **`move`** moves the document and rewrites every link to it in the spec: links, type lines and link reference definitions. When the document changes folder, it also rewrites every relative destination in it so that it reaches the same file: links to any file, images, link reference definitions, and the `href` and `src` attributes of HTML tags. Text between tags, escaped markup such as `&lt;img src="x.png"&gt;`, comments, other attributes, such as a `title` that mentions `href=`, and the contents of `script`, `style` and `textarea` stay as they are. It refuses when such an attribute's value cannot be placed: in a tag that does not close, or broken across lines inside a block quote or a list. A rewritten destination keeps its `#section` and its `<…>` form, and is percent-encoded when it was, or when the new path holds white space, a parenthesis or an angle bracket; nothing else in a file changes, line ends and byte order mark included. It refuses when `OLD` is no document or `NEW` exists, and while the spec has errors or the state a line it cannot read. It carries the state and appends to the history in the same change set, under the lock of `mark` ([project reference](project-reference.md#move-and-the-state)). It also rewrites the place of each report that names the document ([reports](reports.md#reports)). It prints `moved OLD -> NEW`, then `changed PATH` for each file it rewrote, a report by its path below the project folder.
+- **`move`** moves the document and rewrites every link to it in the spec: links, type lines and link reference definitions. When the document changes folder, it also rewrites every relative destination in it so that it reaches the same file: links to any file, images, link reference definitions, and the `href` and `src` attributes of HTML tags. Text between tags, escaped markup such as `&lt;img src="x.png"&gt;`, comments, other attributes, such as a `title` that mentions `href=`, and the contents of `script`, `style` and `textarea` stay as they are. It refuses when such an attribute's value cannot be placed: in a tag that does not close, or broken across lines inside a block quote or a list. A rewritten destination keeps its `#section` and its `<…>` form, and is percent-encoded when it was, or when the new path holds white space, a parenthesis or an angle bracket; nothing else in a file changes, line ends and byte order mark included. It refuses when `OLD` is no document or `NEW` exists, and while the spec has errors or the state a line it cannot read. It carries the state and appends to the history in the same change set, under the lock of `mark` ([project reference](project-reference.md#move-and-the-state)). It also rewrites the place of each report that names the document (reports). It prints `moved OLD -> NEW`, then `changed PATH` for each file it rewrote, a report by its path below the project folder.
 - **`apply`** copies the template, with every package it needs, into the spec at `TARGET`, by default the spec's root; the spec folder is created when it does not exist. It prints `copied PATH` for each document and `copied packages/NAME/` for each package. The [library](library.md#apply) gives the rules.
 
 ### JSON
@@ -136,9 +136,9 @@ With `--json`, every command prints one document that starts with `format_versio
 | `show` | `path`, `fingerprint`, `title`, `type`, `type_state` (`none`, `invalid`, `missing` or `ok`), `sections` with `heading`, `links_to` with `path` and `missing`, `linked_from` with `path` and `section`, `documents`, and from the state `verdict`, empty without a row, `conflict` when rows conflict, `artifacts`, `counter_checks`, `evidence` and `reason` |
 | `table` | `type`, `columns`, and `rows` with `path`, `title` and `cells`; without a type, `type` is empty and the columns are `Verdict` and `Artifacts` |
 | `init`, `version`, `status`, `mark`, `compare` | As the [project reference](project-reference.md) says |
-| `figures` | As [signals](signals.md#the-change-signals) and [the figures of the factory](reports.md#the-figures-of-the-factory) say |
-| `settings` | As [settings](reports.md#settings) says |
-| `reports` | As [listing the reports](reports.md#listing-the-reports) says |
+| `figures` | As [signals](signals.md#the-change-signals) and the figures of the factory say |
+| `settings` | As settings says |
+| `reports` | As listing the reports says |
 | `new` | `path` |
 | `licenses` | `notices` |
 | `move` | `from`, `to` and `changed` |

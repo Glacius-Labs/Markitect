@@ -9,7 +9,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/lang"
 )
 
-func TestFigures(t *testing.T) {
+func TestChangeSignals(t *testing.T) {
 	spec := lang.NewSpec([]*lang.Document{
 		lang.Parse("a.md", []byte("# A\n")),
 		lang.Parse("b.md", []byte("# B\n\nSee [a](a.md).\n")),
@@ -38,7 +38,7 @@ func TestFigures(t *testing.T) {
 		// A, at a third text, and C, far from the change before.
 		v(8*time.Hour, "c.md", h("c2"), Pending{"a.md", h("a3")}),
 	}
-	f := ComputeFigures(spec, events)
+	f := ComputeHistorySignals(spec, events)
 	var changes []string
 	for _, c := range f.Changes {
 		changes = append(changes, strings.Join(c.Docs, "+"))
@@ -48,8 +48,8 @@ func TestFigures(t *testing.T) {
 	}
 	top := func(signal string) string {
 		var out []string
-		for _, fig := range f.Signals[signal] {
-			out = append(out, strings.Join(fig.Docs, "+")+"="+itoa(fig.Count))
+		for _, sig := range f.Signals[signal] {
+			out = append(out, strings.Join(sig.Docs, "+")+"="+itoa(sig.Count))
 		}
 		return strings.Join(out, " ")
 	}
@@ -74,8 +74,8 @@ func TestFigures(t *testing.T) {
 
 func itoa(n int) string { return strconv.Itoa(n) }
 
-func TestNoHistoryNoFigures(t *testing.T) {
-	f := ComputeFigures(lang.NewSpec(nil), nil)
+func TestNoHistoryNoSignals(t *testing.T) {
+	f := ComputeHistorySignals(lang.NewSpec(nil), nil)
 	for _, s := range ChangeSignals {
 		if f.Signals[s] == nil || len(f.Signals[s]) != 0 {
 			t.Errorf("%s: %v", s, f.Signals[s])
@@ -120,7 +120,7 @@ func TestWaitingDocumentsCountOnce(t *testing.T) {
 		return Event{Time: t0.Add(time.Duration(hours) * time.Hour), Type: EventVerdict, Doc: doc, Verdict: "ok", Self: h(doc),
 			Changed: []Pending{{"p.md", h("p")}, {"q.md", h("q")}}}
 	}
-	f := ComputeFigures(lang.NewSpec(nil), []Event{v(0, "x.md"), v(2, "y.md"), v(4, "z.md")})
+	f := ComputeHistorySignals(lang.NewSpec(nil), []Event{v(0, "x.md"), v(2, "y.md"), v(4, "z.md")})
 	var changes []string
 	for _, c := range f.Changes {
 		changes = append(changes, strings.Join(c.Docs, "+"))
@@ -142,7 +142,7 @@ func TestReusedPath(t *testing.T) {
 		{Time: at(4), Type: EventVerdict, Doc: "a.md", Verdict: "ok"},
 		{Time: at(6), Type: EventVerdict, Doc: "a.md", Verdict: "ok", Self: h("one")},
 	}
-	f := ComputeFigures(lang.NewSpec(nil), events)
+	f := ComputeHistorySignals(lang.NewSpec(nil), events)
 	if len(f.Signals["back-and-forth"]) != 0 || len(f.Changes) != 3 {
 		t.Errorf("%+v %+v", f.Signals["back-and-forth"], f.Changes)
 	}
