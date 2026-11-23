@@ -109,6 +109,8 @@ A README is a document, read and checked by the rules above, with a form of its 
 
 **What `Contents` shows.** Every counted link in `Contents`, one with a `#section` included, that points to a document of the README's own folder or to the README of a module directly below. Such a document is **public** in the module, and so is the README itself. A link in `Contents` to anything else shows nothing and is checked as any other link of the README: one to a document inside a module below is itself `link.internal` unless that module shows it.
 
+**Patterns.** A code span in `Contents` whose text holds no `/` is a pattern over the file names of the documents directly in the README's folder, and every document it matches is public: `` `*.md` `` shows every document of the folder, `` `report-*.md` `` those whose names start with `report-`. The wildcards are `*` for any run of characters, `?` for one character and a class such as `[a-z]` for one of a set; everything else matches itself, case included. A pattern matches the file name alone, so it never reaches into a folder below: a module below is shown by a link to its README. A code span that holds `/`, such as `` `old/*.md` ``, is plain code and shows nothing. A pattern that matches no document is no error; one that is not a valid pattern, such as `` `report-[1.md` ``, is `readme.pattern` and shows nothing. Code spans count anywhere in `Contents`, in list items and block quotes too; fenced and indented code blocks do not. A pattern is written as code so that a rendered page shows no dead link.
+
 ```markdown
 # Lending
 
@@ -123,6 +125,7 @@ The loan service and its database.
 ## Contents
 - [Borrow](borrow.md)
 - [Fines](fines/README.md)
+- `notice-*.md`
 ```
 
 ### Visibility
@@ -159,6 +162,7 @@ A module that holds both documents is never asked, so the spec folder, when it i
 | `link.unresolved` | A counted link points to no document: `no document at "PATH"`, with the path as written, without its section | The link's first line |
 | `link.internal` | A counted link, the type line's and the extends line's included, points to a document of a module that does not show the way to it ([visibility](#visibility)): `"PATH" is internal to MODULE: MODULE/README.md does not list it under Contents`, for the first module of the way that does not show its step, or `… does not list MODULE/BELOW/README.md under Contents` when that step is the README of a module below; for a module without a README, `"PATH" is internal to MODULE: MODULE has no README.md`. PATH is the target below the spec folder | The link's first line |
 | `module.readme` | A folder that holds a document directly has no `README.md`: `the folder "FOLDER" holds documents and has no README.md`, or for the spec folder `the spec folder holds documents and has no README.md`. Once per folder | Line 1 of the README's path, such as `shop/README.md:1` or `README.md:1` |
+| `readme.pattern` | A code span in a README's `Contents` without `/` is no valid pattern: `bad pattern "TEXT": a pattern uses the wildcards *, ? and [a-z]` | The code span's line |
 | `readme.type` | A README has a type line or an extends line: `a README has no type line` or `a README has no extends line`. A type line or an extends line names a README: `"PATH" is a README, which is no type` | That line |
 
 A document reports each unresolved or internal target once, at its first link, where its type line or extends line comes first: `[the archive](archive.md)`, `[its rules](archive.md#rules)` and `[again](./archive.md)` are one report. Each declared section is reported at most once, and a document at most one `title`. The diagnostics are sorted by path, then by line.

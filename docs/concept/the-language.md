@@ -100,6 +100,8 @@ A README is never itself the thing it describes: in a module `shop`, the shop is
 
 **Public and internal.** What a README links under `Contents`, a document of its folder or the README of a module directly below, is public; the README itself is public as well. Everything else in the module is internal, and a link to it from outside the module is an error. Inside a module everything may link to everything, also to what is internal to the modules above it, as with Go's internal packages. This holds for every link, the type line and the extends line included: a type that other modules use stands in the `Contents` of its module, as `core`'s README lists its six types.
 
+**Patterns.** A README may also show documents of its folder by a pattern over their file names, written as code: in a module `reports` whose monthly reports keep arriving, `` `report-*.md` `` under `Contents` shows each new one without a change to the README, and `` `*.md` `` would show the whole folder. A pattern never reaches into a module below.
+
 A library has a module `lending` with one public and one internal document:
 
 ```text
@@ -147,6 +149,7 @@ An agent writes the structure, the sections and the links, as it writes the pros
 | `link.unresolved` | A link to a `.md` path points to no document of the spec |
 | `link.internal` | A link, a type line or an extends line from outside a module points to a document that the module's README does not show under `Contents` |
 | `module.readme` | A folder that holds documents has no README |
+| `readme.pattern` | A pattern in a README's `Contents` is not valid |
 | `readme.type` | A README has a type line or an extends line, or a type line or an extends line names a README |
 
 What the language does not catch, contradictions between values, gaps and wrong values, a reader finds ([§5](is-the-spec-good.md)). There are no value forms, check rules or declared scopes: something new joins only when a real project needs it.
