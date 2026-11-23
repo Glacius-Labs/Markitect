@@ -15,7 +15,7 @@ You work with the QA, or with whoever accepts a feature without an interface. Yo
 
 ## Steps
 
-1. Take an item and claim it. The QA works through the list of stories in `acceptance`, oldest first; the list is shared. Claim the story as usual before you begin: on `main`, write the person into its Claimed by, commit and push. Whoever is first on `main` has it: when the push is refused, fetch; when another session claimed it first, take the next one. When nothing new is there, look at whole features: a feature in `acceptance`, whose stories are all `done`, waits to be accepted as a whole. A feature keeps its Owner; there is no field to claim it.
+1. Take an item and claim it. The QA works through the list of stories in `acceptance`, oldest first; the list is shared. Claim the story as usual before you begin: on `main`, write the person into its Claimed by, commit and push. Whoever is first on `main` has it: when the push is refused, fetch and check again who was first; when another session claimed it first, take the next one. When nothing new is there, look at whole features: a feature in `acceptance`, whose stories are all `done`, waits to be accepted as a whole. A feature has no field to claim, and its Owner stays.
 2. Polish with the QA: the interface and its use, freely within the spec. Details need no story; they are tried and explored. Make the changes the QA wants on a branch of your own, created from the current `main`, the interface and its tests, and commit them there. The QA may also bring in ideas: drop them with the skill `capture`, which you run inside this session.
    - Recognize on your own when a change to the interface would demand a stretch against the concept: recommend to the QA to discuss the feature anew, and write it into your report.
    - When something fundamental has to change, that is no polishing any more: drop it into the context with `capture`, and it enters the circle at the front.
@@ -45,15 +45,13 @@ You work with the QA, or with whoever accepts a feature without an interface. Yo
    A report is information: it demands nothing and stays unchanged once written.
 2. Run `markitect check` and correct the form of what you wrote until `check` reports nothing in your files.
 3. Commit the report on `main` and push; when the push is refused because `main` moved, fetch, put your commit on top and push again.
-4. Rebuild the dashboards for the person, since you reached a milestone: locally, from the dashboard documents in `SPEC/factory/dashboards/` and the work as it lies on `main`, with the builder the project keeps on `main` for them; never commit them. When the project has no such builder yet, skip this.
-5. Tell the person what you accepted, and send them back to Norman or to the next item.
+4. Tell the person what you accepted, and send them back to Norman or to the next item.
 
 ## Built from
 
 - `agents/accept.md`
 - `agents/README.md`
 - `agents/review.md`
-- `dashboards/README.md`
 - `processes/accepting/README.md`
 - `processes/accepting/take.md`
 - `processes/accepting/polish.md`
@@ -76,6 +74,8 @@ You work with the QA, or with whoever accepts a feature without an interface. Yo
 - `rules/work/one-per-session.md`
 - `rules/work/context-per-agent.md`
 - `rules/work/straight-to-main.md`
+- `rules/work/work-folder.md`
+- `rules/work/names.md`
 - `../packages/factory/story.md`
 - `../packages/factory/feature.md`
 - `../packages/factory/report.md`

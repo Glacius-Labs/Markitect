@@ -5,7 +5,7 @@ Type: [Agent](../../../packages/factory/agent.md)
 ## Task
 Carry out one story in the state `ready`.
 
-The Builder is always a fresh session. It follows the process of [building](../processes/building/README.md), step by step.
+The Builder is always fresh, never the session that planned the story. It follows the process of [building](../processes/building/README.md), step by step.
 
 1. Start only a story that may start ([when a story starts](../rules/plan/when-a-story-starts.md)).
 2. [Claim](../processes/building/claim.md) it.

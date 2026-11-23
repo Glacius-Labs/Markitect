@@ -15,7 +15,7 @@ The Area of the plan it roughly concerns, as a link, or the module as far as it 
 What was noticed, or what the idea is, without a solution. Example: `Members cannot see when a loan is due without asking at the desk.`
 
 ## Source
-The report and the statement it comes from, as a link, and who said it when. Example: `[Daily, 23 Nov](../../context/observe-dropped-material/2026-11-23-daily.md), statement 4`.
+The report and the statement it comes from, as a link, and who said it when. Example: `[dropped-material, 23 Nov](../../context/observe-dropped-material/2026-11-23-0600.md), statement 4`.
 
 ## Context
 What was being worked on, and who said it. For a finding whose answer follows from what is decided, also the place in the spec it follows from, as a link. Example: `Said while polishing the member's page.`
@@ -27,4 +27,4 @@ The reason for the importance, in a sentence. Example: `Renewals are half of all
 For a Bug and a Risk: `likelihood LEVEL, impact LEVEL`, each `low`, `medium` or `high`. Example: `likelihood high, impact medium`.
 
 ## Outcome (optional)
-What became of it, written when it moves to `closed`: in the plan, with a link to the story or feature; added to the spec, with the place; rejected, with the reason; a duplicate, with a link; noise. Example: `In the plan: [Renew a loan](../../plan/lending/renew-online/renew-a-loan.md)`.
+What became of it, written when it is carried out: by the Recorder when it moves the finding to `closed` or attaches it to a claimed feature, by the Triager for noise and duplicates. The first line says how it ended: `decided` when people decided on it, `without a decision` when it went on from `ready` without one, `noise`, or `duplicate`. The lines below say what became of it: in the plan, with a link to the story or feature; added to the spec, with the place; rejected, with the reason; a duplicate of, with a link; attached to, with a link to the claimed feature, while the finding stays in `ready` until a story names it as its Origin. Example: `without a decision`, then `In the plan: [Renew a loan](../../plan/lending/renew-online/renew-a-loan.md)`.

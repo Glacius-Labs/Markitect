@@ -1,11 +1,11 @@
 ---
 name: create-observer
-description: Adds a new observer to a Markitect project together with a person, asking for its one topic, name, source, thresholds, exclusions, checkpoint and schedule, writing its document and doing a trial run. Run inside the person's session, usually through Norman, on a new source, a Risk decided to be observed, or a finding of type Factory.
+description: Adds a new observer to a Markitect project together with a person, asking for its one topic, name, source, thresholds, exclusions, checkpoint and schedule, writing its document and doing a trial run. Started by a person, usually through Norman, on a new source, a Risk decided to be observed, or a finding of type Factory.
 ---
 
 # Create observer
 
-You add a new observer, with a person. You run inside the session that calls you, usually Norman's, with its model. You start on a new source, on a Risk about which "observe" was decided, or on a finding of type Factory. Your one task is to work out the observer with the person, write its document, create its folder and show the person a first report before the observer counts. When a report only misses something, the existing observer is improved and no new one is added; which observers a project needs, its operation shows.
+You add a new observer, with a person, in a session the person talks to, usually started through Norman. You start on a new source, on a Risk about which "observe" was decided, which reaches you as a story the Recorder wrote, or on a finding of type Factory. Your one task is to work out the observer with the person, write its document, create its folder and show the person a first report before the observer counts. When a report only misses something, the existing observer is improved and no new one is added; which observers a project needs, its operation shows.
 
 ## Before you start
 
@@ -38,7 +38,7 @@ You add a new observer, with a person. You run inside the session that calls you
    An observer selects and states, with numbers and places; it never classifies, interprets, fixes or decides: write nothing into its document that asks for that. Link the document from the list in `SPEC/factory/observers/README.md`, with its topic in a few words. Run `markitect check` and correct what you wrote until `check` reports nothing there.
 3. Create its folder `.markitect/context/observe-NAME/` for its reports and its checkpoint.
 4. Do a trial run: start a fresh subagent that runs exactly the skill `observe`, with the model and effort the new observer's document names under Model; give it the new observer's document as its item, the person as who it works for, and that you started it. The run writes its report and checkpoint into the new folder and brings them to `main` itself. Show the person the first report, or that the run observed nothing, before the observer counts. When the person is not content, change the document with them and run again.
-5. When the person is content, bring the observer's document and the README's new line to `main` in one commit, and push; when the push is refused because `main` moved, fetch, put your commit on top and push again. From then on the Housekeeper runs it when it is due.
+5. Once the person is content with the trial run, bring the observer's document and the README line to `main` in one commit, and push; until then they stay off `main`. When the push is refused, fetch, put your commit on top and push again. From then on the Housekeeper runs it when it is due.
 6. Whatever strikes you outside your task, drop with `capture`, one drop per observation: what, where, and what you were doing.
 
 ## What you never do
@@ -49,7 +49,7 @@ You add a new observer, with a person. You run inside the session that calls you
 
 ## How you end
 
-The observer's document lies in `SPEC/factory/observers/`, linked from its README, its folder `.markitect/context/observe-NAME/` holds the trial run's checkpoint and any report, and all of it is on `main`. Tell the person that the observer counts from now on, and give the calling session back its turn. You write no report of your own: you are part of the calling session, and its report covers it.
+The observer's document lies in `SPEC/factory/observers/`, linked from its README, its folder `.markitect/context/observe-NAME/` holds the trial run's checkpoint and any report, and all of it is on `main`. Tell the person that the observer counts from now on. Your document names no report among what you change, so you write none.
 
 ## Built from
 
@@ -66,4 +66,7 @@ The observer's document lies in `SPEC/factory/observers/`, linked from its READM
 - `rules/work/context-per-agent.md`
 - `rules/work/checkpoints.md`
 - `rules/work/drop-what-you-notice.md`
+- `rules/work/straight-to-main.md`
+- `agents/norman.md`
+- `agents/record.md`
 - `../packages/factory/observer.md`

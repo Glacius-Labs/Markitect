@@ -2,6 +2,8 @@
 
 The agents of the way of working, one [agent](../../../packages/factory/agent.md) per skill. An agent is a fresh session that runs exactly one skill; each skill is built from its document here and lies in the repository, the same for every runner. Whoever starts an agent reads its model, its schedule and whether it asks from its document, so changing the document changes the next start. The document is the agent's usual way of working; what it does outside it is a [deviation](../rules/deviations/usual-way.md).
 
+An agent that asks runs in a session of its own, which the person switches to; an agent that does not ask runs as a fresh subagent of whoever starts it, and [capture](capture.md) and [finish-planning](finish-planning.md) run inside the session that calls them and are no agents of their own. `as the session` under Model means that the agent has no model of its own and takes that of the session it runs in. Whoever starts an agent tells it who started it, for whom, and the item it works on, so that it can write its report. The deepest chain of agents starting agents is Norman, Housekeeper, Builder, Reviewer.
+
 | Agent | Skill |
 |---|---|
 | [Norman](norman.md) | `norman` |

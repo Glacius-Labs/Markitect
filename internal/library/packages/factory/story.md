@@ -15,7 +15,7 @@ The stories it waits for, as links, one per line, or `none`. Whoever creates the
 Who works on it now, the person, or the agent and its run, or `none` while nobody does. Claiming the story is writing yourself here on `main` before you start. Example: `build, 2026-11-24 14:32`.
 
 ## Origin
-Where it came from: a link to the finding or the report in the context, or to its feature for a story cut from one. Example: `[Renew a loan online](feature.md)`.
+Where it came from: a link to the finding or the report in the context, or to its feature for a story cut from one. A smell story lists every finding that references it, one link per line. Example: `[Renew a loan online](feature.md)`.
 
 ## Target picture
 What should hold when the story is done, like an interface or a responsibility. It fits every level above it: its feature, what the spec says for its Area, and the spec as a whole. Example: `A member renews an open loan once; the due date moves by the lending period.`
@@ -24,10 +24,10 @@ What should hold when the story is done, like an interface or a responsibility. 
 The places in the spec that this story changes, each as a link with one sentence on how, or `none` when it changes no standing spec and its own target picture is the place. These changes lie on the story's branch and land with its realization. Example: `[Lending period](../../../../docs/spec/product/lending/period.md): a renewal extends it once.`
 
 ## Plan
-How it will be realized, coarse, in concepts and modules: no file names, no code. Example: `The loan gains a renewal; the member's page offers it.`
+How it will be realized, coarse, in concepts and modules: no file names, no code; `not planned yet` while the story waits in `draft` for its planning. Example: `The loan gains a renewal; the member's page offers it.`
 
 ## Tasks
-The tasks as check boxes, in order. A story with fixed tasks has exactly those. A story with something to accept ends with the task for accepting it. Example: `- [ ] QA: polish, verify interface and use, accept`.
+The tasks as check boxes, in order, ticked when done; `not planned yet` while the story waits in `draft` for its planning. A story with fixed tasks has exactly those. A story with something to accept ends with the task for accepting it. Example: `- [ ] QA: polish, verify interface and use, accept`.
 
 ## Result (optional)
 What changed, written by the Builder, or, after an abort, a link to the report in the context. Below it the Reviewer's `confirm`: for each place in the spec that the story realizes, the files and the test that proves it. Example: `confirm: lending/period.md: src/loans/renew.ts, tests/loans/renew.test.ts`.

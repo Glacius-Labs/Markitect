@@ -14,4 +14,4 @@ Some stories always have the same tasks. They are created with these tasks and a
 | A smell analysis | collect evidence; list possible causes, "false alarm" included; check each; determine place and reach: what depends on it, the effort, the risk of fixing and of leaving it; a report with a recommendation | the report lies in the context |
 | Maintenance | update or repair; check that everything still runs | it runs again or is current |
 
-A story with fixed tasks has nothing to accept: it is `done` when its condition holds. When a fixed task turns out not to suffice, that is a finding of type Factory.
+A story with fixed tasks has nothing to accept: it is `done` when its condition holds. Its Target picture is that condition, its Plan one sentence naming what the tasks work on, and its Target changes `none`. When a fixed task turns out not to suffice, that is a finding of type Factory.

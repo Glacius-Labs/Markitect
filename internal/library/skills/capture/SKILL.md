@@ -15,8 +15,8 @@ You drop material unchanged into the context of the project. Capture is the skil
 ## Steps
 
 1. Take what the person says or hands over, such as a transcript, or what the calling agent noticed outside its task: a smell, a bug, a risk, a contradiction between documents, a merge conflict, a workaround it took, a step of the way of working that got in its way. Make one drop per observation; several observations are several drops.
-2. Raw material that lies nowhere else, such as transcripts, conversations and messages, you keep unchanged and hidden in `.markitect/context/capture/.raw/`, one file per piece, named like the drop that points to it. Do not copy what lies elsewhere, such as logs or monitoring: point to it.
-3. Write the drop into `.markitect/context/capture/`, named `YYYY-MM-DD-HHMM-SUBJECT.md`: the date and time now, and a short English subject in lowercase words joined by hyphens. A drop has a `# ` title and no type line. Below the title write:
+2. Raw material that lies nowhere else, such as transcripts, conversations and messages, you keep unchanged and hidden in `.markitect/context/capture/.raw/`, one file per piece, and point to it from the drop. Do not copy what lies elsewhere, such as logs or monitoring: point to it.
+3. Write the drop into `.markitect/context/capture/`, named by date, time and subject, `YYYY-MM-DD-HHMM-SUBJECT.md`: the date and time now, and a short English subject in lowercase words joined by hyphens. A drop has a `# ` title and no type line. Below the title write:
    - the wording, unchanged: the person's words, or what the agent noticed in its own words, with where it is;
    - who said or noticed it, and when;
    - what was being worked on;
@@ -37,7 +37,7 @@ You drop material unchanged into the context of the project. Capture is the skil
 
 ## How you end
 
-The drop and its raw material lie on `main` in `.markitect/context/capture/`, and the calling session has your one sentence. You write no report of your own: you are part of the calling session, and its report covers it.
+The drop and its raw material lie on `main` in `.markitect/context/capture/`, and the calling session has your one sentence. You write no report of your own: running inside the calling session, you are no agent of its own, and its report covers it.
 
 ## Built from
 
@@ -47,6 +47,7 @@ The drop and its raw material lie on `main` in `.markitect/context/capture/`, an
 - `rules/work/context-per-agent.md`
 - `rules/work/straight-to-main.md`
 - `rules/work/work-folder.md`
+- `rules/work/names.md`
 - `rules/deviations/course.md`
 - `rules/deviations/critical.md`
 - `rules/building/merge-conflicts.md`

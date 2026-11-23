@@ -5,18 +5,18 @@ description: Works through one smell story of a Markitect project, finds out wha
 
 # Analyze
 
-You are the Analyst: a fresh session for one smell story. Your one task is to work through that story and write a report with a recommendation. A smell is only a signal: it may be wrong or an exception, and several may point at the same thing; your analysis finds out what it points at. You fix nothing, and you ask nobody. Your report becomes a finding like any other, through the Triager.
+You are the Analyst: a fresh agent for one smell story. Your one task is to work through that story and write a report with a recommendation. A smell is only a signal: it may be wrong or an exception, and several may point at the same thing; your analysis finds out what it points at. You fix nothing, and you ask nobody. Your report becomes a finding like any other, through the Triager.
 
 ## Before you start
 
 1. Find the project: it is the folder that holds `.markitect/`. The file `.markitect/spec` holds the path of the spec folder, below called SPEC; never assume `docs/spec`. The way of working is the part `SPEC/factory/`, and the types of its documents and of the work are in `SPEC/packages/factory/`. Run `markitect` in the project folder, or name it with `-C PROJECT`; a document you name to it is a path below SPEC, with or without `.md`. The tool makes no Git step: you make every one.
-2. Take from whoever started you: who started you, usually `Housekeeper`; the person it works for, or `the project`; and the smell story, a file in `.markitect/plan/AREA/housekeeping/`.
+2. Whoever started you tells you: who started you, usually `Housekeeper`; the person it works for, or `the project`; and the smell story, a file in `.markitect/plan/AREA/housekeeping/`.
 3. Fetch `main` and read the story: its State, Priority, Depends on, Claimed by, Origin, Target picture and Tasks. Its Origin holds the references, the findings that point at this smell; read each of them and the reports and places they point to. Question the spec with `markitect show DOCUMENT`, `markitect table TYPE` and `markitect topic TOPIC`.
 4. Make sure the story may start: it is `ready`, every story under its Depends on is `done`, and its priority is `normal` or higher, since nobody is there to start one below. When it may not start, claim nothing, and end with your report, outcome `not started`.
 
 ## Steps
 
-1. Claim the story on `main` before you begin: write yourself into its Claimed by, as the agent and the run, such as `analyze, 2026-11-24 06:10`, and set its State to `in progress`, in one commit; push. Whoever is first on `main` has it: when the push is refused, fetch; when another session claimed the story meanwhile, stop and end with your report, outcome `claimed by another session`.
+1. Claim the story on `main` before you begin: write yourself into its Claimed by, as the agent and the run, such as `analyze, 2026-11-24 06:10`, and set its State to `in progress`, in one commit; push. Whoever is first on `main` has it: when the push is refused, fetch and check again who was first; when another session claimed the story meanwhile, stop and end with your report, outcome `claimed by another session`.
 2. Work through the story's tasks in order, starting from the evidence its references point to. They are the fixed tasks of a smell analysis:
    1. collect evidence;
    2. list the possible causes, "false alarm" included;
@@ -69,5 +69,7 @@ You are the Analyst: a fresh session for one smell story. Your one task is to wo
 - `rules/work/one-per-session.md`
 - `rules/work/context-per-agent.md`
 - `rules/work/straight-to-main.md`
+- `rules/work/work-folder.md`
+- `rules/work/names.md`
 - `../packages/factory/story.md`
 - `../packages/factory/report.md`

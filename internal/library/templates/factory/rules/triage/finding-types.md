@@ -12,7 +12,7 @@ Every finding carries one of nine types, ordered by what it points at. The type 
 |---|---|---|---|---|
 | the spec | Requirement | a statement of what should hold that is missing in the spec or stands there differently | `pending` | work it out and examine it, then decide; taken over, it changes the spec |
 | | Idea | a raw proposal for something new | `pending` | never taken over without consent; work it out, then place it in a feature, make it a new one, or park it |
-| | Question | unclear or contradictory, needs an answer | `pending` | someone in particular answers; the answer goes into the context and often becomes a Requirement; daily when it blocks work |
+| | Question | unclear or contradictory, needs an answer | `pending` | someone in particular answers; the answer goes into the context and often becomes a Requirement; when it blocks work, its importance is at least `high`, so it is shown daily |
 | the product | Bug | does not do what it should | `ready` | a story with fixed tasks; only its priority is open, from likelihood and impact |
 | | Risk | works today, may go wrong | `pending` | mitigate (into the plan), observe (an observer keeps an eye on it) or accept (close it with the reason) |
 | | Smell | a sign that something is not clean or does not fit: a detour, a flow the structure prevents, a name that cannot be found | `ready` | a story for analysis at once; an existing one only gains a reference; how often decides its priority |
