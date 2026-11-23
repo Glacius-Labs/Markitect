@@ -1,9 +1,10 @@
 // Package project is a Markitect project, over a file system rooted at the
 // project folder: the file .markitect/spec that makes a folder a project and
-// names its spec folder, the project loaded with its spec, and the difference
-// between the specs of two projects. It reads only the file system it is
-// handed, so that two projects, such as the two that diff compares, load the same
-// way.
+// names its spec folder, the project loaded with its spec, the ignore file that
+// leaves out what does not belong to its files, and the difference between two
+// projects: their specs, and for each module its files. It reads only the file
+// systems it is handed, so that two projects, such as the two that diff
+// compares, load the same way.
 //
 // The rules are in docs/guides/project-reference.md.
 package project
@@ -85,6 +86,8 @@ func readLine(fsys fs.FS, name string) (string, error) {
 
 // Project is a project loaded from a file system rooted at its folder.
 type Project struct {
+	// FS is the project folder.
+	FS fs.FS
 	// SpecFolder is the spec folder, a path below the project folder.
 	SpecFolder string
 	// SpecFS is the spec folder.
@@ -111,5 +114,5 @@ func Load(fsys fs.FS) (*Project, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Project{SpecFolder: folder, SpecFS: sub, Spec: spec}, nil
+	return &Project{FS: fsys, SpecFolder: folder, SpecFS: sub, Spec: spec}, nil
 }

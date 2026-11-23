@@ -18,7 +18,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | `language` | The spec language over a supplied file system: documents, types, sections, links and check. | nothing | 1 |
 | `library` | The library: the module core, and the reference values and question catalog built into the tool. | nothing | 1 |
 | `signals` | The statements of a spec, its signals and the topic view, over a parsed spec. | `language` | 1 |
-| `project` | A project over a supplied file system: the file .markitect/spec, the project loaded with its spec and the difference between the specs of two projects. | `language` | 1 |
+| `project` | A project over a supplied file system: the file .markitect/spec, the project loaded with its spec, its ignore file, and the difference between two projects: their specs and, for each module, its files. | `language` | 1 |
 | `command-line` | The command line: its arguments, the project it works in, the commands that read its spec, version and licenses, and the text and JSON output. It writes nothing. | `build`, `language`, `library`, `signals`, `project` | 1 |
 | `entrypoint` | The thin entrypoint of markitect. | `command-line` | 1 |
 | `maintenance` | The import gate and the code map, separate from product execution. | nothing | 1 |
@@ -53,7 +53,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/project` | Package project is a Markitect project, over a file system rooted at the project folder: the file .markitect/spec that makes a folder a project and names its spec folder, the project loaded with its spec, and the difference between the specs of two projects. | [docs/guides/project-reference.md](../guides/project-reference.md) |
+| `internal/project` | Package project is a Markitect project, over a file system rooted at the project folder: the file .markitect/spec that makes a folder a project and names its spec folder, the project loaded with its spec, the ignore file that leaves out what does not belong to its files, and the difference between two projects: their specs, and for each module its files. | [docs/guides/project-reference.md](../guides/project-reference.md) |
 
 ## Command line
 
