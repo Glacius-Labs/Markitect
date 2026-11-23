@@ -90,7 +90,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 ### DEC-121 A spec is plain Markdown with types, packages and templates
 
 - A document is a Markdown file with a title and `##` sections, without YAML front matter. It is known by its path below the spec folder. Folders are free, so a spec may be ordered by feature. File names use lowercase letters, digits and hyphens; the readable name is the title.
-- A type is a document whose `##` sections are the template of its documents; the text under each says what belongs there, and `(optional)` marks a section that is not required. A document names its type under the title, `Type: [Service](../types/service.md)`. Types and documents relate as classes and objects do. A value, such as a state or an owner, stands in the first line of its section; there are no lines in the head but the type line.
+- A type is a document whose `##` sections are the template of its documents; the text under each says what belongs there, and `(optional)` marks a section that is not required. A document names its type under the title, `Type: [Service](../types/service.md)`, and a type may extend another in the same place ([DEC-155](#dec-155-a-type-extends-another-with-a-line-of-its-own)). Types and documents relate as classes and objects do. A value, such as a state or an owner, stands in the first line of its section; there are no lines in the head but the type line, or in a type the extends line.
 - Links are ordinary relative Markdown links, which work on GitHub, in editors and in note tools alike. A link is no import, and no section means anything special to the tool.
 - There is no module layer: no modules declared by an anchor, no rules on the direction of links, no visibility and no binding by place. What belongs together shares a folder. A part of the spec is a folder, and its README is its table of contents.
 - Types come from packages, folders of types such as `core`, `software` and `company`. Structure comes from templates, folders of documents with empty sections, which can be copied in at any level: a whole project, one part of the domain, or a field such as fire protection. Each type says before its sections what it is and when to use it, and under each section what belongs there, with an example. A spec owns its copy of each package and may change it.
@@ -100,6 +100,17 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - An ontology language, a modelling language and front matter with fields were weighed. None was chosen: Markdown is what people and agents already write.
 - The [language](concept/the-language.md) page describes it.
 - Reopen when a project repeatedly shows errors that a value form or check rule would have caught and the reviewer misses; when a software project shows a layer break that a reviewer misses and direction rules would have caught, or changes measurably reach wider without modules; when projects change their package copies so much that taking a newer package from the library is no longer possible and that does harm; or when an audit shows that agents' documents contradict their own prose more often than before.
+
+### DEC-155 A type extends another with a line of its own
+
+- A type inherits from another type, its base, with a line of its own, `Extends: [Base](base.md)`, where a document of a type has its type line. `Type:` stays for documents of a type. A document has one of the two lines, never both.
+- A document with an extends line is a type and is never checked as a document of its base. A document of a derived type needs the sections of the whole chain, its type's own and those of every type above it.
+- Telling a type by its use was weighed: `Type:` would name the base too, and a document would count as a type once another names it. It was not chosen, because a type that no document names yet would be read as a document of its base and need its sections. That is the normal case in a default that ships types without documents.
+- A derived type may describe a section of its base more precisely or make an optional one required, and never makes a required one optional. A chain that comes back to itself is an error.
+- No inheritance passes through `Type:`: a type that is a document of another type inherits nothing from it.
+- `check` reports a broken extends line, a base that is no document, a cycle and a loosened section. `show`, `table` and `topic` take a derived type's chain into account.
+- The [language](concept/the-language.md#types) page describes it.
+- Reopen when a project needs a type that makes a section of its base optional, or one type that extends two; or when chains grow so deep that people cannot tell which sections a document needs without the tool.
 
 <a id="dec-079-the-spec-is-as-explicit-as-good-documentation"></a><a id="dec-063-the-spec-is-the-authority-and-its-defects-go-to-the-owner"></a>
 

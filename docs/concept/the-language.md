@@ -15,7 +15,7 @@ A link is no import. It says that one document concerns another. No section mean
 
 ## Types
 
-A type is a document that another document names as its type; nothing else marks it. Its text before the first section says what the type is. Each of its sections is a section of its documents, and the text under it says what belongs there. A section is required unless its heading ends with `(optional)`.
+A type is a document that another document names as its type, that another type extends, or that extends a type itself; nothing else marks it. Its text before the first section says what the type is. Each of its sections is a section of its documents, and the text under it says what belongs there. A section is required unless its heading ends with `(optional)`.
 
 ```markdown
 # Operation
@@ -49,6 +49,36 @@ The copy's barcode and the member's card.
 The member already has five open loans: the answer is `limit_reached`.
 ```
 
+A type may extend another, its base, with a line of its own in the place of the type line, `Extends: ` followed by one link ([DEC-155](../decisions.md#dec-155-a-type-extends-another-with-a-line-of-its-own)). `Type:` stands only in a document of a type, and no document has both lines. A type that extends another is never a document of it: it needs none of its base's sections, so a type that no document names yet is still a type. Its sections are its own and those of every type up its chain, the base's first; a document of it has every required section of the whole chain. Here a project's own type, `types/query.md`, extends the Operation above, and a document of it needs the sections of both:
+
+```markdown
+# Query
+
+Extends: [Operation](../packages/software/operation.md)
+
+An operation that answers a question and changes nothing.
+
+## Answers
+What the caller learns from it.
+```
+
+```markdown
+# Open loans
+
+Type: [Query](../types/query.md)
+
+## Does
+Lists the loans of a member that are not yet returned.
+
+## Given
+The member's card.
+
+## Answers
+Each open loan with its copy and due date.
+```
+
+A type may describe a section of its base more precisely, under the same heading, or make an optional one required; it never makes a required one optional. A chain that comes back to itself is an error. Only an extends line passes sections on: a type that has a type line of its own inherits nothing from the type it names.
+
 Where a type says that a section holds a link to something, each document links it; where it says only what belongs there, the document states it directly. A strong statement that every document of a type must keep belongs in the type, so that a contradicting document cannot arise.
 
 ## Packages and templates
@@ -61,7 +91,7 @@ Each type says before its sections what it is and when to use it, and under each
 
 ## Values
 
-A value, such as the state of a concept or the owner of a process, stands in the first line of its section, `## Owner` with a link to a role under it. There are no lines in the head but the type line.
+A value, such as the state of a concept or the owner of a process, stands in the first line of its section, `## Owner` with a link to a role under it. There are no lines in the head but the type line, or in a type the extends line.
 
 ## Parts
 
@@ -80,8 +110,12 @@ An agent writes the structure, the sections and the links, as it writes the pros
 | `title` | The title is missing, or there is a second level-1 heading |
 | `type.unresolved` | The type line's link points to no document |
 | `type.line` | A line starting with `Type:` that is not exactly one link |
-| `section.missing` | A required section of the type is missing |
-| `section.empty` | A section of the type has no text |
+| `extends.unresolved` | The extends line's link points to no document |
+| `extends.line` | A line starting with `Extends:` that is not exactly one link, is not in the type line's place, or stands beside a type line |
+| `extends.cycle` | A chain of extends lines comes back to itself |
+| `extends.loosens` | A type marks optional a section that a type up its chain requires |
+| `section.missing` | A required section of the type, or of a type up its chain, is missing |
+| `section.empty` | A section of the type, or of a type up its chain, has no text |
 | `link.unresolved` | A link to a `.md` path points to no document of the spec |
 
 What the language does not catch, contradictions between values, gaps and wrong values, a reader finds ([§5](is-the-spec-good.md)). There are no value forms, check rules or declared scopes: something new joins only when a real project needs it.
