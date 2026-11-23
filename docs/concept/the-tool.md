@@ -25,7 +25,7 @@ The commands are flat, as Git's are. The help groups them.
 | | `version` | The tool's version, and whether it is the one the project pins |
 | | `licenses` | The third-party notices |
 
-**What the tool writes.** Of the state and the history it writes only what it binds: `confirm` a verdict row and its history entry, `move` the moved row and its history entry. `init`, `apply`, `new` and `move` write documents on request. Plan items, findings, reports and briefings are files that agents write and `check` checks. There is no command to report, to start or end a run, to land a branch or to steer anything, and no settings file.
+**What the tool writes.** Of the state and the history it writes only what it binds: `confirm` a verdict row and its history entry, `move` the moved row and its history entry. `init`, `apply`, `new` and `move` write documents on request, and `move` also rewrites the links in the documents of the work to the document it moves. Plan items, findings, reports and briefings are otherwise files that agents write and `check` checks. There is no command to report, to start or end a run, to land a branch or to steer anything, and no settings file.
 
 ## Output and exit codes
 

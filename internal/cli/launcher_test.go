@@ -96,7 +96,7 @@ func TestPluginOnlyFetchesTheTool(t *testing.T) {
 	}
 	var manifest struct{ Description string }
 	readJSON(t, filepath.Join(pluginDir, ".claude-plugin", "plugin.json"), &manifest)
-	if !strings.Contains(manifest.Description, "fetches the tool") {
+	if !strings.Contains(manifest.Description, "launcher downloads the release binary of the plugin") {
 		t.Errorf("the plugin describes itself as %q", manifest.Description)
 	}
 }

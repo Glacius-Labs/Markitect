@@ -97,8 +97,10 @@ func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 	oldSpec, newSpec := older.Project.Spec, newer.Project.Spec
 	// Where each document of the older project went: its own path, or where
 	// the newer history's moves led it.
+	// Only the moves the older history lacks count: a document moved away
+	// in the older history and back in the newer is where it was.
 	moves := map[string]string{}
-	for _, e := range newer.History {
+	for _, e := range NewEvents(older.History, newer.History) {
 		if e.Type == EventMove {
 			moves[e.From] = e.To
 		}

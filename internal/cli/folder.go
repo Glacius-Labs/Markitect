@@ -110,6 +110,17 @@ func precheck(folder string, c edit.Changes, local func(string) string) error {
 	return nil
 }
 
+// canWrite says why the file at name cannot be replaced, nil when it can: the
+// file must be writable and a temporary file must fit beside it.
+func canWrite(name string) error {
+	f, err := os.OpenFile(name, os.O_WRONLY, 0)
+	if err != nil {
+		return err
+	}
+	f.Close()
+	return probe(filepath.Dir(name))
+}
+
 // existingAncestor returns dir or its nearest ancestor that exists.
 func existingAncestor(dir string) string {
 	for {

@@ -416,3 +416,38 @@ func TestMoveKeepsTheSlashOfAFolder(t *testing.T) {
 	_, after := move(t, fsys, "a.md", "sub/a.md")
 	eq(t, text(after, "sub/a.md"), "# A\n\nThe [api](../dir/) and <a href=\"../dir/\">the api</a>.\n")
 }
+
+func TestRelinkWork(t *testing.T) {
+	doc := func(p, text string) *lang.Document { return lang.Parse(p, []byte(text)) }
+	const from, to = "docs/spec/a/old.md", "docs/spec/b/new one.md"
+	docs := []*lang.Document{
+		doc(".markitect/plan/x/item.md", "# Item\n\nType: [T](../../../docs/spec/a/old.md)\n\n[l](../../../docs/spec/a/old.md#s) ![i](../../../docs/spec/a/old.md) <a href=\"../../../docs/spec/a/old.md\">h</a> [q](../../../docs/spec/a/old.md?x=1)\n"),
+		doc(".markitect/plan/y/other.md", "# Other\n\n[kept](../../../docs/spec/a/else.md) and [code](../../../src/old.go)\n"),
+		doc(".markitect/briefing/z.md", "# Z\n\n[x](<../../docs/spec/a/old.md>) and [d](./../../docs/spec/a/../a/old.md)\n"),
+	}
+	writes, left := RelinkWork(docs, from, to)
+	got := map[string]string{}
+	for _, w := range writes {
+		got[w.Path] = string(w.Data)
+	}
+	want := map[string]string{
+		".markitect/plan/x/item.md": "# Item\n\nType: [T](../../../docs/spec/b/new%20one.md)\n\n[l](../../../docs/spec/b/new%20one.md#s) ![i](../../../docs/spec/b/new%20one.md) <a href=\"../../../docs/spec/b/new%20one.md\">h</a> [q](../../../docs/spec/b/new%20one.md?x=1)\n",
+		".markitect/briefing/z.md":  "# Z\n\n[x](<../../docs/spec/b/new one.md>) and [d](../../docs/spec/b/new%20one.md)\n",
+	}
+	for p, text := range want {
+		if got[p] != text {
+			t.Errorf("%s is\n%q\nwant\n%q", p, got[p], text)
+		}
+	}
+	if len(got) != len(want) || len(left) != 0 {
+		t.Errorf("wrote %v, left %+v", got, left)
+	}
+	// A link that cannot be placed in the text cannot be rewritten byte for
+	// byte: its document is left as it is, and named.
+	unplaced := &lang.Document{Path: ".markitect/context/odd.md", Source: []byte("# Odd\n\n[x](old.md)\n"),
+		Paths: []lang.Ref{{Dest: "../../docs/spec/a/old.md", Raw: "../../docs/spec/a/old.md", Target: from, Line: 3, Start: -1, End: -1}}}
+	writes, left = RelinkWork([]*lang.Document{unplaced}, from, to)
+	if len(writes) != 0 || len(left) != 1 || left[0].Path != ".markitect/context/odd.md" || left[0].Reason != "cannot rewrite the link at line 3" {
+		t.Errorf("wrote %v, left %+v", writes, left)
+	}
+}

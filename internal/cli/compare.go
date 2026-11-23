@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing/fstest"
-	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/edit"
 	"github.com/Glacius-Labs/Markitect/internal/lang"
@@ -242,19 +241,13 @@ func orNone(s, none string) string {
 // documents they rewrote, by their paths in the newer project. It replays
 // each move as move computes it, and stops at one it cannot replay.
 func replay(older, newer *state.Snapshot) map[string][]byte {
-	var last time.Time
-	for _, e := range older.History {
-		if e.Time.After(last) {
-			last = e.Time
-		}
-	}
 	texts := map[string][]byte{}
 	for _, d := range older.Project.Spec.Documents {
 		texts[d.Path] = d.Source
 	}
 	rewritten := map[string]bool{}
-	for _, e := range newer.History {
-		if e.Type != state.EventMove || !e.Time.After(last) {
+	for _, e := range state.NewEvents(older.History, newer.History) {
+		if e.Type != state.EventMove {
 			continue
 		}
 		fsys := fstest.MapFS{}

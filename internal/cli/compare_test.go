@@ -270,3 +270,25 @@ func TestAllShowsEveryChangeSignal(t *testing.T) {
 		t.Errorf("%v %s", err, js)
 	}
 }
+
+// A document that NEW moves back to the path OLD's own history moved it away
+// from is moved, not new and gone: only the moves OLD lacks count.
+func TestCompareFindsADocumentMovedBack(t *testing.T) {
+	clock(t)
+	older := confirmedWith(t, withFlow())
+	if code, _, errOut := run("move", "-C", older, "lending/borrow.md", "loans/borrow.md"); code != ExitOK {
+		t.Fatal(errOut)
+	}
+	newer := copyTree(t, older, false)
+	if code, _, errOut := run("move", "-C", newer, "loans/borrow.md", "lending/borrow.md"); code != ExitOK {
+		t.Fatal(errOut)
+	}
+	code, out, _ := run("compare", older, newer, "--json")
+	var doc compareDocument
+	if err := json.Unmarshal([]byte(out), &doc); err != nil || code != ExitFound {
+		t.Fatal(code, out)
+	}
+	if len(doc.New) != 0 || len(doc.Gone) != 0 || len(doc.Moved) != 1 || doc.Moved[0].From != "loans/borrow.md" || doc.Moved[0].To != "lending/borrow.md" {
+		t.Errorf("new %v gone %v moved %+v", doc.New, doc.Gone, doc.Moved)
+	}
+}

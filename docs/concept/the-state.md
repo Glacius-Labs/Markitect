@@ -23,7 +23,7 @@ The mapping stands nowhere else: not in the artifact, not in the spec. The build
 
 A gap or contradiction in the spec is no verdict: it is a finding ([§9](the-work.md)).
 
-The documents of the work in `.markitect/`, plan items, findings, reports and briefings, are not documents of the spec and have no row. A link from them into the spec makes nothing in the spec suspect, and `move` rewrites those links when it moves the document they name ([moving a document](#moving-a-document)).
+The documents of the work in `.markitect/`, plan items, findings, reports and briefings, are not documents of the spec and have no row. A link from them into the spec makes nothing in the spec suspect; `move` rewrites it ([moving a document](#moving-a-document)).
 
 ## What `status` lists
 
@@ -51,7 +51,7 @@ The reviewer changes nothing that was built; `confirm` is the one thing it write
 
 ## Moving a document
 
-A document is known by its path. `markitect move` moves it, rewrites every link to it in the spec and in the documents of the work, the type lines included, and the relative links inside it, and carries its row in the state to the new path. The documents whose links it rewrote changed only mechanically: `move` computes their hashes anew, records the move in the history, and puts none of them on the list.
+A document is known by its path. `markitect move` moves it, rewrites every link to it in the spec, the type lines included, and the relative links inside it, and the links to it in the documents of the work, and carries its row in the state to the new path. The documents whose links it rewrote changed only mechanically: `move` computes their hashes anew, records the move in the history, and puts none of them on the list.
 
 ## The history
 

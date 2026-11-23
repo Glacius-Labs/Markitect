@@ -245,7 +245,7 @@ func TestMoveLeavesAnUnreadableDocumentOfTheWorkAsItIs(t *testing.T) {
 	}
 	code, out, errOut := run("move", "-C", dir, "lending/renew", "lending/renewal")
 	if code != ExitOK || !strings.Contains(out, "changed .markitect/plan/lending/renew-online/feature.md\n") ||
-		!strings.Contains(out, "left as it is .markitect/findings/pending/late-fee.md: cannot be read\n") {
+		!strings.Contains(out, "left as it is .markitect/findings/pending/late-fee.md: could not be read, so it was not searched for links to this document\n") {
 		t.Fatalf("%d %s %s", code, out, errOut)
 	}
 }

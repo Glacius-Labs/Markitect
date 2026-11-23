@@ -98,4 +98,4 @@ packages/core/rule.md: changed 1 time × linked from 3 documents = 3
 packages/core/concept.md: changed 1 time × linked from 2 documents = 2
 ```
 
-The example shows the first lines of one signal. With `--json`, `topic` of the whole spec holds `change_signals` with `verdicts` and `moves`, the events read, `changes` with `time`, `docs` and `events`, `signals`, each signal's list with `docs`, `count` and `detail`, `reference` per signal, `weakening`, and `history`, the lines of the history it cannot read, which the text shows as notes.
+The example shows the first lines of one signal. With `--json`, `topic` of the whole spec holds `change_signals` with `verdicts` and `moves`, the numbers of verdict and move events read, `changes` with `time`, `docs` and `events`, `signals`, each signal's list with `docs`, `count` and `detail`, `reference` per signal, `weakening`, and `history`, the lines of the history it cannot read, which the text shows as notes.

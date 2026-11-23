@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/edit"
@@ -109,10 +110,22 @@ func move(o options, stdout io.Writer) (int, error) {
 		return ExitFailed, err
 	}
 	was, now := path.Join(w.SpecFolder, m.From), path.Join(w.SpecFolder, m.To)
-	relinked, left := edit.RelinkWork(work.Documents, was, now)
-	for _, p := range work.Unreadable {
-		left = append(left, edit.Left{Path: p, Reason: "cannot be read"})
+	rewrites, left := edit.RelinkWork(work.Documents, was, now)
+	// A document of the work that cannot be written stays as it is too: only
+	// the spec's own files make the move all or nothing.
+	var relinked []edit.Write
+	for _, wr := range rewrites {
+		if err := canWrite(filepath.Join(dir, filepath.FromSlash(wr.Path))); err != nil {
+			left = append(left, edit.Left{Path: wr.Path, Reason: "cannot be written: " + err.Error()})
+			continue
+		}
+		relinked = append(relinked, wr)
 	}
+	// What cannot be read may link the document or not; the tool cannot know.
+	for _, p := range work.Unreadable {
+		left = append(left, edit.Left{Path: p, Reason: "could not be read, so it was not searched for links to this document"})
+	}
+	sort.Slice(left, func(i, j int) bool { return left[i].Path < left[j].Path })
 	changes, err := carry(dir, w, m, rows)
 	if err != nil {
 		return ExitFailed, err

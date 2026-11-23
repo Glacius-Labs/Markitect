@@ -207,6 +207,23 @@ func (s *Status) VerdictEvent(at time.Time, doc, verdict, inputs string) Event {
 	return e
 }
 
+// NewEvents are the events of the newer history that the older one does not
+// hold, in the newer one's order: what happened between two states of a
+// project, which a comparison replays.
+func NewEvents(older, newer []Event) []Event {
+	had := map[string]bool{}
+	for _, e := range older {
+		had[string(e.Line())] = true
+	}
+	var out []Event
+	for _, e := range newer {
+		if !had[string(e.Line())] {
+			out = append(out, e)
+		}
+	}
+	return out
+}
+
 // Text is a document's text before and after a move rewrote it.
 type Text struct{ Before, After []byte }
 

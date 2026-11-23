@@ -54,7 +54,7 @@ It prints `created PATH` for each file and folder it made, a folder with a `/` a
 
 The documents of the work are the Markdown files below `.markitect/context/`, `.markitect/findings/`, `.markitect/plan/` and `.markitect/briefing/`, at any depth. A file is a document by the rule of the [language reference](language-reference.md#documents). The folders of the work that are missing are no error; a folder whose name starts with a dot, every file that is no document and everything the project's `.gitignore` files exclude, read as [the walk](#the-walk) reads them, are passed over, so that `check` and `compare` do not read it; `.markitect/ignore` does not apply, since it names files that realize nothing; a file that cannot be read stops the command. A project's `.markitect/` holds no other document.
 
-They are written in the language and are no part of the spec: a document of the work has no row in the state, `status`, `show` and `table` know none, a link from it into the spec makes nothing suspect, `move` rewrites it with the others, and `confirm` refuses one ([confirm](#confirm)). `check` checks each one and exits 1 when it finds an error, but an error in the documents of the work blocks no other command: `status`, `confirm` and `move` look at the spec and the state only.
+They are written in the language and are no part of the spec: a document of the work has no row in the state, `status`, `show` and `table` know none, a link from it into the spec makes nothing suspect, and `confirm` refuses one ([confirm](#confirm)). `check` checks each one and exits 1 when it finds an error, but an error in the documents of the work blocks no other command: `status`, `confirm` and `move` look at the spec and the state only.
 
 **What `check` finds.** A document of the work is checked for its title, as a document of the spec is. Its type line, when it has one, must be exactly one link to a document of the spec: the link is relative to the document's own folder, so that from `.markitect/findings/pending/` the type `packages/factory/finding.md` of a spec in `docs/spec/` is `../../../docs/spec/packages/factory/finding.md`. The document then has each section its type requires, and each section it has holds text. A document without a type line is checked for its title and its links only. Each relative destination, of a link to any file, an image, a link reference definition or an HTML `href` or `src`, must lead to an existing file or folder of the project, in the case it is written; a web address or a bare `#section` is not checked, and neither is the type line's link, which is the type.
 
@@ -71,11 +71,11 @@ A document of the work is named by its path below the project folder, with `/`: 
 
 ```text
 .markitect/findings/pending/late-fee.md:3: section.missing: missing section "Context" required by packages/factory/finding.md
-.markitect/findings/pending/late-fee.md:18: link.unresolved: no file at "../../context/observe/2026-11-23-desk.md"
+.markitect/findings/pending/late-fee.md:18: link.unresolved: no file at "../../context/observe-desk/2026-11-23-0915.md"
 2 errors in 35 documents, 1 document of the work
 ```
 
-`move` rewrites the links of the documents of the work to the moved document ([move and the state](#move-and-the-state)). `compare` names the documents of the work that are new, gone or changed ([compare](#compare)).
+`move` rewrites their links to a moved document ([move and the state](#move-and-the-state)). `compare` names the documents of the work that are new, gone or changed ([compare](#compare)).
 
 ## version
 
@@ -201,7 +201,7 @@ It writes under a lock: a file in `markitect/locks/` of the user's cache folder,
 
 ## move and the state
 
-`markitect move OLD NEW` ([language reference](language-reference.md#commands-that-write)) carries the state with the document, so that a move leaves `status` as it was. It takes the lock of the state ([confirm](#confirm)), refuses while the spec has errors or the state a line it cannot read, and writes the moved and rewritten documents of the spec and of the work, the state and the history in one change set: when a step fails, every step done is undone, the state and the history included. The links of the work are rewritten as those of the spec are, type lines included, mechanically; the move records no document of the work in the history, and a document of the work that cannot be read, or whose links cannot be rewritten so that each still reaches what it did, is left as it is and named, `left as it is PATH: REASON`.
+`markitect move OLD NEW` ([language reference](language-reference.md#commands-that-write)) carries the state with the document, so that a move leaves `status` as it was. It takes the lock of the state ([confirm](#confirm)), refuses while the spec has errors or the state a line it cannot read, and writes the moved and rewritten documents of the spec, the state and the history in one change set: when a step fails, every step done is undone, the state and the history included.
 
 - The moved document's rows take the new path, and every `type:` and `link:` input that names it names the new path.
 - For each document whose text `move` rewrote, the moved one included: a `self` that matched its text before the move takes the hash of its new text, and so does a `type:` or `link:` input of another row that matched it. One that did not match stays, so a document that was changed or suspect before the move is so after it.
@@ -209,6 +209,8 @@ It writes under a lock: a file in `markitect/locks/` of the user's cache folder,
 - It appends a `move` event to the history.
 
 The other inputs stay: an artifact, a counter-check or a file of the spec folder that a document links keeps its path, and the moved document's rewritten links reach the same file. The documents of the work have no row, so they carry no state.
+
+**The work.** `move` also rewrites, in the documents of the work, every link to the moved document that `check` verifies there: links, type lines, images, `<a href>` and `src` values, reference definitions, and the forms of a destination, with a query or an anchor, with `./` and `../`, in `<…>`, encoded or with spaces. It rewrites them mechanically, as in the spec, so that each still reaches the same file, and keeps every other byte. A document of the work that cannot be read, rewritten or written never stops the move: it is left as it is and named, `left as it is PATH: REASON`, sorted by path, with `cannot be written: …` for one it could not write, and for one it could not read that it was not searched for links to the moved document. Only the spec's own documents, the state and the history stay all or nothing. The move records no document of the work in the history.
 
 ## The history
 
@@ -260,4 +262,4 @@ lending/loan-limit.md
 +A loan is open until the book is returned.
 ```
 
-**Mechanical rewrites.** `compare` replays on OLD's documents, as `move` computes them, the moves of NEW's history after the last event of OLD's history. A document whose text in NEW is what the replay makes of it is moved or rewritten, not changed, and makes no neighbour suspect, as `status` lists none of them. One whose text also changed otherwise is changed, with its diff, and makes its neighbours suspect. A move made without `move` leaves no event, and shows as a document gone and one new. A line of either project's state or history that `compare` cannot read is left out and printed first as a note, `note: old: .markitect/state.jsonl:LINE: …, left out`; with `--json`, `notes` holds them with `side`. Each section shows `(none)` when empty. `compare` exits 0 when nothing differs and 1 otherwise; notes do not change that. With `--json` it prints `new`, `gone`, `moved` with `from`, `to`, `diff` and `mechanical`, `rewritten`, `changed` with `doc` and `diff`, `suspect` with `doc` and `because`, `verdicts` with `doc`, `old_verdict`, `new_verdict`, `old_artifacts` and `new_artifacts`, `unexplained`, `work` with `path` and `change`, and `notes`.
+**Mechanical rewrites.** `compare` replays on OLD's documents, as `move` computes them, the moves among the events of NEW's history that OLD's history lacks, so that a document moved back to an earlier path shows as moved. A document whose text in NEW is what the replay makes of it is moved or rewritten, not changed, and makes no neighbour suspect, as `status` lists none of them. One whose text also changed otherwise is changed, with its diff, and makes its neighbours suspect. A move made without `move` leaves no event, and shows as a document gone and one new. A line of either project's state or history that `compare` cannot read is left out and printed first as a note, `note: old: .markitect/state.jsonl:LINE: …, left out`; with `--json`, `notes` holds them with `side`. Each section shows `(none)` when empty. `compare` exits 0 when nothing differs and 1 otherwise; notes do not change that. With `--json` it prints `new`, `gone`, `moved` with `from`, `to`, `diff` and `mechanical`, `rewritten`, `changed` with `doc` and `diff`, `suspect` with `doc` and `because`, `verdicts` with `doc`, `old_verdict`, `new_verdict`, `old_artifacts` and `new_artifacts`, `unexplained`, `work` with `path` and `change`, and `notes`.

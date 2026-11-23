@@ -100,8 +100,9 @@ type Left struct{ Path, Reason string }
 // RelinkWork rewrites, in documents outside the spec folder, such as the
 // documents of the work, every link to the document at from, so that it
 // points to to; both are paths below the project folder, as the documents'
-// own paths are. The rewrite is the one MoveDocument makes in the spec:
-// type lines and link reference definitions included, the #section and every
+// own paths are. It rewrites every relative destination that checking the
+// document verifies: links, type lines, images, link reference definitions
+// and HTML href and src values, with the #section and the ?query and every
 // other byte kept. A document whose links cannot be rewritten so that each
 // still reaches what it did is left as it is and named in left.
 func RelinkWork(docs []*lang.Document, from, to string) (writes []Write, left []Left) {
@@ -112,14 +113,14 @@ func RelinkWork(docs []*lang.Document, from, to string) (writes []Write, left []
 			}
 			return r.Target
 		}
-		fresh, err := rewrite(d, d.Refs, func(r lang.Ref) (string, bool) {
+		fresh, err := rewrite(d, d.Paths, func(r lang.Ref) (string, bool) {
 			if r.Target != from {
 				return "", false
 			}
 			return rel(to, dir(d.Path)), true
 		})
 		if err == nil && !bytes.Equal(fresh, d.Source) {
-			err = verify(d.Path, fresh, d.Refs, func(d *lang.Document) []lang.Ref { return d.Refs }, target)
+			err = verify(d.Path, fresh, d.Paths, func(d *lang.Document) []lang.Ref { return d.Paths }, target)
 		}
 		switch {
 		case err != nil:
