@@ -57,17 +57,11 @@ type Analysis struct {
 func Analyze(spec *lang.Spec, refs References) *Analysis {
 	a := &Analysis{Spec: spec, Findings: map[string][]Finding{}, links: map[string]map[string]bool{},
 		inbound: map[string]map[string]bool{}, refs: refs}
-	types := map[string]bool{}
-	for _, d := range spec.Documents {
-		if d.HasType() {
-			types[d.TypePath] = true
-		}
-	}
 	for _, d := range spec.Documents {
 		for _, st := range Statements(d) {
 			// The text under a type's sections guides the writer; only what
 			// stands before its first section says what the type is.
-			if types[d.Path] && (st.Section != "" || len(d.Sections) > 0 && st.Line > d.Sections[0].Line) {
+			if spec.IsType(d) && (st.Section != "" || len(d.Sections) > 0 && st.Line > d.Sections[0].Line) {
 				continue
 			}
 			a.Statements = append(a.Statements, st)

@@ -10,7 +10,7 @@ How the tool `markitect` shows where reading a spec pays off: the statements it 
 | `markitect topic TOPIC` | The topic view of a document, a type or a folder, with every finding |
 | `markitect questions` | The question catalogs of the packages of the default that the spec has in `packages/` |
 
-A finding reads `path:line: signal: detail`. With `--json`, `topic` prints `topic`, `topic_kind` (`spec`, `document`, `type` or `folder`), `documents`, the paths of the documents of the topic, `strong`, `linked_from` and `mentions` as lists of statements with `file`, `line`, `section` and `text`, and `signals`, each signal's list of findings with `file`, `line` and `detail`; for a type also `typed_documents`. `questions` prints `packages`, each with `package` and `questions`.
+A finding reads `path:line: signal: detail`. With `--json`, `topic` prints `topic`, `topic_kind` (`spec`, `document`, `type` or `folder`), `documents`, the paths of the documents of the topic, `strong`, `linked_from` and `mentions` as lists of statements with `file`, `line`, `section` and `text`, and `signals`, each signal's list of findings with `file`, `line` and `detail`; for a type also `typed_documents`, those of the types that extend it included. `questions` prints `packages`, each with `package` and `questions`.
 
 ## Statements
 
@@ -18,7 +18,7 @@ A statement is the unit of every signal: a sentence of a paragraph, a list item,
 
 - **Sentences.** A paragraph splits after `.`, `!` or `?`, together with any further `.!?` and closing quotes or brackets, when white space or the end follows. It does not split after `e.g.`, `i.e.`, `etc.` or `vs.`, nor inside a number such as `2.5`.
 - **Whole units.** A list item is one statement, whatever its sentences; its nested lists are statements of their own. A table body row is one statement, its cells joined by ` | `; the header row is none. A block quote's paragraphs and lists are statements like any other.
-- **Not statements.** Headings, the type line and any other line starting with `Type:`, code, HTML, link reference definitions and footnotes. In a type, the text under its sections tells the writer what belongs there and is no statement of the spec; only its text before the first section, which says what the type is, counts.
+- **Not statements.** Headings, the type line and any other line starting with `Type:`, the extends line and any other line starting with `Extends:`, code, HTML, link reference definitions and footnotes. In a type, the text under its sections tells the writer what belongs there and is no statement of the spec; only its text before the first section, which says what the type is, counts.
 - **What a statement keeps.** Its document, its section, or none before the first section, its line, its words, the documents its links point to, and its markers.
 - **Words** are runs of letters and digits, joined inside a word by a hyphen or an apostrophe, compared in lower case. `user-friendly` is one word; `e.g.` is two.
 
@@ -41,7 +41,7 @@ Each signal is a list sorted strongest first; equal ones stand in path and line 
 | Weak statements | `weak` | Every statement with conditions or vague words, with the words found | Most conditions and vague words |
 | Strong statements | `strong` | Every statement with strong words. Its subject is what it links to or names, or its own document when it does neither | Most documents that link to or name its subject |
 | Complexity of a statement | `complexity` | Every statement with its words, beside the project's median and maximum and the reference of its document's type, its terms, the documents it links to, and its conditions | Most words, then conditions, then terms |
-| Size | `size` | Every document with a type: its statements, beside the median, range and number of documents of the same type and the type's reference | Highest ratio to the median of its type |
+| Size | `size` | Every document with a type: its statements, beside the median, range and number of documents of exactly the same type, not of its base, and the type's reference | Highest ratio to the median of its type |
 | Text before the first section | `text-before-sections` | Every document with a type that has statements before its first section, after the type line, with their number | Most statements |
 | Recurring link group | `link-group` | The same three or more link targets under the same section heading, compared without regard to case, in two or more documents. The groups are the intersections of the sections' targets, of any number of documents, so a group shared by many is found even where each pair shares more. Only the largest group with the same documents is listed | Most documents, then most links |
 | Scattered rules | `scattered-rules` | Every document that conditional or restricting statements of other documents refer to, with those documents. A statement is restricting when it holds one of the strong words only, never, must not, no one, nobody or none, or "not" followed by "alone" within three words | Most other documents |
@@ -53,10 +53,10 @@ Each signal is a list sorted strongest first; equal ones stand in path and line 
 
 ## The topic view
 
-A topic is a document, a type, which is a document that another names in its type line, or a folder below the spec folder. `topic` prints one text:
+A topic is a document, a type ([language reference](language-reference.md#types-and-the-type-line)), or a folder below the spec folder. `topic` prints one text:
 
 1. **Strong statements about it** from other documents: those that link to it or name it. They come first, since the single cases are read against them.
-2. **The topic itself:** a document's text; a type's text and its documents as the [`table`](language-reference.md#commands-that-read); a folder's documents in path order, its README among them.
+2. **The topic itself:** a document's text; a type's text and its documents, those of the types that extend it included, as the [`table`](language-reference.md#commands-that-read); a folder's documents in path order, its README among them.
 3. **Linked from:** every statement of another document that links to it, with its section. A link outside a statement, such as one in a heading, does not appear here; `show` lists it.
 4. **Mentioned without a link:** every statement of another document that names it while that document has no link to it.
 5. **Signals:** every finding that concerns a document of the topic.

@@ -8,7 +8,7 @@ import (
 )
 
 // Text is one stretch of prose of a document: a paragraph, the text of a list
-// item or a table body row, rendered as plain text. Headings, the type line,
+// item or a table body row, rendered as plain text. Headings, the type and extends lines,
 // code, HTML, link reference definitions and footnotes hold none.
 type Text struct {
 	// Kind is "paragraph", "item" or "row".
@@ -102,7 +102,7 @@ func (p *parser) keep(t *Text) {
 	}
 }
 
-// flow renders the inline content of n into t, leaving out type lines.
+// flow renders the inline content of n into t, leaving out type and extends lines.
 func (p *parser) flow(n ast.Node, t *Text) {
 	anchor := func(offset int) {
 		line := p.line(offset)
@@ -113,7 +113,7 @@ func (p *parser) flow(n ast.Node, t *Text) {
 	for c := n.FirstChild(); c != nil; c = c.NextSibling() {
 		switch c := c.(type) {
 		case *ast.Text:
-			if p.typeLines[p.line(c.Segment.Start)] {
+			if p.headLines[p.line(c.Segment.Start)] {
 				continue
 			}
 			anchor(c.Segment.Start)
@@ -128,7 +128,7 @@ func (p *parser) flow(n ast.Node, t *Text) {
 			anchor(c.Pos())
 			t.Text += string(c.URL(p.source))
 		case *ast.Link:
-			if p.typeLines[p.line(c.Pos())] {
+			if p.headLines[p.line(c.Pos())] {
 				continue
 			}
 			start := len(t.Text)

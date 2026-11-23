@@ -16,17 +16,29 @@ type showDocument struct {
 	// Type is the path of the type, "" without one; TypeState is "none",
 	// "invalid" for a type line that is not one link, "missing" for a type
 	// that is no document, or "ok".
-	Type       string        `json:"type"`
-	TypeState  string        `json:"type_state"`
-	Sections   []showSection `json:"sections"`
-	LinksTo    []showLink    `json:"links_to"`
-	LinkedFrom []showLink    `json:"linked_from"`
-	// Documents are the documents whose type this document is.
+	Type      string `json:"type"`
+	TypeState string `json:"type_state"`
+	// Extends and ExtendsState are the base of a type that extends another and
+	// the state of its extends line, "missing" or "ok", as Type and TypeState are
+	// for a document of a type; both are left out for any other document. An
+	// extends line that is not one link counts for nothing.
+	Extends      string        `json:"extends,omitempty"`
+	ExtendsState string        `json:"extends_state,omitempty"`
+	Sections     []showSection `json:"sections"`
+	// ExtendedBy are the types that extend this type directly.
+	ExtendedBy []string   `json:"extended_by,omitempty"`
+	LinksTo    []showLink `json:"links_to"`
+	LinkedFrom []showLink `json:"linked_from"`
+	// Documents are the documents whose type this document is, or a type that
+	// extends it.
 	Documents []string `json:"documents"`
 }
 
+// showSection is a section of a document; for a type that extends another,
+// DeclaredBy is the path of the type that declares a section it inherits.
 type showSection struct {
-	Heading string `json:"heading"`
+	Heading    string `json:"heading"`
+	DeclaredBy string `json:"declared_by,omitempty"`
 }
 
 type showLink struct {
@@ -57,8 +69,27 @@ func show(o options, stdout io.Writer) (int, error) {
 	default:
 		doc.TypeState = "ok"
 	}
-	for _, s := range d.Sections {
-		doc.Sections = append(doc.Sections, showSection{Heading: s.Heading})
+	if d.HasExtends() {
+		doc.Extends = d.ExtendsPath
+		doc.ExtendsState = "ok"
+		if _, ok := spec.Document(d.ExtendsPath); !ok {
+			doc.ExtendsState = "missing"
+		}
+		for _, s := range spec.ChainSections(d) {
+			heading := s.Name
+			if s.Optional {
+				heading += " (optional)"
+			}
+			sec := showSection{Heading: heading}
+			if s.DeclaredBy != d.Path {
+				sec.DeclaredBy = s.DeclaredBy
+			}
+			doc.Sections = append(doc.Sections, sec)
+		}
+	} else {
+		for _, s := range d.Sections {
+			doc.Sections = append(doc.Sections, showSection{Heading: s.Heading})
+		}
 	}
 	seen := map[string]bool{}
 	for _, l := range d.Links {
@@ -76,9 +107,14 @@ func show(o options, stdout io.Writer) (int, error) {
 				doc.LinkedFrom = append(doc.LinkedFrom, showLink{Path: other.Path, Section: l.Section})
 			}
 		}
-		if other.HasType() && other.TypePath == d.Path {
-			doc.Documents = append(doc.Documents, other.Path)
+	}
+	for _, other := range spec.Documents {
+		if other.HasExtends() && other.ExtendsPath == d.Path {
+			doc.ExtendedBy = append(doc.ExtendedBy, other.Path)
 		}
+	}
+	for _, other := range spec.Objects(d) {
+		doc.Documents = append(doc.Documents, other.Path)
 	}
 	sortLinks(doc.LinksTo)
 	sortLinks(doc.LinkedFrom)
@@ -117,7 +153,14 @@ func showText(doc showDocument) string {
 	case "missing":
 		kind += " (missing)"
 	}
-	b.WriteString(doc.Path + "\nTitle: " + title + "\nType: " + kind + "\n")
+	label := "Type: "
+	if doc.ExtendsState != "" {
+		label, kind = "Extends: ", doc.Extends
+		if doc.ExtendsState == "missing" {
+			kind += " (missing)"
+		}
+	}
+	b.WriteString(doc.Path + "\nTitle: " + title + "\n" + label + kind + "\n")
 	list := func(label string, items []string, always bool) {
 		if len(items) == 0 {
 			if always {
@@ -132,7 +175,11 @@ func showText(doc showDocument) string {
 	}
 	var sections, to, from []string
 	for _, s := range doc.Sections {
-		sections = append(sections, s.Heading)
+		if s.DeclaredBy != "" {
+			sections = append(sections, s.Heading+" (from "+s.DeclaredBy+")")
+		} else {
+			sections = append(sections, s.Heading)
+		}
 	}
 	for _, l := range doc.LinksTo {
 		if l.Missing {
@@ -149,6 +196,7 @@ func showText(doc showDocument) string {
 		}
 	}
 	list("Sections:", sections, true)
+	list("Extended by:", doc.ExtendedBy, false)
 	list("Links to:", to, true)
 	list("Linked from:", from, true)
 	list("Documents:", doc.Documents, false)
@@ -187,16 +235,14 @@ func table(o options, stdout io.Writer) (int, error) {
 	return output(o, stdout, doc, tableText(doc))
 }
 
-// tableOf is every document of the type t as a row.
+// tableOf is every document of the type t, and of every type that extends it,
+// as a row, with a column per section of t's chain.
 func tableOf(spec *lang.Spec, t *lang.Document) tableDocument {
 	doc := tableDocument{header: newHeader("table"), Type: t.Path, Columns: []string{}, Rows: []tableRow{}}
-	for _, s := range t.Declared() {
+	for _, s := range spec.ChainSections(t) {
 		doc.Columns = append(doc.Columns, s.Name)
 	}
-	for _, d := range spec.Documents {
-		if !d.HasType() || d.TypePath != t.Path {
-			continue
-		}
+	for _, d := range spec.Objects(t) {
 		row := tableRow{Path: d.Path, Title: d.Title, Cells: []string{}}
 		for _, name := range doc.Columns {
 			s, _ := d.Section(name)

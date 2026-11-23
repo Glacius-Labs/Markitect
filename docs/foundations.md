@@ -29,7 +29,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 **Analogy.** A statically typed language reports a contradiction when it compiles, a dynamically typed one only when the program runs into it. A declarative language states what should hold and leaves how to an executor, as SQL leaves the plan to the database and Terraform the steps to its providers. TLA+ (Lamport) and Alloy (Jackson) are specification languages: formal, and never executed. The spec borrows all three images ([DEC-119](decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)): it is typed, it is declarative with an agent as its executor, and nothing in it is executed. `markitect check` is the type checker, and a borrowed idea, not a guarantee ([DEC-138](decisions.md#dec-138-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)).
 
-**Taken.** Types and their instances, as classes and objects: a type declares the sections of its documents, and a checker enforces them ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-packages-and-templates)).
+**Taken.** Types and their instances, as classes and objects: a type declares the sections of its documents, and a checker enforces them ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-packages-and-templates)). A type extends another as a class extends its base class, and inherits its sections ([DEC-155](decisions.md#dec-155-a-type-extends-another-with-a-line-of-its-own)).
 
 **Differs.** Only the structure is formal. The content is prose that an agent interprets, so the result is checked, not derived. A type declares sections only, with no value forms or check rules, and everything stays plain Markdown with ordinary links.
 

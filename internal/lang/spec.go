@@ -11,14 +11,24 @@ import (
 type Spec struct {
 	Documents []*Document
 	byPath    map[string]*Document
+	types     map[string]bool // the paths of the documents that are types
 }
 
 // NewSpec indexes documents by path and sorts them.
 func NewSpec(docs []*Document) *Spec {
-	s := &Spec{Documents: append([]*Document(nil), docs...), byPath: make(map[string]*Document, len(docs))}
+	s := &Spec{Documents: append([]*Document(nil), docs...), byPath: make(map[string]*Document, len(docs)), types: map[string]bool{}}
 	sort.SliceStable(s.Documents, func(i, j int) bool { return s.Documents[i].Path < s.Documents[j].Path })
 	for _, d := range s.Documents {
 		s.byPath[d.Path] = d
+		if d.HasType() {
+			s.types[d.TypePath] = true
+		}
+		if d.HasExtends() {
+			s.types[d.ExtendsPath] = true
+		}
+		if d.HasExtends() {
+			s.types[d.Path] = true
+		}
 	}
 	return s
 }
@@ -76,6 +86,11 @@ const (
 	CodeSectionMissing = "section.missing"
 	CodeSectionEmpty   = "section.empty"
 	CodeLinkUnresolved = "link.unresolved"
+
+	CodeExtendsUnresolved = "extends.unresolved"
+	CodeExtendsLine       = "extends.line"
+	CodeExtendsCycle      = "extends.cycle"
+	CodeExtendsLoosens    = "extends.loosens"
 )
 
 // checkTitle checks that the document starts with one level-1 title.
@@ -89,15 +104,16 @@ func checkTitle(d *Document) []Diagnostic {
 	return nil
 }
 
-// checkSections checks the sections the type t declares: a required one
-// missing is reported at line, and one the document has must hold text.
-func checkSections(d, t *Document, line int, by string) []Diagnostic {
+// checkSections checks the sections of the type t, its own and those of every
+// type up its chain: a required one missing is reported at line, and one the
+// document has must hold text.
+func (s *Spec) checkSections(d, t *Document, line int) []Diagnostic {
 	var out []Diagnostic
-	for _, want := range t.Declared() {
+	for _, want := range s.ChainSections(t) {
 		sec, has := d.Section(want.Name)
 		switch {
 		case !has && !want.Optional:
-			out = append(out, Diagnostic{Path: d.Path, Line: line, Code: CodeSectionMissing, Message: fmt.Sprintf("missing section \"%s\" required by %s", want.Name, by)})
+			out = append(out, Diagnostic{Path: d.Path, Line: line, Code: CodeSectionMissing, Message: fmt.Sprintf("missing section \"%s\" required by %s", want.Name, want.RequiredBy)})
 		case has && !sec.HasText:
 			out = append(out, Diagnostic{Path: d.Path, Line: sec.Line, Code: CodeSectionEmpty, Message: fmt.Sprintf("empty section \"%s\"", want.Name)})
 		}
@@ -118,8 +134,8 @@ func (d Diagnostic) String() string {
 	return fmt.Sprintf("%s:%d: %s: %s", d.Path, d.Line, d.Code, d.Message)
 }
 
-// Check checks every document of the spec: its title, its type line, the
-// sections its type requires and its links. The result is sorted by path,
+// Check checks every document of the spec: its title, its type line or
+// extends line, the sections its type requires and its links. The result is sorted by path,
 // then by line.
 func Check(s *Spec) []Diagnostic {
 	var out []Diagnostic
@@ -137,11 +153,16 @@ func Check(s *Spec) []Diagnostic {
 				add(d.TypeLine, CodeTypeUnresolved, "no document at \"%s\"", d.TypeRaw)
 				break
 			}
-			out = append(out, checkSections(d, t, d.TypeLine, t.Path)...)
+			out = append(out, s.checkSections(d, t, d.TypeLine)...)
 		}
 		for _, line := range d.StrayTypeLines {
-			add(line, CodeTypeLine, "a type line stands only on the first line after the title")
+			if d.ExtendsLine != 0 && d.inHead(line) {
+				add(line, CodeTypeLine, bothLines)
+			} else {
+				add(line, CodeTypeLine, "a type line stands only on the first line after the title")
+			}
 		}
+		out = append(out, s.checkExtends(d)...)
 		seen := map[string]bool{}
 		for _, l := range d.Links {
 			if seen[l.Target] {

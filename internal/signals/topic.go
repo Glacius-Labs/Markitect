@@ -16,7 +16,8 @@ type Topic struct {
 	// Docs are the topic's own documents: the document, the type, or every
 	// document in the folder, in path order.
 	Docs []string
-	// Documents are a type's documents.
+	// Documents are a type's documents, those of the types that extend it
+	// included.
 	Documents []string
 	// Strong are the strong statements of other documents about the topic.
 	Strong []Statement
@@ -40,11 +41,11 @@ func (a *Analysis) Topic(name string) (*Topic, bool) {
 	}
 	if d, ok := a.Spec.Document(path.Clean(doc)); ok {
 		t.Kind, t.Path, t.Docs = "document", d.Path, []string{d.Path}
-		for _, o := range a.Spec.Documents {
-			if o.HasType() && o.TypePath == d.Path {
-				t.Kind = "type"
-				t.Documents = append(t.Documents, o.Path)
-			}
+		if a.Spec.IsType(d) {
+			t.Kind = "type"
+		}
+		for _, o := range a.Spec.Objects(d) {
+			t.Documents = append(t.Documents, o.Path)
 		}
 	} else {
 		folder := path.Clean(name)
