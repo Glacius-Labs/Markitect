@@ -29,7 +29,7 @@ Markitect has three parts ([DEC-148](../decisions.md#dec-148-markitect-is-a-tool
 |---|---|---|
 | **Tool** | One program, `markitect`. It checks the spec and the documents of the work, computes the state and what is to verify, and binds verdicts. It starts no agent, steers nothing and uses no Git ([§11](the-tool.md)) | No |
 | **Spec with templates** | A folder of Markdown documents in the project, by default `docs/spec/`, started from four templates; the `factory` template holds the way of working as a standard ([§3](the-language.md), [§4](what-goes-in-a-spec.md)) | No |
-| **Skills** | One per agent, named `markitect-` and the agent's name, built from the `factory` part of the spec and lying in the repository as its artifacts ([§12](the-project.md)) | No: they hold for Claude Code and Codex alike |
+| **Skills** | One per Agent document, named `markitect-` and the document's name, built from the `factory` part of the spec and lying in the repository as its artifacts ([§12](the-project.md)) | No: they hold for Claude Code and Codex alike |
 
 ## Words
 

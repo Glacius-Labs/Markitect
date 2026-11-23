@@ -71,7 +71,7 @@ The plan is a tree.
 | `ready` | Nobody has to design anything more | Waits for its start |
 | `in progress` | Claimed | Builder and Reviewer, an Analyst or a person |
 | `acceptance` | On the main branch, waiting to be accepted | Whoever accepts |
-| `done` | Finished | Nobody |
+| `done` | Finished, or given up by a decision | Nobody |
 
 A story starts only when it is `ready` and all its predecessors are `done`; a blocked story is one whose predecessor is still open. Stories with fixed tasks, a bug with a clear spec, a smell analysis and maintenance, are created with their tasks and are `ready` at once. A Smell story rises in priority with each further reference, so a single smell waits and only recurrence starts the analysis. The `factory` template holds the tasks and the thresholds.
 
