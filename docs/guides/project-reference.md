@@ -30,10 +30,11 @@ build/out/
 ```
 
 - **Lines.** One pattern per line. Blank lines and lines that start with `#` are skipped; white space and a carriage return at the end of a line and a byte order mark at the start of the file are dropped.
-- **Patterns.** A line is a path pattern with the wildcards of `Realized in`, each matching within one name ([language reference](language-reference.md#realized-in)). A pattern without `/`, such as `node_modules` or `*.log`, matches a file or folder of that name at any depth. A pattern with `/` between names, such as `build/out/`, is a path from the project folder. A pattern that ends with `/` matches only folders; a `/` at the end alone does not make it a path, so `node_modules/` matches a folder of that name at any depth. A line only ever leaves something out: a line that starts with `!` means a name that starts with `!`.
+- **Patterns.** A line is a path pattern with the wildcards of `Realized in`, each matching within one name ([language reference](language-reference.md#realized-in)). A pattern without `/`, such as `node_modules` or `*.log`, matches a file or folder of that name at any depth. A pattern with `/` between names, such as `build/out/`, is a path from the project folder. A pattern that ends with `/` matches only folders; a `/` at the end alone does not make it a path, so `node_modules/` matches a folder of that name at any depth. Unlike in `Realized in`, `*`, `?` and a class here also match a dot at the start of a name, so `*env` leaves out `src/.env`. A line only ever leaves something out: a line that starts with `!` means a name that starts with `!`.
 - **Folders.** A folder that a pattern matches is left out with everything below it.
-- **Always left out**, with or without the file: every file and folder whose name starts with a dot, so `.markitect/` itself, with everything below such a folder; the spec folder; the folder of the other project, when one of the two projects that `diff` compares lies inside the other; and symbolic links, Windows junctions and other special files, which `diff` never follows.
-- **Not valid.** A line that is no valid path pattern, by the rules of `Realized in` except that a name may start with a dot, stops `diff` with exit 2, naming the line and the reason: `markitect diff: .markitect/ignore:3: bad pattern "a/../b": a pattern stays below the project folder, without ..`.
+- **Always left out**, with or without the file: `.markitect/`; the spec folder; the folder of the other project, when one of the two projects that `diff` compares lies inside the other; and symbolic links, Windows junctions and other special files, which `diff` never follows.
+- **Names with a dot.** A file or folder whose name starts with a dot, such as `.github/` or `.env`, is left out with everything below it, unless a module names it: a file below such a name is one of the project's own files when a `Realized in` pattern of a module, in the state the file belongs to, names it ([language reference](language-reference.md#realized-in)), and is then compared and counted like any other. The ignore file wins over a module: what it names is left out even when a module names it.
+- **Not valid.** A line that is no valid path pattern, by the rules of `Realized in`, stops `diff` with exit 2, naming the line and the reason: `markitect diff: .markitect/ignore:3: bad pattern "a/../b": a pattern stays below the project folder, without ..`.
 
 The ignore file of NEW counts for both projects that `diff` compares, so that both sides leave out the same.
 
@@ -83,7 +84,7 @@ The part is headed `## Modules (N)`, with N the number of modules named, sorted 
 
 ### Files no module names
 
-`diff` names the project's own files that no module names under `Realized in` and that are new, gone or changed, and gives the number of files of NEW that no module names in total. Whether a module names a file is asked in the state the file belongs to: NEW for a new or changed file, OLD for a gone one. A project whose READMEs have no `Realized in` has all its files there. The documents of the spec are never among the files: the spec folder is always left out of them and compared only in the part on documents. A file in the spec folder that is no document, such as an image, is compared in neither part.
+`diff` names the project's own files that no module names under `Realized in` and that are new, gone or changed, and gives the number of files of NEW that no module names in total. A file below a name that starts with a dot that no module names is never read, never listed there and not counted. Whether a module names a file is asked in the state the file belongs to: NEW for a new or changed file, OLD for a gone one. A project whose READMEs have no `Realized in` has all its files there. The documents of the spec are never among the files: the spec folder is always left out of them and compared only in the part on documents. A file in the spec folder that is no document, such as an image, is compared in neither part.
 
 The part is headed `## Files no module names (N)`, with one line per file, `new     scripts/seed.sql`, sorted by path, and ends with the line `Files of NEW that no module names: N`. Like every part, it prints `(none)` when empty, and every part is printed, also when nothing differs.
 
@@ -150,7 +151,7 @@ new     scripts/seed.sql
 Files of NEW that no module names: 2
 ```
 
-`lending` names `src/lending/fines.go` too, but `lending/fines` lies within it and names the file as well, so it goes only to `lending/fines`. The two files of NEW that no module names are `README.md` and `scripts/seed.sql`. `core` is not named, since nothing of it changed. `build/out/library.exe` is left out by the ignore file, and `.markitect/` because its name starts with a dot. `diff` exits 1.
+`lending` names `src/lending/fines.go` too, but `lending/fines` lies within it and names the file as well, so it goes only to `lending/fines`. The two files of NEW that no module names are `README.md` and `scripts/seed.sql`. `core` is not named, since nothing of it changed. `build/out/library.exe` is left out by the ignore file, and `.markitect/` always. `diff` exits 1.
 
 ### Exit codes and JSON
 
