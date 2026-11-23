@@ -147,14 +147,19 @@ func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 		text, ok := replayed[n.Path]
 		return ok && Hash(text) == Hash(n.Source)
 	}
-	touched := map[string]bool{}
+	// touchedOld are the documents of the older project, by their paths there,
+	// that are gone, changed or moved with a change of their own; touchedNew
+	// those of the newer, by their paths there, that are new, changed or moved
+	// with a change. A path is judged in the project it belongs to, so that a
+	// document that took the name of another is not taken for it.
+	touchedOld, touchedNew := map[string]bool{}, map[string]bool{}
 	for _, d := range oldSpec.Documents {
 		to, moved := movedTo[d.Path]
 		n, same := newSpec.Document(d.Path)
 		switch {
 		case departed[d.Path] && !moved:
 			c.Gone = append(c.Gone, d.Path)
-			touched[d.Path] = true
+			touchedOld[d.Path] = true
 		case moved:
 			nd, _ := newSpec.Document(to)
 			if mechanical(nd) {
@@ -164,30 +169,32 @@ func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 			diff := textDiff(older, newer, d, nd)
 			c.Moved = append(c.Moved, MovedDoc{From: d.Path, To: to, Diff: diff, Mechanical: diff == ""})
 			if diff != "" {
-				touched[d.Path], touched[to] = true, true
+				touchedOld[d.Path], touchedNew[to] = true, true
 			}
 		case !same:
 			c.Gone = append(c.Gone, d.Path)
-			touched[d.Path] = true
+			touchedOld[d.Path] = true
 		case Hash(d.Source) == Hash(n.Source):
 		case mechanical(n):
 			c.Rewritten = append(c.Rewritten, d.Path)
 		default:
 			c.Changed = append(c.Changed, ChangedDoc{Doc: d.Path, Diff: textDiff(older, newer, d, n)})
-			touched[d.Path] = true
+			touchedOld[d.Path], touchedNew[d.Path] = true, true
 		}
 	}
 	for _, d := range newSpec.Documents {
 		_, before := oldSpec.Document(d.Path)
 		if (!before || departed[d.Path]) && movedFrom[d.Path] == "" {
 			c.New = append(c.New, d.Path)
-			touched[d.Path] = true
+			touchedNew[d.Path] = true
 		}
 	}
-	// Suspect: unchanged documents next to a touched one, in either project.
+	// Suspect: unchanged documents next to a touched one, in either project: a
+	// neighbour of the older project is judged by its path there, one of the
+	// newer by its path there.
 	oldNear, newNear := neighbours(oldSpec), neighbours(newSpec)
 	for _, d := range newSpec.Documents {
-		if touched[d.Path] {
+		if touchedNew[d.Path] {
 			continue
 		}
 		// A document moved without a change of its own is compared at the
@@ -201,11 +208,12 @@ func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 		}
 		because := map[string]bool{}
 		for _, near := range []struct {
-			links map[string]map[string]string
-			at    string
-		}{{oldNear, from}, {newNear, d.Path}} {
+			links   map[string]map[string]string
+			at      string
+			touched map[string]bool
+		}{{oldNear, from, touchedOld}, {newNear, d.Path, touchedNew}} {
 			for other, kind := range near.links[near.at] {
-				if touched[other] {
+				if near.touched[other] {
 					because[kind+other] = true
 				}
 			}
@@ -217,7 +225,7 @@ func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 	// Linked files of the spec folder that changed make their documents
 	// suspect.
 	for _, d := range newSpec.Documents {
-		if touched[d.Path] {
+		if touchedNew[d.Path] {
 			continue
 		}
 		var because []string

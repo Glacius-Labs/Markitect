@@ -451,3 +451,67 @@ func TestCompareFindsDeletedDocumentsGone(t *testing.T) {
 	}
 	same(t, "gone", doc.Gone, []string{"components/fines.md", "components/other.md"})
 }
+
+// suspectsOf lists the suspect documents of a comparison with their reasons.
+func suspectsOf(doc compareDocument) []string {
+	var out []string
+	for _, s := range doc.Suspect {
+		out = append(out, s.Doc+": "+strings.Join(s.Because, ", "))
+	}
+	return out
+}
+
+// A document that links a document that is gone is suspect for the gone
+// document. A document that took the gone one's name is not taken for it:
+// those that link only the document that moved there are not suspect.
+func TestCompareJudgesSuspectsByTheProjectAPathBelongsTo(t *testing.T) {
+	clock(t)
+	older := project(t, map[string]string{
+		"docs/spec/components/fines.md": "# Fines\n\nA late book costs a fee.\n",
+		"docs/spec/components/loans.md": "# Loans\n\nSee [fines](fines.md) and [other](other.md).\n",
+		"docs/spec/components/other.md": "# Other\n\nSomething else entirely.\n",
+		"docs/spec/components/desk.md":  "# Desk\n\nThe desk takes [fines](fines.md).\n",
+		"src/x.go":                      "package lending\n",
+	})
+	for _, doc := range []string{"fines", "loans", "other", "desk"} {
+		verdict(t, older, "components/"+doc+".md", "ok", "-e", "src/x.go")
+	}
+	newer := copyTree(t, older, false)
+	if err := os.Remove(filepath.Join(newer, "docs", "spec", "components", "other.md")); err != nil {
+		t.Fatal(err)
+	}
+	if code, _, errOut := run("move", "-C", newer, "components/fines.md", "components/other.md"); code != ExitOK {
+		t.Fatal(errOut)
+	}
+	moved, doc := movedOf(t, older, newer)
+	same(t, "moved", moved, []string{"components/fines.md -> components/other.md"})
+	same(t, "gone", doc.Gone, []string{"components/other.md"})
+	// Loans links the gone document; desk links only the one that moved, and
+	// its text changed by the rewritten link alone.
+	same(t, "suspect", suspectsOf(doc), []string{"components/loans.md: link:components/other.md"})
+	same(t, "rewritten", doc.Rewritten, []string{"components/desk.md", "components/loans.md"})
+}
+
+// A document moved away and a new document written at its old path: the
+// documents that link the moved one are not suspect for the new one.
+func TestCompareDoesNotTakeANewDocumentForTheOneThatMoved(t *testing.T) {
+	clock(t)
+	older := project(t, map[string]string{
+		"docs/spec/components/fines.md": "# Fines\n\nA late book costs a fee.\n",
+		"docs/spec/components/desk.md":  "# Desk\n\nThe desk takes [fines](fines.md).\n",
+		"src/x.go":                      "package lending\n",
+	})
+	for _, doc := range []string{"fines", "desk"} {
+		verdict(t, older, "components/"+doc+".md", "ok", "-e", "src/x.go")
+	}
+	newer := copyTree(t, older, false)
+	if code, _, errOut := run("move", "-C", newer, "components/fines.md", "components/f2.md"); code != ExitOK {
+		t.Fatal(errOut)
+	}
+	write(t, newer, "docs/spec/components/fines.md", "# Fines, again\n\nA different document.\n")
+	moved, doc := movedOf(t, older, newer)
+	same(t, "moved", moved, []string{"components/fines.md -> components/f2.md"})
+	same(t, "new", doc.New, []string{"components/fines.md"})
+	same(t, "suspect", suspectsOf(doc), []string{})
+	same(t, "rewritten", doc.Rewritten, []string{"components/desk.md"})
+}
