@@ -141,12 +141,18 @@ func (f *folders) holds(p string, e fs.DirEntry) bool {
 	return false
 }
 
-// listFiles walks the project at fsys. It leaves out what starts with a dot,
-// the folders named, which are the spec folder and a project that lies inside
-// this one, links and junctions, which it never follows, special files and what
-// the ignore file names; a folder that is left out is left out with everything
-// below it.
-func listFiles(fsys fs.FS, ig *Ignore, leave ...Folder) (fileTable, error) {
+// listFiles walks the project at fsys and returns its files that are looked at.
+// A file below a name that starts with a dot is one only when a pattern names
+// it, one of the Realized in patterns of the state it belongs to; the walk
+// enters a dot folder, and every folder below it, only where some pattern may
+// name something below it, so that a folder such as the one a version control
+// keeps is never walked, and no file in it is read or counted. The folder
+// .markitect/ is always left out, so are the folders named, which are the spec
+// folder and a project that lies inside this one, links and junctions, which
+// are never followed, special files and what the ignore file names, also when a
+// pattern names it; a folder that is left out is left out with everything below
+// it.
+func listFiles(fsys fs.FS, ig *Ignore, patterns []lang.PathPattern, leave ...Folder) (fileTable, error) {
 	files := fileTable{}
 	out := newFolders(fsys, leave)
 	err := fs.WalkDir(fsys, ".", func(p string, e fs.DirEntry, err error) error {
@@ -156,23 +162,21 @@ func listFiles(fsys fs.FS, ig *Ignore, leave ...Folder) (fileTable, error) {
 		if p == "." {
 			return nil
 		}
-		skip := func() error {
+		dotted := p[0] == '.' || strings.Contains(p, "/.")
+		switch {
+		case strings.EqualFold(p, Dir):
 			if e.IsDir() {
 				return fs.SkipDir
 			}
 			return nil
-		}
-		switch {
-		case strings.HasPrefix(e.Name(), "."):
-			return skip()
 		case e.Type()&(fs.ModeSymlink|fs.ModeIrregular) != 0:
 			return nil
 		case e.IsDir():
-			if out.holds(p, e) || ig.leaves(p, true) {
+			if out.holds(p, e) || ig.leaves(p, true) || dotted && !mayHold(patterns, p) {
 				return fs.SkipDir
 			}
 			return nil
-		case !e.Type().IsRegular() || ig.leaves(p, false):
+		case !e.Type().IsRegular() || ig.leaves(p, false) || dotted && !named(patterns, p):
 			return nil
 		}
 		info, err := e.Info()
@@ -183,6 +187,26 @@ func listFiles(fsys fs.FS, ig *Ignore, leave ...Folder) (fileTable, error) {
 		return nil
 	})
 	return files, err
+}
+
+// mayHold reports whether a pattern may name a file below the folder dir.
+func mayHold(patterns []lang.PathPattern, dir string) bool {
+	for _, pat := range patterns {
+		if pat.MayHold(dir) {
+			return true
+		}
+	}
+	return false
+}
+
+// named reports whether a pattern names the file.
+func named(patterns []lang.PathPattern, file string) bool {
+	for _, pat := range patterns {
+		if pat.Names(file) {
+			return true
+		}
+	}
+	return false
 }
 
 // unwrapPath drops the operation and the path from a file system error, which

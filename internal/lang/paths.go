@@ -13,6 +13,14 @@ import (
 // character and a class such as [a-z], none of them across a /; everything
 // else, case included, matches itself. A pattern that ends with / names a
 // folder and everything below it.
+//
+// A name that starts with a dot is matched only by a segment that starts with a
+// dot itself, as shells do: * and ? and a class such as [.] never match a
+// leading dot, so src/* names no file .env, and */workflows/ names nothing in
+// .github. What a folder pattern names below its folder holds no dot name
+// either: .claude/skills/ names .claude/skills/triage/SKILL.md and not
+// .claude/skills/.cache/x. A project's dot folders are therefore named by
+// patterns that spell the dot, such as .github/workflows/*.yaml or .*/x/.
 
 // PathPattern is a path pattern that is well-formed.
 type PathPattern struct {
@@ -54,42 +62,59 @@ func ParsePathPattern(text string) (PathPattern, error) {
 	return PathPattern{Text: text, Segments: segments, Folder: folder}, nil
 }
 
-// dotName is the reason a Realized in pattern is refused that has a folder or
-// file name starting with a dot: the project's own files never include such a
-// name, so the pattern can never name anything.
-const dotName = "a name that starts with a dot is always left out, so a pattern with one names nothing"
+// Names reports whether the pattern names the file at rel, a path below the
+// project folder with /: its whole path matches, or, for a pattern that ends
+// with /, a folder it names holds the file at any depth. A dot name is matched
+// only by a segment that starts with a dot, and what lies below a folder the
+// pattern names holds no dot name.
+func (p PathPattern) Names(rel string) bool {
+	names := strings.Split(rel, "/")
+	if p.Folder {
+		// The file is below the folder, so its own name is no folder name.
+		return len(names) > len(p.Segments) && matchSegments(p.Segments, names[:len(p.Segments)], true) && !anyDot(names[len(p.Segments):])
+	}
+	return len(names) == len(p.Segments) && matchSegments(p.Segments, names, true)
+}
 
-// hasDotName reports whether a name of the pattern starts with a dot.
-func (p PathPattern) hasDotName() bool {
-	for _, s := range p.Segments {
-		if strings.HasPrefix(s, ".") {
+// MayHold reports whether a file below the folder dir, a path below the project
+// folder with /, can be named by the pattern: the pattern is longer than dir and
+// its leading segments match dir, or it ends with / and its folder is dir or
+// above it. It is what lets a walk enter a dot folder only where something below
+// it can be named.
+func (p PathPattern) MayHold(dir string) bool {
+	names := strings.Split(dir, "/")
+	if len(names) < len(p.Segments) {
+		return matchSegments(p.Segments[:len(names)], names, true)
+	}
+	return p.Folder && matchSegments(p.Segments, names[:len(p.Segments)], true) && !anyDot(names[len(p.Segments):])
+}
+
+// Is reports whether the whole path rel, the path of a file or of a folder,
+// matches the pattern segment by segment, whether or not it ends with /. Here a
+// star matches a leading dot too, so that a pattern of an ignore file such as
+// *.log leaves out .hidden.log.
+func (p PathPattern) Is(rel string) bool {
+	names := strings.Split(rel, "/")
+	return len(names) == len(p.Segments) && matchSegments(p.Segments, names, false)
+}
+
+// anyDot reports whether one of the names starts with a dot.
+func anyDot(names []string) bool {
+	for _, n := range names {
+		if strings.HasPrefix(n, ".") {
 			return true
 		}
 	}
 	return false
 }
 
-// Names reports whether the pattern names the file at rel, a path below the
-// project folder with /: its whole path matches, or, for a pattern that ends
-// with /, a folder it names holds the file at any depth.
-func (p PathPattern) Names(rel string) bool {
-	names := strings.Split(rel, "/")
-	if p.Folder {
-		// The file is below the folder, so its own name is no folder name.
-		return len(names) > len(p.Segments) && matchSegments(p.Segments, names[:len(p.Segments)])
-	}
-	return len(names) == len(p.Segments) && matchSegments(p.Segments, names)
-}
-
-// Is reports whether the whole path rel, the path of a file or of a folder,
-// matches the pattern segment by segment, whether or not it ends with /.
-func (p PathPattern) Is(rel string) bool {
-	names := strings.Split(rel, "/")
-	return len(names) == len(p.Segments) && matchSegments(p.Segments, names)
-}
-
-func matchSegments(patterns, names []string) bool {
+// matchSegments matches each name against its pattern; with dots, a name that
+// starts with a dot is matched only by a pattern that starts with a dot.
+func matchSegments(patterns, names []string, dots bool) bool {
 	for i, pattern := range patterns {
+		if dots && strings.HasPrefix(names[i], ".") && !strings.HasPrefix(pattern, ".") {
+			return false
+		}
 		if ok, _ := path.Match(pattern, names[i]); !ok {
 			return false
 		}
@@ -123,11 +148,7 @@ func checkRealized(d *Document) []Diagnostic {
 		if !strings.EqualFold(c.Section, realizedSection) {
 			continue
 		}
-		p, err := ParsePathPattern(c.Text)
-		if err == nil && p.hasDotName() {
-			err = errors.New(dotName)
-		}
-		if err != nil {
+		if _, err := ParsePathPattern(c.Text); err != nil {
 			out = append(out, Diagnostic{Path: d.Path, Line: c.Line, Code: CodeReadmePattern,
 				Message: fmt.Sprintf("bad pattern \"%s\": %v", c.Text, err)})
 		}

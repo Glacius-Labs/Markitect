@@ -398,7 +398,7 @@ func (s *smoke) projectCommands() error {
 }
 
 // diffFiles drives diff over the files of a project: a module whose README says
-// under Realized in where it is built, a file that changed, one that is new, one
+// under Realized in where it is built, in a dot folder too, a file that changed, one that is new, one
 // that no module names, one that the ignore file leaves out, and a bad line of
 // the ignore file. It works on copies of the project, so that the check that no
 // command wrote into the project stands.
@@ -408,13 +408,15 @@ func (s *smoke) diffFiles(project string) error {
 	if err := copyTree(project, older); err != nil {
 		return err
 	}
-	readme := readFile(older, "docs/spec/domain/README.md") + "\n## Realized in\n- `src/borrow/`\n"
+	readme := readFile(older, "docs/spec/domain/README.md") + "\n## Realized in\n- `src/borrow/`\n- `.claude/skills/triage/`\n"
 	for name, content := range map[string]string{
-		"docs/spec/domain/README.md": readme,
-		"src/borrow/borrow.go":       "package borrow\n",
-		"tools/build.sh":             "#!/bin/sh\n",
-		"out/result.txt":             "one\n",
-		".markitect/ignore":          "# build output\nout/\n",
+		"docs/spec/domain/README.md":     readme,
+		"src/borrow/borrow.go":           "package borrow\n",
+		".claude/skills/triage/SKILL.md": "triage\n",
+		".claude/skills/other/SKILL.md":  "nobody names it\n",
+		"tools/build.sh":                 "#!/bin/sh\n",
+		"out/result.txt":                 "one\n",
+		".markitect/ignore":              "# build output\nout/\n",
 	} {
 		if err := writeFile(older, name, content); err != nil {
 			return err
@@ -427,10 +429,12 @@ func (s *smoke) diffFiles(project string) error {
 		return fmt.Errorf("two copies of a project with files: %w", err)
 	}
 	for name, content := range map[string]string{
-		"src/borrow/borrow.go": "package borrow // three weeks\n",
-		"src/borrow/renew.go":  "package borrow\n",
-		"tools/build.sh":       "#!/bin/sh\nset -e\n",
-		"out/result.txt":       "two\n",
+		"src/borrow/borrow.go":           "package borrow // three weeks\n",
+		"src/borrow/renew.go":            "package borrow\n",
+		".claude/skills/triage/SKILL.md": "triage, changed\n",
+		".claude/skills/other/SKILL.md":  "changed, but nobody names it\n",
+		"tools/build.sh":                 "#!/bin/sh\nset -e\n",
+		"out/result.txt":                 "two\n",
 	} {
 		if err := writeFile(newer, name, content); err != nil {
 			return err
@@ -438,7 +442,7 @@ func (s *smoke) diffFiles(project string) error {
 	}
 	if out, err := s.exit(newer, 1, "diff", older); err != nil {
 		return err
-	} else if err := requireContains(out, "## Modules (1)\n\ndomain: files changed (2)\n  changed src/borrow/borrow.go\n  new     src/borrow/renew.go\n\n",
+	} else if err := requireContains(out, "## Modules (1)\n\ndomain: files changed (3)\n  changed .claude/skills/triage/SKILL.md\n  changed src/borrow/borrow.go\n  new     src/borrow/renew.go\n\n",
 		"## Files no module names (1)\n\nchanged tools/build.sh\n\nFiles of NEW that no module names: 1\n"); err != nil {
 		return err
 	}
