@@ -147,3 +147,15 @@ func TestSpecRealizedIn(t *testing.T) {
 		}
 	}
 }
+
+// A name that starts with a dot is always left out of the files of a project, so
+// a pattern with one names nothing.
+func TestRealizedInDotNames(t *testing.T) {
+	const dot = "a name that starts with a dot is always left out, so a pattern with one names nothing"
+	files := realizedFiles("- `.github/workflows/`\n- `src/.env`\n- `.*`\n- `src/*.go`\n- `a.b/c.d`\n- `.`\n")
+	expect(t, checkExactly(t, files),
+		`shop/README.md:6: readme.pattern: bad pattern ".github/workflows/": `+dot,
+		`shop/README.md:7: readme.pattern: bad pattern "src/.env": `+dot,
+		`shop/README.md:8: readme.pattern: bad pattern ".*": `+dot,
+		`shop/README.md:11: readme.pattern: bad pattern ".": a pattern has no empty folder name and no .`)
+}

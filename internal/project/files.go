@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"os"
 	"path"
 	"strings"
 	"unicode"
@@ -93,12 +94,53 @@ func (ig *Ignore) leaves(rel string, folder bool) bool {
 // their path below the project folder.
 type fileTable map[string]int64
 
+// folders are folders below a project folder that are left out of its files.
+// A path names one when it is equal to it, or, on a file system that does not
+// regard case, when it differs only in case and lies at the same place: the
+// folder that is meant is the one on the disk, whatever case the name was
+// written in.
+type folders struct {
+	names []string
+	infos []fs.FileInfo
+}
+
+func newFolders(fsys fs.FS, names ...string) *folders {
+	f := &folders{}
+	for _, name := range names {
+		if name == "" || name == "." {
+			continue
+		}
+		info, _ := fs.Stat(fsys, name)
+		f.names = append(f.names, name)
+		f.infos = append(f.infos, info)
+	}
+	return f
+}
+
+// holds reports whether the folder at p, an entry of the walk, is one of them.
+func (f *folders) holds(p string, e fs.DirEntry) bool {
+	for i, name := range f.names {
+		if p == name {
+			return true
+		}
+		if f.infos[i] == nil || !strings.EqualFold(p, name) {
+			continue
+		}
+		if info, err := e.Info(); err == nil && os.SameFile(f.infos[i], info) {
+			return true
+		}
+	}
+	return false
+}
+
 // listFiles walks the project at fsys. It leaves out what starts with a dot,
-// the spec folder, links and junctions, which it never follows, special files
-// and what the ignore file names; a folder that is left out is left out with
-// everything below it.
-func listFiles(fsys fs.FS, specFolder string, ig *Ignore) (fileTable, error) {
+// the folders named, which are the spec folder and a project that lies inside
+// this one, links and junctions, which it never follows, special files and what
+// the ignore file names; a folder that is left out is left out with everything
+// below it.
+func listFiles(fsys fs.FS, ig *Ignore, leave ...string) (fileTable, error) {
 	files := fileTable{}
+	out := newFolders(fsys, leave...)
 	err := fs.WalkDir(fsys, ".", func(p string, e fs.DirEntry, err error) error {
 		if err != nil {
 			return fmt.Errorf("cannot read %s: %w", p, unwrapPath(err))
@@ -118,7 +160,7 @@ func listFiles(fsys fs.FS, specFolder string, ig *Ignore) (fileTable, error) {
 		case e.Type()&(fs.ModeSymlink|fs.ModeIrregular) != 0:
 			return nil
 		case e.IsDir():
-			if p == specFolder || ig.leaves(p, true) {
+			if out.holds(p, e) || ig.leaves(p, true) {
 				return fs.SkipDir
 			}
 			return nil
@@ -145,10 +187,18 @@ func unwrapPath(err error) error {
 	return err
 }
 
-// sameBytes compares the file at rel in two file systems byte for byte, in
-// chunks, so that neither is loaded as a whole. The sizes are those of the
-// files, which differ for files that cannot be the same.
-func sameBytes(oldFS, newFS fs.FS, rel string, oldSize, newSize int64) (bool, error) {
+// chunk is how much of each file is read at a time.
+const chunk = 64 << 10
+
+// comparer compares files byte for byte, with two buffers it reuses.
+type comparer struct{ a, b []byte }
+
+func newComparer() *comparer { return &comparer{make([]byte, chunk), make([]byte, chunk)} }
+
+// same compares the file at rel in two file systems byte for byte, in chunks,
+// so that neither is loaded as a whole. The sizes are those of the files, which
+// differ for files that cannot be the same.
+func (c *comparer) same(oldFS, newFS fs.FS, rel string, oldSize, newSize int64) (bool, error) {
 	if oldSize != newSize {
 		return false, nil
 	}
@@ -162,11 +212,9 @@ func sameBytes(oldFS, newFS fs.FS, rel string, oldSize, newSize int64) (bool, er
 		return false, fmt.Errorf("cannot read %s in the new project: %w", rel, unwrapPath(err))
 	}
 	defer b.Close()
-	const chunk = 64 << 10
-	bufA, bufB := make([]byte, chunk), make([]byte, chunk)
 	for {
-		na, errA := io.ReadFull(a, bufA)
-		nb, errB := io.ReadFull(b, bufB)
+		na, errA := io.ReadFull(a, c.a)
+		nb, errB := io.ReadFull(b, c.b)
 		for _, r := range []struct {
 			side string
 			err  error
@@ -175,7 +223,7 @@ func sameBytes(oldFS, newFS fs.FS, rel string, oldSize, newSize int64) (bool, er
 				return false, fmt.Errorf("cannot read %s in the %s project: %w", rel, r.side, unwrapPath(r.err))
 			}
 		}
-		if na != nb || !bytes.Equal(bufA[:na], bufB[:nb]) {
+		if na != nb || !bytes.Equal(c.a[:na], c.b[:nb]) {
 			return false, nil
 		}
 		if na < chunk {

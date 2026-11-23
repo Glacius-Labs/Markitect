@@ -438,7 +438,7 @@ func (s *smoke) diffFiles(project string) error {
 	}
 	if out, err := s.exit(newer, 1, "diff", older); err != nil {
 		return err
-	} else if err := requireContains(out, "## Modules (1)\n\ndomain: files changed\n  changed src/borrow/borrow.go\n  new     src/borrow/renew.go\n\n",
+	} else if err := requireContains(out, "## Modules (1)\n\ndomain: files changed (2)\n  changed src/borrow/borrow.go\n  new     src/borrow/renew.go\n\n",
 		"## Files no module names (1)\n\nchanged tools/build.sh\n\nFiles of NEW that no module names: 1\n"); err != nil {
 		return err
 	}

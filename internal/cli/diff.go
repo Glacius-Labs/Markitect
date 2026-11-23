@@ -53,8 +53,8 @@ type moduleJSON struct {
 // unassignedJSON are the changed files that no module names, each with how it
 // changed, and how many files of NEW no module names in all.
 type unassignedJSON struct {
-	Files []unassignedFileJSON `json:"files"`
-	Total int                  `json:"total"`
+	Changes []unassignedFileJSON `json:"changes"`
+	Total   int                  `json:"total"`
 }
 
 type unassignedFileJSON struct {
@@ -95,13 +95,14 @@ func diff(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	d, err := project.DiffProjects(older, newer, ignore)
+	oldInside, newInside := inside(oldDir, newDir), inside(newDir, oldDir)
+	d, err := project.DiffProjects(older, newer, ignore, oldInside, newInside)
 	if err != nil {
 		return ExitFailed, err
 	}
 	c := d.Spec
 	doc := diffDocument{header: newHeader("diff"), New: nonNil(c.New), Gone: nonNil(c.Gone), Changed: []changedJSON{},
-		Modules: []moduleJSON{}, Unassigned: unassignedJSON{Files: []unassignedFileJSON{}, Total: d.UnassignedTotal}}
+		Modules: []moduleJSON{}, Unassigned: unassignedJSON{Changes: []unassignedFileJSON{}, Total: d.UnassignedTotal}}
 	var b strings.Builder
 	section := func(title string, n int) {
 		fmt.Fprintf(&b, "## %s (%d)\n\n", title, n)
@@ -133,7 +134,7 @@ func diff(o options, stdout io.Writer) (int, error) {
 		}
 		doc.Modules = append(doc.Modules, moduleJSON{Module: m.Module, Spec: m.Spec, Files: m.Files,
 			NewFiles: nonNil(m.New), GoneFiles: nonNil(m.Gone), ChangedFiles: nonNil(m.Changed)})
-		fmt.Fprintf(&b, "%s: %s changed\n", moduleName(m.Module), what(m))
+		fmt.Fprintf(&b, "%s: %s changed%s\n", moduleName(m.Module), what(m), count(m))
 		for _, f := range m.Changes() {
 			fmt.Fprintf(&b, "  %-7s %s\n", f.Kind, f.Path)
 		}
@@ -141,7 +142,7 @@ func diff(o options, stdout io.Writer) (int, error) {
 	b.WriteString("\n")
 	section("Files no module names", len(d.Unassigned))
 	for _, f := range d.Unassigned {
-		doc.Unassigned.Files = append(doc.Unassigned.Files, unassignedFileJSON{f.Path, f.Kind})
+		doc.Unassigned.Changes = append(doc.Unassigned.Changes, unassignedFileJSON{f.Path, f.Kind})
 		fmt.Fprintf(&b, "%-7s %s\n", f.Kind, f.Path)
 	}
 	fmt.Fprintf(&b, "\nFiles of NEW that no module names: %d\n", d.UnassignedTotal)
@@ -158,6 +159,34 @@ func moduleName(m string) string {
 		return "(spec folder)"
 	}
 	return m
+}
+
+// count is the number of changed files of a module, in brackets; nothing for a
+// module whose files did not change.
+func count(m project.ModuleChange) string {
+	if n := len(m.New) + len(m.Gone) + len(m.Changed); n > 0 {
+		return fmt.Sprintf(" (%d)", n)
+	}
+	return ""
+}
+
+// inside returns the path of the folder inner below the folder outer, with /,
+// when inner lies in outer, and "" otherwise, also when they are the same
+// folder. Links and junctions on the way are resolved.
+func inside(inner, outer string) string {
+	in, err := realPath(inner, 0)
+	if err != nil {
+		in = inner
+	}
+	out, err := realPath(outer, 0)
+	if err != nil {
+		out = outer
+	}
+	rel, err := filepath.Rel(out, in)
+	if err != nil || rel == "." || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) || filepath.IsAbs(rel) {
+		return ""
+	}
+	return filepath.ToSlash(rel)
 }
 
 // what says what changed in a module that has a change.

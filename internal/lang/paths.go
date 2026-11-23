@@ -54,6 +54,21 @@ func ParsePathPattern(text string) (PathPattern, error) {
 	return PathPattern{Text: text, Segments: segments, Folder: folder}, nil
 }
 
+// dotName is the reason a Realized in pattern is refused that has a folder or
+// file name starting with a dot: the project's own files never include such a
+// name, so the pattern can never name anything.
+const dotName = "a name that starts with a dot is always left out, so a pattern with one names nothing"
+
+// hasDotName reports whether a name of the pattern starts with a dot.
+func (p PathPattern) hasDotName() bool {
+	for _, s := range p.Segments {
+		if strings.HasPrefix(s, ".") {
+			return true
+		}
+	}
+	return false
+}
+
 // Names reports whether the pattern names the file at rel, a path below the
 // project folder with /: its whole path matches, or, for a pattern that ends
 // with /, a folder it names holds the file at any depth.
@@ -108,7 +123,11 @@ func checkRealized(d *Document) []Diagnostic {
 		if !strings.EqualFold(c.Section, realizedSection) {
 			continue
 		}
-		if _, err := ParsePathPattern(c.Text); err != nil {
+		p, err := ParsePathPattern(c.Text)
+		if err == nil && p.hasDotName() {
+			err = errors.New(dotName)
+		}
+		if err != nil {
 			out = append(out, Diagnostic{Path: d.Path, Line: c.Line, Code: CodeReadmePattern,
 				Message: fmt.Sprintf("bad pattern \"%s\": %v", c.Text, err)})
 		}

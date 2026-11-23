@@ -81,8 +81,8 @@ func within(child, parent string) bool {
 	return strings.HasPrefix(child, parent+"/")
 }
 
-func newSide(p *Project, ig *Ignore) (*side, error) {
-	files, err := listFiles(p.FS, p.SpecFolder, ig)
+func newSide(p *Project, ig *Ignore, inside string) (*side, error) {
+	files, err := listFiles(p.FS, ig, p.SpecFolder, inside)
 	if err != nil {
 		return nil, err
 	}
@@ -129,18 +129,22 @@ func newSide(p *Project, ig *Ignore) (*side, error) {
 // file to those that named it in the older one, a module below another taking
 // the file from the one above in that state. A module whose spec or whose files
 // changed is a change of the project; a changed file that no module names, in
-// the state it belongs to, is listed apart.
-func DiffProjects(older, newer *Project, ig *Ignore) (*ProjectDiff, error) {
+// the state it belongs to, is listed apart. oldInside is the folder of the older
+// project below the newer one, newInside that of the newer below the older, ""
+// where the project does not lie inside the other: a copy kept inside a project
+// is left out of that project's files.
+func DiffProjects(older, newer *Project, ig *Ignore, oldInside, newInside string) (*ProjectDiff, error) {
 	d := &ProjectDiff{Spec: DiffSpecs(older, newer)}
-	before, err := newSide(older, ig)
+	before, err := newSide(older, ig, newInside)
 	if err != nil {
 		return nil, fmt.Errorf("the old project: %w", err)
 	}
-	after, err := newSide(newer, ig)
+	after, err := newSide(newer, ig, oldInside)
 	if err != nil {
 		return nil, fmt.Errorf("the new project: %w", err)
 	}
 
+	cmp := newComparer()
 	// What happened to each file, by itself.
 	paths := make([]string, 0, len(before.files)+len(after.files))
 	for file := range before.files {
@@ -176,7 +180,7 @@ func DiffProjects(older, newer *Project, ig *Ignore) (*ProjectDiff, error) {
 		case !inNew:
 			kind, owners = FileGone, before.owners[file]
 		case inOld:
-			same, err := sameBytes(older.FS, newer.FS, file, oldSize, newSize)
+			same, err := cmp.same(older.FS, newer.FS, file, oldSize, newSize)
 			if err != nil {
 				return nil, err
 			}

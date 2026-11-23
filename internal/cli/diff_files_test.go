@@ -116,12 +116,12 @@ lending/loan-limit.md
 
 ## Modules (2)
 
-lending: spec and files changed
+lending: spec and files changed (3)
   changed src/lending/loan.go
   gone    src/lending/old.go
   new     src/lending/renew.go
 
-members: files changed
+members: files changed (1)
   changed src/members/card.go
 
 ## Files no module names (2)
@@ -163,8 +163,8 @@ func TestDiffShowsModulesAndFiles(t *testing.T) {
 			ChangedFiles []string `json:"changed_files"`
 		}
 		Unassigned struct {
-			Files []struct{ File, Change string }
-			Total int
+			Changes []struct{ File, Change string }
+			Total   int
 		}
 	}
 	if err := json.Unmarshal([]byte(out), &doc); err != nil {
@@ -181,13 +181,13 @@ func TestDiffShowsModulesAndFiles(t *testing.T) {
 	if members.Module != "members" || members.Spec || !members.Files || len(members.NewFiles)+len(members.GoneFiles) != 0 || !reflect.DeepEqual(members.ChangedFiles, []string{"src/members/card.go"}) {
 		t.Errorf("members %+v", members)
 	}
-	if doc.Unassigned.Total != 3 || len(doc.Unassigned.Files) != 2 || doc.Unassigned.Files[0].File != "notes.txt" || doc.Unassigned.Files[0].Change != "new" ||
-		doc.Unassigned.Files[1].File != "tools/build.sh" || doc.Unassigned.Files[1].Change != "changed" {
+	if doc.Unassigned.Total != 3 || len(doc.Unassigned.Changes) != 2 || doc.Unassigned.Changes[0].File != "notes.txt" || doc.Unassigned.Changes[0].Change != "new" ||
+		doc.Unassigned.Changes[1].File != "tools/build.sh" || doc.Unassigned.Changes[1].Change != "changed" {
 		t.Errorf("unassigned %+v", doc.Unassigned)
 	}
 	// An empty list is [], not null.
 	_, out, _ = run("diff", older, older, "--json")
-	for _, part := range []string{`"modules": []`, `"files": []`, `"total": 2`, `"changed": []`} {
+	for _, part := range []string{`"modules": []`, `"changes": []`, `"total": 2`, `"changed": []`} {
 		if !strings.Contains(out, part) {
 			t.Errorf("missing %s in\n%s", part, out)
 		}
@@ -374,5 +374,58 @@ func TestDiffRealizedInChangedOnly(t *testing.T) {
 	_, out, _ = run("diff", older, newer, "--json")
 	if !strings.Contains(out, `"spec": true`) || !strings.Contains(out, `"files": false`) || !strings.Contains(out, `"new_files": []`) {
 		t.Errorf("%s", out)
+	}
+}
+
+// projectIn writes a project of the given files into the folder dir.
+func projectIn(t *testing.T, dir string, files map[string]string) string {
+	t.Helper()
+	markitectFile(t, dir)
+	for p, text := range files {
+		write(t, dir, p, text)
+	}
+	return dir
+}
+
+// A copy kept inside the project is no file of that project: not when OLD lies
+// in NEW, and not when NEW lies in OLD.
+func TestDiffLeavesOutAProjectThatLiesInside(t *testing.T) {
+	outer := projectOf(t, lendingFiles)
+	inner := projectIn(t, filepath.Join(outer, "backup", "old"), lendingFiles)
+	for name, args := range map[string][]string{"OLD inside NEW": {inner, outer}, "NEW inside OLD": {outer, inner}} {
+		code, out, errOut := run(append([]string{"diff"}, args...)...)
+		if code != ExitOK || errOut != "" || !strings.HasSuffix(out, "## Files no module names (0)\n\n(none)\n\nFiles of NEW that no module names: 2\n") {
+			t.Errorf("%s: %d %q\n%s", name, code, errOut, out)
+		}
+	}
+	// What differs is still found, and the total of NEW does not count the inner project.
+	write(t, outer, "src/lending/loan.go", "package lending // changed\n")
+	code, out, _ := run("diff", inner, outer)
+	if code != ExitFound || !strings.Contains(out, "lending: files changed (1)\n  changed src/lending/loan.go\n") || strings.Contains(out, "backup") || !strings.HasSuffix(out, "Files of NEW that no module names: 2\n") {
+		t.Errorf("%d\n%s", code, out)
+	}
+	// The folder is found by what is on the disk, however its path is written.
+	code, out, _ = run("diff", filepath.Join(outer, "backup", "..", "backup", "old"), outer)
+	if code != ExitFound || strings.Contains(out, "backup") {
+		t.Errorf("%d\n%s", code, out)
+	}
+}
+
+// The spec folder is left out whatever case .markitect/spec writes its name in,
+// on a file system that does not regard case.
+func TestDiffLeavesOutTheSpecFolderInAnyCase(t *testing.T) {
+	older, newer := projectOf(t, lendingFiles), projectOf(t, changes(lendingFiles, map[string]string{
+		"docs/spec/lending/loan-limit.md": "# Loan limit\n\nSix loans.\n", "docs/spec/lending/diagram.png": "png2",
+	}))
+	for _, dir := range []string{older, newer} {
+		write(t, dir, ".markitect/spec", "Docs/Spec\n")
+	}
+	if _, err := os.Stat(filepath.Join(older, "Docs", "Spec")); err != nil {
+		t.Skip("this file system regards case")
+	}
+	code, out, errOut := run("diff", older, newer)
+	if code != ExitFound || errOut != "" || !strings.Contains(out, "## Changed (1)\n\nlending/loan-limit.md\n") ||
+		!strings.HasSuffix(out, "## Files no module names (0)\n\n(none)\n\nFiles of NEW that no module names: 2\n") {
+		t.Errorf("%d %q\n%s", code, errOut, out)
 	}
 }

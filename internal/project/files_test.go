@@ -141,7 +141,7 @@ func TestListFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, err := listFiles(fsys, "docs/spec", ig)
+	got, err := listFiles(fsys, ig, "docs/spec")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +155,7 @@ func TestListFiles(t *testing.T) {
 		t.Errorf("sizes %v", got)
 	}
 	// Without an ignore file, only the fixed rules apply.
-	got, err = listFiles(fsys, "docs/spec", nil)
+	got, err = listFiles(fsys, nil, "docs/spec")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -186,6 +186,7 @@ func (f failing) Open(name string) (fs.File, error) {
 }
 
 func TestSameBytes(t *testing.T) {
+	cmp := newComparer()
 	big := strings.Repeat("0123456789abcdef", 64<<10/16*3) // three chunks
 	flip := func(s string, at int) string { return s[:at] + "X" + s[at+1:] }
 	for name, tc := range map[string]struct {
@@ -206,7 +207,7 @@ func TestSameBytes(t *testing.T) {
 		"size differs":     {"abc", "abcd", false},
 	} {
 		a, b := tree(map[string]string{"f": tc.a}), tree(map[string]string{"f": tc.b})
-		got, err := sameBytes(a, b, "f", int64(len(tc.a)), int64(len(tc.b)))
+		got, err := cmp.same(a, b, "f", int64(len(tc.a)), int64(len(tc.b)))
 		if err != nil || got != tc.same {
 			t.Errorf("%s: got %v %v, want %v", name, got, err, tc.same)
 		}
@@ -221,7 +222,7 @@ func TestSameBytes(t *testing.T) {
 		"read new":  {a, failing{FS: a, read: "dir/f.bin"}, "cannot read dir/f.bin in the new project: disk error"},
 		"read both": {failing{FS: a, read: "dir/f.bin"}, failing{FS: a, read: "dir/f.bin"}, "cannot read dir/f.bin in the old project: disk error"},
 	} {
-		if _, err := sameBytes(tc.old, tc.new, "dir/f.bin", 4, 4); err == nil || err.Error() != tc.want {
+		if _, err := cmp.same(tc.old, tc.new, "dir/f.bin", 4, 4); err == nil || err.Error() != tc.want {
 			t.Errorf("%s: %v, want %s", name, err, tc.want)
 		}
 	}
