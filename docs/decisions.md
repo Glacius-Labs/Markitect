@@ -105,10 +105,10 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 
 - A type inherits from another type, its base, with a line of its own, `Extends: [Base](base.md)`, where an object has its type line. The type line stays for objects. A document has one of the two lines, never both.
 - A document with an extends line is a type and is never checked as an object of its base. An object of a derived type needs the properties of the whole chain, its type's own and those of every type up its chain.
-- Telling a type by its use was weighed: `Type:` would name the base too, and a document would count as a type once another names it. It was not chosen, because a type that no document names yet would be read as a document of its base and need its sections. That is the normal case in a default that ships types without documents.
+- Telling a type by its use alone was weighed: `Type:` would name the base too, and a document would count as a type only once another names it. It was not chosen as the only mark, because a type that no document names yet would be read as a document of its base and need its sections. That is the normal case in a default that ships types without documents.
 - A derived type may describe a property of its base more precisely or make an optional one required, and never makes a required one optional or gives it another type ([DEC-157](#dec-157-a-property-names-its-type-and-modules-depend-on-each-other-without-a-cycle)). A chain that comes back to itself is an error.
 - No inheritance passes through `Type:`: a type that is a document of another type inherits nothing from it.
-- `check` reports a broken extends line, a base that is no document, a cycle and a loosened section. `show`, `table` and `topic` take a derived type's chain into account.
+- `check` reports a broken extends line, a base that is no document, a cycle and a loosened property. `show`, `table` and `topic` take a derived type's chain into account.
 - The [language](concept/the-language.md#types) page describes it.
 - Reopen when a project needs a type that makes a section of its base optional, or one type that extends two; or when chains grow so deep that people cannot tell which sections a document needs without the tool.
 
@@ -122,7 +122,7 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - A README may show all or some of the documents of its folder by a pattern instead of a link each, written as code under `Contents`, such as `` `report-*.md` ``, with the wildcards `*`, `?` and `[a-z]` over the file names. A pattern never reaches into a module below. It is code, not a link, so a rendered page shows no dead link.
 - The default is a module too. The packages `software` and `company` and the five templates of the earlier default leave the library; until a new default is designed, the default is the one module `core`, with the types concept, decision, goal, role, rule and term ([DEC-154](#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
 - Why: a spec of many folders needs to say what others may rely on, as code does. Without it every document is an interface, and a change anywhere may reach anything. Weighed and not taken: visibility marked in each document, kinds of modules or a type for the README, and a folder with documents of its own but no README counting as part of the module above.
-- `check` requires a README in every folder that holds documents directly, refuses a type line, an extends line or a property type line in a README, a type line or an extends line naming one and a pattern that is not valid, and reports a link into a module that its README does not show. It does not check `Responsible` or `Realized in`.
+- `check` requires a README in every folder that holds documents directly, refuses a type line, an extends line or a property type line in a README, a type line, an extends line or a property type line naming one and a pattern that is not valid, and reports a link into a module that its README does not show. It does not check `Responsible` or `Realized in`.
 - The [language](concept/the-language.md#modules) page describes it.
 - Reopen when a project repeatedly lists documents under `Contents` only so that one other module can link them, until `Contents` holds most of the module; when people cannot tell from a README which role answers for a document; or when a change crosses a module's boundary unseen although every link it took was public.
 
@@ -152,16 +152,18 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - The [content](concept/what-goes-in-a-spec.md) page describes it.
 - Reopen when a builder or reviewer in a software project misses something about operation that the spec should have said; or when plans or task lists appear in a spec and go stale after every change.
 
-### DEC-123 A good spec has five properties and shows them in four sources
+<a id="dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources"></a>
+
+### DEC-123 A good spec has five characteristics and shows them in four sources
 
 - A good spec is, after the characteristics of good requirements in ISO/IEC/IEEE 29148: **necessary**, it states only what is fixed; **complete**, nothing fixed is missing; **consistent**, no two statements exclude each other; **unambiguous and verifiable**, two readers understand the same and a checker can say yes or no, with every statement as strong as possible; and **structured**, one thing per document, each fact on its level, and what has facts of its own in a document of its own.
 - Coupling, cohesion, abstractness and link density are no measures of a spec. There are no fixed thresholds.
-- Four sources show how good a spec is. The spec itself: checked by `check`, shown by a topic view and signals, read by a person or agent against the five properties, and questioned with competency questions answered only from the spec with a citation. Its changes, as the repository's history shows them: six signals, a wide change, documents that change together without a link, links dragged along, a hotspot, back and forth, and weakening, with mechanical changes left out; the tool computes none of them. What is built from it. And the questions it raises.
-- Every problem found names its place and the property it violates: one of the five, or **correct**, when a person sees a result and says it was not meant so. Only use shows correctness.
+- Four sources show how good a spec is. The spec itself: checked by `check`, shown by a topic view and signals, read by a person or agent against the five characteristics, and questioned with competency questions answered only from the spec with a citation. Its changes, as the repository's history shows them: six signals, a wide change, documents that change together without a link, links dragged along, a hotspot, back and forth, and weakening, with mechanical changes left out; the tool computes none of them. What is built from it. And the questions it raises.
+- Every problem found names its place and the characteristic it violates: one of the five, or **correct**, when a person sees a result and says it was not meant so. Only use shows correctness.
 - Every number is shown against the reference value of its type, which ships with the default for its types, and against the rest of the project. Reference values come from proven specs; a proven spec is one that the people who answer for it name as a reference.
 - Question catalogs ship with the default. A project's own questions lie beside the spec, not in it. An answered question from use becomes a fixed question, and a general one can move into the default.
 - The [quality](concept/is-the-spec-good.md) page describes it.
-- Reopen when problems found repeatedly show something bad that falls under none of the five properties or correctness, the property is not assigned reliably, or nobody reads the evaluation; when a signal of the spec itself shows almost only false alarms on real specs; when a change signal never points at a real problem over a series of changes on a real project; when reference values show almost only false alarms, or differ so much between projects that none carries; or when answers stay unreliable despite citations, or a catalog grows without ever finding anything.
+- Reopen when problems found repeatedly show something bad that falls under none of the five characteristics or correctness, the characteristic is not assigned reliably, or nobody reads the evaluation; when a signal of the spec itself shows almost only false alarms on real specs; when a change signal never points at a real problem over a series of changes on a real project; when reference values show almost only false alarms, or differ so much between projects that none carries; or when answers stay unreliable despite citations, or a catalog grows without ever finding anything.
 
 ## Trust
 

@@ -106,7 +106,7 @@ Where a property is a reference, each object links what it refers to; where it i
 
 ## Values
 
-A value, such as the status of an operation or the role responsible for a rule, stands in the first line of its section, and the property's type gives its form: a fixed value is exactly one of the values its type lists, and a reference is a link to an object of a named type, of which a reference property may hold several. In a property without a property type line, the value is text, and a link in it is a mention: `core`'s Rule declares no type for `Responsible`, so a role linked there is a mention, and a project that wants it checked gives its copy of Rule a property type line. There are no lines in the head but the type line, or in a type the extends line.
+The property's type gives a value its form. A fixed value, such as the status of an operation, stands in the first line of its section and is exactly one of the values its type lists. The references of a reference property, such as the roles that call an operation, may stand anywhere in its section, and every link there is one. In a property without a property type line, the value is text, and a link in it is a mention: `core`'s Rule declares no type for `Responsible`, so a role linked there is a mention, and a project that wants it checked gives its copy of Rule a property type line. There are no lines in the head but the type line, or in a type the extends line.
 
 ## Modules
 
@@ -155,7 +155,7 @@ How members borrow copies and bring them back.
 
 `borrow.md` may link `loan-limit.md`, and so may the README: they are inside the module. In `members/card.md`, `[Borrow](../lending/borrow.md)` is right, and `[Loan limit](../lending/loan-limit.md)` is an error of `check`, `link.internal`: the rule is internal to `lending`. The rule's type line, `Type: [Rule](../core/rule.md)`, is right, since `core` shows Rule.
 
-**No cycle.** Modules do not depend on each other in a cycle ([DEC-157](../decisions.md#dec-157-a-property-names-its-type-and-modules-depend-on-each-other-without-a-cycle)). A module depends on another when one of its objects names a type of the other in its type line, one of its types extends a type of the other or links one in a property type line, or one of its objects has a reference to a document of the other. A parent module and a module below it count like any two, although the module below may link what is internal to the one above. A mention never counts, and neither do the links of a README. The library above has none: `lending` depends on `types`, `members` and `core`, `types` and `members` on `core`, and the link from `members/card.md` to Borrow is a mention. A cycle arises when a type in each of two modules names the other in a property type line:
+**No cycle.** Modules do not depend on each other in a cycle ([DEC-157](../decisions.md#dec-157-a-property-names-its-type-and-modules-depend-on-each-other-without-a-cycle)). A module depends on another when one of its objects names a type of the other in its type line, one of its types extends a type of the other or links one in a property type line, or one of its objects has a reference to a document of the other. A parent module and a module below it count like any two, although the module below may link what is internal to the one above. A mention never counts, and neither do the links of a README. The library above has none: `lending` depends on `types`, `members` and `core`, `types` and `members` on `core`, and the link from `members/card.md` to Borrow is a mention. A cycle arises when a type in each of two modules names the other in a property type line, each type listed under `Contents` in the README of its module, so that both links are public:
 
 ```text
 lending/loan.md         ## Holder   Type: [Membership](../members/membership.md)
@@ -193,6 +193,6 @@ An agent writes the structure, the sections and the links, as it writes the pros
 | `module.readme` | A folder that holds a document directly has no README |
 | `module.cycle` | Modules depend on each other in a cycle |
 | `readme.pattern` | A pattern in a README's `Contents` is not valid |
-| `readme.type` | A README has a type line or an extends line, or a type line or an extends line names a README |
+| `readme.type` | A README has a type line or an extends line, or a type line, an extends line or a property type line names a README |
 
 What the language does not catch, contradictions between values, gaps and wrong values, a reader finds ([§5](is-the-spec-good.md)). Beyond references and fixed values there are no value forms, and there are no check rules: something new joins only when a real project needs it.

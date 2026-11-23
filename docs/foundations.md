@@ -43,15 +43,15 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 **Taken.**
 
-- **Characteristics of good requirements** (ISO/IEC/IEEE 29148): a good spec is necessary, complete, consistent, unambiguous and verifiable, and structured, each fact singular and on its level ([DEC-123](decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)). Vague words that the standard names as signs of a weak requirement are one of the signals that say where reading pays off.
+- **Characteristics of good requirements** (ISO/IEC/IEEE 29148): a good spec is necessary, complete, consistent, unambiguous and verifiable, and structured, each fact singular and on its level ([DEC-123](decisions.md#dec-123-a-good-spec-has-five-characteristics-and-shows-them-in-four-sources)). Vague words that the standard names as signs of a weak requirement are one of the signals that say where reading pays off.
 - **Competency questions** (Grüninger and Fox 1995): an ontology is judged by the questions it must be able to answer. A spec is questioned the same way, with a catalog of questions that ships with the default, each answer taken from the spec with a citation.
-- **Hotspots and change coupling** (Tornhill 2015, 2018): a hotspot is what changes often and costs much; change coupling is what changes together without a declared dependency. Both are among the signals of a spec's changes.
+- **Hotspots and change coupling** (Tornhill 2015, 2018): a hotspot is what changes often and costs much; change coupling is what changes together without a link. Both are among the signals of a spec's changes.
 
 **Differs.**
 
-- The properties are judged by readers, guided by signals with no fixed thresholds. Each number stands beside the reference value of its type and the rest of the project.
+- The characteristics are judged by readers, guided by signals with no fixed thresholds. Each number stands beside the reference value of its type and the rest of the project.
 - A hotspot weighs how often a document changed by how many documents link to it, not by its complexity. The tool computes no signal of the changes: an agent reads them from the repository's history.
-- Correctness, whether the spec says what is meant, is not among the properties a reader checks: only use shows it.
+- Correctness, whether the spec says what is meant, is not among the characteristics a reader checks: only use shows it.
 
 ## Purpose, world and system
 
@@ -106,7 +106,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 - **An ontology language or SysML v2 as the form of the spec,** and front matter with typed fields. RDF with OWL and SHACL, SysML v2 and TypeScript were weighed. Markdown is what people and agents already write ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-and-modules)).
 - **Rules on layers** between modules, as layered architectures have, beyond the rule that forbids a cycle. A module only groups and shows, and a rule names what it applies to by links ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-and-modules)).
 - **Declared imports** between modules, as Go's import declarations. They would state again what type lines, extends lines and references already say ([DEC-157](decisions.md#dec-157-a-property-names-its-type-and-modules-depend-on-each-other-without-a-cycle)).
-- **Architecture metrics of the spec,** such as coupling, cohesion and abstractness, and fixed thresholds. They measure structure, not whether a spec serves its purpose ([DEC-123](decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)).
+- **Architecture metrics of the spec,** such as coupling, cohesion and abstractness, and fixed thresholds. They measure structure, not whether a spec serves its purpose ([DEC-123](decisions.md#dec-123-a-good-spec-has-five-characteristics-and-shows-them-in-four-sources)).
 - **Attributes per requirement**, such as priority, risk, owner and history, which requirements standards keep. They describe the work, not the system, and the spec states only the system as it should be.
 - **Views as declared things.** A declared view states the same facts twice ([DEC-131](decisions.md#dec-131-the-tool-shows-claude-explains)).
 

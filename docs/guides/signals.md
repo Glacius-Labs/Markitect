@@ -1,6 +1,6 @@
 # Signals and the topic view
 
-How the tool `markitect` shows where reading a spec pays off: the statements it reads, the marker words, the eight signals of [the spec itself](../concept/is-the-spec-good.md#the-spec-itself), the topic view, the reference values and the question catalogs ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-properties-and-shows-them-in-four-sources)). The tool judges nothing and has no thresholds: each signal is a list, strongest first, and the reader decides. [The language reference](language-reference.md) gives the rules of the language and the other commands; the [library](library.md) holds the reference values and the catalogs.
+How the tool `markitect` shows where reading a spec pays off: the statements it reads, the marker words, the eight signals of [the spec itself](../concept/is-the-spec-good.md#the-spec-itself), the topic view, the reference values and the question catalogs ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-characteristics-and-shows-them-in-four-sources)). The tool judges nothing and has no thresholds: each signal is a list, strongest first, and the reader decides. [The language reference](language-reference.md) gives the rules of the language and the other commands; the [library](library.md) holds the reference values and the catalogs.
 
 ## Commands
 
@@ -10,7 +10,7 @@ How the tool `markitect` shows where reading a spec pays off: the statements it 
 | `markitect topic TOPIC` | The topic view of a document, a type or a folder, with every finding |
 | `markitect questions` | The question catalog of the default's module `core`, for a spec that has the folder `core` directly below the spec folder |
 
-A finding reads `path:line: signal: detail`. With `--json`, `topic` prints `topic`, `topic_kind` (`spec`, `document`, `type` or `folder`), `documents`, the paths of the documents of the topic, `strong`, `linked_from` and `mentions` as lists of statements with `file`, `line`, `section` and `text`, and `signals`, each signal's list of findings with `file`, `line` and `detail`; for a type also `typed_documents`, those of the types that extend it included. `questions` prints `modules`, each with `module` and `questions`.
+A finding reads `path:line: signal: detail`. With `--json`, `topic` prints `topic`, `topic_kind` (`spec`, `document`, `type` or `folder`), `documents`, the paths of the documents of the topic, `strong`, `linked_from` and `named` as lists of statements with `file`, `line`, `section` and `text`, and `signals`, each signal's list of findings with `file`, `line` and `detail`; for a type also `typed_documents`, those of the types that extend it included. `questions` prints `modules`, each with `module` and `questions`.
 
 ## Statements
 
@@ -45,9 +45,9 @@ Each signal is a list sorted strongest first; equal ones stand in path and line 
 | Text before the first section | `text-before-sections` | Every object that has statements before its first section, after the type line, with their number | Most statements |
 | Recurring link group | `link-group` | The same three or more link targets under the same section heading, compared without regard to case, in two or more documents. The groups are the intersections of the sections' targets, of any number of documents, so a group shared by many is found even where each pair shares more. Only the largest group with the same documents is listed | Most documents, then most links |
 | Scattered rules | `scattered-rules` | Every document that conditional or restricting statements of other documents concern, with those documents. A statement is restricting when it holds one of the strong words only, never, must not, no one, nobody or none, or "not" followed by "alone" within three words | Most other documents |
-| Mention without a link | `unlinked-mention` | Every pair of a document and another document whose title stands in its statements while it has no link to it anywhere, the type line included | Most statements that name it |
+| Name without a link | `unlinked-name` | Every pair of a document and another document whose title stands in its statements while it has no link to it anywhere, the type line included | Most statements that name it |
 
-**Mention without a link.** A mention is a link in text ([language reference](language-reference.md#properties-and-their-types)), and this signal lists the places where a title stands in the text and the link is missing. A title is found as whole words, without regard to case; at each word the longest title counts. One-word titles shorter than four letters do not count, nor do the titles of types, which stand in prose as ordinary words, such as "the role". A document does not name itself.
+**Name without a link.** A statement that names a document's title without linking it is no mention, since a mention is a link in text ([language reference](language-reference.md#properties-and-their-types)); this signal lists such statements. A title is found as whole words, without regard to case; at each word the longest title counts. One-word titles shorter than four letters do not count, nor do the titles of types, which stand in prose as ordinary words, such as "the role". A document does not name itself.
 
 **Two reference points.** Where a signal shows a number, it shows the project's values beside it, and the reference value of the document's type when the type is a type of the default's module: `core/rule.md`, directly below the spec folder, matches `core`'s `rule`. A project's own types have no reference value and show only the project's values.
 
@@ -58,7 +58,7 @@ A topic is a document, a type ([language reference](language-reference.md#types-
 1. **Strong statements about it** from other documents: those that link to it or name it. They come first, since the single cases are read against them.
 2. **The topic itself:** a document's text; a type's text and its objects, those of the types that extend it included, as the [`table`](language-reference.md#commands-that-read); a folder's documents in path order, its README among them.
 3. **Linked from:** every statement of another document that links to it, with its section. A link outside a statement, such as one in a heading, does not appear here; `show` lists it.
-4. **Mentioned without a link:** every statement of another document that names it while that document has no link to it.
+4. **Named without a link:** every statement of another document that names it while that document has no link to it.
 5. **Signals:** every finding that concerns a document of the topic.
 
 A link to the README of a folder that holds a topic document counts as a link to the topic, so a rule that applies to a folder, and every folder above it, shows for each document in it. Only READMEs of folders below the spec root count this way: a link to the root's `README.md` concerns that document alone.
