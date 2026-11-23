@@ -44,14 +44,14 @@ func TestFindProject(t *testing.T) {
 }
 
 func TestCommandsFindTheProjectUpward(t *testing.T) {
-	dir := spec(t, map[string]string{"lending.md": "# Lending\n\nSee [loans](loans.md).\n"})
+	dir := spec(t, map[string]string{"README.md": readme("Spec", "lending.md"), "lending.md": "# Lending\n\nSee [loans](loans.md).\n"})
 	sub := filepath.Join(dir, "src", "loans")
 	if err := os.MkdirAll(sub, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	t.Chdir(sub)
 	code, out, _ := run("check")
-	if code != ExitFound || out != "lending.md:3: link.unresolved: no document at \"loans.md\"\n1 error in 1 document\n" {
+	if code != ExitFound || out != "lending.md:3: link.unresolved: no document at \"loans.md\"\n1 error in 2 documents\n" {
 		t.Error(code, out)
 	}
 	if code, out, _ := run("show", "lending"); code != ExitOK || !strings.HasPrefix(out, "lending.md\nTitle: Lending\n") {
@@ -123,8 +123,9 @@ func TestOutsideAProject(t *testing.T) {
 	// With the spec file, the other files of .markitect/ are no concern.
 	write(t, outside, ".markitect/spec", "docs\n")
 	write(t, outside, ".markitect/state.jsonl", "not json\n")
+	write(t, outside, "docs/README.md", readme("A", "a.md"))
 	write(t, outside, "docs/a.md", "# A\n")
-	if code, out, errOut := run("check"); code != ExitOK || out != "0 errors in 1 document\n" {
+	if code, out, errOut := run("check"); code != ExitOK || out != "0 errors in 2 documents\n" {
 		t.Error(code, out, errOut)
 	}
 }
@@ -146,6 +147,7 @@ func link(t *testing.T, target, link string) {
 
 func TestSpecFolderOutsideTheProjectIsRefused(t *testing.T) {
 	elsewhere := t.TempDir()
+	write(t, elsewhere, "README.md", readme("A", "a.md"))
 	write(t, elsewhere, "a.md", "# A\n")
 	// A link inside the project is fine.
 	inside := t.TempDir()
@@ -153,6 +155,7 @@ func TestSpecFolderOutsideTheProjectIsRefused(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(inside, "handbook"), 0o755); err != nil {
 		t.Fatal(err)
 	}
+	write(t, inside, "handbook/spec/README.md", readme("A", "a.md"))
 	write(t, inside, "handbook/spec/a.md", "# A\n")
 	link(t, filepath.Join(inside, "handbook"), filepath.Join(inside, "docs"))
 	if code, _, errOut := run("check", "-C", inside); code != ExitOK {

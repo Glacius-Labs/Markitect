@@ -37,33 +37,38 @@ func copyFromLibrary(t *testing.T, project string, folders ...string) {
 	}
 }
 
-// The library as one spec: the module core, whose types are well-formed, and
-// the reference values and question catalogs beside it, which are plain
-// documents. check finds nothing in it.
+// The module core as a spec, the way a person copies it: on its own and
+// below a spec folder as core/. check finds nothing in either, so the module
+// passes the rules of the language itself: a README, and under Contents every
+// type that a document outside it may link to.
 func TestLibrary(t *testing.T) {
-	s, err := lang.Load(libraryFolder())
+	alone, err := fs.Sub(libraryFolder(), "core")
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, d := range lang.Check(s) {
-		t.Error(d)
-	}
-	core := 0
-	for _, d := range s.Documents {
-		if strings.HasPrefix(d.Path, "core/") {
-			core++
+	dir := initialized(t)
+	copyFromLibrary(t, dir, "core")
+	for name, fsys := range map[string]fs.FS{"alone": alone, "in a spec": os.DirFS(specOf(dir))} {
+		s, err := lang.Load(fsys)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, d := range lang.Check(s) {
+			t.Errorf("%s: %s", name, d)
+		}
+		if len(s.Documents) != 7 {
+			t.Errorf("%s: %d documents", name, len(s.Documents))
 		}
 	}
-	if core != 6 {
-		t.Errorf("core holds %d documents", core)
-	}
-	concept, _ := s.Document("core/concept.md")
+	s, _ := lang.Load(alone)
+	concept, _ := s.Document("concept.md")
 	if n := len(concept.Declared()); n != 4 {
 		t.Errorf("concept declares %d sections", n)
 	}
 }
 
-// The reference values name a value for every type of core.
+// The reference values name a value for every type of core, which is every
+// document of it but its README.
 func TestReferenceValuesCoverEveryType(t *testing.T) {
 	refs, err := references()
 	if err != nil {
@@ -71,7 +76,7 @@ func TestReferenceValuesCoverEveryType(t *testing.T) {
 	}
 	n := 0
 	err = fs.WalkDir(libraryFolder(), "core", func(p string, e fs.DirEntry, err error) error {
-		if err == nil && !e.IsDir() {
+		if err == nil && !e.IsDir() && e.Name() != "README.md" {
 			n++
 			if _, ok := refs.For(p); !ok {
 				t.Errorf("no reference value for %s", p)
@@ -162,5 +167,46 @@ func TestAHandLaidProjectHasTheQuestionsAndReferenceValuesOfCore(t *testing.T) {
 	}
 	if code, out, _ := run("questions", "-C", moved); code != ExitOK || !strings.Contains(out, "The spec has no module of the library, so there are no questions.") {
 		t.Errorf("a folder of another name: %d %s", code, out)
+	}
+}
+
+// A README is never an object and never a type: with a type line it is read
+// without it, with an extends line too, and a type line that names a README
+// names no type. check reports each at its line, show and table treat the
+// documents as untyped.
+func TestReadmeIsNoObjectAndNoType(t *testing.T) {
+	dir := spec(t, map[string]string{
+		"types/README.md":  "# Types\n\n## Contents\n- [Member](member.md)\n",
+		"types/member.md":  "# Member\n\nA person.\n\n## Card\nThe number.\n",
+		"people/README.md": "# People\n\nType: [Member](../types/member.md)\n\n## Card\nNone.\n",
+		"people/ada.md":    "# Ada\n\nType: [Types](../types/README.md)\n\n## Card\n1\n",
+		"people/bob.md":    "# Bob\n\nType: [Member](../types/member.md)\n\n## Card\n2\n",
+	})
+	code, out, _ := run("check", "-C", dir)
+	want := "people/README.md:3: readme.type: a README has no type line\n" +
+		"people/ada.md:3: readme.type: \"types/README.md\" is a README, which is no type\n" +
+		"2 errors in 5 documents\n"
+	if code != ExitFound || out != want {
+		t.Errorf("check: %d\n%s\nwant\n%s", code, out, want)
+	}
+	_, out, _ = run("check", "-C", dir, "--json")
+	if !strings.Contains(out, "\"file\": \"people/README.md\",\n      \"line\": 3,\n      \"code\": \"readme.type\",\n      \"message\": \"a README has no type line\"") {
+		t.Errorf("check --json: %s", out)
+	}
+	_, out, _ = run("show", "-C", dir, "people/README")
+	if !strings.HasPrefix(out, "people/README.md\nTitle: People\nType: (none)\n") {
+		t.Errorf("show README: %s", out)
+	}
+	_, out, _ = run("show", "-C", dir, "people/ada", "--json")
+	if !strings.Contains(out, "\"type_state\": \"invalid\"") {
+		t.Errorf("show of a document naming a README: %s", out)
+	}
+	_, out, _ = run("table", "-C", dir, "types/member")
+	if out != "| Title | Card |\n| --- | --- |\n| Bob | 2 |\n" {
+		t.Errorf("table of the type: %s", out)
+	}
+	_, out, _ = run("show", "-C", dir, "types/README")
+	if strings.Contains(out, "Documents:") {
+		t.Errorf("show of a README lists objects: %s", out)
 	}
 }

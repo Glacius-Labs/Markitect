@@ -56,6 +56,18 @@ type Document struct {
 	ExtendsPath string
 	// StrayExtendsLines are the other lines of text that start with "Extends:".
 	StrayExtendsLines []int
+	// ReadmeHeadLine is the line of a type line or an extends line that a README
+	// carries, and ReadmeHeadKind says which: "type" or "extends". A README is
+	// read without that line, so that it has no type and extends nothing: its
+	// TypeLine, ExtendsLine and their paths are empty. Both are zero for any
+	// other document.
+	ReadmeHeadLine int
+	ReadmeHeadKind string
+	// HeadReadme is the path of the README that the type line or the extends
+	// line of the document names, a document that is no type; the type line or
+	// extends line is then read as naming no type: TypePath and ExtendsPath are
+	// empty, TypeLine and ExtendsLine stay.
+	HeadReadme string
 	// HeadFirst and HeadLast are the first and the last line of the head block,
 	// the paragraph right after the title where the type line or the extends
 	// line belongs; both are 0 when that block is no paragraph.
@@ -168,6 +180,9 @@ func Parse(docPath string, src []byte) *Document {
 	root := markdown.Parser().Parse(text.NewReader(source))
 	p.read(root)
 	p.refs(root)
+	if isReadme(docPath) {
+		p.doc.readWithoutHead()
+	}
 	return p.doc
 }
 

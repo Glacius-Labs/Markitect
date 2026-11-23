@@ -3,6 +3,7 @@ package lang
 import (
 	"fmt"
 	"io/fs"
+	"path"
 	"sort"
 	"strings"
 )
@@ -12,14 +13,23 @@ type Spec struct {
 	Documents []*Document
 	byPath    map[string]*Document
 	types     map[string]bool // the paths of the documents that are types
+	modules   map[string]bool // the folders that hold a document directly; "." is the spec folder
 }
 
-// NewSpec indexes documents by path and sorts them.
+// NewSpec indexes documents by path and sorts them. A type line or an extends
+// line that names a README names no type: the document keeps the line and
+// HeadReadme holds the path.
 func NewSpec(docs []*Document) *Spec {
-	s := &Spec{Documents: append([]*Document(nil), docs...), byPath: make(map[string]*Document, len(docs)), types: map[string]bool{}}
+	s := &Spec{Documents: append([]*Document(nil), docs...), byPath: make(map[string]*Document, len(docs)), types: map[string]bool{}, modules: map[string]bool{}}
 	sort.SliceStable(s.Documents, func(i, j int) bool { return s.Documents[i].Path < s.Documents[j].Path })
 	for _, d := range s.Documents {
 		s.byPath[d.Path] = d
+		s.modules[path.Dir(d.Path)] = true
+	}
+	for _, d := range s.Documents {
+		d.readHeadReadme(s)
+	}
+	for _, d := range s.Documents {
 		if d.HasType() {
 			s.types[d.TypePath] = true
 		}
@@ -86,6 +96,9 @@ const (
 	CodeSectionMissing = "section.missing"
 	CodeSectionEmpty   = "section.empty"
 	CodeLinkUnresolved = "link.unresolved"
+	CodeLinkInternal   = "link.internal"
+	CodeModuleReadme   = "module.readme"
+	CodeReadmeType     = "readme.type"
 
 	CodeExtendsUnresolved = "extends.unresolved"
 	CodeExtendsLine       = "extends.line"
@@ -135,17 +148,19 @@ func (d Diagnostic) String() string {
 }
 
 // Check checks every document of the spec: its title, its type line or
-// extends line, the sections its type requires and its links. The result is sorted by path,
+// extends line, the sections its type requires and its links, and every module
+// of it: its README and what its links may reach. The result is sorted by path,
 // then by line.
 func Check(s *Spec) []Diagnostic {
-	var out []Diagnostic
+	out := s.checkModules()
+	shown := s.shownByModule()
 	for _, d := range s.Documents {
 		add := func(line int, code, format string, args ...any) {
 			out = append(out, Diagnostic{Path: d.Path, Line: line, Code: code, Message: fmt.Sprintf(format, args...)})
 		}
 		out = append(out, checkTitle(d)...)
 		switch {
-		case d.TypeLine != 0 && !d.HasType():
+		case d.TypeLine != 0 && !d.HasType() && d.HeadReadme == "":
 			add(d.TypeLine, CodeTypeLine, "type line must be exactly one link to a document")
 		case d.HasType():
 			t, ok := s.Document(d.TypePath)
@@ -163,6 +178,8 @@ func Check(s *Spec) []Diagnostic {
 			}
 		}
 		out = append(out, s.checkExtends(d)...)
+		out = append(out, s.checkReadmeType(d)...)
+		out = append(out, s.checkInternal(d, shown)...)
 		seen := map[string]bool{}
 		for _, l := range d.Links {
 			if seen[l.Target] {

@@ -28,8 +28,16 @@ func checkFolder(t *testing.T, folder string) []string {
 	return lines(t, s)
 }
 
-// checkFiles checks a spec of the given files, path to content.
+// checkFiles checks a spec of the given files, path to content, with the
+// README.md that each of its modules needs and the fixture leaves out, so that
+// a test of another rule meets no rule of the modules.
 func checkFiles(t *testing.T, files map[string]string) []string {
+	t.Helper()
+	return checkExactly(t, withReadmes(files))
+}
+
+// checkExactly checks a spec of exactly the given files.
+func checkExactly(t *testing.T, files map[string]string) []string {
 	t.Helper()
 	fsys := fstest.MapFS{}
 	for p, text := range files {
@@ -88,8 +96,8 @@ func TestCheckFixtures(t *testing.T) {
 	for _, d := range s.Documents {
 		paths = append(paths, d.Path)
 	}
-	expect(t, paths, "branches/central.md", "members/Grace Hopper.md", "members/ada-lovelace.md",
-		"members/alan-turing.md", "types/branch.md", "types/member.md")
+	expect(t, paths, "branches/README.md", "branches/central.md", "members/Grace Hopper.md", "members/README.md",
+		"members/ada-lovelace.md", "members/alan-turing.md", "types/README.md", "types/branch.md", "types/member.md")
 }
 
 const member = "# Member\n\nA person.\n\n## Card\nThe card number.\n"
@@ -108,12 +116,15 @@ func TestFiles(t *testing.T) {
 			".md":         {Data: []byte("no title")},
 			"B.MD":        {Data: []byte("# B\n")},
 			"dir.md/c.md": {Data: []byte("# C\n")},
+			// The README each module needs.
+			"README.md":        {Data: []byte("# Spec\n\n## Contents\n- [A](a.md)\n- [B](B.MD)\n- [C](dir.md/README.md)\n")},
+			"dir.md/README.md": {Data: []byte("# Dir\n\n## Contents\n- [C](c.md)\n")},
 		})
 		var paths []string
 		for _, d := range s.Documents {
 			paths = append(paths, d.Path)
 		}
-		expect(t, paths, "B.MD", "a.md", "dir.md/c.md")
+		expect(t, paths, "B.MD", "README.md", "a.md", "dir.md/README.md", "dir.md/c.md")
 		expect(t, lines(t, s))
 	})
 	t.Run("byte order mark and CRLF", func(t *testing.T) {

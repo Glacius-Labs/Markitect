@@ -77,33 +77,48 @@ func spec(t *testing.T, files map[string]string) string {
 	return dir
 }
 
+// readme is the README of a module: a title and, under Contents, a link to
+// each of the documents it shows.
+func readme(title string, shown ...string) string {
+	text := "# " + title + "\n\n## Contents\n"
+	for _, p := range shown {
+		text += "- [" + p + "](" + p + ")\n"
+	}
+	return text
+}
+
 func TestCheckText(t *testing.T) {
 	dir := spec(t, map[string]string{
-		"types/member.md":      "# Member\n\nA person.\n\n## Card\nThe number.\n",
-		"lending/loans/ada.md": "# Ada\r\n\r\nType: [Member](../../types/member.md)\r\n\r\n## Card\r\n\r\n",
-		"lending/borrow.md":    "# Borrow\n\nSee [the loans](loans/ghost.md).\n",
+		"types/README.md":         readme("Types", "member.md"),
+		"types/member.md":         "# Member\n\nA person.\n\n## Card\nThe number.\n",
+		"lending/README.md":       readme("Lending", "borrow.md", "loans/README.md"),
+		"lending/loans/README.md": readme("Loans", "ada.md"),
+		"lending/loans/ada.md":    "# Ada\r\n\r\nType: [Member](../../types/member.md)\r\n\r\n## Card\r\n\r\n",
+		"lending/borrow.md":       "# Borrow\n\nSee [the loans](loans/ghost.md).\n",
 	})
 	code, out, errOut := run("check", "-C", dir)
 	want := strings.Join([]string{
 		`lending/borrow.md:3: link.unresolved: no document at "loans/ghost.md"`,
 		`lending/loans/ada.md:5: section.empty: empty section "Card"`,
-		"2 errors in 3 documents", ""}, "\n")
+		"2 errors in 6 documents", ""}, "\n")
 	if code != ExitFound || out != want || errOut != "" {
 		t.Errorf("got %d\n%s%s\nwant 1\n%s", code, out, errOut, want)
 	}
 }
 
 func TestCheckClean(t *testing.T) {
-	dir := spec(t, map[string]string{"a.md": "# A\n"})
-	if code, out, _ := run("check", "-C", dir); code != ExitOK || out != "0 errors in 1 document\n" {
+	dir := spec(t, map[string]string{"README.md": readme("A", "a.md"), "a.md": "# A\n"})
+	if code, out, _ := run("check", "-C", dir); code != ExitOK || out != "0 errors in 2 documents\n" {
 		t.Errorf("got %d %q", code, out)
 	}
 }
 
 func TestCheckJSON(t *testing.T) {
 	dir := spec(t, map[string]string{
-		"a.md":     "# A\n",
-		"sub/b.md": "# B\n\n[x](../ghost.md)\n",
+		"README.md":     readme("Root", "a.md", "sub/README.md"),
+		"a.md":          "# A\n",
+		"sub/README.md": readme("Sub", "b.md"),
+		"sub/b.md":      "# B\n\n[x](../ghost.md)\n",
 	})
 	for _, args := range [][]string{{"check", "-C", dir, "--json"}, {"check", "--json", "-C", dir}, {"check", "-C", dir, "-json", "--"}} {
 		code, out, _ := run(args...)
@@ -112,14 +127,14 @@ func TestCheckJSON(t *testing.T) {
 			t.Fatalf("%v: %s", err, out)
 		}
 		want := map[string]any{
-			"format_version": float64(1), "kind": "check", "documents": float64(2),
+			"format_version": float64(1), "kind": "check", "documents": float64(4),
 			"diagnostics": []any{map[string]any{"file": "sub/b.md", "line": float64(3), "code": "link.unresolved", "message": `no document at "../ghost.md"`}},
 		}
 		if code != ExitFound || !reflect.DeepEqual(doc, want) {
 			t.Errorf("%v: got %d %v", args, code, doc)
 		}
 	}
-	clean := spec(t, map[string]string{"a.md": "# A\n"})
+	clean := spec(t, map[string]string{"README.md": readme("A", "a.md"), "a.md": "# A\n"})
 	if code, out, _ := run("check", "--json", "-C", clean); code != ExitOK || !strings.Contains(out, `"diagnostics": []`) {
 		t.Errorf("got %d %s", code, out)
 	}
@@ -197,7 +212,7 @@ func TestUsage(t *testing.T) {
 // The flags may stand before the command, as in markitect -C PROJECT check, and between its
 // arguments.
 func TestFlagsMayStandBeforeTheCommand(t *testing.T) {
-	dir := spec(t, map[string]string{"a.md": "# A\n"})
+	dir := spec(t, map[string]string{"README.md": readme("A", "a.md"), "a.md": "# A\n"})
 	for _, args := range [][]string{
 		{"-C", dir, "check"},
 		{"--json", "-C", dir, "check"},

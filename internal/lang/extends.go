@@ -132,7 +132,7 @@ func (s *Spec) checkExtends(d *Document) []Diagnostic {
 	}
 	var out []Diagnostic
 	switch {
-	case d.ExtendsLine != 0 && !d.HasExtends():
+	case d.ExtendsLine != 0 && !d.HasExtends() && d.HeadReadme == "":
 		out = append(out, add(d.ExtendsLine, CodeExtendsLine, "extends line must be exactly one link to a document"))
 	case d.HasExtends():
 		if _, ok := s.Document(d.ExtendsPath); !ok {

@@ -47,8 +47,8 @@ func TestLibraryHoldsTheModuleCore(t *testing.T) {
 		t.Errorf("folders: %s", got)
 	}
 	types, _ := fs.Glob(folder(), "core/*.md")
-	if len(types) != 6 {
-		t.Errorf("core holds %v", types)
+	if len(types) != 7 {
+		t.Errorf("core holds %v, its README and six types", types)
 	}
 }
 
@@ -92,7 +92,7 @@ func TestEveryFileIsADocumentWithATitleAndLineFeeds(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if n != 8 {
+	if n != 9 {
 		t.Errorf("%d files", n)
 	}
 }
@@ -103,9 +103,10 @@ func TestEveryModuleHasReferencesAndQuestions(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		// Every document of a module but its README is a type.
 		types, _ := fs.Glob(folder(), name+"/*.md")
-		if rows := strings.Count(string(refs), "\n| ") - 1; rows != len(types) {
-			t.Errorf("%s: %d reference rows for %d types", name, rows, len(types))
+		if rows := strings.Count(string(refs), "\n| ") - 1; rows != len(types)-1 {
+			t.Errorf("%s: %d reference rows for %d types", name, rows, len(types)-1)
 		}
 		questions, err := fs.ReadFile(FS(), "questions/"+name+".md")
 		if err != nil {

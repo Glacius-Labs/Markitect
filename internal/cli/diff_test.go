@@ -167,13 +167,14 @@ func TestSpecFileThatIsAFolderIsNoProject(t *testing.T) {
 	// The search upward is unchanged: a project further up is still found.
 	outer := t.TempDir()
 	markitectFile(t, outer)
+	write(t, outer, "docs/spec/README.md", readme("A", "a.md"))
 	write(t, outer, "docs/spec/a.md", "# A\n")
 	inner := filepath.Join(outer, "inner")
 	if err := os.MkdirAll(filepath.Join(inner, ".markitect", "spec"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	t.Chdir(inner)
-	if code, out, _ := run("check"); code != ExitOK || out != "0 errors in 1 document\n" {
+	if code, out, _ := run("check"); code != ExitOK || out != "0 errors in 2 documents\n" {
 		t.Errorf("project above: %d %q", code, out)
 	}
 }

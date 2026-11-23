@@ -24,11 +24,11 @@ func (s *smoke) version() error {
 }
 
 // smokeFiles are the documents of a small lending library that a person writes
-// by hand into the spec beside the module core: a concept of core's type, a
-// type of their own with an operation of it, and a type that extends another
-// with a document of it.
+// by hand into the spec beside the module core: a module domain with its README,
+// a concept of core's type, a type of their own with an operation of it, and a
+// type that extends another with a document of it.
 var smokeFiles = map[string]string{
-	"docs/spec/domain/README.md":       "# Domain\n\n## Concepts\n- [Member](member.md)\n\n## Operations\n- [Borrow](borrow.md)\n",
+	"docs/spec/domain/README.md":       "# Domain\n\nHow members borrow books.\n\n## Contents\n- [Member](member.md)\n- [Borrow](borrow.md)\n\n## Concepts\n- [Member](member.md)\n\n## Operations\n- [Borrow](borrow.md)\n",
 	"docs/spec/domain/member.md":       "# Member\n\nType: [Concept](../core/concept.md)\n\n## Definition\nA person with a library card.\n",
 	"docs/spec/domain/operation.md":    "# Operation\n\nSomething a member can do.\n\n## Does\nWhat happens.\n\n## Who\nWho may do it.\n\n## Given\nWhat it needs.\n",
 	"docs/spec/domain/borrow.md":       "# Borrow\n\nType: [Operation](operation.md)\n\n## Does\nLends a book to a member for three weeks.\n\n## Who\nA [member](member.md).\n\n## Given\nThe book and the card.\n",
@@ -140,12 +140,12 @@ func (s *smoke) projectCommands() error {
 	// path, with their type and title.
 	if out, err := markitect(0, "check"); err != nil {
 		return err
-	} else if out != "0 errors in 6 documents\n" {
+	} else if out != "0 errors in 7 documents\n" {
 		return fmt.Errorf("check over the module core: %s", tail(out))
 	}
 	if out, err := markitect(0, "table"); err != nil {
 		return err
-	} else if err := requireContains(out, "| Document | Type | Title |\n| --- | --- | --- |\n", "| core/concept.md |  | Concept |\n", "| core/term.md |  | Term |\n"); err != nil {
+	} else if err := requireContains(out, "| Document | Type | Title |\n| --- | --- | --- |\n", "| core/README.md |  | Core |\n", "| core/concept.md |  | Concept |\n", "| core/term.md |  | Term |\n"); err != nil {
 		return err
 	}
 	base, err := documents(markitect, 0)
@@ -192,6 +192,42 @@ func (s *smoke) projectCommands() error {
 	if err := os.Remove(filepath.Join(project, "docs", "spec", "domain", "broken.md")); err != nil {
 		return err
 	}
+	// A module needs a README, and what its README does not list under Contents
+	// is internal to it: a link from outside is found.
+	if err := writeFile(project, "docs/spec/shop/cart.md", "# Cart\n\nWhat a customer buys.\n"); err != nil {
+		return err
+	}
+	if err := writeFile(project, "docs/spec/domain/shopping.md", "# Shopping\n\nSee [the cart](../shop/cart.md).\n"); err != nil {
+		return err
+	}
+	if out, err := markitect(1, "check"); err != nil {
+		return err
+	} else if err := requireContains(out, "domain/shopping.md:3: link.internal: \"shop/cart.md\" is internal to shop: shop has no README.md\n",
+		"shop/README.md:1: module.readme: the folder \"shop\" holds documents and has no README.md\n", fmt.Sprintf("2 errors in %d documents\n", total+2)); err != nil {
+		return err
+	}
+	if err := writeFile(project, "docs/spec/shop/README.md", "# Shop\n\nWhat customers buy.\n"); err != nil {
+		return err
+	}
+	if out, err := markitect(1, "check", "--json"); err != nil {
+		return err
+	} else if err := requireContains(out, `"code": "link.internal"`, `"message": "\"shop/cart.md\" is internal to shop: shop/README.md does not list it under Contents"`); err != nil {
+		return err
+	}
+	if err := writeFile(project, "docs/spec/shop/README.md", "# Shop\n\nWhat customers buy.\n\n## Contents\n- [Cart](cart.md)\n"); err != nil {
+		return err
+	}
+	if out, err := markitect(0, "check"); err != nil {
+		return err
+	} else if out != fmt.Sprintf("0 errors in %d documents\n", total+3) {
+		return fmt.Errorf("check with a module that lists its cart: %s", tail(out))
+	}
+	if err := os.RemoveAll(filepath.Join(project, "docs", "spec", "shop")); err != nil {
+		return err
+	}
+	if err := os.Remove(filepath.Join(project, "docs", "spec", "domain", "shopping.md")); err != nil {
+		return err
+	}
 	// A derived type that makes a section of its base optional is found.
 	if err := writeFile(project, "docs/spec/domain/loose.md", "# Loose\n\nExtends: [Artifact](artifact.md)\n\n## Owner (optional)\nNobody.\n"); err != nil {
 		return err
@@ -220,7 +256,7 @@ func (s *smoke) projectCommands() error {
 	}
 	if out, err := markitect(0, "show", "domain/borrow"); err != nil {
 		return err
-	} else if err := requireContains(out, "domain/borrow.md\nTitle: Borrow\n", "Type: domain/operation.md\n", "Linked from:\n  domain/README.md (Operations)\n"); err != nil {
+	} else if err := requireContains(out, "domain/borrow.md\nTitle: Borrow\n", "Type: domain/operation.md\n", "Linked from:\n  domain/README.md (Contents)\n  domain/README.md (Operations)\n"); err != nil {
 		return err
 	}
 	if out, err := markitect(0, "table"); err != nil {
