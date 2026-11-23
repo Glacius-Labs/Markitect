@@ -6,33 +6,6 @@ import (
 	"testing/fstest"
 )
 
-func TestInitFiles(t *testing.T) {
-	got := map[string]string{}
-	for _, f := range InitFiles("1.2.3", "docs/spec") {
-		got[f.Path] = string(f.Data)
-	}
-	want := map[string]string{
-		".markitect/version":                   "1.2.3\n",
-		".markitect/spec":                      "docs/spec\n",
-		".markitect/.gitattributes":            "state.jsonl merge=union\nhistory.jsonl merge=union\n",
-		".markitect/ignore":                    "",
-		".markitect/context/.gitkeep":          "",
-		".markitect/findings/pending/.gitkeep": "",
-		".markitect/findings/ready/.gitkeep":   "",
-		".markitect/findings/closed/.gitkeep":  "",
-		".markitect/plan/.gitkeep":             "",
-		".markitect/briefing/.gitkeep":         "",
-	}
-	if len(got) != len(want) {
-		t.Fatalf("got %v", got)
-	}
-	for p, w := range want {
-		if got[p] != w {
-			t.Errorf("%s: got %q, want %q", p, got[p], w)
-		}
-	}
-}
-
 func TestSpecPath(t *testing.T) {
 	for arg, want := range map[string]string{
 		"docs/spec": "docs/spec", `docs\spec\`: "docs/spec", " ./docs//spec ": "docs/spec",
@@ -49,23 +22,24 @@ func TestSpecPath(t *testing.T) {
 	}
 }
 
-func TestReadLayout(t *testing.T) {
-	fsys := fstest.MapFS{
-		".markitect/version": {Data: []byte("\xef\xbb\xbf 0.35.0\r\n")},
-		".markitect/spec":    {Data: []byte("docs\\spec\r\n")},
+func TestReadSpecFolder(t *testing.T) {
+	fsys := fstest.MapFS{".markitect/spec": {Data: []byte("\xef\xbb\xbf docs\\spec\r\n")}}
+	if got, err := ReadSpecFolder(fsys); err != nil || got != "docs/spec" {
+		t.Errorf("got %q %v", got, err)
 	}
-	l, err := ReadLayout(fsys)
-	if err != nil || l.Version != "0.35.0" || l.SpecFolder != "docs/spec" {
-		t.Errorf("got %+v %v", l, err)
+	// Whatever else lies in .markitect/ is ignored.
+	fsys[".markitect/version"] = &fstest.MapFile{Data: []byte("not a version")}
+	fsys[".markitect/state.jsonl"] = &fstest.MapFile{Data: []byte("{")}
+	if got, err := ReadSpecFolder(fsys); err != nil || got != "docs/spec" {
+		t.Errorf("got %q %v", got, err)
 	}
 	for name, files := range map[string]fstest.MapFS{
-		"version missing":   {".markitect/spec": {Data: []byte("docs/spec\n")}},
-		"version empty":     {".markitect/version": {Data: []byte(" \n")}, ".markitect/spec": {Data: []byte("docs/spec\n")}},
-		"two version lines": {".markitect/version": {Data: []byte("1\n2\n")}, ".markitect/spec": {Data: []byte("docs/spec\n")}},
-		"spec missing":      {".markitect/version": {Data: []byte("1\n")}},
-		"spec outside":      {".markitect/version": {Data: []byte("1\n")}, ".markitect/spec": {Data: []byte("../spec\n")}},
+		"missing":   {".markitect/version": {Data: []byte("1\n")}},
+		"empty":     {".markitect/spec": {Data: []byte(" \n")}},
+		"two lines": {".markitect/spec": {Data: []byte("docs\nspec\n")}},
+		"outside":   {".markitect/spec": {Data: []byte("../spec\n")}},
 	} {
-		if _, err := ReadLayout(files); err == nil {
+		if _, err := ReadSpecFolder(files); err == nil {
 			t.Errorf("%s: no error", name)
 		}
 	}
@@ -73,7 +47,6 @@ func TestReadLayout(t *testing.T) {
 
 func TestLoad(t *testing.T) {
 	fsys := fstest.MapFS{
-		".markitect/version":      {Data: []byte("1.0.0\n")},
 		".markitect/spec":         {Data: []byte("docs/spec\n")},
 		"docs/spec/lending.md":    {Data: []byte("# Lending\n\nSee [loans](loans/loan.md).\n")},
 		"docs/spec/loans/loan.md": {Data: []byte("# Loan\n")},
@@ -87,8 +60,8 @@ func TestLoad(t *testing.T) {
 	for _, d := range p.Spec.Documents {
 		paths = append(paths, d.Path)
 	}
-	if p.Version != "1.0.0" || p.Spec == nil || strings.Join(paths, " ") != "lending.md loans/loan.md" {
-		t.Errorf("got %+v %v", p.Layout, paths)
+	if p.SpecFolder != "docs/spec" || p.Spec == nil || strings.Join(paths, " ") != "lending.md loans/loan.md" {
+		t.Errorf("got %q %v", p.SpecFolder, paths)
 	}
 	delete(fsys, "docs/spec/lending.md")
 	delete(fsys, "docs/spec/loans/loan.md")

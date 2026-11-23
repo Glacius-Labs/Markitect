@@ -23,58 +23,45 @@ func (s *smoke) version() error {
 	return nil
 }
 
-// smokeFiles fill the documents of a small lending library: the domain README
-// that apply copies, and a concept and an operation that new creates.
+// smokeFiles are the documents of a small lending library that a person writes
+// by hand into the spec: a domain, a concept and an operation of the types of
+// the packages.
 var smokeFiles = map[string]string{
 	"docs/spec/domain/README.md": "# Domain\n\nType: [Domain](../packages/software/domain.md)\n\n## Concepts\n- [Member](member.md)\n\n## Operations\n- [Borrow](borrow.md)\n",
 	"docs/spec/domain/member.md": "# Member\n\nType: [Concept](../packages/core/concept.md)\n\n## Definition\nA person with a library card.\n",
 	"docs/spec/domain/borrow.md": "# Borrow\n\nType: [Operation](../packages/software/operation.md)\n\n## Does\nLends a book to a member for three weeks.\n\n## Who\nA [member](member.md).\n\n## Given\nThe book and the card.\n",
 }
 
-// skillsOf lists the skills init copied into a folder of the project.
-func skillsOf(repo, folder string) ([]string, error) {
-	entries, err := os.ReadDir(filepath.Join(repo, filepath.FromSlash(folder)))
-	if err != nil {
-		return nil, err
-	}
-	var names []string
-	for _, e := range entries {
-		if e.IsDir() {
-			names = append(names, e.Name())
+// snapshot reads every file below root, by its path with forward slashes.
+func snapshot(root string) (map[string]string, error) {
+	out := map[string]string{}
+	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
 		}
-	}
-	return names, nil
+		data, err := os.ReadFile(p)
+		rel, _ := filepath.Rel(root, p)
+		out[filepath.ToSlash(rel)] = string(data)
+		return err
+	})
+	return out, err
 }
 
-// sameTree says whether two folders hold the same files with the same bytes.
-func sameTree(a, b string) error {
-	files := func(root string) (map[string]string, error) {
-		out := map[string]string{}
-		err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
-			if err != nil || d.IsDir() {
-				return err
-			}
-			data, err := os.ReadFile(p)
-			rel, _ := filepath.Rel(root, p)
-			out[filepath.ToSlash(rel)] = string(data)
-			return err
-		})
-		return out, err
+// sameFiles says whether two snapshots hold the same files with the same
+// bytes, and names the first difference.
+func sameFiles(before, after map[string]string) error {
+	for name, text := range before {
+		got, ok := after[name]
+		switch {
+		case !ok:
+			return fmt.Errorf("%s is gone", name)
+		case got != text:
+			return fmt.Errorf("%s changed", name)
+		}
 	}
-	x, err := files(a)
-	if err != nil {
-		return err
-	}
-	y, err := files(b)
-	if err != nil {
-		return err
-	}
-	if len(x) == 0 || len(x) != len(y) {
-		return fmt.Errorf("%s holds %d files, %s %d", a, len(x), b, len(y))
-	}
-	for name, text := range x {
-		if y[name] != text {
-			return fmt.Errorf("%s differs between %s and %s", name, a, b)
+	for name := range after {
+		if _, ok := before[name]; !ok {
+			return fmt.Errorf("%s is new", name)
 		}
 	}
 	return nil
@@ -105,69 +92,60 @@ func documents(markitect func(int, ...string) (string, error), want int) (int, e
 	return checked.Documents, nil
 }
 
-// projectCommands drives the built CLI over a small fresh project in a plain
-// folder, with no Git: init, which lays out the project; table, which lists
-// what init laid out; apply, new and check; the look commands show, table,
-// topic, questions and licenses; compare against a copy made before a change;
-// and the refusal of the commands that are gone. It starts no agent and
-// checks that no command writes a state or a history.
+// layOut builds a project by hand, the way a person does since no command lays
+// one out: an empty folder, the packages and the templates copied from the
+// library of the repository into a spec folder, docs/spec, and the file
+// .markitect/spec that names that folder.
+func layOut(repo, project string) error {
+	library := filepath.Join(repo, "internal", "library")
+	spec := filepath.Join(project, "docs", "spec")
+	if err := copyTree(filepath.Join(library, "packages"), filepath.Join(spec, "packages")); err != nil {
+		return err
+	}
+	for _, template := range []string{"project", "product", "architecture", "software", "company"} {
+		if err := copyTree(filepath.Join(library, "templates", template), filepath.Join(spec, "templates", template)); err != nil {
+			return err
+		}
+	}
+	return writeFile(project, ".markitect/spec", "docs/spec\n")
+}
+
+// projectCommands drives the built CLI over a small project that it lays out
+// by hand in a plain folder, with no Git: the commands that read it, check,
+// table, show, topic, questions, licenses and diff against a copy made before a
+// change, and the refusal of the commands that are gone. It starts no agent
+// and checks that no command writes anything into the project.
 func (s *smoke) projectCommands() error {
-	repo := filepath.Join(s.work, "lending")
-	if err := os.MkdirAll(repo, 0o755); err != nil {
-		return err
-	}
-	markitect := func(want int, args ...string) (string, error) { return s.exit(repo, want, args...) }
+	project := filepath.Join(s.work, "lending")
+	markitect := func(want int, args ...string) (string, error) { return s.exit(project, want, args...) }
 
-	out, err := markitect(0, "init")
-	if err != nil {
+	// Outside a project, the commands that need one name the file that is
+	// missing and what it holds; version and licenses need none.
+	if err := os.MkdirAll(project, 0o755); err != nil {
 		return err
 	}
-	if err := requireContains(out, "created .markitect/\n", "created docs/spec/\n", "created docs/spec/project/\n", "created docs/spec/product/\n", "created docs/spec/architecture/\n",
-		"created docs/spec/factory/\n", "created docs/spec/packages/factory/\n", "created AGENTS.md\n"); err != nil {
-		return err
+	if err := s.refused(project, ".markitect/spec", "check"); err != nil {
+		return fmt.Errorf("check in an empty folder: %w", err)
 	}
-	if err := requirePresent(repo, ".markitect/version", ".markitect/spec", ".markitect/ignore", ".markitect/.gitattributes",
-		".markitect/context/.gitkeep", ".markitect/findings/pending/.gitkeep", ".markitect/findings/ready/.gitkeep", ".markitect/findings/closed/.gitkeep",
-		".markitect/plan/.gitkeep", ".markitect/briefing/.gitkeep", "docs/spec/factory/README.md", "docs/spec/packages/factory/story.md", "AGENTS.md"); err != nil {
-		return err
-	}
-	if entries, err := os.ReadDir(filepath.Join(repo, ".markitect")); err != nil {
-		return err
-	} else {
-		var names []string
-		for _, e := range entries {
-			names = append(names, e.Name())
-		}
-		if got := strings.Join(names, " "); got != ".gitattributes briefing context findings ignore plan spec version" {
-			return fmt.Errorf(".markitect/ holds %s", got)
-		}
-	}
-	if err := requireContains(readFile(repo, "AGENTS.md"), "skill `markitect-assistant`", "`docs/spec/factory/`"); err != nil {
-		return err
-	}
-	claude, err := skillsOf(repo, ".claude/skills")
-	if err != nil || len(claude) == 0 {
-		return fmt.Errorf("init copied no skills to .claude/skills: %v", err)
-	}
-	agents, err := skillsOf(repo, ".agents/skills")
-	if err != nil || strings.Join(claude, " ") != strings.Join(agents, " ") {
-		return fmt.Errorf("the skills of .claude/skills %v and of .agents/skills %v differ: %v", claude, agents, err)
-	}
-	for _, name := range claude {
-		if err := requirePresent(repo, ".claude/skills/"+name+"/SKILL.md"); err != nil {
-			return err
-		}
-		if err := sameTree(filepath.Join(repo, ".claude", "skills", name), filepath.Join(repo, ".agents", "skills", name)); err != nil {
-			return err
-		}
-	}
-	if _, err := markitect(2, "init"); err != nil {
-		return fmt.Errorf("a second init: %w", err)
+	if out, err := markitect(0, "licenses"); err != nil || !strings.Contains(out, "goldmark") {
+		return fmt.Errorf("licenses in an empty folder: %v", err)
 	}
 
-	// The spec passes check but for the sections a project fills, none of
-	// them in the way of working.
-	out, err = markitect(1, "check")
+	if err := layOut(s.repo, project); err != nil {
+		return err
+	}
+	if err := requirePresent(project, ".markitect/spec", "docs/spec/packages/core/concept.md", "docs/spec/packages/software/operation.md",
+		"docs/spec/templates/project/README.md", "docs/spec/templates/product/README.md"); err != nil {
+		return err
+	}
+	if entries, err := os.ReadDir(filepath.Join(project, ".markitect")); err != nil {
+		return err
+	} else if len(entries) != 1 {
+		return fmt.Errorf(".markitect/ holds %d entries, not only spec", len(entries))
+	}
+
+	// The spec passes check but for the sections a project fills.
+	out, err := markitect(1, "check")
 	if err != nil {
 		return err
 	}
@@ -176,59 +154,31 @@ func (s *smoke) projectCommands() error {
 		return fmt.Errorf("check finds nothing in the templates:\n%s", tail(out))
 	}
 	for i, code := range found {
-		if code != "section.empty" || strings.HasPrefix(files[i], "factory/") {
-			return fmt.Errorf("check after init finds %s in %s", code, files[i])
+		if code != "section.empty" || !strings.HasPrefix(files[i], "templates/") {
+			return fmt.Errorf("check after laying out finds %s in %s", code, files[i])
 		}
 	}
-	// table lists every document init laid out, sorted by path, with its
-	// type and title.
+	// table lists every document, sorted by path, with its type and title.
 	if out, err := markitect(0, "table"); err != nil {
 		return err
-	} else if err := requireContains(out, "| Document | Type | Title |\n| --- | --- | --- |\n", "| factory/README.md | ", "| project/README.md | "); err != nil {
+	} else if err := requireContains(out, "| Document | Type | Title |\n| --- | --- | --- |\n", "| templates/product/README.md | ", "| templates/project/README.md | "); err != nil {
 		return err
 	}
 
 	// A small project of its own: the templates go, the packages stay.
-	for _, tpl := range []string{"project", "product", "architecture", "factory"} {
-		if err := os.RemoveAll(filepath.Join(repo, "docs", "spec", tpl)); err != nil {
-			return err
-		}
+	if err := os.RemoveAll(filepath.Join(project, "docs", "spec", "templates")); err != nil {
+		return err
 	}
 	base, err := documents(markitect, 0)
 	if err != nil {
 		return err
 	}
-	if out, err := markitect(0, "apply", "software/domain", "domain"); err != nil {
-		return err
-	} else if out != "copied domain/README.md\n" {
-		return fmt.Errorf("apply printed %q", out)
-	}
-	// After apply, check finds nothing but the empty sections.
-	if out, err := markitect(1, "check"); err != nil {
-		return err
-	} else if err := requireContains(out, "domain/README.md:5: section.empty: empty section \"Concepts\"\n", "domain/README.md:7: section.empty: empty section \"Operations\"\n", fmt.Sprintf("2 errors in %d documents\n", base+1)); err != nil {
-		return err
-	}
-	if out, err := markitect(0, "new", "packages/core/concept", "domain/member", "Member"); err != nil {
-		return err
-	} else if err := requireContains(out, "created domain/member.md\n"); err != nil {
-		return err
-	}
-	if out, err := markitect(0, "new", "packages/software/operation", "domain/borrow", "Borrow"); err != nil {
-		return err
-	} else if err := requireContains(out, "created domain/borrow.md\n"); err != nil {
-		return err
-	}
-	if got := readFile(repo, "docs/spec/domain/borrow.md"); got != "# Borrow\n\nType: [Operation](../packages/software/operation.md)\n\n## Does\n\n## Who\n\n## Given\n\n" {
-		return fmt.Errorf("new wrote %q", got)
-	}
-
 	for name, content := range smokeFiles {
-		if err := writeFile(repo, name, content); err != nil {
+		if err := writeFile(project, name, content); err != nil {
 			return err
 		}
 	}
-	total := base + 3
+	total := base + len(smokeFiles)
 	if out, err := markitect(0, "check"); err != nil {
 		return err
 	} else if out != fmt.Sprintf("0 errors in %d documents\n", total) {
@@ -246,9 +196,27 @@ func (s *smoke) projectCommands() error {
 		if err := decode(out, &checked); err != nil {
 			return err
 		}
-		if checked.FormatVersion != 1 || checked.Kind != "check" || checked.Documents != total || len(checked.Diagnostics) != 0 || strings.Contains(out, `"work"`) {
+		if checked.FormatVersion != 1 || checked.Kind != "check" || checked.Documents != total || len(checked.Diagnostics) != 0 {
 			return fmt.Errorf("check --json: %s", tail(out))
 		}
+	}
+	// A document that breaks a rule is found, with its file and line.
+	if err := writeFile(project, "docs/spec/domain/broken.md", "# Broken\n\nSee [nothing](nothing.md).\n"); err != nil {
+		return err
+	}
+	if out, err := markitect(1, "check"); err != nil {
+		return err
+	} else if err := requireContains(out, "domain/broken.md:3: link.unresolved: no document at \"nothing.md\"\n", fmt.Sprintf("1 error in %d documents\n", total+1)); err != nil {
+		return err
+	}
+	if err := os.Remove(filepath.Join(project, "docs", "spec", "domain", "broken.md")); err != nil {
+		return err
+	}
+
+	// Everything from here on reads: nothing of the project may change.
+	before, err := snapshot(project)
+	if err != nil {
+		return err
 	}
 
 	// The look commands: the topic view of the whole spec, show, table,
@@ -257,15 +225,11 @@ func (s *smoke) projectCommands() error {
 		return err
 	} else if err := requireContains(out, "# Signals of the spec\n", "\n### weak ("); err != nil {
 		return err
-	} else if strings.Contains(out, "hange signals") {
-		return fmt.Errorf("topic prints change signals:\n%s", tail(out))
 	}
 	if out, err := markitect(0, "show", "domain/borrow"); err != nil {
 		return err
 	} else if err := requireContains(out, "domain/borrow.md\nTitle: Borrow\n", "Type: packages/software/operation.md\n", "Linked from:\n  domain/README.md (Operations)\n"); err != nil {
 		return err
-	} else if strings.Contains(out, "Verdict") || strings.Contains(out, "@") {
-		return fmt.Errorf("show prints a state:\n%s", tail(out))
 	}
 	if out, err := markitect(0, "table"); err != nil {
 		return err
@@ -287,46 +251,95 @@ func (s *smoke) projectCommands() error {
 	} else if err := requireContains(out, "goldmark"); err != nil {
 		return err
 	}
+	if out, err := markitect(0, "version", "--json"); err != nil {
+		return err
+	} else {
+		var v struct {
+			FormatVersion int `json:"format_version"`
+			Kind          string
+			Version       string
+			Build         string
+		}
+		if err := decode(out, &v); err != nil {
+			return err
+		}
+		if v.FormatVersion != 1 || v.Kind != "version" || v.Version == "" || !strings.HasPrefix(v.Build, v.Version) || strings.Contains(out, "pinned") {
+			return fmt.Errorf("version --json: %s", tail(out))
+		}
+	}
+
+	// The commands find the project from a folder inside it.
+	inside := filepath.Join(project, "docs", "spec", "domain")
+	if out, err := s.exit(inside, 0, "check"); err != nil {
+		return err
+	} else if out != fmt.Sprintf("0 errors in %d documents\n", total) {
+		return fmt.Errorf("check from inside the spec: %s", tail(out))
+	}
+
+	read, err := snapshot(project)
+	if err != nil {
+		return err
+	}
+	if err := sameFiles(before, read); err != nil {
+		return fmt.Errorf("a command wrote into the project: %w", err)
+	}
 
 	// A change of the spec, seen against a copy made before it: a document
-	// gone, one new, and a loan that runs two weeks, not three.
-	if err := writeFile(repo, "docs/spec/domain/draft.md", "# Draft\n"); err != nil {
+	// gone, one new, and a loan that runs two weeks, not three. Writing the
+	// change is the person's, so it is done here by hand, after the check that
+	// no command wrote.
+	if err := writeFile(project, "docs/spec/domain/draft.md", "# Draft\n"); err != nil {
 		return err
 	}
-	before := filepath.Join(s.work, "lending-before")
-	if err := copyTree(repo, before); err != nil {
+	copyOf := filepath.Join(s.work, "lending-before")
+	if err := copyTree(project, copyOf); err != nil {
 		return err
 	}
-	if err := os.Remove(filepath.Join(repo, "docs", "spec", "domain", "draft.md")); err != nil {
+	if err := os.Remove(filepath.Join(project, "docs", "spec", "domain", "draft.md")); err != nil {
 		return err
 	}
-	if _, err := markitect(0, "new", "packages/core/concept", "domain/fine", "Fine"); err != nil {
+	if err := writeFile(project, "docs/spec/domain/fine.md", "# Fine\n\nType: [Concept](../packages/core/concept.md)\n\n## Definition\nWhat a late book costs.\n"); err != nil {
 		return err
 	}
-	if err := writeFile(repo, "docs/spec/domain/borrow.md", strings.Replace(readFile(repo, "docs/spec/domain/borrow.md"), "three weeks", "two weeks", 1)); err != nil {
+	if err := writeFile(project, "docs/spec/domain/borrow.md", strings.Replace(readFile(project, "docs/spec/domain/borrow.md"), "three weeks", "two weeks", 1)); err != nil {
 		return err
 	}
-	if out, err := markitect(1, "compare", before); err != nil {
+	changed, err := snapshot(project)
+	if err != nil {
+		return err
+	}
+	if out, err := markitect(1, "diff", copyOf); err != nil {
 		return err
 	} else if err := requireContains(out, "## New (1)\n\ndomain/fine.md\n", "## Gone (1)\n\ndomain/draft.md\n", "## Changed (1)\n\ndomain/borrow.md\n",
 		"--- docs/spec/domain/borrow.md\n+++ docs/spec/domain/borrow.md\n", "+Lends a book to a member for two weeks.\n"); err != nil {
 		return err
 	}
-	if _, err := markitect(0, "compare", repo, repo); err != nil {
+	if out, err := markitect(1, "diff", copyOf, "--json"); err != nil {
+		return err
+	} else if err := requireContains(out, `"kind": "diff"`); err != nil {
+		return err
+	}
+	if _, err := markitect(0, "diff", project, project); err != nil {
 		return fmt.Errorf("a project against itself: %w", err)
 	}
 
-	for _, gone := range []string{"status", "confirm", "move", "vet", "list", "doc", "tidy", "run", "inbox", "update", "install", "config", "hook"} {
-		if _, err := markitect(2, gone); err != nil {
+	// The commands that are gone are unknown commands.
+	for _, gone := range []string{"init", "apply", "new", "status", "confirm", "move", "compare", "vet", "list", "doc", "tidy", "run", "inbox", "update", "install", "config", "hook"} {
+		if err := s.refused(project, fmt.Sprintf("unknown command %q", gone), gone); err != nil {
 			return fmt.Errorf("the removed %s command: %w", gone, err)
 		}
 	}
-	for _, name := range []string{".markitect/state.jsonl", ".markitect/history.jsonl"} {
-		if _, err := os.Lstat(filepath.Join(repo, filepath.FromSlash(name))); err == nil {
-			return fmt.Errorf("a command wrote %s", name)
-		}
+
+	// No command wrote anything into the project: not a file, a folder, a
+	// state or a history, and the project is no Git repository.
+	after, err := snapshot(project)
+	if err != nil {
+		return err
 	}
-	if _, err := os.Stat(filepath.Join(repo, ".git")); err == nil {
+	if err := sameFiles(changed, after); err != nil {
+		return fmt.Errorf("a command wrote into the project: %w", err)
+	}
+	if _, err := os.Stat(filepath.Join(project, ".git")); err == nil {
 		return fmt.Errorf("a command made the project folder a Git repository")
 	}
 	return nil
@@ -351,6 +364,17 @@ func (s *smoke) exit(dir string, want int, args ...string) (string, error) {
 	return out, nil
 }
 
+// refused runs the built markitect in dir and checks that it exits with 2 and
+// that what it says on its error output contains want.
+func (s *smoke) refused(dir, want string, args ...string) error {
+	_, err := s.run(dir, nil, s.tool("markitect"), args...)
+	var exit *exec.ExitError
+	if !errors.As(err, &exit) || exit.ExitCode() != 2 {
+		return fmt.Errorf("markitect %s: want exit 2: %v", strings.Join(args, " "), err)
+	}
+	return requireContains(err.Error(), want)
+}
+
 // readFile reads a file of the project, or "" when it cannot.
 func readFile(repo, file string) string {
 	data, _ := os.ReadFile(filepath.Join(repo, filepath.FromSlash(file)))
@@ -366,7 +390,7 @@ func writeFile(repo, file, content string) error {
 	return os.WriteFile(path, []byte(content), 0o644)
 }
 
-// copyTree copies the folder from to the new folder to, as compare reads an
+// copyTree copies the folder from to the new folder to, as diff reads an
 // earlier version of a project.
 func copyTree(from, to string) error {
 	return filepath.WalkDir(from, func(path string, d fs.DirEntry, err error) error {

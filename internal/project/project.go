@@ -1,8 +1,9 @@
 // Package project is a Markitect project, over a file system rooted at the
-// project folder: the layout of .markitect/, the project loaded with its spec,
-// and the comparison of the specs of two projects. It reads only the file
-// system it is handed, so that two projects, such as two states to compare,
-// load the same way.
+// project folder: the file .markitect/spec that makes a folder a project and
+// names its spec folder, the project loaded with its spec, and the difference
+// between the specs of two projects. It reads only the file system it is
+// handed, so that two projects, such as two states to compare, load the same
+// way.
 //
 // The rules are in docs/guides/project-reference.md.
 package project
@@ -18,57 +19,15 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/lang"
 )
 
-// The layout of .markitect/, by paths below the project folder.
+// The file that makes a folder a project, by its path below the project
+// folder. Its one line names the spec folder; whatever else lies in .markitect/
+// is no concern of the tool.
 const (
-	Dir            = ".markitect"
-	VersionFile    = ".markitect/version"
-	SpecFile       = ".markitect/spec"
-	AttributesFile = ".markitect/.gitattributes"
-	IgnoreFile     = ".markitect/ignore"
-	// DefaultSpec is the spec folder init names when it is given none.
-	DefaultSpec = "docs/spec"
+	Dir      = ".markitect"
+	SpecFile = ".markitect/spec"
 )
 
-// attributes has Git keep the lines of both sides of a merge of the files
-// init lays out.
-const attributes = "state.jsonl merge=union\nhistory.jsonl merge=union\n"
-
-// initFolders are the folders init lays out below .markitect/, each with a
-// .gitkeep so that it survives a Git commit.
-var initFolders = []string{"context", "findings/pending", "findings/ready", "findings/closed", "plan", "briefing"}
-
-// Layout is what .markitect/ says of a project: the tool version it pins and
-// its spec folder, a path below the project folder.
-type Layout struct {
-	Version    string
-	SpecFolder string
-}
-
-// File is one file to write, by its path below the project folder.
-type File struct {
-	Path string
-	Data []byte
-}
-
-// InitFiles are the files init writes into .markitect/ for a project that
-// pins version and keeps its spec in spec, a path SpecPath accepts: the
-// version, the spec folder, the attributes and the ignore file, and an empty
-// .gitkeep in each folder of initFolders.
-func InitFiles(version, spec string) []File {
-	files := []File{
-		{VersionFile, []byte(version + "\n")},
-		{SpecFile, []byte(spec + "\n")},
-		{AttributesFile, []byte(attributes)},
-		{IgnoreFile, nil},
-	}
-	for _, dir := range initFolders {
-		files = append(files, File{Dir + "/" + dir + "/.gitkeep", nil})
-	}
-	return files
-}
-
-// SpecPath turns a spec folder, as given on the command line or written in
-// .markitect/spec, into a clean path below the project folder with forward
+// SpecPath turns a spec folder, as written in .markitect/spec, into a clean path below the project folder with forward
 // slashes. It refuses a path that is empty, absolute, has a drive, leaves the
 // project folder, is the project folder itself, or lies in .markitect/ or a
 // .git folder, in any case.
@@ -97,23 +56,19 @@ func SpecPath(arg string) (string, error) {
 	return p, nil
 }
 
-// ReadLayout reads .markitect/version and .markitect/spec. Each holds one
-// line; a byte order mark, white space and the line end around it are
-// dropped, so a checkout with CRLF reads the same.
-func ReadLayout(fsys fs.FS) (Layout, error) {
-	version, err := readLine(fsys, VersionFile)
+// ReadSpecFolder reads .markitect/spec, which holds one line: the spec folder.
+// A byte order mark, white space and the line end around it are dropped, so a
+// checkout with CRLF reads the same.
+func ReadSpecFolder(fsys fs.FS) (string, error) {
+	line, err := readLine(fsys, SpecFile)
 	if err != nil {
-		return Layout{}, err
+		return "", err
 	}
-	specLine, err := readLine(fsys, SpecFile)
+	spec, err := SpecPath(line)
 	if err != nil {
-		return Layout{}, err
+		return "", fmt.Errorf("%s: %w", SpecFile, err)
 	}
-	spec, err := SpecPath(specLine)
-	if err != nil {
-		return Layout{}, fmt.Errorf("%s: %w", SpecFile, err)
-	}
-	return Layout{Version: version, SpecFolder: spec}, nil
+	return spec, nil
 }
 
 // readLine reads a file of one line.
@@ -135,24 +90,25 @@ func readLine(fsys fs.FS, name string) (string, error) {
 
 // Project is a project loaded from a file system rooted at its folder.
 type Project struct {
-	Layout
+	// SpecFolder is the spec folder, a path below the project folder.
+	SpecFolder string
 	// SpecFS is the spec folder.
 	SpecFS fs.FS
 	Spec   *lang.Spec
 }
 
-// Load reads the layout of the project at fsys and its spec, whose folder
-// must exist.
+// Load reads .markitect/spec of the project at fsys and its spec, whose
+// folder must exist.
 func Load(fsys fs.FS) (*Project, error) {
-	layout, err := ReadLayout(fsys)
+	folder, err := ReadSpecFolder(fsys)
 	if err != nil {
 		return nil, err
 	}
-	info, err := fs.Stat(fsys, layout.SpecFolder)
+	info, err := fs.Stat(fsys, folder)
 	if err != nil || !info.IsDir() {
-		return nil, fmt.Errorf("the spec folder %s, which %s names, is no folder", layout.SpecFolder, SpecFile)
+		return nil, fmt.Errorf("the spec folder %s, which %s names, is no folder", folder, SpecFile)
 	}
-	sub, err := fs.Sub(fsys, layout.SpecFolder)
+	sub, err := fs.Sub(fsys, folder)
 	if err != nil {
 		return nil, err
 	}
@@ -160,5 +116,5 @@ func Load(fsys fs.FS) (*Project, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Project{Layout: layout, SpecFS: sub, Spec: spec}, nil
+	return &Project{SpecFolder: folder, SpecFS: sub, Spec: spec}, nil
 }

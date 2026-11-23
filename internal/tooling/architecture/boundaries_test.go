@@ -71,7 +71,6 @@ func TestLayerDirections(t *testing.T) {
 		from, to string
 		allowed  int
 	}{
-		{"internal/edit", "internal/lang", both},
 		{"internal/signals", "internal/lang", both},
 		{"internal/project", "internal/lang", both},
 		{"internal/cli", "internal/project", both},
@@ -80,17 +79,13 @@ func TestLayerDirections(t *testing.T) {
 		{"cmd/markitect", "internal/cli", both},
 
 		// The language and the library never import outward.
-		{"internal/lang", "internal/edit", none},
 		{"internal/lang", "internal/project", none},
 		{"internal/lang", "internal/cli", none},
 		{"internal/lang", "internal/library", none},
 		{"internal/library", "internal/lang", none},
-		{"internal/edit", "internal/project", none},
-		{"internal/edit", "internal/signals", none},
 		{"internal/signals", "internal/project", none},
 		{"internal/project", "internal/cli", none},
 		{"internal/project", "internal/library", none},
-		{"internal/project", "internal/edit", none},
 		{"internal/project", "internal/buildinfo", none},
 		// The entrypoint stays thin.
 		{"cmd/markitect", "internal/project", none},
@@ -143,12 +138,12 @@ func TestForbiddenLayerImportFailsInEveryFile(t *testing.T) {
 	root := t.TempDir()
 	writeFixture(t, root, map[string]string{
 		"README.md":             "# Owner\n",
-		"internal/edit/e.go":    "package edit\nimport _ \"" + ModulePath + "internal/signals\"\n",
-		"internal/signals/s.go": "package signals\n",
+		"internal/signals/s.go": "package signals\nimport _ \"" + ModulePath + "internal/project\"\n",
+		"internal/project/p.go": "package project\n",
 	})
-	got, err := fixtureRules(t, "internal/edit", "internal/signals").CheckRepository(root)
-	if err != nil || len(got) != 1 || got[0].Rule != "layer editing may not import layer signals" {
-		t.Fatalf("editing imported the signals: %v %v", got, err)
+	got, err := fixtureRules(t, "internal/signals", "internal/project").CheckRepository(root)
+	if err != nil || len(got) != 1 || got[0].Rule != "layer signals may not import layer project" {
+		t.Fatalf("the signals imported the project: %v %v", got, err)
 	}
 }
 
@@ -201,8 +196,8 @@ func TestUnknownPackageFails(t *testing.T) {
 	}
 	// An import of a package the table does not classify is a violation.
 	root := t.TempDir()
-	writeFixture(t, root, map[string]string{"README.md": "# Owner\n", "internal/edit/o.go": "package edit\nimport _ \"" + ModulePath + "internal/spec\"\n"})
-	got, err := fixtureRules(t, "internal/edit").CheckRepository(root)
+	writeFixture(t, root, map[string]string{"README.md": "# Owner\n", "internal/signals/o.go": "package signals\nimport _ \"" + ModulePath + "internal/spec\"\n"})
+	got, err := fixtureRules(t, "internal/signals").CheckRepository(root)
 	if err != nil || len(got) != 1 || !strings.Contains(got[0].Rule, "unclassified package") {
 		t.Fatalf("import of an unclassified package accepted: %v %v", got, err)
 	}
@@ -211,7 +206,6 @@ func TestUnknownPackageFails(t *testing.T) {
 func TestCommandLineCompositionAcrossPlatforms(t *testing.T) {
 	for _, producer := range []struct{ path, pkg string }{
 		{"internal/project", "project"},
-		{"internal/edit", "edit"},
 		{"internal/signals", "signals"},
 		{"internal/lang", "lang"},
 	} {

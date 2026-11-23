@@ -1,9 +1,11 @@
 // Command smoke builds markitect from the repository and drives its commands
-// over a small fresh project with exact assertions. It checks the version,
-// init with the project it lays out, apply, new, check, show, table, topic,
-// questions, licenses and compare, and the refusal of the commands that are
-// gone. It starts no agent and needs no Git. The same checks run on
-// every operating system, so CI needs no shell-specific copies.
+// over a small project that it builds by hand, the way a person does: an empty
+// folder, the packages and templates of the library copied into a spec folder,
+// and the file .markitect/spec. It checks the version, check, show, table,
+// topic, questions, licenses and diff, the refusal of the commands that are
+// gone, and that no command writes into the project. It starts no agent and
+// needs no Git. The same checks run on every operating system, so CI needs no
+// shell-specific copies.
 //
 //	go run ./tools/smoke [-repo DIR] [-work DIR]
 package main
@@ -75,7 +77,7 @@ func (s *smoke) checks() error {
 	for _, c := range []check{
 		{"build markitect from the repository", s.build},
 		{"markitect reports a build version", s.version},
-		{"the commands over a small fresh project, and refusals", s.projectCommands},
+		{"the commands over a project built by hand, and refusals", s.projectCommands},
 	} {
 		start := time.Now()
 		if err := c.run(); err != nil {

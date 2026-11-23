@@ -86,8 +86,7 @@ func TestPluginHasTheVersionOfTheSource(t *testing.T) {
 	}
 }
 
-// The plugin only fetches the tool: the skills of Markitect lie in the
-// project, as artifacts of its spec, never in the plugin.
+// The plugin only fetches the tool: it holds no skills, agents or jobs.
 func TestPluginOnlyFetchesTheTool(t *testing.T) {
 	for _, name := range []string{"skills", "agents", "jobs.md"} {
 		if _, err := os.Stat(filepath.Join(pluginDir, name)); err == nil {
