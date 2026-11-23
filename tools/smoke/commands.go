@@ -157,7 +157,7 @@ func (s *smoke) projectCommands() error {
 			return fmt.Errorf(".markitect/ holds %s", got)
 		}
 	}
-	if err := requireContains(readFile(repo, "AGENTS.md"), "skill `markitect-norman`", "`docs/spec/factory/`"); err != nil {
+	if err := requireContains(readFile(repo, "AGENTS.md"), "skill `markitect-assistant`", "`docs/spec/factory/`"); err != nil {
 		return err
 	}
 	claude, err := skillsOf(repo, ".claude/skills")

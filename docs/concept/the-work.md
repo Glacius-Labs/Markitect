@@ -11,7 +11,7 @@ A report is what an agent or an observer writes about one run or session. It lie
 | Section | Holds |
 |---|---|
 | Item | A link to the plan item it worked on, where it has one |
-| Started by | A person, Norman, the Housekeeper or a routine |
+| Started by | A person, the Assistant, the Housekeeper or a routine |
 | For | The person behind it |
 | Started, Finished | When |
 | Outcome | How it ended, such as merged or stopped |

@@ -106,9 +106,9 @@ func TestInitLaysOutTheProject(t *testing.T) {
 		}
 	}
 
-	// AGENTS.md names the spec, the way of working, the skills and Norman.
+	// AGENTS.md names the spec, the way of working, the skills and the Assistant.
 	agents := read(t, dir, "AGENTS.md")
-	for _, part := range []string{"## Markitect", "`docs/spec/`", "`docs/spec/factory/`", "`.claude/skills/`", "`.agents/skills/`", "skill `markitect-norman`"} {
+	for _, part := range []string{"## Markitect", "`docs/spec/`", "`docs/spec/factory/`", "`.claude/skills/`", "`.agents/skills/`", "skill `markitect-assistant`"} {
 		if !strings.Contains(agents, part) {
 			t.Errorf("AGENTS.md lacks %s:\n%s", part, agents)
 		}
@@ -135,7 +135,7 @@ func TestInitLaysOutTheProject(t *testing.T) {
 		t.Error("the way of working is not listed")
 	}
 	unexplained := strings.Join(l.Unexplained, " ")
-	for _, part := range []string{"AGENTS.md", ".claude/skills/markitect-norman/SKILL.md", ".agents/skills/markitect-norman/SKILL.md"} {
+	for _, part := range []string{"AGENTS.md", ".claude/skills/markitect-assistant/SKILL.md", ".agents/skills/markitect-assistant/SKILL.md"} {
 		if !strings.Contains(unexplained, part) {
 			t.Errorf("%s is not unexplained: %s", part, unexplained)
 		}

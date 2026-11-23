@@ -22,7 +22,7 @@ What people should not have to take on an agent's word does not come from an age
 
 ### Briefing
 
-A person starts the day with Norman, who tells them what is critical, what happened, what waits for them and which meeting is today, from the briefing the Briefer wrote ([§9](the-work.md#the-briefing)), and what changed since their last look. Everyone gets the briefing; what needs a decision is decided in conversation.
+A person starts the day with the Assistant, who tells them what is critical, what happened, what waits for them and which meeting is today, from the briefing the Briefer wrote ([§9](the-work.md#the-briefing)), and what changed since their last look. Everyone gets the briefing; what needs a decision is decided in conversation.
 
 ### Explain
 

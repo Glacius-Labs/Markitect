@@ -33,13 +33,13 @@ Each observer is a kind of agent of its own, with its own folder in `context/`; 
 - `.markitect/`, with the version, the spec path and empty folders for the work;
 - the spec, with the four templates `project`, `product`, `architecture` and `factory` ([§4](what-goes-in-a-spec.md#four-templates));
 - the skills of the standard, in `.claude/skills/` and `.agents/skills/`;
-- a short entry in `AGENTS.md`, which names the spec, the skills and `markitect-norman` as the entry.
+- a short entry in `AGENTS.md`, which names the spec, the skills and `markitect-assistant` as the entry.
 
 Deleting `.markitect/` and the tool leaves an ordinary repository with documentation, code, tests and skills.
 
 ## The skills
 
-The skills of the standard are built from the `factory` template, one per agent, each named `markitect-` and the agent's name: `markitect-norman`, `markitect-capture`, `markitect-architect`, `markitect-finish-planning`, `markitect-build`, `markitect-review`, `markitect-analyze`, `markitect-accept`, `markitect-observe` with `markitect-create-observer`, `markitect-triage`, `markitect-record`, `markitect-brief` and `markitect-housekeeper` ([§8](the-circle.md#agents)). Each describes its agent's work completely and step by step.
+The skills of the standard are built from the `factory` template, one per Agent document, each named `markitect-` and the document's name: `markitect-assistant`, `markitect-capture`, `markitect-architect`, `markitect-finish-planning`, `markitect-build`, `markitect-review`, `markitect-analyze`, `markitect-accept`, `markitect-observe`, `markitect-create-observer`, `markitect-triage`, `markitect-record`, `markitect-brief` and `markitect-housekeeper` ([§8](the-circle.md#agents)). Each describes its agent's work completely and step by step; `markitect-capture`, `markitect-finish-planning` and `markitect-create-observer` run inside the session that calls them.
 
 - **They lie in the repository,** never in the plugin, where Claude Code and Codex both find them, and hold for both alike ([DEC-147](../decisions.md#dec-147-the-way-of-working-stands-in-the-spec-and-skills-realize-it)).
 - **They are artifacts of the spec.** When the `factory` part changes, the skills are built and confirmed again like any code, and the state maps each to the documents it realizes. A failure in how agents work is fixed in the `factory` part and the skill built from it, not with prompt text beside them.
@@ -47,7 +47,7 @@ The skills of the standard are built from the `factory` template, one per agent,
 
 ## Who starts an agent
 
-An agent is started by a person, by Norman, by the Housekeeper or by a routine, as its Agent document says ([DEC-142](../decisions.md#dec-142-the-tool-computes-and-checks-a-runner-acts)). Agents and people make every Git step; the tool makes none.
+An agent is started by a person, by the Assistant, by the Housekeeper or by a routine, as its Agent document says ([DEC-142](../decisions.md#dec-142-the-tool-computes-and-checks-a-runner-acts)). Agents and people make every Git step; the tool makes none.
 
 Agents run on the login of the user's subscription: in their own session, as a scheduled task of the desktop app, as a cloud task, or in CI with a token that `claude setup-token` makes for a run without a session. API keys are never used ([DEC-134](../decisions.md#dec-134-agents-run-on-the-users-subscription-with-or-without-a-session)). Agents run with the rights of whoever runs them, so work that reads untrusted input needs an isolated machine with limited rights around it.
 

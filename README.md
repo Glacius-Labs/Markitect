@@ -57,7 +57,7 @@ For a new project, make an empty folder, run `git init` in it, and then:
 
 1. **Set it up.** `markitect init` writes `.markitect/` with the folders of the work, the spec folder `docs/spec/` with the four templates `project`, `product`, `architecture` and `factory`, the skills of the standard in `.claude/skills/` and `.agents/skills/`, and an entry in `AGENTS.md`. It commits nothing.
 2. **See what is left to fill.** `markitect check` lists the sections the templates leave empty: the work still to do. A further template goes into a folder of its own, such as `markitect apply company company`.
-3. **Start with Norman.** In a new session of Claude Code or Codex in the folder, start the skill `markitect-norman`. It tells you what is critical and what waits for you, and starts the session that fits your work: for a new project the Architect, who works out the spec as a whole with you and leads you through planning, and for an existing one extracts its spec.
+3. **Start with the Assistant.** In a new session of Claude Code or Codex in the folder, start the skill `markitect-assistant`. It tells you what is critical and what waits for you, and starts the session that fits your work: for a new project the Architect, who works out the spec as a whole with you and leads you through planning, and for an existing one extracts its spec.
 
 The plugin in [`plugin/`](plugin/) only fetches the tool for Claude Code ([the plugin](docs/guides/plugin.md)). The [language reference](docs/guides/language-reference.md) lists every command, and the [library](docs/guides/library.md#the-skills-of-the-standard) the skills.
 

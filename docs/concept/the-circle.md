@@ -35,32 +35,32 @@ The agent the person is working with notices from the role that the work lies ou
 
 ## Agents
 
-An agent is a fresh session that runs exactly one skill, named `markitect-` and the agent's name; its folder in the context is named like its Agent document. Its model, one line per provider, its schedule and whether it asks stand at its Agent document in the spec, and whoever starts it reads them there ([§12](the-project.md)). Each agent does one thing and uses the tool wherever it helps ([DEC-152](../decisions.md#dec-152-each-command-run-skill-and-agent-does-one-thing-on-its-own)).
+An agent is a fresh session that runs exactly one skill, named `markitect-` and the agent's name; its folder in the context is named like its Agent document. Its model, one line per provider, its schedule and whether it asks stand at its Agent document in the spec, and whoever starts it reads them there ([§12](the-project.md)). Each agent does one thing and uses the tool wherever it helps ([DEC-152](../decisions.md#dec-152-each-command-run-skill-and-agent-does-one-thing-on-its-own)). Three skills are no agent of their own and start none: `markitect-capture`, `markitect-finish-planning` and `markitect-create-observer` run inside the session that calls them.
 
 | Skill | The one task | Started by | Asks |
 |---|---|---|---|
-| `markitect-norman` | Prepare a person in the morning, propose, and start the right session | The person | Yes |
+| `markitect-assistant` | Prepare a person in the morning, propose, and start the right session | The person | Yes |
 | `markitect-capture` | Put material into the context unchanged | Any agent, at any time | No |
-| `markitect-architect` | Work out the spec and the plan of one level with a person | Norman | Yes |
+| `markitect-architect` | Work out the spec and the plan of one level with a person | The Assistant | Yes |
 | `markitect-finish-planning` | Close a planning: check, report, state, branch, main | The planning session | No |
-| `markitect-build` | Realize a story in `ready` | Norman or the Housekeeper | No |
+| `markitect-build` | Realize a story in `ready` | The Assistant or the Housekeeper | No |
 | `markitect-review` | Check a result against its plan, its Feature and the spec, and confirm | Whoever's result is checked | No |
 | `markitect-analyze` | Work through a Smell story and write a report | The Housekeeper | No |
-| `markitect-accept` | Polish and accept a Feature or a Story with the person who accepts | Norman | Yes |
+| `markitect-accept` | Polish and accept a Feature or a Story with the person who accepts | The Assistant | Yes |
 | `markitect-observe` | Watch one topic and write a report | The Housekeeper | No |
-| `markitect-create-observer` | Set up a new observer, on a story | Norman, for a person | Yes |
+| `markitect-create-observer` | Explain how a new observer is built | The Architect planning the story, the Builder building it | No |
 | `markitect-triage` | Turn new reports into findings, classify and file them | The Housekeeper | No |
 | `markitect-record` | Carry out decisions and turn findings into plan items | The Housekeeper | No |
 | `markitect-brief` | Write the briefings: daily, weekly and for each meeting | The Housekeeper | No |
 | `markitect-housekeeper` | Run the day | A person or a routine | No |
 
-**Norman** is a person's first contact in the morning. It fetches the main branch, says what is critical first, what happened, what waits for this person, what the others do as far as it touches them and which meeting is today, proposes in one sentence where to start, and starts a session with the right skill for the chosen work.
+**The Assistant** is a person's first contact in the morning. It fetches the main branch, says what is critical first, what happened, what waits for this person, what the others do as far as it touches them and which meeting is today, proposes in one sentence where to start, and starts a session with the right skill for the chosen work.
 
 **The Housekeeper** runs once a day, started by anyone or by a routine, and always asks no one, whoever started it: the observers that are due, the Triager, the Recorder, the Briefer, then a builder for every story that is `ready` and analysts for the smell analyses, by priority, and a short report of what is new, what is critical and what it started. Each agent keeps its checkpoint in its folder of the context, so that a run that broke off is caught up by the next.
 
-**Observers** are general and come with the standard: what was dropped into the context, how the plan moves, deviations on the main branch, hotspots, what is built twice, and `status`, which reports what `markitect status` shows anew. A project adds observers for its own sources with `markitect-create-observer`, each on a story like every other change to the spec.
+**Observers** are general and come with the standard: what was dropped into the context, how the plan moves, deviations on the main branch, hotspots, what is built twice, and `status`, which reports what `markitect status` shows anew. A project adds observers for its own sources like every other change to the spec: the Recorder writes a story, the Architect plans it with the person, a Builder builds the observer and runs it once on a trial, a Reviewer checks it and the person accepts. `markitect-create-observer` explains to the Architect and the Builder how an observer is built.
 
-**Meetings** stand in the spec: rhythm, time, participants and what they cover. The Briefer writes a briefing for each in time, and Norman says in the morning which meeting is today. Decisions are made in conversation: in a meeting, whose transcript goes into the context, or by one person telling their agent, which drops the decision there.
+**Meetings** stand in the spec: rhythm, time, participants and what they cover. The Briefer writes a briefing for each in time, and the Assistant says in the morning which meeting is today. Decisions are made in conversation: in a meeting, whose transcript goes into the context, or by one person telling their agent, which drops the decision there.
 
 ## Planning
 

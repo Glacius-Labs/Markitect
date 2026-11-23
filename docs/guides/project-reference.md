@@ -18,7 +18,7 @@ The tool reads a project through a file system rooted at its folder, the spec an
 | `ignore` | Files the project does not explain, written like a `.gitignore` ([the walk](#the-walk)); empty at `init` |
 | `state.jsonl` | The state: one row per document with its verdict and the hashes it rests on ([below](#the-state)); written by `confirm` and `move`, and absent until the first of them writes it |
 | `history.jsonl` | The history: what changed when, as hashes ([below](#the-history)); appended to by `confirm` and `move`, and absent until the first of them writes it |
-| `context/` | Everything that happened: the reports of the agents, one folder per kind of agent, named like its Agent document in the spec without the prefix of its skill, such as `norman/`, and one folder `observe-NAME/` for each observer |
+| `context/` | Everything that happened: the reports of the agents, one folder per kind of agent, named like its Agent document in the spec without the prefix of its skill, such as `assistant/`, and one folder `observe-NAME/` for each observer |
 | `findings/pending/`, `findings/ready/`, `findings/closed/` | The findings, one document each; the folder is the state of the finding |
 | `plan/` | The Features and Stories of the plan, as a tree |
 | `briefing/` | The briefings, daily, weekly and per meeting |
@@ -36,7 +36,7 @@ The last four are the work, which agents write and the tool checks ([the documen
 - the skills of the standard, each whole and byte for byte, in `.claude/skills/markitect-NAME/` and in `.agents/skills/markitect-NAME/` ([library](library.md#the-skills-of-the-standard));
 - an entry in `AGENTS.md`.
 
-**The entry in `AGENTS.md`** is a section `## Markitect` that says where the spec lies and that `.markitect/spec` names the folder, that the way of working stands in its `factory` part, where the skills lie, and that a person starts with the skill `markitect-norman`. A missing `AGENTS.md` is created, with the heading `# Agent instructions` above the entry. An existing one gets the entry appended as a section of its own, in the line ends the file uses, and what stands there stays as it is.
+**The entry in `AGENTS.md`** is a section `## Markitect` that says where the spec lies and that `.markitect/spec` names the folder, that the way of working stands in its `factory` part, where the skills lie, and that a person starts with the skill `markitect-assistant`. A missing `AGENTS.md` is created, with the heading `# Agent instructions` above the entry. An existing one gets the entry appended as a section of its own, in the line ends the file uses, and what stands there stays as it is.
 
 **What it keeps and what it refuses.** It keeps a spec folder that exists with every file in it, and every other skill in `.claude/skills/` and `.agents/skills/`. It writes no `CLAUDE.md`, no other file in `.claude/` or `.agents/` and no line in `.gitignore`, and it commits nothing. It refuses, names every reason and changes nothing when `.markitect/` exists, when the spec folder is a file, when the spec folder holds one of the four folders already, when a skill of the standard exists already in either place, or when `AGENTS.md` is a symbolic link or a folder.
 
