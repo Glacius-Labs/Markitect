@@ -23,7 +23,7 @@ Make one clean and simple version that works reliably ([DEC-120](../decisions.md
 2. **Triage.** The Triager turns reports into findings and files each by one of three exits: the spec already says what is right, the answer follows from what was decided, or a new decision is needed ([§9](the-work.md)).
 3. **Briefing.** What needs a person stands in the briefing, short and by importance, and people decide in conversation.
 4. **Record.** The Recorder carries out the decisions and puts them in the plan: Area, Feature, Story, Task.
-5. **Work.** A person plans a Feature or a Story with the Architect; a Builder realizes it on a branch, spec change and code together; a Reviewer checks it and writes `confirm`; it reaches the main branch without a person, and QA accepts what has a surface. What shows up goes back to 1.
+5. **Work.** A person plans a Feature or a Story with the Architect; a Builder realizes it on a branch, spec change and code together; a Reviewer checks it and writes `confirm`; it reaches the main branch without a person, and whoever accepts, by default the Admin, tries what there is to accept. The same course holds in every Area, with no exceptions. What shows up goes back to 1.
 
 The way of working itself stands in the spec, in its `factory` part, and the skills in the repository realize it ([§12](the-project.md)).
 

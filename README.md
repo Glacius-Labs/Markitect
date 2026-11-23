@@ -38,7 +38,7 @@ Markitect gives the project that statement, and agents build to it.
 
 **Agents build to spec.** `markitect status` computes from the spec and a state of what was confirmed which documents a change reaches, so the list of work does not depend on an agent's memory. A builder agent makes code, tests, configuration and documentation match the spec, and a reviewer agent with fresh context confirms each document with evidence, so nobody has to read the work to trust it.
 
-**Your team works in one circle around the spec.** What anyone notices lands as a report and becomes a finding; what follows from what was decided is recorded without a question; what needs a decision reaches people in a short briefing, and they decide in conversation. People plan with an agent; agents build, review and merge; QA accepts. That way of working stands in the spec too, and skills in your repository realize it, for Claude Code and Codex alike.
+**Your team works in one circle around the spec.** What anyone notices lands as a report and becomes a finding; what follows from what was decided is recorded without a question; what needs a decision reaches people in a short briefing, and they decide in conversation. People plan with an agent; agents build, review and merge; whoever accepts tries the result. By default one role, the Admin, does all a person does. That way of working stands in the spec too, and skills in your repository realize it, for Claude Code and Codex alike.
 
 Markitect builds on Terraform's declared state, requirements traceability with suspect links, and quality management, and it works with the coding agents' own skills, subagents and scheduled tasks. The [vision](docs/vision.md#why-markitect-exists) gives the full reasoning.
 
@@ -57,7 +57,7 @@ For a new project, make an empty folder, run `git init` in it, and then:
 
 1. **Set it up.** `markitect init` writes `.markitect/` with the folders of the work, the spec folder `docs/spec/` with the four templates `project`, `product`, `architecture` and `factory`, the skills of the standard in `.claude/skills/` and `.agents/skills/`, and an entry in `AGENTS.md`. It commits nothing.
 2. **See what is left to fill.** `markitect check` lists the sections the templates leave empty: the work still to do. A further template goes into a folder of its own, such as `markitect apply company company`.
-3. **Start with Norman.** In a new session of Claude Code or Codex in the folder, start the skill `norman`. It tells you what is critical and what waits for you, and starts the session that fits your role: for a new project the Architect, who works out the spec as a whole with you and leads you through planning, and for an existing one extracts its spec.
+3. **Start with Norman.** In a new session of Claude Code or Codex in the folder, start the skill `markitect-norman`. It tells you what is critical and what waits for you, and starts the session that fits your work: for a new project the Architect, who works out the spec as a whole with you and leads you through planning, and for an existing one extracts its spec.
 
 The plugin in [`plugin/`](plugin/) only fetches the tool for Claude Code ([the plugin](docs/guides/plugin.md)). The [language reference](docs/guides/language-reference.md) lists every command, and the [library](docs/guides/library.md#the-skills-of-the-standard) the skills.
 

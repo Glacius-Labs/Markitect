@@ -19,7 +19,7 @@ The image is a testing laboratory. Nobody there looks at every result. People tr
 
 ## Confirmation
 
-A fresh reviewer per round checks the build against the story's plan and target picture and against every level of the spec above it, up to the global one. It reads each document the story concerns, what it links to and its artifacts, takes its list from `status`, and treats what the builder says as claims to check. It changes nothing that was built and returns `comments`. When builder and reviewer agree, it runs the targeted tests and binds its verdict with `confirm` ([§6](the-state.md#binding-a-verdict)). The tests a builder writes are realizations: a green one is evidence, not proof. Alone, a reviewer is an opinion; the mechanisms below turn it into figures.
+A fresh reviewer per round checks the build against the story's plan and target picture and against its Feature's target picture and the spec. It reads each document the story concerns, what it links to and its artifacts, takes its list from `status`, and treats what the builder says as claims to check. It changes nothing that was built and returns `comments`. When builder and reviewer agree, it runs the targeted tests and binds its verdict with `confirm` ([§6](the-state.md#binding-a-verdict)). The tests a builder writes are realizations: a green one is evidence, not proof. Alone, a reviewer is an opinion; the mechanisms below turn it into figures.
 
 **Counter-checks, control samples and spot checks come later, with the runs.** Building with the way of working does not wait for them; they measure it once they exist ([roadmap](../roadmap.md)).
 
@@ -56,7 +56,7 @@ Observers watch the project on a schedule, and every finding goes through the sa
 | **Counter-checker**, later | Derives counter-checks from the spec | Its checks, never the artifacts |
 | **Sampler**, later | Plants errors in a throwaway copy | Nothing that lands but the list |
 
-The model of each agent stands at its Agent document in the spec ([§12](the-project.md)): by default a smaller model for the builder and the reviewer, and a larger one for the agents on the spec, which is little text that everything else follows from. Control samples and counter-checks show whether another model catches more.
+The model of each agent stands at its Agent document in the spec, one line per provider ([§12](the-project.md)): by default a smaller model for the builder and the reviewer, and a larger one for the agents on the spec, which is little text that everything else follows from. Control samples and counter-checks show whether another model catches more.
 
 ## How firm it is
 
@@ -64,7 +64,7 @@ Markitect guards against forgetting, which is what has been seen, and against a 
 
 | What people want | What secures it | How firm |
 |---|---|---|
-| The spec is correct in itself before it is built | `status` gives no list while `check` finds errors in the spec | Firm |
+| The spec is correct in itself | `check` shows its errors, and builder and reviewer run it while building; nothing else waits for it | Shown |
 | Every document is confirmed at the state it is in | The state's hashes, and `confirm` binding a verdict to the fingerprint the reviewer read | Firm for one step of links in both directions and for every file; the code's imports are not followed |
 | Nothing grows without a reason | Every file mapped or ignored, else unexplained | Shown by `status`; an entry becomes a finding |
 | Work outside the usual way is seen | Deviations noted by the agent at hand, and an observer of what happened on the main branch ([§8](the-circle.md#deviations)) | Shown, not prevented |
