@@ -66,3 +66,22 @@ func TestDiffLeavesOutAProjectNamedByAShortName(t *testing.T) {
 		}
 	}
 }
+
+// A junction that leads to the project inside the other one is resolved: the
+// inner project is left out of the outer one's files, named by the junction.
+func TestDiffLeavesOutAProjectNamedByAJunction(t *testing.T) {
+	base := t.TempDir()
+	outer := projectIn(t, filepath.Join(base, "proj"), lendingFiles)
+	inner := projectIn(t, filepath.Join(outer, "old"), lendingFiles)
+	link := filepath.Join(base, "jold")
+	if out, err := exec.Command("cmd", "/c", "mklink", "/J", link, inner).CombinedOutput(); err != nil {
+		t.Skip("no junctions here:", err, string(out))
+	}
+	const want = "## Files no module names (0)\n\n(none)\n\nFiles of NEW that no module names: 2\n"
+	for name, args := range map[string][]string{"OLD by the junction": {link, outer}, "NEW by the junction": {outer, link}} {
+		code, out, errOut := run(append([]string{"diff"}, args...)...)
+		if code != ExitOK || errOut != "" || !strings.HasSuffix(out, want) {
+			t.Errorf("%s: %d %q\n%s", name, code, errOut, out)
+		}
+	}
+}

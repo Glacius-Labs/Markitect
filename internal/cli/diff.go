@@ -184,7 +184,12 @@ func inside(inner, outer string) project.Folder {
 	if err != nil {
 		return project.Folder{}
 	}
-	for dir := filepath.Dir(inner); ; dir = filepath.Dir(dir) {
+	// A link in the path of inner leads somewhere else: go up from where it ends.
+	real, err := realPath(inner, 0)
+	if err != nil {
+		real = inner
+	}
+	for dir := filepath.Dir(real); ; dir = filepath.Dir(dir) {
 		if info, err := os.Stat(dir); err == nil && os.SameFile(info, out) {
 			return project.Folder{Info: in}
 		}
