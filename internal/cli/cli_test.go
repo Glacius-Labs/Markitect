@@ -169,3 +169,56 @@ func TestUsage(t *testing.T) {
 		}
 	}
 }
+
+// The flags may stand before the command, as Git's do, and between its
+// arguments.
+func TestFlagsMayStandBeforeTheCommand(t *testing.T) {
+	dir := spec(t, map[string]string{"a.md": "# A\n"})
+	for _, args := range [][]string{
+		{"-C", dir, "check"},
+		{"--json", "-C", dir, "check"},
+		{"-C", dir, "--json", "check"},
+		{"-C", dir, "show", "a"},
+		{"--json", "-C", dir, "show", "a"},
+		{"-C", dir, "table"},
+		{"-C", dir, "status", "--json"},
+	} {
+		code, out, errOut := run(args...)
+		if code != ExitOK && !(args[len(args)-1] == "status" || args[len(args)-2] == "status") || errOut != "" || out == "" {
+			t.Errorf("%v: %d %q %q", args, code, out, errOut)
+		}
+	}
+	// The same as with the flags after the command.
+	_, before, _ := run("check", "-C", dir, "--json")
+	if _, after, _ := run("--json", "-C", dir, "check"); after != before {
+		t.Errorf("%s differs from %s", after, before)
+	}
+	// A value of a flag is no command, and a missing command is an error.
+	if code, _, errOut := run("-C", dir); code != ExitFailed || !strings.Contains(errOut, "unknown command") {
+		t.Errorf("%d %q", code, errOut)
+	}
+	if code, _, errOut := run("-C", dir, "show"); code != ExitFailed || !strings.Contains(errOut, "usage: markitect show DOCUMENT") {
+		t.Errorf("%d %q", code, errOut)
+	}
+}
+
+// A wrong number of arguments prints the error and the one line of usage of
+// the command, not the whole help.
+func TestWrongArgumentsPrintOneLineOfUsage(t *testing.T) {
+	dir := spec(t, map[string]string{"a.md": "# A\n"})
+	for args, want := range map[string]string{
+		"show":         "usage: markitect show DOCUMENT [-C PROJECT] [--json]",
+		"confirm a.md": "usage: markitect confirm DOCUMENT@FINGERPRINT VERDICT",
+		"check extra":  "usage: markitect check [-C PROJECT] [--json]",
+		"move a":       "usage: markitect move OLD NEW",
+	} {
+		code, out, errOut := run(append(strings.Fields(args), "-C", dir)...)
+		if code != ExitFailed || out != "" || !strings.HasPrefix(errOut, "markitect "+strings.Fields(args)[0]+": wrong number of arguments\n") ||
+			!strings.Contains(errOut, want) || strings.Count(errOut, "\n") > 4 || strings.Contains(errOut, "Change the spec") {
+			t.Errorf("%s: %d %q", args, code, errOut)
+		}
+	}
+	if code, _, errOut := run("frobnicate"); code != ExitFailed || strings.Count(errOut, "\n") != 1 || !strings.Contains(errOut, "markitect --help") {
+		t.Errorf("%d %q", code, errOut)
+	}
+}

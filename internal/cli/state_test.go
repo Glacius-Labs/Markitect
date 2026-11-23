@@ -457,7 +457,7 @@ func TestConfirmForms(t *testing.T) {
 		{[]string{at, "ok"}, ExitFailed, "ok needs evidence"},
 		{[]string{at, "fail"}, ExitFailed, "fail needs a reason"},
 		{[]string{at, "skip", "-m", " "}, ExitFailed, "skip needs a reason"},
-		{[]string{"nobody.md@" + fp, "ok", "-e", "src/loans.go"}, ExitFound, "unknown document: nobody.md"},
+		{[]string{"nobody.md@" + fp, "ok", "-e", "src/loans.go"}, ExitFailed, "unknown document: nobody.md"},
 		{[]string{at, "ok", "-e", "src/nothing.go"}, ExitFound, "evidence src/nothing.go is no file of the project"},
 		{[]string{at, "ok", "-e", "../outside.go"}, ExitFound, "is not path, path:line"},
 		{[]string{at, "ok", "-e", "src/loans.go", "--file", "docs/spec/roles/member.md"}, ExitFound, "lies in the spec folder"},

@@ -265,10 +265,10 @@ func confirm(o options, stdout io.Writer) (int, error) {
 	}
 	doc, ok := edit.DocumentPath(docArg)
 	if !ok {
-		return ExitFound, &state.Refusal{Problems: []string{"unknown document: " + docArg}}
+		return ExitFailed, &state.Refusal{Problems: []string{"unknown document: " + docArg}}
 	}
 	if strings.HasPrefix(doc, state.Dir+"/") {
-		return ExitFound, &state.Refusal{Problems: []string{docArg + " is a document of the work: confirm binds documents of the spec"}}
+		return ExitFailed, &state.Refusal{Problems: []string{docArg + " is a document of the work: confirm binds documents of the spec"}}
 	}
 	dir, err := mustProject(o)
 	if err != nil {
@@ -298,7 +298,12 @@ func confirm(o options, stdout io.Writer) (int, error) {
 		r.Problems = append(r.Problems, "nothing is confirmed while the state has lines it cannot read: confirming would lose them")
 		return ExitFound, r
 	}
+	// A document that is in neither the spec nor the state is unknown, as to
+	// show and status; a wrong fingerprint is a refusal below.
 	_, inSpec := w.Spec.Document(doc)
+	if _, _, hasRow := s.Row(doc); !inSpec && !hasRow {
+		return ExitFailed, &state.Refusal{Problems: []string{"unknown document: " + docArg}}
+	}
 	if verdict == state.VerdictOK && inSpec && len(o.evidence) == 0 {
 		return ExitFailed, errors.New("ok needs evidence with -e")
 	}

@@ -402,3 +402,36 @@ func TestInitModes(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// init inside a project lays out the new project all the same and warns, once,
+// that the folder lies inside the other; the JSON document stays as it is.
+func TestInitInsideAProjectWarns(t *testing.T) {
+	outer := initialized(t)
+	inner := filepath.Join(outer, "services", "billing")
+	if err := os.MkdirAll(inner, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	code, out, errOut := run("init", "-C", inner)
+	if code != ExitOK || !strings.Contains(out, "created .markitect/\n") {
+		t.Fatal(code, out, errOut)
+	}
+	if strings.Count(errOut, "\n") != 1 || !strings.HasPrefix(errOut, "markitect init: warning: "+inner+" lies inside the project at "+outer+";") {
+		t.Errorf("the warning is %q", errOut)
+	}
+	if _, err := os.Stat(filepath.Join(inner, ".markitect", "version")); err != nil {
+		t.Error("the nested project was not laid out")
+	}
+	// Nothing to warn of in a folder that is no project's, or with --json.
+	if code, _, errOut := run("init", "-C", t.TempDir()); code != ExitOK || errOut != "" {
+		t.Errorf("%d %q", code, errOut)
+	}
+	other := filepath.Join(outer, "more")
+	if err := os.MkdirAll(other, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	code, out, errOut = run("init", "-C", other, "--json")
+	var doc map[string]any
+	if err := json.Unmarshal([]byte(out), &doc); err != nil || code != ExitOK || errOut == "" || len(doc) != 6 {
+		t.Errorf("%v %d %v %q", err, code, doc, errOut)
+	}
+}

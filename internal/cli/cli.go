@@ -111,23 +111,26 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprint(stderr, usage)
 		return ExitFailed
 	}
-	name := args[0]
-	switch name {
+	switch args[0] {
 	case "help", "-h", "-help", "--help":
 		fmt.Fprint(stdout, usage)
 		return ExitOK
 	}
+	// The flags may stand before the command, as Git's do: markitect -C
+	// PROJECT check.
+	name, rest := splitCommand(args)
 	c, ok := commands[name]
 	if !ok {
-		fmt.Fprintf(stderr, "markitect: unknown command %q\n\n%s", name, usage)
+		fmt.Fprintf(stderr, "markitect: unknown command %q; markitect --help lists the commands\n", name)
 		return ExitFailed
 	}
-	o, err := parse(args[1:])
+	o, err := parse(rest)
 	if err == nil {
 		err = validate(name, c, o)
 	}
 	code := ExitFailed
 	if err == nil {
+		o.stderr = stderr
 		code, err = c.run(o, stdout)
 	}
 	if err != nil {
@@ -149,12 +152,46 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	return code
 }
 
+// splitCommand finds the command among the arguments: the first that is no
+// flag and no value of a flag, whatever flags stand before it. It returns the
+// command, "" when there is none, and the other arguments in their order.
+func splitCommand(args []string) (string, []string) {
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		switch {
+		case a == "--":
+			return "", args
+		case flagWithValue[a]:
+			i++
+		case strings.HasPrefix(a, "-") && a != "-":
+		default:
+			return a, append(append([]string{}, args[:i]...), args[i+1:]...)
+		}
+	}
+	return "", args
+}
+
+// flagWithValue are the flags that take the argument after them as a value.
+var flagWithValue = map[string]bool{
+	"-C": true, "--spec": true, "-spec": true, "--file": true, "-file": true, "--check": true, "-check": true,
+	"-e": true, "--evidence": true, "-m": true, "--reason": true,
+}
+
+// synopsis is the one line of usage of each command.
+var synopsis = map[string]string{
+	"init": "init [--spec PATH]", "check": "check", "show": "show DOCUMENT", "table": "table [TYPE]", "new": "new TYPE PATH [TITLE]",
+	"move": "move OLD NEW", "apply": "apply TEMPLATE [TARGET]", "topic": "topic [TOPIC] [--all]", "questions": "questions",
+	"version": "version", "licenses": "licenses", "status": "status [PATH]...",
+	"confirm": "confirm DOCUMENT@FINGERPRINT VERDICT [--file PATH]... [--check PATH]... [-e EVIDENCE]... [-m REASON]",
+	"compare": "compare OLD [NEW]",
+}
+
 // validate checks the parsed arguments against the command: the number of
 // positional arguments, and that each flag given is one of the command's.
 func validate(name string, c command, o options) error {
 	switch {
 	case len(o.positional) < c.min || len(o.positional) > c.max:
-		return fmt.Errorf("wrong number of arguments\n\n%s", usage)
+		return fmt.Errorf("wrong number of arguments\nusage: markitect %s [-C PROJECT] [--json]\nmarkitect --help lists every command", synopsis[name])
 	case o.specSet && name != "init":
 		return errors.New("--spec is a flag of init")
 	case o.all && name != "topic":
@@ -181,6 +218,8 @@ type options struct {
 	reason                  string
 	reasonSet, confirmFlags bool
 	positional              []string
+	// stderr is where a command puts a warning; nil outside Run.
+	stderr io.Writer
 }
 
 func parse(args []string) (options, error) {

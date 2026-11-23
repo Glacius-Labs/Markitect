@@ -292,3 +292,47 @@ func TestCompareFindsADocumentMovedBack(t *testing.T) {
 		t.Errorf("new %v gone %v moved %+v", doc.New, doc.Gone, doc.Moved)
 	}
 }
+
+// The moves of a history are followed in order, each applied to the document
+// that held the path at that moment, also when a name is vacated and taken by
+// another document: fines becomes late-fees, loans takes the name fines, and
+// late-fees moves up a folder.
+func TestCompareFollowsASwapOfNames(t *testing.T) {
+	clock(t)
+	older := project(t, map[string]string{
+		"docs/spec/components/fines.md": "# Fines\n\nA late book costs a fee.\n",
+		"docs/spec/components/loans.md": "# Loans\n\nA loan runs three weeks; see [fines](fines.md).\n",
+		"src/x.go":                      "package lending\n",
+	})
+	verdict(t, older, "components/fines.md", "ok", "-e", "src/x.go")
+	verdict(t, older, "components/loans.md", "ok", "-e", "src/x.go")
+	newer := copyTree(t, older, false)
+	for _, m := range [][2]string{
+		{"components/fines.md", "components/late-fees.md"},
+		{"components/loans.md", "components/fines.md"},
+		{"components/late-fees.md", "late-fees.md"},
+	} {
+		if code, _, errOut := run("move", "-C", newer, m[0], m[1]); code != ExitOK {
+			t.Fatal(errOut)
+		}
+	}
+	code, out, _ := run("compare", older, newer, "--json")
+	var doc compareDocument
+	if err := json.Unmarshal([]byte(out), &doc); err != nil || code != ExitFound {
+		t.Fatal(code, out)
+	}
+	var moved []string
+	for _, m := range doc.Moved {
+		moved = append(moved, m.From+" -> "+m.To)
+	}
+	same(t, "moved", moved, []string{"components/loans.md -> components/fines.md", "components/fines.md -> late-fees.md"})
+	if len(doc.New) != 0 || len(doc.Gone) != 0 || len(doc.Changed) != 0 || len(doc.Suspect) != 0 {
+		t.Errorf("new %v gone %v changed %v suspect %v", doc.New, doc.Gone, doc.Changed, doc.Suspect)
+	}
+	for _, m := range doc.Moved {
+		if !m.Mechanical || m.Diff != "" {
+			t.Errorf("a move that changed no text shows a diff: %+v", m)
+		}
+	}
+	same(t, "rewritten", doc.Rewritten, []string{})
+}

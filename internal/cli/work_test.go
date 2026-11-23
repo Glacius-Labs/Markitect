@@ -130,7 +130,7 @@ func TestTheWorkIsNotPartOfTheSpec(t *testing.T) {
 	}
 	// confirm binds documents of the spec and refuses one of the work.
 	code, _, errOut := run("confirm", "-C", dir, ".markitect/findings/pending/late-fee.md@00000000", "ok", "-e", "src/renew.go")
-	if code != ExitFound || !strings.Contains(errOut, "is a document of the work") {
+	if code != ExitFailed || !strings.Contains(errOut, "is a document of the work") {
 		t.Errorf("%d %s", code, errOut)
 	}
 }
