@@ -75,6 +75,8 @@ type Document struct {
 	Sections            []Section
 	// Links are the links to .md paths outside type and extends lines.
 	Links []Link
+	// CodeSpans are the code spans of the text, in order, outside code blocks.
+	CodeSpans []CodeSpan
 	// Refs are all destinations of links to .md paths, type and extends lines,
 	// footnotes and link reference definitions included, with their place in
 	// Source.
@@ -96,6 +98,16 @@ type Section struct {
 	// First is the first line of text under the heading that shows something,
 	// as plain text.
 	First string
+}
+
+// CodeSpan is a code span in the text of a document.
+type CodeSpan struct {
+	// Text is the code as it shows: line breaks as spaces, one space at each
+	// end dropped when both ends have one and the code is not all spaces.
+	Text string
+	// Section is the heading of the section the code span stands in, or "".
+	Section string
+	Line    int
 }
 
 // Link is a link from a document to a .md path.
@@ -164,7 +176,9 @@ func cutOptional(heading string) (string, bool) {
 	return strings.TrimRightFunc(heading[:n], unicode.IsSpace), true
 }
 
-var markdown = goldmark.New(goldmark.WithExtensions(extension.GFM, extension.Footnote))
+// markdown is CommonMark with the extensions of GitHub Flavored Markdown, but
+// for its task list, which taskList replaces, and footnotes.
+var markdown = goldmark.New(goldmark.WithExtensions(extension.Linkify, extension.Table, extension.Strikethrough, taskList{}, extension.Footnote))
 
 const (
 	typePrefix    = "Type:"
@@ -289,6 +303,7 @@ func (p *parser) read(root ast.Node) {
 			}
 		}
 		p.links(n, section)
+		p.codeSpans(n, section)
 		p.texts(n, section)
 	}
 }
@@ -391,6 +406,33 @@ func (p *parser) links(block ast.Node, section string) {
 			p.doc.Links = append(p.doc.Links, Link{Target: resolve(p.doc.Path, raw), Raw: raw, Section: section, Line: line})
 		}
 		return ast.WalkContinue, nil
+	})
+}
+
+// codeSpans collects the code spans in a block; fenced and indented code
+// blocks hold none.
+func (p *parser) codeSpans(block ast.Node, section string) {
+	_ = ast.Walk(block, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+		span, ok := n.(*ast.CodeSpan)
+		if !ok || !entering {
+			return ast.WalkContinue, nil
+		}
+		var b strings.Builder
+		line := 0
+		for c := span.FirstChild(); c != nil; c = c.NextSibling() {
+			if t, ok := c.(*ast.Text); ok {
+				if line == 0 {
+					line = p.line(t.Segment.Start)
+				}
+				b.Write(t.Segment.Value(p.source))
+			}
+		}
+		code := strings.ReplaceAll(b.String(), "\n", " ")
+		if len(code) > 1 && code[0] == ' ' && code[len(code)-1] == ' ' && strings.Trim(code, " ") != "" {
+			code = code[1 : len(code)-1]
+		}
+		p.doc.CodeSpans = append(p.doc.CodeSpans, CodeSpan{Text: code, Section: section, Line: max(line, 1)})
+		return ast.WalkSkipChildren, nil
 	})
 }
 

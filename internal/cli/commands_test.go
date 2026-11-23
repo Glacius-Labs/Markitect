@@ -121,7 +121,7 @@ func TestTopicAndQuestions(t *testing.T) {
 		t.Error(code, errOut)
 	}
 	code, out, _ = run("questions", "-C", dir)
-	if code != ExitOK || !strings.Contains(out, "no module of the library") {
+	if code != ExitOK || !strings.Contains(out, "no module of the default") {
 		t.Error(code, out)
 	}
 	applied := initialized(t)

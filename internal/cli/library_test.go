@@ -165,7 +165,7 @@ func TestAHandLaidProjectHasTheQuestionsAndReferenceValuesOfCore(t *testing.T) {
 	if err := os.Rename(filepath.Join(specOf(moved), "core"), filepath.Join(specOf(moved), "elsewhere")); err != nil {
 		t.Fatal(err)
 	}
-	if code, out, _ := run("questions", "-C", moved); code != ExitOK || !strings.Contains(out, "The spec has no module of the library, so there are no questions.") {
+	if code, out, _ := run("questions", "-C", moved); code != ExitOK || !strings.Contains(out, "The spec has no module of the default, so there are no questions.") {
 		t.Errorf("a folder of another name: %d %s", code, out)
 	}
 }

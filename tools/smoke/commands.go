@@ -222,6 +222,12 @@ func (s *smoke) projectCommands() error {
 	} else if out != fmt.Sprintf("0 errors in %d documents\n", total+3) {
 		return fmt.Errorf("check with a module that lists its cart: %s", tail(out))
 	}
+	// A pattern in Contents shows the documents of the folder that match it.
+	if err := writeFile(project, "docs/spec/shop/README.md", "# Shop\n\n## Contents\n- `ca*.md`\n"); err != nil {
+		return err
+	} else if out, err := markitect(0, "check"); err != nil || out != fmt.Sprintf("0 errors in %d documents\n", total+3) {
+		return fmt.Errorf("check with a module that shows its cart by a pattern: %v %s", err, tail(out))
+	}
 	if err := os.RemoveAll(filepath.Join(project, "docs", "spec", "shop")); err != nil {
 		return err
 	}

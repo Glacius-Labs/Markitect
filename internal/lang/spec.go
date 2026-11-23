@@ -99,6 +99,7 @@ const (
 	CodeLinkInternal   = "link.internal"
 	CodeModuleReadme   = "module.readme"
 	CodeReadmeType     = "readme.type"
+	CodeReadmePattern  = "readme.pattern"
 
 	CodeExtendsUnresolved = "extends.unresolved"
 	CodeExtendsLine       = "extends.line"
@@ -179,6 +180,7 @@ func Check(s *Spec) []Diagnostic {
 		}
 		out = append(out, s.checkExtends(d)...)
 		out = append(out, s.checkReadmeType(d)...)
+		out = append(out, checkPatterns(d)...)
 		out = append(out, s.checkInternal(d, shown)...)
 		seen := map[string]bool{}
 		for _, l := range d.Links {

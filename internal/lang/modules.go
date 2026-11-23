@@ -12,7 +12,8 @@ import (
 // that holds only folders, or no document at all, is no module and is
 // transparent: it counts as no level between two modules. The manifest of a
 // module is its README.md; the section Contents of it lists what the module
-// shows to the modules outside it.
+// shows to the modules outside it: by links, and by code spans, which are
+// patterns over the file names of the documents directly in its folder.
 
 const (
 	readmeName      = "README.md"
@@ -97,6 +98,16 @@ func (s *Spec) shownByModule() map[string]map[string]bool {
 		}
 		set := map[string]bool{readme.Path: true}
 		shown[dir] = set
+		for _, pattern := range contentsPatterns(readme) {
+			for _, d := range s.Documents {
+				if path.Dir(d.Path) != dir {
+					continue
+				}
+				if ok, _ := path.Match(pattern.Text, path.Base(d.Path)); ok {
+					set[d.Path] = true
+				}
+			}
+		}
 		for _, l := range readme.Links {
 			if !strings.EqualFold(l.Section, contentsSection) {
 				continue
@@ -118,6 +129,44 @@ func (s *Spec) shownByModule() map[string]map[string]bool {
 		}
 	}
 	return shown
+}
+
+// contentsPatterns returns the code spans of the sections Contents of a README
+// that are patterns: wildcards as path.Match reads them, over the file names of
+// the documents directly in the folder. A code span with a "/" is plain code,
+// such as a path or an address, and one that path.Match calls malformed shows
+// nothing.
+func contentsPatterns(readme *Document) []CodeSpan {
+	var out []CodeSpan
+	for _, c := range readme.CodeSpans {
+		if strings.EqualFold(c.Section, contentsSection) && !strings.Contains(c.Text, "/") && validPattern(c.Text) {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+// validPattern reports whether path.Match reads the pattern, whatever name it
+// is matched against.
+func validPattern(pattern string) bool {
+	_, err := path.Match(pattern, "")
+	return err == nil
+}
+
+// checkPatterns reports the code spans without a "/" in the section Contents of
+// a README that are no valid pattern.
+func checkPatterns(d *Document) []Diagnostic {
+	if !isReadme(d.Path) {
+		return nil
+	}
+	var out []Diagnostic
+	for _, c := range d.CodeSpans {
+		if strings.EqualFold(c.Section, contentsSection) && !strings.Contains(c.Text, "/") && !validPattern(c.Text) {
+			out = append(out, Diagnostic{Path: d.Path, Line: c.Line, Code: CodeReadmePattern,
+				Message: fmt.Sprintf("bad pattern \"%s\": a pattern uses the wildcards *, ? and [a-z]", c.Text)})
+		}
+	}
+	return out
 }
 
 // checkModules reports every module without a README.md, at the path the

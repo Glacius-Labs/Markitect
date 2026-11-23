@@ -209,7 +209,7 @@ func questions(o options, stdout io.Writer) (int, error) {
 		b.WriteString("\n")
 	}
 	if len(doc.Modules) == 0 {
-		b.WriteString("The spec has no module of the library, so there are no questions.\n")
+		b.WriteString("The spec has no module of the default, so there are no questions.\n")
 	}
 	return output(o, stdout, doc, strings.TrimSuffix(b.String(), "\n\n")+"\n")
 }
