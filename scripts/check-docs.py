@@ -51,8 +51,6 @@ DEFAULT_DOCUMENTS = (
     "docs/guides/library.md",
     "docs/guides/signals.md",
     "docs/guides/project-reference.md",
-    "docs/guides/reports.md",
-    "docs/guides/rights.md",
     "docs/guides/plugin.md",
     "docs/releasing.md",
 )

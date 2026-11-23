@@ -122,7 +122,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 ## Findings and the circle
 
-**Taken.** ISO 9001:2015, clause 10.2, handles a nonconformity in a loop: react to it, find its cause, take a corrective action, and review whether the action worked. What anyone notices lands as a report; triage makes it a finding and files it; a plan item answers it; and a finding that recurs is bundled into a new finding one level higher, where the cause may lie ([DEC-144](decisions.md#dec-144-reports-findings-and-plan-items-hold-the-work)).
+**Taken.** ISO 9001:2015, clause 10.2, handles a nonconformity in a loop: react to it, find its cause, take a corrective action, and review whether the action worked. What anyone notices lands as a report; triage makes it a finding and files it; a plan item answers it; and a finding that recurs is bundled into a new finding one level higher, where the cause may lie ([DEC-151](decisions.md#dec-151-reports-findings-and-plan-items-hold-the-work-and-every-story-names-the-places-its-files-realize)).
 
 **Differs.** There are no approvals. People decide what is new in conversation, and what follows from what was decided is recorded without a question and shown in the briefing ([DEC-145](decisions.md#dec-145-triage-has-three-exits-and-what-follows-from-what-was-decided-is-recorded-without-a-question)).
 

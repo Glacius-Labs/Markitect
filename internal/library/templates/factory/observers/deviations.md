@@ -18,4 +18,5 @@ Customer data and secrets, also not the secret that was committed: only the refe
 daily
 
 ## Model
-Sonnet, effort high
+Claude: Sonnet, effort high
+Codex: Luna, effort high

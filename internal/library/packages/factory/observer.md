@@ -1,6 +1,6 @@
 # Observer
 
-One observer of the way of working: it watches exactly one topic in one source and writes a [report](report.md) into the context on its schedule. The agent `observe` runs it, in a fresh session; each observer is a kind of agent of its own, with its folder `.markitect/context/observe-NAME/` for its reports and its checkpoint. Take it for a topic worth watching again and again. Do not take it for a single look, which is a story, nor for a second topic of an existing observer: one observer, one topic. An observer selects and states, with numbers and places; it never classifies, interprets, fixes or decides.
+One observer of the way of working: it watches exactly one topic in one source and writes a [report](report.md) into the context on its schedule. The agent `observe` runs it, fresh for each run; each observer is a kind of agent of its own, with its folder `.markitect/context/observe-NAME/` for its reports and its checkpoint. Take it for a topic worth watching again and again. Do not take it for a single look, which is a story, nor for a second topic of an existing observer: one observer, one topic. An observer selects and states, with numbers and places; it never classifies, interprets, fixes or decides.
 
 ## Observes
 The one topic, in one sentence. Example: `How the plan items move.`
@@ -18,4 +18,4 @@ What must never stand in a report, and how an excerpt looks without it. Customer
 How often it runs: `daily`, `weekly`, or every so many days. It is due when its last run lies further back than this. Example: `weekly`.
 
 ## Model
-The model and the effort, as for an [agent](agent.md). Example: `Sonnet, effort high`.
+The model and the effort, one line per provider, as for an [agent](agent.md). Example: `Claude: Sonnet, effort high`, then `Codex: Luna, effort high`.

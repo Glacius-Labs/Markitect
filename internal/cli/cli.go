@@ -1,7 +1,8 @@
 // Package cli is the command line of markitect: it
 // parses the arguments, finds the project they work in, sets one up with
-// init, reads its spec, prints what the language finds, as text or as JSON,
-// and applies the changes of the commands that write.
+// init, reads its spec and the documents of its work, prints what the
+// language finds, as text or as JSON, and applies the changes of the commands
+// that write.
 package cli
 
 import (
@@ -30,40 +31,40 @@ const (
 
 const usage = `usage: markitect COMMAND ARGUMENTS [-C PROJECT] [--json]
 
-  init [--spec PATH]          set up a project: .markitect/ and the spec folder,
-                              by default docs/spec
-  check                       check the spec, the reports, the results of
-                              control samples and the settings
+Look
   show DOCUMENT               a document with its type, sections, links and row
   table [TYPE]                every document of a type as a Markdown table, or
                               every document with its verdict and artifacts
-  new TYPE PATH [TITLE]       create a document of a type
-  move OLD NEW                move a document and rewrite the links to it
-  apply TEMPLATE [TARGET]     copy a template of the library into the spec
-  topic [TOPIC] [--all]       the signals of the spec, or everything about a
-                              document, a type or a folder
+  topic [TOPIC] [--all]       the signals of the spec and the change signals of
+                              its history, or everything about a document, a
+                              type or a folder
   questions                   the questions of the packages the spec has
-  status                      what is changed, suspect, unexplained or waiting
-                              on a report
-  status --step ROLE --before DIR [--target DIR]
-                              what a step of ROLE wrote since DIR against the
-                              write table, read from the target or DIR
-  status --target DIR         whether the branch lands: what its status shows
-                              that the target DIR's does not; the tests and
-                              the counter-checks are the runner's to run
-  mark DOCUMENT@FINGERPRINT VERDICT [--file PATH]... [--check PATH]...
-       [-e EVIDENCE]... [-m REASON]
-                              bind ok, fail or skip to the state status showed
   compare OLD [NEW]           what is new, gone, moved, changed or suspect in NEW,
                               by default this project, against the project OLD,
-                              and its reports that are new, closed or changed
-  figures [--all]             the change signals computed from the history, and
-                              the figures of the reports and control samples
-  reports [--open]            the reports with the values of their sections, or
-                              only the open ones
-  settings                    the settings: the model per role, the counter-check
-                              folder, the tests command, the cadence, the write
-                              table and the CI definition
+                              and the documents of the work that are new, gone
+                              or changed
+
+Check
+  check                       check the spec and the documents of the work
+  status [PATH]...            what is changed, suspect or unexplained, for the
+                              documents, files and folders named, or for all
+
+Change the spec
+  new TYPE PATH [TITLE]       create a document of a type
+  apply TEMPLATE [TARGET]     copy a template of the library into the spec
+  move OLD NEW                move a document and rewrite the links to it
+
+Confirm
+  confirm DOCUMENT@FINGERPRINT VERDICT [--file PATH]... [--check PATH]...
+          [-e EVIDENCE]... [-m REASON]
+                              bind ok, fail or skip to the state status showed;
+                              --file names the files that realize the document,
+                              all of them: a later confirm replaces the list
+
+Set up
+  init [--spec PATH]          set up a project: .markitect/, the spec folder, by
+                              default docs/spec, with the four templates, the
+                              skills of the standard and an entry in AGENTS.md
   version                     the tool's version, and whether the project pins it
   licenses                    the license notices of the modules the tool is
                               built from
@@ -75,6 +76,10 @@ path:line: code: message. --json prints one document with format_version and
 kind. Exit codes: 0 when all is well, 1 when the command found something, 2
 when it could not run.
 `
+
+// maxArguments is no limit on the number of arguments of a command that takes
+// any.
+const maxArguments = 1 << 30
 
 // A command takes its positional arguments, between min and max of them.
 type command struct {
@@ -94,12 +99,9 @@ var commands = map[string]command{
 	"questions": {0, 0, questions},
 	"version":   {0, 0, version},
 	"licenses":  {0, 0, licenses},
-	"status":    {0, 0, status},
-	"mark":      {2, 2, mark},
+	"status":    {0, maxArguments, status},
+	"confirm":   {2, 2, confirm},
 	"compare":   {1, 2, compare},
-	"figures":   {0, 0, figures},
-	"reports":   {0, 0, reports},
-	"settings":  {0, 0, settings},
 }
 
 // Run runs the command line args, without the program name, and returns the
@@ -109,23 +111,34 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprint(stderr, usage)
 		return ExitFailed
 	}
-	name := args[0]
-	switch name {
-	case "help", "-h", "-help", "--help":
+	// --help, -h and the command help print the usage, wherever they stand.
+	if wantsHelp(args) {
+		fmt.Fprint(stdout, usage)
+		return ExitOK
+	}
+	// The flags may stand before the command, as Git's do: markitect -C
+	// PROJECT check.
+	name, rest, err := splitCommand(args)
+	if err != nil {
+		fmt.Fprintf(stderr, "markitect: %v; markitect --help lists the commands and flags\n", err)
+		return ExitFailed
+	}
+	if name == "help" {
 		fmt.Fprint(stdout, usage)
 		return ExitOK
 	}
 	c, ok := commands[name]
 	if !ok {
-		fmt.Fprintf(stderr, "markitect: unknown command %q\n\n%s", name, usage)
+		fmt.Fprintf(stderr, "markitect: unknown command %q; markitect --help lists the commands\n", name)
 		return ExitFailed
 	}
-	o, err := parse(args[1:])
+	o, err := parse(rest)
 	if err == nil {
 		err = validate(name, c, o)
 	}
 	code := ExitFailed
 	if err == nil {
+		o.stderr = stderr
 		code, err = c.run(o, stdout)
 	}
 	if err != nil {
@@ -147,24 +160,76 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	return code
 }
 
+// wantsHelp says whether the arguments ask for the usage: help, -h, -help or
+// --help, not as the value of a flag and not after --.
+func wantsHelp(args []string) bool {
+	for i := 0; i < len(args); i++ {
+		switch a := args[i]; {
+		case a == "--":
+			return false
+		case a == "help" && i == 0 || a == "-h" || a == "-help" || a == "--help":
+			return true
+		case flagWithValue[a]:
+			i++
+		}
+	}
+	return false
+}
+
+// splitCommand finds the command among the arguments: the first that is no
+// flag and no value of a flag, whatever flags stand before it. It returns the
+// command and the other arguments in their order. It fails for a flag that no
+// command has, for a flag without its value and when there is no command.
+func splitCommand(args []string) (string, []string, error) {
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		switch {
+		case a == "--":
+			return "", nil, errors.New("no command given")
+		case flagWithValue[a]:
+			if i++; i >= len(args) {
+				return "", nil, fmt.Errorf("flag %s needs a value", a)
+			}
+		case flagWithoutValue[a] || strings.HasPrefix(a, "--spec=") || strings.HasPrefix(a, "-spec="):
+		case strings.HasPrefix(a, "-") && a != "-":
+			return "", nil, fmt.Errorf("unknown flag %s", a)
+		default:
+			return a, append(append([]string{}, args[:i]...), args[i+1:]...), nil
+		}
+	}
+	return "", nil, errors.New("no command given")
+}
+
+// flagWithoutValue are the flags that stand alone.
+var flagWithoutValue = map[string]bool{"--json": true, "-json": true, "--all": true, "-all": true}
+
+// flagWithValue are the flags that take the argument after them as a value.
+var flagWithValue = map[string]bool{
+	"-C": true, "--spec": true, "-spec": true, "--file": true, "-file": true, "--check": true, "-check": true,
+	"-e": true, "--evidence": true, "-m": true, "--reason": true,
+}
+
+// synopsis is the one line of usage of each command.
+var synopsis = map[string]string{
+	"init": "init [--spec PATH]", "check": "check", "show": "show DOCUMENT", "table": "table [TYPE]", "new": "new TYPE PATH [TITLE]",
+	"move": "move OLD NEW", "apply": "apply TEMPLATE [TARGET]", "topic": "topic [TOPIC] [--all]", "questions": "questions",
+	"version": "version", "licenses": "licenses", "status": "status [PATH]...",
+	"confirm": "confirm DOCUMENT@FINGERPRINT VERDICT [--file PATH]... [--check PATH]... [-e EVIDENCE]... [-m REASON]",
+	"compare": "compare OLD [NEW]",
+}
+
 // validate checks the parsed arguments against the command: the number of
 // positional arguments, and that each flag given is one of the command's.
 func validate(name string, c command, o options) error {
 	switch {
 	case len(o.positional) < c.min || len(o.positional) > c.max:
-		return fmt.Errorf("wrong number of arguments\n\n%s", usage)
+		return fmt.Errorf("wrong number of arguments\nusage: markitect %s [-C PROJECT] [--json]\nmarkitect --help lists every command", synopsis[name])
 	case o.specSet && name != "init":
 		return errors.New("--spec is a flag of init")
-	case o.all && name != "topic" && name != "figures":
-		return errors.New("--all is a flag of topic and figures")
-	case o.open && name != "reports":
-		return errors.New("--open is a flag of reports")
-	case o.statusFlags && name != "status":
-		return errors.New("--step, --before and --target are flags of status")
-	case o.step != "" && o.before == "" || o.before != "" && o.step == "":
-		return errors.New("--step and --before go together")
-	case o.markFlags && name != "mark":
-		return errors.New("--file, --check, -e and -m are flags of mark")
+	case o.all && name != "topic":
+		return errors.New("--all is a flag of topic")
+	case o.confirmFlags && name != "confirm":
+		return errors.New("--file, --check, -e and -m are flags of confirm")
 	}
 	return nil
 }
@@ -174,22 +239,19 @@ func validate(name string, c command, o options) error {
 type options struct {
 	json bool
 	all  bool
-	open bool
 	// dir is the project folder -C names, "" without the flag.
 	dir string
 	// spec is the spec folder --spec names, specSet whether it was given.
 	spec    string
 	specSet bool
-	// files, checks, evidence and reason are the flags of mark, markFlags
-	// whether any was given.
+	// files, checks, evidence and reason are the flags of confirm,
+	// confirmFlags whether any was given.
 	files, checks, evidence []string
 	reason                  string
-	reasonSet, markFlags    bool
-	// step, before and target are the flags of status, statusFlags whether
-	// any was given.
-	step, before, target string
-	statusFlags          bool
-	positional           []string
+	reasonSet, confirmFlags bool
+	positional              []string
+	// stderr is where a command puts a warning; nil outside Run.
+	stderr io.Writer
 }
 
 func parse(args []string) (options, error) {
@@ -212,8 +274,6 @@ func parse(args []string) (options, error) {
 			o.json = true
 		case a == "--all" || a == "-all":
 			o.all = true
-		case a == "--open" || a == "-open":
-			o.open = true
 		case a == "-C":
 			if o.dir, err = value(a); err == nil && o.dir == "" {
 				err = errors.New("flag -C needs a folder")
@@ -227,27 +287,18 @@ func parse(args []string) (options, error) {
 		case a == "--file" || a == "-file":
 			var v string
 			v, err = value(a)
-			o.files, o.markFlags = append(o.files, v), true
+			o.files, o.confirmFlags = append(o.files, v), true
 		case a == "--check" || a == "-check":
 			var v string
 			v, err = value(a)
-			o.checks, o.markFlags = append(o.checks, v), true
+			o.checks, o.confirmFlags = append(o.checks, v), true
 		case a == "-e" || a == "--evidence":
 			var v string
 			v, err = value(a)
-			o.evidence, o.markFlags = append(o.evidence, v), true
-		case a == "--step" || a == "-step":
-			o.step, err = value(a)
-			o.statusFlags = true
-		case a == "--before" || a == "-before":
-			o.before, err = value(a)
-			o.statusFlags = true
-		case a == "--target" || a == "-target":
-			o.target, err = value(a)
-			o.statusFlags = true
+			o.evidence, o.confirmFlags = append(o.evidence, v), true
 		case a == "-m" || a == "--reason":
 			o.reason, err = value(a)
-			o.reasonSet, o.markFlags = true, true
+			o.reasonSet, o.confirmFlags = true, true
 		case strings.HasPrefix(a, "-") && a != "-":
 			err = fmt.Errorf("unknown flag %s", a)
 		default:
@@ -276,14 +327,13 @@ func check(o options, stdout io.Writer) (int, error) {
 		return ExitFailed, err
 	}
 	spec := w.Spec
-	f, err := factoryOf(w)
+	work, err := workOf(w)
 	if err != nil {
 		return ExitFailed, err
 	}
-	found := append(lang.Check(spec), f.Diagnostics...)
+	found := append(lang.Check(spec), work.Diagnostics...)
 	if o.json {
-		doc := checkDocument{header: newHeader("check"), Documents: len(spec.Documents), Reports: len(f.Reports), Samples: len(f.Samples),
-			Settings: f.Settings != nil, Diagnostics: []diagnostic{}}
+		doc := checkDocument{header: newHeader("check"), Documents: len(spec.Documents), Work: len(work.Documents), Diagnostics: []diagnostic{}}
 		for _, d := range found {
 			doc.Diagnostics = append(doc.Diagnostics, diagnostic{File: d.Path, Line: d.Line, Code: d.Code, Message: d.Message})
 		}
@@ -296,8 +346,8 @@ func check(o options, stdout io.Writer) (int, error) {
 			b.WriteString(d.String() + "\n")
 		}
 		fmt.Fprintf(&b, "%s in %s", plural(len(found), "error"), plural(len(spec.Documents), "document"))
-		if len(f.Reports)+len(f.Samples) > 0 {
-			fmt.Fprintf(&b, ", %s and %s", plural(len(f.Reports), "report"), plural(len(f.Samples), "sample"))
+		if len(work.Documents) > 0 {
+			fmt.Fprintf(&b, ", %s of the work", plural(len(work.Documents), "document"))
 		}
 		b.WriteString("\n")
 		if _, err := io.WriteString(stdout, b.String()); err != nil {
@@ -319,20 +369,17 @@ type header struct {
 func newHeader(kind string) header { return header{FormatVersion: FormatVersion, Kind: kind} }
 
 // checkDocument is the JSON document of check: the number of documents of
-// the spec, of reports and of results of control samples, whether the
-// project has settings, and the diagnostics.
+// the spec and of the work, and the diagnostics.
 type checkDocument struct {
 	header
 	Documents   int          `json:"documents"`
-	Reports     int          `json:"reports"`
-	Samples     int          `json:"samples"`
-	Settings    bool         `json:"settings"`
+	Work        int          `json:"work"`
 	Diagnostics []diagnostic `json:"diagnostics"`
 }
 
 // diagnostic is one diagnostic in a JSON document; file is the path below the
 // spec folder for a document of the spec, and below the project folder for
-// any other file.
+// a document of the work and any other file.
 type diagnostic struct {
 	File    string `json:"file"`
 	Line    int    `json:"line"`

@@ -44,19 +44,15 @@ func TestEventLines(t *testing.T) {
 	if got := string(m.Line()); got != `{"time":"2026-11-20T08:00:00.000000005Z","type":"move","from":"a.md","to":"b.md","rewritten":[]}`+"\n" {
 		t.Error(got)
 	}
-	m.Reports = []string{".markitect/reports/late-fee.md"}
-	if got := string(m.Line()); got != `{"time":"2026-11-20T08:00:00.000000005Z","type":"move","from":"a.md","to":"b.md","rewritten":[],"reports":[".markitect/reports/late-fee.md"]}`+"\n" {
-		t.Error(got)
-	}
 }
 
 func TestMoveRows(t *testing.T) {
 	h := func(s string) string { return Hash([]byte(s)) }
 	rows := []Row{
-		{Doc: "types/kind.md", Verdict: "ok", Source: "mark", Inputs: Inputs{"self": h("kind v1")}},
-		{Doc: "a.md", Verdict: "ok", Source: "mark", Inputs: Inputs{"self": h("a v1"), "type:types/kind.md": h("kind v1"), "link:b.md": h("b old")}},
-		{Doc: "b.md", Verdict: "ok", Source: "mark", Inputs: Inputs{"self": h("b old"), "link:a.md": h("a v1")}},
-		{Doc: "c.md", Verdict: "ok", Source: "mark", Inputs: Inputs{"self": h("c")}},
+		{Doc: "types/kind.md", Verdict: "ok", Source: "confirm", Inputs: Inputs{"self": h("kind v1")}},
+		{Doc: "a.md", Verdict: "ok", Source: "confirm", Inputs: Inputs{"self": h("a v1"), "type:types/kind.md": h("kind v1"), "link:b.md": h("b old")}},
+		{Doc: "b.md", Verdict: "ok", Source: "confirm", Inputs: Inputs{"self": h("b old"), "link:a.md": h("a v1")}},
+		{Doc: "c.md", Verdict: "ok", Source: "confirm", Inputs: Inputs{"self": h("c")}},
 	}
 	// The type moves; a's type line is rewritten; b had changed before.
 	out := MoveRows(rows, "types/kind.md", "kinds/kind.md", map[string]Text{
@@ -68,11 +64,34 @@ func TestMoveRows(t *testing.T) {
 		{Doc: "kinds/kind.md", Verdict: "ok", Source: "move", Inputs: Inputs{"self": h("kind v2")}},
 		{Doc: "a.md", Verdict: "ok", Source: "move", Inputs: Inputs{"self": h("a v2"), "type:kinds/kind.md": h("kind v2"), "link:b.md": h("b old")}},
 		{Doc: "b.md", Verdict: "ok", Source: "move", Inputs: Inputs{"self": h("b old"), "link:a.md": h("a v2")}},
-		{Doc: "c.md", Verdict: "ok", Source: "mark", Inputs: Inputs{"self": h("c")}},
+		{Doc: "c.md", Verdict: "ok", Source: "confirm", Inputs: Inputs{"self": h("c")}},
 	}
 	for i := range want {
 		if string(out[i].line()) != string(want[i].line()) {
 			t.Errorf("got  %s\nwant %s", out[i].line(), want[i].line())
 		}
+	}
+}
+
+func TestInputsDigestLeavesOutTheEvidence(t *testing.T) {
+	a := Inputs{"self": hashA, "file:src/loans.go": hashA, "evidence:tests/loans_test.go": hashA}
+	b := Inputs{"self": hashA, "file:src/loans.go": hashA}
+	if InputsDigest(a) != InputsDigest(b) || !validHash(InputsDigest(a)) {
+		t.Error("the evidence counts")
+	}
+	b["check:tests/counter-checks/loans_test.go"] = hashA
+	if InputsDigest(a) == InputsDigest(b) {
+		t.Error("a counter-check does not count")
+	}
+	e := Event{Time: time.Date(2026, 11, 20, 9, 0, 0, 0, time.UTC), Type: EventVerdict, Doc: "a.md", Verdict: "ok", Self: hashA, Inputs: InputsDigest(a)}
+	if got := string(e.Line()); got != `{"time":"2026-11-20T09:00:00Z","type":"verdict","doc":"a.md","verdict":"ok","self":"`+hashA+`","inputs":"`+InputsDigest(a)+`","changed":[]}`+"\n" {
+		t.Error(got)
+	}
+	events, problems := ParseHistory(e.Line())
+	if len(events) != 1 || events[0].Inputs != InputsDigest(a) || len(problems) != 0 {
+		t.Error(events, problems)
+	}
+	if _, problems := ParseHistory([]byte(`{"time":"2026-11-20T09:00:00Z","type":"verdict","doc":"a.md","verdict":"ok","inputs":"x"}`)); len(problems) != 1 {
+		t.Error("a bad inputs hash reads")
 	}
 }

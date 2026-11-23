@@ -3,11 +3,12 @@
 Type: [Agent](../../../packages/factory/agent.md)
 
 ## Task
-Add a new observer, with a person.
+Explain how a new observer is built.
 
-It starts on a new source, on a Risk about which "observe" was decided, or on a finding of type Factory. When a report only misses something, the existing observer is improved and no new one is added. Which observers a project needs, its operation shows.
+It runs inside the session that calls it: the [Architect](architect.md) when it plans a story for a new observer, the [Builder](build.md) when it builds one. An observer is planned and built like everything else, through a story in the Area that covers the way of working.
 
-1. Ask, one after another:
+1. A new observer is right when there is a topic worth watching again and again in one source, which no observer covers yet: one observer, one topic. When a report only misses something, the existing observer is improved instead, and when an existing observer covers the topic, it is extended: like every change to the spec, through a story, which a finding of type Factory leads to. Which observers a project needs, its operation shows.
+2. While planning, the Architect asks the person, one after another, and writes the answers into the story's target picture:
 
    | Question | What for |
    |---|---|
@@ -19,21 +20,19 @@ It starts on a new source, on a Risk about which "observe" was decided, or on a 
    | How does it know how far it has observed? | a commit, a run or a file |
    | How often? | the schedule |
 
-2. Write the observer's document among the [observers](../observers/README.md), of type [Observer](../../../packages/factory/observer.md), and link it from that folder's README.
-3. Create its folder `.markitect/context/observe-NAME/` for its reports and its checkpoint.
-4. Do a trial run: show the person the first report before the observer counts.
-
-A new observer changes the way of working: usually an Admin does it ([the usual way](../rules/deviations/usual-way.md)).
+3. From those answers the Architect writes, while planning and on the story's branch as every change to the spec, the observer's document among the [observers](../observers/README.md), of type [Observer](../../../packages/factory/observer.md), and its line in the observers' README; the story's Target changes name both ([spec change](../rules/building/spec-change-lands-with-realization.md)). The Reviewer of the planning's check reads them and confirms nothing.
+4. The Builder creates the folder `.markitect/context/observe-NAME/` and does a trial run of the observer with [observe](observe.md) in the working folder of the story's branch, where the document lies: as part of building, the trial's checkpoint, and its report when it observed something, lie on that branch and reach `main` with the story's merge; the Builder's own report says what the trial read ([straight to main](../rules/work/straight-to-main.md)).
+5. The Reviewer of the build confirms the observer's document and the README as [one trace](../rules/building/one-trace.md) says for a document no file realizes.
+6. The story's last task names the trial's outcome and where it lies, the observer's folder `.markitect/context/observe-NAME/` with its checkpoint and any report, so the story ends in `acceptance`, never directly in `done`, and the person accepts with [accept](accept.md) what that task names. When they drop the observer, they end the acceptance as failed ([accepting](../processes/accepting/review.md)); what removes it from `main`, where the Housekeeper would keep running it, is the decision to give the story up and a story that removes its document ([reopen after a finding](../rules/planning/reopen-after-finding.md)).
 
 ## Started by
-A person, usually through [Norman](norman.md).
+The [Architect](architect.md) and the [Builder](build.md), inside their sessions.
 
 ## Asks
-yes
+no
 
 ## Model
 as the session
 
 ## Changes
-A new observer document in the spec, and the observers' README.
-The folder `.markitect/context/observe-NAME/`.
+Nothing of its own: the session that calls it writes.

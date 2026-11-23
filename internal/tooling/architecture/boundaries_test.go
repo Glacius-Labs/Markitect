@@ -74,8 +74,6 @@ func TestLayerDirections(t *testing.T) {
 		{"internal/edit", "internal/lang", both},
 		{"internal/signals", "internal/lang", both},
 		{"internal/state", "internal/lang", both},
-		{"internal/state", "internal/library", both},
-		{"internal/state", "internal/edit", both},
 		{"internal/cli", "internal/state", both},
 		{"internal/cli", "internal/signals", both},
 		{"internal/cli", "internal/buildinfo", both},
@@ -91,6 +89,8 @@ func TestLayerDirections(t *testing.T) {
 		{"internal/edit", "internal/signals", none},
 		{"internal/signals", "internal/state", none},
 		{"internal/state", "internal/cli", none},
+		{"internal/state", "internal/library", none},
+		{"internal/state", "internal/edit", none},
 		{"internal/state", "internal/buildinfo", none},
 		// The entrypoint stays thin.
 		{"cmd/markitect", "internal/state", none},

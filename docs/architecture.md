@@ -1,6 +1,6 @@
 # Architecture
 
-How the source is composed, where each responsibility lives and which contracts hold between the packages. Main builds the [concept](concept/README.md). The tool checks and analyses a project's spec, computes from the state what is changed, suspect or unexplained, binds verdicts, and checks the steps and the landing of a job; it starts no agent, steers no work and uses no Git ([DEC-097](decisions.md#dec-097-markitect-uses-no-git); [where Main is](roadmap.md#where-main-is)). The jobs are skills and agents of the [plugin](guides/plugin.md), run by a session or a runner.
+How the source is composed, where each responsibility lives and which contracts hold between the packages. Main builds the [concept](concept/README.md). The tool checks and analyses a project's spec, computes from the state what is changed, suspect or unexplained, binds verdicts, and checks the documents of the work against their types; it starts no agent, steers no work and uses no Git ([DEC-097](decisions.md#dec-097-markitect-uses-no-git); [where Main is](roadmap.md#where-main-is)). The skills of the standard lie in the project and are laid out by `init`; the [plugin](guides/plugin.md) only fetches the tool.
 
 This page owns the package contracts and the repository layout. The [language reference](guides/language-reference.md) owns the language and the commands, the [project reference](guides/project-reference.md) the project and its state; the [code map](development/code-map.md) lists every package with its owning document.
 
@@ -9,11 +9,11 @@ This page owns the package contracts and the repository layout. The [language re
 `cmd/markitect → internal/cli → internal/state, internal/signals, internal/edit, internal/library → internal/lang`.
 
 - `cmd/markitect` only calls `cli.Run` with the arguments and the output streams.
-- The command line (`internal/cli`) parses the arguments, finds the project, the nearest folder upward that holds `.markitect/version` or the one `-C` names, and prints text or JSON. It writes `.markitect/` and the spec folder for `init`, carries out the change sets of `new`, `move` and `apply` all or nothing, checking first, writing through temporary files and undoing every step when one fails, writes the state and the history for `mark` and `move` under a lock in the user's cache folder, and prints the version and the license notices from `internal/buildinfo`.
-- The project and its state (`internal/state`) load a project through the `os.DirFS` of its folder: the layout of `.markitect/`, the spec, the walk of the files without what the ignore files exclude, their hashes, the state with `status`, `mark` and `move`, the history, the reports, settings and control samples, the write table with the step and landing checks, `compare` and the figures. It reads and returns; the command line writes.
+- The command line (`internal/cli`) parses the arguments, finds the project, the nearest folder upward that holds `.markitect/version` or the one `-C` names, and prints text or JSON. It lays out `.markitect/`, the spec with the four templates, the skills of the standard and the entry in `AGENTS.md` for `init`, carries out the change sets of `new`, `move` and `apply` all or nothing, checking first, writing through temporary files and undoing every step when one fails, writes the state and the history for `confirm` and `move` under a lock in the user's cache folder, and prints the version and the license notices from `internal/buildinfo`.
+- The project and its state (`internal/state`) load a project through the `os.DirFS` of its folder: the layout of `.markitect/`, the spec, the walk of the files without what the ignore files exclude, their hashes, the state with `status`, `confirm` and `move`, the history, the documents of the work with their check, `compare` and the change signals. It reads and returns; the command line writes.
 - The signals (`internal/signals`) read a parsed spec: its statements, the eight signals and the topic view.
 - The change sets (`internal/edit`) compute what `new`, `move` and `apply` write, over supplied file systems.
-- The library (`internal/library`) is built into the binary: the packages of types, the templates, the types the tool owns, the reference values and the question catalogs.
+- The library (`internal/library`) is built into the binary: the packages of types, the templates, the skills of the standard, the reference values and the question catalogs.
 - The language (`internal/lang`) parses and checks the documents of the file system it is handed and writes nothing.
 
 None of the commands starts an agent or a process, uses the network or needs credentials. The [language reference](guides/language-reference.md#commands) gives their arguments and exit codes.
@@ -26,11 +26,11 @@ All Go packages use one root module. One rule table in [`internal/tooling/archit
 | --- | --- | --- |
 | Version and license notices | `internal/buildinfo` | No other Markitect package |
 | The spec language over a supplied file system: documents, types, sections, links and `check` ([language reference](guides/language-reference.md)) | `internal/lang` | No other Markitect package |
-| The library built into the tool: packages, templates and the types the tool owns, of reports, settings and control samples ([library](guides/library.md)) | `internal/library` | No other Markitect package |
+| The library built into the tool: packages, templates, the skills of the standard, reference values and question catalogs ([library](guides/library.md)) | `internal/library` | No other Markitect package |
 | The change sets of `new`, `move` and `apply` over supplied file systems: files to move and files to write | `internal/edit` | The language |
 | The statements, signals and topic view over a parsed spec ([signals](guides/signals.md)) | `internal/signals` | The language |
-| The project over a supplied file system: the `.markitect/` layout, the project loaded with its spec, the walk of its files, their hashes, the state with `status`, `mark` and `move`, the history, the reports, settings and control samples ([reports](guides/reports.md)), the write table with the step and landing checks ([rights](guides/rights.md)), `compare`, the change signals and the figures of the factory ([project reference](guides/project-reference.md)) | `internal/state` | The language, the library and the change sets |
-| The command line: arguments, the project it works in, `init`, `version` and `licenses`, the spec folder and the state it reads and writes, the lock of `mark`, and the output | `internal/cli` | Every layer above, and build data |
+| The project over a supplied file system: the `.markitect/` layout, the project loaded with its spec, the walk of its files, their hashes, the state with `status`, `confirm` and `move`, the history, the documents of the work with their check, `compare` and the change signals ([project reference](guides/project-reference.md)) | `internal/state` | The language |
+| The command line: arguments, the project it works in, `init` with its templates, skills and entry in `AGENTS.md`, `version` and `licenses`, the spec folder and the state it reads and writes, the lock of the state, and the output | `internal/cli` | Every layer above, and build data |
 | The entrypoint, `markitect` | `cmd/markitect` | The command line |
 | Maintenance: the import gate and the code map | `internal/tooling/architecture` | No other Markitect package; separate from product execution |
 | Test support, test files only: temporary folders | `internal/testkit` | No Markitect package |
@@ -64,7 +64,7 @@ One Go module at the root, with `cmd/` and `internal/` below it.
 |---|---|
 | `cmd/` | The Go entrypoint `markitect` |
 | `internal/` | The Go packages, including the library (`internal/library`) that the binary embeds; the [code map](development/code-map.md) lists every package |
-| `plugin/` | The Claude Code plugin `markitect`, with its skills, agents, launcher and start hooks ([plugin](guides/plugin.md)) |
+| `plugin/` | The Claude Code plugin `markitect`, which only fetches the tool: launcher and start hooks ([plugin](guides/plugin.md)) |
 | `tools/` | Independent tools that import no product code: the command smoke |
 | `scripts/` | Maintainer scripts: the documentation link check and the CI test and flake reports |
 | `docs/` | This documentation |

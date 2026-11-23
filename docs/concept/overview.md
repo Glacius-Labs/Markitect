@@ -22,7 +22,7 @@ What people should not have to take on an agent's word does not come from an age
 
 ### Briefing
 
-A person starts the day with Norman, who tells them what is critical, what happened, what waits for them and which meeting is today, from the briefing the Briefer wrote ([§9](the-work.md#the-briefing)), and what changed since their last look. Everyone gets the briefing; what needs a decision is decided in conversation.
+A person starts the day with the Assistant, who tells them what is critical, what happened, what waits for them and which meeting is today, from the briefing the Briefer wrote ([§9](the-work.md#the-briefing)), and what changed since their last look. Everyone gets the briefing; what needs a decision is decided in conversation.
 
 ### Explain
 
@@ -38,6 +38,6 @@ A reader's last look is personal. It is a copy in their profile under `~/.markit
 
 Views are generic and come from the language, so they work for every spec: the topic view, a table per type, `show` with a document's artifacts and verdict, `status`, and the comparison ([§11](the-tool.md)). Views particular to a package come with a user interface.
 
-A dashboard or a handbook is different: the way of working describes it in the spec, what it shows, for whom and in which sections, and it is built from the spec as an artifact of the project, like any other ([§8](the-circle.md)). A handbook of the way of working comes from the `factory` part, a user handbook from the `product` part, so each fact stands once.
+A dashboard or a handbook is different: the way of working describes it in the spec, what it shows, for whom and in which sections, and the project builds it from the spec as an artifact, like any other; the standard ships no program that builds it ([§8](the-circle.md)). A handbook of the way of working comes from the `factory` part, a user handbook from the `product` part, so each fact stands once.
 
 There is no user interface of Markitect for now. The spec is readable Markdown, the tool runs natively, and people ask their agent. A user interface comes once Markitect is proven ([§13](what-is-shown.md)).

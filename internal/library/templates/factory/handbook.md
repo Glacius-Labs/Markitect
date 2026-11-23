@@ -3,7 +3,7 @@
 Type: [Handbook](../../packages/factory/handbook.md)
 
 ## For
-Everyone who works on the project: [Admin](roles/admin.md), [Developer](roles/developer.md) and [QA](roles/qa.md).
+Everyone who works on the project, in whichever [role](roles/README.md); by default the [Admin](roles/admin.md).
 
 ## Covers
 1. [Principles](rules/principles/README.md)

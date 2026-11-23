@@ -104,7 +104,7 @@ func (p *parser) keep(t *Text) {
 
 // flow renders the inline content of n into t, leaving out type lines.
 func (p *parser) flow(n ast.Node, t *Text) {
-	mark := func(offset int) {
+	anchor := func(offset int) {
 		line := p.line(offset)
 		if len(t.Lines) == 0 || t.Lines[len(t.Lines)-1].Line != line {
 			t.Lines = append(t.Lines, TextLine{Offset: len(t.Text), Line: line})
@@ -116,7 +116,7 @@ func (p *parser) flow(n ast.Node, t *Text) {
 			if p.typeLines[p.line(c.Segment.Start)] {
 				continue
 			}
-			mark(c.Segment.Start)
+			anchor(c.Segment.Start)
 			t.Text += string(c.Segment.Value(p.source))
 			if c.SoftLineBreak() || c.HardLineBreak() {
 				t.Text += " "
@@ -125,7 +125,7 @@ func (p *parser) flow(n ast.Node, t *Text) {
 			t.Text += string(c.Value)
 		case *ast.RawHTML:
 		case *ast.AutoLink:
-			mark(c.Pos())
+			anchor(c.Pos())
 			t.Text += string(c.URL(p.source))
 		case *ast.Link:
 			if p.typeLines[p.line(c.Pos())] {

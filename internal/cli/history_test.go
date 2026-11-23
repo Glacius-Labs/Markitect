@@ -45,7 +45,7 @@ func withFlow() map[string]string {
 
 func TestMoveCarriesTheState(t *testing.T) {
 	clock(t)
-	dir := markedWith(t, withFlow())
+	dir := confirmedWith(t, withFlow())
 	code, out, errOut := run("move", "-C", dir, "lending/borrow.md", "loans/borrow.md")
 	if code != ExitOK || out != "moved lending/borrow.md -> loans/borrow.md\nchanged loans/borrow.md\nchanged roles/member.md\n" {
 		t.Fatal(code, out, errOut)
@@ -61,7 +61,7 @@ func TestMoveCarriesTheState(t *testing.T) {
 	for _, r := range rows {
 		sources[r.Doc] = r.Source
 	}
-	if sources["loans/borrow.md"] != "move" || sources["roles/member.md"] != "move" || sources["lending/return.md"] != "mark" || len(sources) != 4 {
+	if sources["loans/borrow.md"] != "move" || sources["roles/member.md"] != "move" || sources["lending/return.md"] != "confirm" || len(sources) != 4 {
 		t.Errorf("sources %v", sources)
 	}
 	events := history(t, dir)
@@ -84,7 +84,7 @@ func TestMoveCarriesTheState(t *testing.T) {
 }
 
 func TestMoveKeepsAChangedDocumentChanged(t *testing.T) {
-	dir := markedWith(t, withFlow())
+	dir := confirmedWith(t, withFlow())
 	write(t, dir, "docs/spec/roles/member.md", "# Member\n\nA card holder who may [borrow](../lending/borrow.md) books, five at most.\n")
 	before := statusOf(t, dir).summary()
 	same(t, "before the move", before, []string{"changed roles/member.md: self", "suspect lending/borrow.md: link:roles/member.md"})
@@ -94,7 +94,7 @@ func TestMoveKeepsAChangedDocumentChanged(t *testing.T) {
 	same(t, "after the move", statusOf(t, dir).summary(), []string{"changed roles/member.md: self", "suspect loans/borrow.md: link:roles/member.md"})
 }
 
-func TestMarkAppendsOneVerdictEvent(t *testing.T) {
+func TestConfirmAppendsOneVerdictEvent(t *testing.T) {
 	clock(t)
 	dir := project(t, lending)
 	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "-e", "src/loans.go")
@@ -136,7 +136,7 @@ func TestMarkAppendsOneVerdictEvent(t *testing.T) {
 
 func TestJoinedHistoriesReadAsOne(t *testing.T) {
 	clock(t)
-	dir := marked(t)
+	dir := confirmed(t)
 	base := read(t, dir, state.HistoryFile)
 	verdict(t, dir, "roles/member.md", "skip", "--file", "src/member.go", "-m", "no members yet")
 	ours := read(t, dir, state.HistoryFile)
@@ -162,7 +162,7 @@ func TestFailedMoveChangesNothing(t *testing.T) {
 	args := func(dir string) []string { return []string{"move", "-C", dir, "lending/borrow.md", "loans/borrow.md"} }
 	steps := 0
 	t.Cleanup(func() { fault = nil })
-	dir := markedWith(t, withFlow())
+	dir := confirmedWith(t, withFlow())
 	fault = func(int) error { steps++; return nil }
 	if code, _, errOut := run(args(dir)...); code != ExitOK {
 		t.Fatal(errOut)
@@ -172,7 +172,7 @@ func TestFailedMoveChangesNothing(t *testing.T) {
 	}
 	for k := 1; k <= steps; k++ {
 		fault = nil
-		dir := markedWith(t, withFlow())
+		dir := confirmedWith(t, withFlow())
 		before := tree(t, dir)
 		contents := map[string]string{}
 		for _, p := range before {
@@ -202,7 +202,7 @@ func TestFailedMoveChangesNothing(t *testing.T) {
 }
 
 func TestMoveRefusesErrors(t *testing.T) {
-	dir := marked(t)
+	dir := confirmed(t)
 	write(t, dir, state.StateFile, read(t, dir, state.StateFile)+"not json\n")
 	before := read(t, dir, "docs/spec/roles/member.md")
 	if code, _, errOut := run("move", "-C", dir, "roles/member.md", "people/member.md"); code != ExitFailed || !strings.Contains(errOut, "state.unreadable") {
@@ -214,16 +214,16 @@ func TestMoveRefusesErrors(t *testing.T) {
 }
 
 func TestLookAtNamesChangedAssets(t *testing.T) {
-	dir := markedWith(t, withFlow())
+	dir := confirmedWith(t, withFlow())
 	write(t, dir, "docs/spec/lending/flow.png", "\x89PNG new flow")
 	e, _ := statusOf(t, dir).entry("lending/borrow.md")
 	same(t, "where to look", e.LookAt, []string{"docs/spec/lending/borrow.md", "src/loans.go", "tests/counter-checks/loans_test.go", "tests/counter-checks/loans_test.go:3", "docs/spec/lending/flow.png"})
 }
 
-// mark writes the state and the history together: when the history cannot
+// confirm writes the state and the history together: when the history cannot
 // be written, neither is.
-func TestMarkWritesStateAndHistoryTogether(t *testing.T) {
-	dir := marked(t)
+func TestConfirmWritesStateAndHistoryTogether(t *testing.T) {
+	dir := confirmed(t)
 	fp := fingerprint(t, dir, "roles/member.md")
 	file := filepath.Join(dir, filepath.FromSlash(state.HistoryFile))
 	if err := os.Chmod(file, 0o444); err != nil {
@@ -235,18 +235,18 @@ func TestMarkWritesStateAndHistoryTogether(t *testing.T) {
 		t.Skip("the file system lets this user write a read-only file")
 	}
 	stateBefore, historyBefore := read(t, dir, state.StateFile), read(t, dir, state.HistoryFile)
-	code, out, errOut := run("mark", "-C", dir, "roles/member.md@"+fp, "skip", "--file", "src/member.go", "-m", "no members yet")
+	code, out, errOut := run("confirm", "-C", dir, "roles/member.md@"+fp, "skip", "--file", "src/member.go", "-m", "no members yet")
 	if code != ExitFailed || out != "" || !strings.Contains(errOut, "history.jsonl: cannot be written") {
 		t.Error(code, out, errOut)
 	}
 	if read(t, dir, state.StateFile) != stateBefore || read(t, dir, state.HistoryFile) != historyBefore {
-		t.Error("a failed mark wrote the state or the history")
+		t.Error("a failed confirm wrote the state or the history")
 	}
 }
 
 // status names a line of the history it cannot read as a note.
 func TestStatusNotesUnreadableHistory(t *testing.T) {
-	dir := marked(t)
+	dir := confirmed(t)
 	write(t, dir, state.HistoryFile, read(t, dir, state.HistoryFile)+"not json\n")
 	code, out, _ := run("status", "-C", dir)
 	if code != ExitOK || !strings.HasPrefix(out, "note: .markitect/history.jsonl:5: history.unreadable: ") ||

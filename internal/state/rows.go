@@ -145,8 +145,8 @@ func (r Row) problem() string {
 		return fmt.Sprintf("doc %q is not a path below the spec folder", r.Doc)
 	case r.Verdict != VerdictOK && r.Verdict != VerdictFail && r.Verdict != VerdictSkip:
 		return fmt.Sprintf("verdict %q is none of ok, fail and skip", r.Verdict)
-	case r.Source != "mark" && r.Source != "move":
-		return fmt.Sprintf("source %q is neither mark nor move", r.Source)
+	case r.Source != "confirm" && r.Source != "move":
+		return fmt.Sprintf("source %q is neither confirm nor move", r.Source)
 	case r.Inputs[InputSelf] == "":
 		return "no self input"
 	}

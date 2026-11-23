@@ -104,13 +104,7 @@ func TestNewAndMove(t *testing.T) {
 	if code, out, errOut := run("new", "-C", dir, "types/member", "members/ada"); code != ExitFailed || out != "" || !strings.Contains(errOut, "already exists") {
 		t.Error(code, out, errOut)
 	}
-	// Its empty sections are errors, which stop a move.
-	if code, _, errOut := run("move", "-C", dir, "places/central", "places/main hall"); code != ExitFailed || !strings.Contains(errOut, "nothing is moved while the spec or the state has errors") {
-		t.Error(code, errOut)
-	}
-	if err := os.Remove(filepath.Join(specOf(dir), "members", "alan.md")); err != nil {
-		t.Fatal(err)
-	}
+	// Its empty sections are errors of check, which stop no move.
 	before = files(t, dir)
 	code, out, _ = run("move", "-C", dir, "places/central", "places/main hall")
 	if code != ExitOK || out != "moved places/central.md -> places/main hall.md\nchanged members/ada.md\nchanged members/grace.md\n" {
@@ -168,16 +162,6 @@ func TestEveryTemplateApplies(t *testing.T) {
 	if len(tpls) < 10 {
 		t.Fatalf("templates %v", tpls)
 	}
-	// The types the tool owns lie at the library's root; a package type of the same
-	// file name is another type, so the content tells them apart.
-	own := map[string]string{}
-	for _, name := range []string{library.ReportType, library.SettingsType, library.SampleType} {
-		data, err := fs.ReadFile(library.FS(), name)
-		if err != nil {
-			t.Fatal(err)
-		}
-		own[name] = string(data)
-	}
 	refused := 0
 	for _, tpl := range tpls {
 		for _, target := range []string{"", "parts/" + path.Base(tpl)} {
@@ -202,11 +186,6 @@ func TestEveryTemplateApplies(t *testing.T) {
 			for _, d := range lang.Check(s) {
 				if d.Code != lang.CodeSectionEmpty {
 					t.Errorf("%s at %q: %s", tpl, target, d)
-				}
-			}
-			for p, text := range files(t, dir) {
-				if want, ok := own[path.Base(p)]; ok && text == want {
-					t.Errorf("%s copied the type %s the tool owns", tpl, p)
 				}
 			}
 		}
@@ -290,16 +269,6 @@ func TestLibrary(t *testing.T) {
 		if d.Code != lang.CodeSectionEmpty || !strings.HasPrefix(d.Path, "templates/") {
 			t.Error(d)
 		}
-	}
-	report, _ := s.Document(library.ReportType)
-	var names []string
-	for _, d := range report.Declared() {
-		if !d.Optional {
-			names = append(names, d.Name)
-		}
-	}
-	if got := strings.Join(names, ", "); got != "Source, Place, Finding, Occurred or risk, Violated property" {
-		t.Errorf("required report sections: %s", got)
 	}
 	quality, _ := s.Document("packages/software/quality.md")
 	if n := len(quality.Declared()); n != 10 {

@@ -18,4 +18,5 @@ Customer data and secrets; causes and recommendations, which are the Triager's a
 daily
 
 ## Model
-Sonnet, effort high
+Claude: Sonnet, effort high
+Codex: Luna, effort high

@@ -37,13 +37,11 @@ type Event struct {
 	Self    string    `json:"self,omitempty"`
 	Inputs  string    `json:"inputs,omitempty"`
 	Changed []Pending `json:"changed,omitempty"`
-	// A move: the paths before and after, the documents whose links it
-	// rewrote, by their paths after the move, and the reports whose place
-	// it rewrote, by their paths below the project folder.
+	// A move: the paths before and after, and the documents whose links it
+	// rewrote, by their paths after the move.
 	From      string   `json:"from,omitempty"`
 	To        string   `json:"to,omitempty"`
 	Rewritten []string `json:"rewritten,omitempty"`
-	Reports   []string `json:"reports,omitempty"`
 }
 
 // Pending is a document listed as changed beside a verdict, with the hash of
@@ -71,7 +69,6 @@ type moveLine struct {
 	From      string   `json:"from"`
 	To        string   `json:"to"`
 	Rewritten []string `json:"rewritten"`
-	Reports   []string `json:"reports,omitempty"`
 }
 
 // Line is the event as one line of the history, with its line end.
@@ -90,7 +87,7 @@ func (e Event) Line() []byte {
 		if rewritten == nil {
 			rewritten = []string{}
 		}
-		v = moveLine{t, e.Type, e.From, e.To, rewritten, e.Reports}
+		v = moveLine{t, e.Type, e.From, e.To, rewritten}
 	default:
 		panic("unknown event " + e.Type)
 	}
@@ -208,6 +205,23 @@ func (s *Status) VerdictEvent(at time.Time, doc, verdict, inputs string) Event {
 		e.Changed = append(e.Changed, p)
 	}
 	return e
+}
+
+// NewEvents are the events of the newer history that the older one does not
+// hold, in the newer one's order: what happened between two states of a
+// project, which a comparison replays.
+func NewEvents(older, newer []Event) []Event {
+	had := map[string]bool{}
+	for _, e := range older {
+		had[string(e.Line())] = true
+	}
+	var out []Event
+	for _, e := range newer {
+		if !had[string(e.Line())] {
+			out = append(out, e)
+		}
+	}
+	return out
 }
 
 // Text is a document's text before and after a move rewrote it.

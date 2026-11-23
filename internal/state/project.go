@@ -2,12 +2,10 @@
 // at the project folder: the layout of .markitect/, the project loaded with
 // its spec, the files of the project without what its ignore files exclude,
 // the hash of a file, the state: its rows, what status lists and the rows a
-// mark or a move leaves, the history, the reports, the settings and the
-// results of control samples with the forms of their values, the write
-// table with the step check and the landing check, the comparison of two
-// projects, the change signals of the history and the figures of the
-// factory. It reads only the file system it is handed, so that two projects,
-// such as two states to compare, load the same way.
+// confirm or a move leaves, the history, the documents of the work with what
+// check finds in them, the comparison of two projects and the change signals
+// of the history. It reads only the file system it is handed, so that two
+// projects, such as two states to compare, load the same way.
 //
 // The rules are in docs/guides/project-reference.md.
 package state
@@ -52,15 +50,20 @@ type File struct {
 }
 
 // InitFiles are the files init writes into .markitect/ for a project that
-// pins version and keeps its spec in spec, a path SpecPath accepts.
+// pins version and keeps its spec in spec, a path SpecPath accepts: the
+// version, the spec folder, the attributes and the ignore file, and an empty
+// .gitkeep in each folder of the work, so that each survives a Git commit.
 func InitFiles(version, spec string) []File {
-	return []File{
+	files := []File{
 		{VersionFile, []byte(version + "\n")},
 		{SpecFile, []byte(spec + "\n")},
 		{AttributesFile, []byte(attributes)},
 		{IgnoreFile, nil},
-		{SettingsFile, []byte(DefaultSettings)},
 	}
+	for _, dir := range WorkFolders {
+		files = append(files, File{dir + "/.gitkeep", nil})
+	}
+	return files
 }
 
 // SpecPath turns a spec folder, as given on the command line or written in

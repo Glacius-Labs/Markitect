@@ -9,12 +9,12 @@ import (
 )
 
 // Snapshot is a project as compare reads it: the project with its spec, the
-// state as status takes it, and the history.
+// state as status takes it, the history and the documents of the work.
 type Snapshot struct {
 	Project *Project
 	Status  *Status
 	History []Event
-	Reports []*Report
+	Work    []*lang.Document
 }
 
 // Comparison is what differs between two projects, each list sorted by
@@ -40,27 +40,21 @@ type Comparison struct {
 	// Unexplained are the files unexplained in the newer project that were
 	// not in the older one.
 	Unexplained []string
-	// Reports are the reports that are new, closed, changed or gone, by
-	// name.
-	Reports []ReportChange
+	// Work are the documents of the work that are new, gone or changed, by
+	// their paths below the project folder.
+	Work []WorkChange
 }
 
-// The kinds of a report's change.
+// The kinds of a change of a document of the work.
 const (
-	ReportNew     = "new"
-	ReportClosed  = "closed"
-	ReportChanged = "changed"
-	ReportGone    = "gone"
+	WorkNew     = "new"
+	WorkGone    = "gone"
+	WorkChanged = "changed"
 )
 
-// ReportChange is a report that differs between two projects: new, closed,
-// which was open in the older project, changed otherwise, or gone. Diff is
-// the diff of its text for a closed or changed report.
-type ReportChange struct {
-	Name, Kind, Diff string
-	// Closing is the first line of its closing, for a closed report.
-	Closing string
-}
+// WorkChange is a document of the work that differs between two projects:
+// new, gone or changed.
+type WorkChange struct{ Path, Kind string }
 
 // MovedDoc is a document the history moved, and the diff of its text.
 // Mechanical says that its text differs only by the links the moves
@@ -90,7 +84,7 @@ type VerdictChange struct {
 
 // Differs says whether the comparison found anything.
 func (c *Comparison) Differs() bool {
-	return len(c.New)+len(c.Gone)+len(c.Moved)+len(c.Rewritten)+len(c.Changed)+len(c.Suspect)+len(c.Verdicts)+len(c.Unexplained)+len(c.Reports) > 0
+	return len(c.New)+len(c.Gone)+len(c.Moved)+len(c.Rewritten)+len(c.Changed)+len(c.Suspect)+len(c.Verdicts)+len(c.Unexplained)+len(c.Work) > 0
 }
 
 // Compare compares an older project with a newer one. replayed holds, by
@@ -102,31 +96,47 @@ func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 	c := &Comparison{}
 	oldSpec, newSpec := older.Project.Spec, newer.Project.Spec
 	// Where each document of the older project went: its own path, or where
-	// the newer history's moves led it.
-	moves := map[string]string{}
-	for _, e := range newer.History {
-		if e.Type == EventMove {
-			moves[e.From] = e.To
-		}
-	}
-	movedTo := map[string]string{}
+	// the newer history's moves led it. Only the moves the older history lacks
+	// count: a document moved away in the older history and back in the newer
+	// is where it was. The moves are replayed once, in their order, over the
+	// documents by the path each holds: a move takes the document at its From
+	// path to its To path, and a document that held the To path, which a
+	// deletion freed, is lost. So a name vacated and taken by another document
+	// leads each to its own place, and a document whose name was taken is gone.
+	occupant := map[string]string{} // the path now -> the path in the older project
 	for _, d := range oldSpec.Documents {
-		if _, still := newSpec.Document(d.Path); still {
+		occupant[d.Path] = d.Path
+	}
+	for _, e := range NewEvents(older.History, newer.History) {
+		if e.Type != EventMove {
 			continue
 		}
-		at, seen := d.Path, map[string]bool{}
-		for !seen[at] {
-			seen[at] = true
-			next, ok := moves[at]
-			if !ok {
-				break
-			}
-			at = next
+		if was, ok := occupant[e.From]; ok {
+			delete(occupant, e.From)
+			occupant[e.To] = was
+		} else {
+			// A document of the newer project moved: it displaces any
+			// document of the older one whose name it takes.
+			delete(occupant, e.To)
 		}
-		if _, there := newSpec.Document(at); there && at != d.Path {
-			if _, before := oldSpec.Document(at); !before {
-				movedTo[d.Path] = at
-			}
+	}
+	at := map[string]string{} // the path in the older project -> the path now
+	for now, was := range occupant {
+		at[was] = now
+	}
+	// departed are the documents of the older project that no longer hold
+	// their path: moved, or gone with their name taken or their move undone by
+	// a deletion.
+	movedTo, departed := map[string]string{}, map[string]bool{}
+	for _, d := range oldSpec.Documents {
+		now, kept := at[d.Path]
+		_, there := newSpec.Document(now)
+		switch {
+		case kept && now == d.Path:
+		case kept && there:
+			movedTo[d.Path], departed[d.Path] = now, true
+		default:
+			departed[d.Path] = true
 		}
 	}
 	movedFrom := map[string]string{}
@@ -142,14 +152,20 @@ func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 		to, moved := movedTo[d.Path]
 		n, same := newSpec.Document(d.Path)
 		switch {
+		case departed[d.Path] && !moved:
+			c.Gone = append(c.Gone, d.Path)
+			touched[d.Path] = true
 		case moved:
 			nd, _ := newSpec.Document(to)
 			if mechanical(nd) {
 				c.Moved = append(c.Moved, MovedDoc{From: d.Path, To: to, Mechanical: true})
 				continue
 			}
-			c.Moved = append(c.Moved, MovedDoc{From: d.Path, To: to, Diff: textDiff(older, newer, d, nd)})
-			touched[d.Path], touched[to] = true, true
+			diff := textDiff(older, newer, d, nd)
+			c.Moved = append(c.Moved, MovedDoc{From: d.Path, To: to, Diff: diff, Mechanical: diff == ""})
+			if diff != "" {
+				touched[d.Path], touched[to] = true, true
+			}
 		case !same:
 			c.Gone = append(c.Gone, d.Path)
 			touched[d.Path] = true
@@ -162,7 +178,8 @@ func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 		}
 	}
 	for _, d := range newSpec.Documents {
-		if _, before := oldSpec.Document(d.Path); !before && movedFrom[d.Path] == "" {
+		_, before := oldSpec.Document(d.Path)
+		if (!before || departed[d.Path]) && movedFrom[d.Path] == "" {
 			c.New = append(c.New, d.Path)
 			touched[d.Path] = true
 		}
@@ -263,7 +280,7 @@ func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 			c.Unexplained = append(c.Unexplained, u)
 		}
 	}
-	c.Reports = compareReports(older.Reports, newer.Reports)
+	c.Work = compareWork(older.Work, newer.Work)
 	sort.Strings(c.New)
 	sort.Strings(c.Gone)
 	sort.Strings(c.Rewritten)
@@ -274,39 +291,30 @@ func Compare(older, newer *Snapshot, replayed map[string][]byte) *Comparison {
 	return c
 }
 
-// compareReports names the reports that are new, closed, changed or gone,
-// by name.
-func compareReports(older, newer []*Report) []ReportChange {
-	was := map[string]*Report{}
-	for _, r := range older {
-		was[r.Name] = r
+// compareWork names the documents of the work that are new, gone or changed,
+// by path.
+func compareWork(older, newer []*lang.Document) []WorkChange {
+	was := map[string]*lang.Document{}
+	for _, d := range older {
+		was[d.Path] = d
 	}
 	is := map[string]bool{}
-	var out []ReportChange
-	for _, r := range newer {
-		is[r.Name] = true
-		o, ok := was[r.Name]
-		switch {
+	var out []WorkChange
+	for _, d := range newer {
+		is[d.Path] = true
+		switch o, ok := was[d.Path]; {
 		case !ok:
-			out = append(out, ReportChange{Name: r.Name, Kind: ReportNew})
-		case Hash(o.Doc.Source) == Hash(r.Doc.Source):
-		default:
-			ch := ReportChange{Name: r.Name, Kind: ReportChanged, Diff: Diff(o.Path, r.Path, o.Doc.Source, r.Doc.Source)}
-			if o.Open() && r.Closed {
-				ch.Kind = ReportClosed
-				if vs, _ := values(r.Doc, "Closing"); len(vs) > 0 {
-					ch.Closing = vs[0].Text
-				}
-			}
-			out = append(out, ch)
+			out = append(out, WorkChange{d.Path, WorkNew})
+		case Hash(o.Source) != Hash(d.Source):
+			out = append(out, WorkChange{d.Path, WorkChanged})
 		}
 	}
-	for _, r := range older {
-		if !is[r.Name] {
-			out = append(out, ReportChange{Name: r.Name, Kind: ReportGone})
+	for _, d := range older {
+		if !is[d.Path] {
+			out = append(out, WorkChange{d.Path, WorkGone})
 		}
 	}
-	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	sort.Slice(out, func(i, j int) bool { return out[i].Path < out[j].Path })
 	return out
 }
 

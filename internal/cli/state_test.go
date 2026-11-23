@@ -11,7 +11,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	// The locks of mark go to a temporary cache folder.
+	// The locks of confirm go to a temporary cache folder.
 	cache, err := os.MkdirTemp("", "markitect-cache-*")
 	if err != nil {
 		panic(err)
@@ -69,7 +69,7 @@ func read(t *testing.T, dir, p string) string {
 
 // listed is the JSON document of status.
 type listed struct {
-	Errors      []diagnostic  `json:"errors"`
+	State       []diagnostic  `json:"state"`
 	Changed     []statusEntry `json:"changed"`
 	Suspect     []statusEntry `json:"suspect"`
 	Unexplained []string      `json:"unexplained"`
@@ -156,22 +156,22 @@ func withoutFingerprint(out string) string {
 // it to succeed.
 func verdict(t *testing.T, dir, doc, v string, flags ...string) {
 	t.Helper()
-	args := append([]string{"mark", "-C", dir, doc + "@" + fingerprint(t, dir, doc), v}, flags...)
+	args := append([]string{"confirm", "-C", dir, doc + "@" + fingerprint(t, dir, doc), v}, flags...)
 	if code, out, errOut := run(args...); code != ExitOK {
 		t.Fatalf("%v: %d %s %s", args, code, out, errOut)
 	}
 }
 
-// marked is the lending project with every document confirmed, so that
+// confirmed is the lending project with every document confirmed, so that
 // status lists nothing.
-func marked(t *testing.T) string {
+func confirmed(t *testing.T) string {
 	t.Helper()
-	return markedWith(t, lending)
+	return confirmedWith(t, lending)
 }
 
-// markedWith is a project of files, the lending project's documents and
+// confirmedWith is a project of files, the lending project's documents and
 // code, with every document confirmed.
-func markedWith(t *testing.T, files map[string]string) string {
+func confirmedWith(t *testing.T, files map[string]string) string {
 	t.Helper()
 	dir := project(t, files)
 	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--check", "tests/counter-checks/loans_test.go", "-e", "tests/counter-checks/loans_test.go:3 (TestBorrow)")
@@ -179,13 +179,13 @@ func markedWith(t *testing.T, files map[string]string) string {
 	verdict(t, dir, "roles/member.md", "ok", "--file", "src/member.go", "-e", "src/member.go")
 	verdict(t, dir, "types/operation.md", "ok", "-e", "docs/spec/types/operation.md")
 	if l := statusOf(t, dir); l.code != ExitOK || len(l.summary()) != 0 {
-		t.Fatalf("not empty after marking everything: %d %v", l.code, l.summary())
+		t.Fatalf("not empty after confirming everything: %d %v", l.code, l.summary())
 	}
 	return dir
 }
 
-// Scenario 1: a new document is changed; after its mark the list is empty.
-func TestNewDocumentsAreChangedUntilMarked(t *testing.T) {
+// Scenario 1: a new document is changed; after its confirm the list is empty.
+func TestNewDocumentsAreChangedUntilConfirmed(t *testing.T) {
 	dir := project(t, lending)
 	l := statusOf(t, dir)
 	same(t, "the new project", l.summary(), []string{
@@ -204,7 +204,7 @@ func TestNewDocumentsAreChangedUntilMarked(t *testing.T) {
 		!strings.HasSuffix(out, "unexplained: tests/counter-checks/loans_test.go\n4 changed, 0 suspect, 4 unexplained\n") {
 		t.Error(code, out)
 	}
-	dir = marked(t)
+	dir = confirmed(t)
 	code, out, _ = run("status", "-C", dir)
 	if code != ExitOK || out != "0 changed, 0 suspect, 0 unexplained\n" {
 		t.Error(code, out)
@@ -226,7 +226,7 @@ func TestNewDocumentsAreChangedUntilMarked(t *testing.T) {
 	sort.Strings(keys)
 	same(t, "the inputs of borrow", keys, []string{"check:tests/counter-checks/loans_test.go", "evidence:tests/counter-checks/loans_test.go", "file:src/loans.go",
 		"link:roles/member.md", "self", "type:types/operation.md"})
-	if !strings.HasPrefix(lines[0], `{"doc":"lending/borrow.md","verdict":"ok","source":"mark","inputs":{`) ||
+	if !strings.HasPrefix(lines[0], `{"doc":"lending/borrow.md","verdict":"ok","source":"confirm","inputs":{`) ||
 		!strings.HasSuffix(lines[0], `,"evidence":["tests/counter-checks/loans_test.go:3"],"reason":""}`) {
 		t.Error(lines[0])
 	}
@@ -235,7 +235,7 @@ func TestNewDocumentsAreChangedUntilMarked(t *testing.T) {
 // Scenario 2: a changed text makes its document changed and the documents
 // linked in either direction suspect.
 func TestChangedTextMakesLinkedDocumentsSuspect(t *testing.T) {
-	dir := marked(t)
+	dir := confirmed(t)
 	write(t, dir, "docs/spec/lending/borrow.md", read(t, dir, "docs/spec/lending/borrow.md")+"\nA book on hold is not lent.\n")
 	same(t, "after borrow changed", statusOf(t, dir).summary(), []string{
 		"changed lending/borrow.md: self", "suspect roles/member.md: link:lending/borrow.md"})
@@ -247,7 +247,7 @@ func TestChangedTextMakesLinkedDocumentsSuspect(t *testing.T) {
 
 // Scenario 3: a changed type makes its documents suspect.
 func TestChangedTypeMakesItsDocumentsSuspect(t *testing.T) {
-	dir := marked(t)
+	dir := confirmed(t)
 	write(t, dir, "docs/spec/types/operation.md", "# Operation\n\nSomething a member does at the desk.\n\n## Rule\nWhat holds.\n")
 	same(t, "after the type changed", statusOf(t, dir).summary(), []string{
 		"changed types/operation.md: self, evidence:docs/spec/types/operation.md",
@@ -257,7 +257,7 @@ func TestChangedTypeMakesItsDocumentsSuspect(t *testing.T) {
 // Scenario 4: an edited or deleted artifact, or edited evidence, makes the
 // document changed.
 func TestChangedArtifactsAndEvidence(t *testing.T) {
-	dir := marked(t)
+	dir := confirmed(t)
 	write(t, dir, "src/loans.go", "package lending\n\nfunc Borrow() { panic(1) }\n")
 	if err := os.Remove(filepath.Join(dir, "src", "returns.go")); err != nil {
 		t.Fatal(err)
@@ -265,7 +265,7 @@ func TestChangedArtifactsAndEvidence(t *testing.T) {
 	write(t, dir, "docs/spec/types/operation.md", read(t, dir, "docs/spec/types/operation.md"))
 	same(t, "after the code changed", statusOf(t, dir).summary(), []string{
 		"changed lending/borrow.md: file:src/loans.go", "changed lending/return.md: file:src/returns.go (gone), evidence:src/returns.go (gone)"})
-	dir = marked(t)
+	dir = confirmed(t)
 	write(t, dir, "tests/counter-checks/loans_test.go", "package lending\n\nfunc TestBorrow() { t.Skip() }\n")
 	l := statusOf(t, dir)
 	same(t, "after the test changed", l.summary(), []string{"changed lending/borrow.md: check:tests/counter-checks/loans_test.go, evidence:tests/counter-checks/loans_test.go"})
@@ -273,10 +273,10 @@ func TestChangedArtifactsAndEvidence(t *testing.T) {
 	same(t, "where to look", e.LookAt, []string{"docs/spec/lending/borrow.md", "src/loans.go", "tests/counter-checks/loans_test.go", "tests/counter-checks/loans_test.go:3"})
 }
 
-// Scenario 5: a new file is unexplained until a mark maps it; ignored files
+// Scenario 5: a new file is unexplained until a confirm maps it; ignored files
 // are not listed.
 func TestNewFilesAreUnexplainedUntilMapped(t *testing.T) {
-	dir := marked(t)
+	dir := confirmed(t)
 	write(t, dir, "src/fines.go", "package lending\n")
 	write(t, dir, "bin/lending.exe", "binary")
 	write(t, dir, "notes.txt", "to do")
@@ -287,13 +287,13 @@ func TestNewFilesAreUnexplainedUntilMapped(t *testing.T) {
 	}
 	// The named artifacts replace the earlier list.
 	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "-e", "src/loans.go")
-	same(t, "after a mark with fewer artifacts", statusOf(t, dir).summary(), []string{"unexplained src/fines.go", "unexplained tests/counter-checks/loans_test.go"})
+	same(t, "after a confirm with fewer artifacts", statusOf(t, dir).summary(), []string{"unexplained src/fines.go", "unexplained tests/counter-checks/loans_test.go"})
 }
 
 // Scenario 6: a deleted document with a row is gone, its files unexplained,
 // and ok removes its row.
 func TestGoneDocument(t *testing.T) {
-	dir := marked(t)
+	dir := confirmed(t)
 	if err := os.Remove(filepath.Join(dir, "docs", "spec", "lending", "return.md")); err != nil {
 		t.Fatal(err)
 	}
@@ -303,7 +303,7 @@ func TestGoneDocument(t *testing.T) {
 	same(t, "where to look", e.LookAt, []string{"src/returns.go", "src/returns.go:3"})
 	fp := e.Fingerprint
 	for _, args := range [][]string{{"fail", "-m", "still here"}, {"ok", "--file", "src/returns.go"}} {
-		if code, _, errOut := run(append([]string{"mark", "-C", dir, "lending/return.md@" + fp}, args...)...); code != ExitFound || !strings.Contains(errOut, "is gone from the spec") {
+		if code, _, errOut := run(append([]string{"confirm", "-C", dir, "lending/return.md@" + fp}, args...)...); code != ExitFound || !strings.Contains(errOut, "is gone from the spec") {
 			t.Errorf("%v: %d %s", args, code, errOut)
 		}
 	}
@@ -316,7 +316,7 @@ func TestGoneDocument(t *testing.T) {
 
 // Scenario 7: fail stays listed until a later ok.
 func TestFailStaysListed(t *testing.T) {
-	dir := marked(t)
+	dir := confirmed(t)
 	verdict(t, dir, "lending/borrow.md", "fail", "--file", "src/loans.go", "-m", "lends a sixth\nbook")
 	l := statusOf(t, dir)
 	same(t, "after fail", l.summary(), []string{"changed lending/borrow.md: fail: lends a sixth book", "unexplained tests/counter-checks/loans_test.go"})
@@ -330,20 +330,20 @@ func TestFailStaysListed(t *testing.T) {
 	}
 }
 
-// Scenario 8: a file that changes between status and mark refuses the mark.
-func TestMarkRefusesAChangeSinceStatus(t *testing.T) {
-	dir := marked(t)
+// Scenario 8: a file that changes between status and confirm refuses the confirm.
+func TestConfirmRefusesAChangeSinceStatus(t *testing.T) {
+	dir := confirmed(t)
 	write(t, dir, "docs/spec/lending/borrow.md", read(t, dir, "docs/spec/lending/borrow.md")+"\nOne more rule.\n")
 	write(t, dir, "src/holds.go", "package lending\n")
 	e, _ := statusOf(t, dir).entry("lending/borrow.md")
 	write(t, dir, "src/holds.go", "package lending\n\nfunc Hold() {}\n")
 	before := read(t, dir, ".markitect/state.jsonl")
-	code, out, errOut := run("mark", "-C", dir, "lending/borrow.md@"+e.Fingerprint, "ok", "--file", "src/loans.go", "--file", "src/holds.go", "-e", "src/loans.go")
+	code, out, errOut := run("confirm", "-C", dir, "lending/borrow.md@"+e.Fingerprint, "ok", "--file", "src/loans.go", "--file", "src/holds.go", "-e", "src/loans.go")
 	if code != ExitFound || out != "" || !strings.Contains(errOut, "is not the state now") {
 		t.Error(code, out, errOut)
 	}
 	if read(t, dir, ".markitect/state.jsonl") != before {
-		t.Error("a refused mark wrote the state")
+		t.Error("a refused confirm wrote the state")
 	}
 }
 
@@ -351,7 +351,7 @@ func TestMarkRefusesAChangeSinceStatus(t *testing.T) {
 // that matches the folder wins, and two that match with different verdicts
 // are a conflict.
 func TestMergedStates(t *testing.T) {
-	dir := marked(t)
+	dir := confirmed(t)
 	base := read(t, dir, ".markitect/state.jsonl")
 	write(t, dir, "docs/spec/lending/return.md", "# Return\n\nType: [Operation](../types/operation.md)\n\n## Rule\nA book comes back within four weeks.\n")
 	verdict(t, dir, "lending/return.md", "ok", "--file", "src/returns.go", "-e", "src/returns.go")
@@ -366,7 +366,7 @@ func TestMergedStates(t *testing.T) {
 	if _, out, _ := run("table", "-C", dir); !strings.Contains(out, "| lending/return.md | fail (rows conflict) | src/returns.go |\n") {
 		t.Error(out)
 	}
-	// Another mark keeps the rows of the conflict; one of its own settles it.
+	// Another confirm keeps the rows of the conflict; one of its own settles it.
 	verdict(t, dir, "roles/member.md", "ok", "--file", "src/member.go", "-e", "src/member.go")
 	if n := strings.Count(read(t, dir, ".markitect/state.jsonl"), `"doc":"lending/return.md"`); n != 2 {
 		t.Errorf("%d rows of the conflict", n)
@@ -380,33 +380,37 @@ func TestMergedStates(t *testing.T) {
 	}
 }
 
-// Scenario 10: while the spec has errors, status gives no list and exits 1,
-// and mark refuses; so do both with a line of the state they cannot read.
-func TestErrorsGiveNoList(t *testing.T) {
-	dir := marked(t)
-	fp := fingerprint(t, dir, "roles/member.md")
+// Scenario 10: what check finds in the spec stops neither status nor confirm. A
+// line of the state that cannot be read is left out and noted, and confirm,
+// which would write the state again without it, refuses.
+func TestErrorsStopNeitherStatusNorConfirm(t *testing.T) {
+	dir := confirmed(t)
 	write(t, dir, "docs/spec/lending/borrow.md", "# Borrow\n\nSee [the fines](fines.md).\n")
-	code, out, _ := run("status", "-C", dir)
-	if code != ExitFound || out != "lending/borrow.md:3: link.unresolved: no document at \"fines.md\"\nno list while check finds errors or the state has errors\n" {
-		t.Error(code, out)
+	if code, out, _ := run("check", "-C", dir); code != ExitFound || !strings.Contains(out, "link.unresolved") {
+		t.Fatal(code, out)
 	}
-	if code, _, errOut := run("mark", "-C", dir, "roles/member.md@"+fp, "ok", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "link.unresolved") {
-		t.Error(code, errOut)
-	}
-	dir = marked(t)
-	fp = fingerprint(t, dir, "roles/member.md")
-	write(t, dir, ".markitect/state.jsonl", read(t, dir, ".markitect/state.jsonl")+"{\"doc\":\"x.md\"}\nnot json\n")
 	l := statusOf(t, dir)
-	if l.code != ExitFound || len(l.Errors) != 2 || l.Errors[0].String() != `.markitect/state.jsonl:5: state.unreadable: verdict "" is none of ok, fail and skip` ||
-		!strings.HasPrefix(l.Errors[1].String(), ".markitect/state.jsonl:6: state.unreadable: ") || len(l.Changed) != 0 {
-		t.Errorf("%d %v", l.code, l.Errors)
+	if e, kind := l.entry("lending/borrow.md"); kind != "changed" || e.Fingerprint == "" || l.code != ExitFound || len(l.State) != 0 {
+		t.Errorf("%d %v", l.code, l.summary())
+	}
+	if code, out, errOut := run("confirm", "-C", dir, "lending/borrow.md@"+fingerprint(t, dir, "lending/borrow.md"), "ok", "-e", "src/loans.go"); code != ExitOK {
+		t.Errorf("confirm: %d %s %s", code, out, errOut)
+	}
+
+	dir = confirmed(t)
+	fp := fingerprint(t, dir, "roles/member.md")
+	write(t, dir, ".markitect/state.jsonl", read(t, dir, ".markitect/state.jsonl")+"{\"doc\":\"x.md\"}\nnot json\n")
+	l = statusOf(t, dir)
+	if l.code != ExitOK || len(l.State) != 2 || l.State[0].String() != `.markitect/state.jsonl:5: state.unreadable: verdict "" is none of ok, fail and skip` ||
+		!strings.HasPrefix(l.State[1].String(), ".markitect/state.jsonl:6: state.unreadable: ") || len(l.Changed) != 0 {
+		t.Errorf("%d %v", l.code, l.State)
 	}
 	before := read(t, dir, ".markitect/state.jsonl")
-	if code, _, errOut := run("mark", "-C", dir, "roles/member.md@"+fp, "ok", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "state.unreadable") {
+	if code, _, errOut := run("confirm", "-C", dir, "roles/member.md@"+fp, "ok", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "state.unreadable") || !strings.Contains(errOut, "would lose them") {
 		t.Error(code, errOut)
 	}
 	if read(t, dir, ".markitect/state.jsonl") != before {
-		t.Error("a refused mark wrote the state")
+		t.Error("a refused confirm wrote the state")
 	}
 }
 
@@ -427,7 +431,7 @@ func TestLineEndingsDoNotChangeFingerprints(t *testing.T) {
 		}
 	}
 	// A state written on one system holds on the other.
-	dir := marked(t)
+	dir := confirmed(t)
 	for p, text := range crlf {
 		if !strings.HasPrefix(p, ".markitect/") {
 			write(t, dir, p, text)
@@ -439,8 +443,8 @@ func TestLineEndingsDoNotChangeFingerprints(t *testing.T) {
 	}
 }
 
-func TestMarkForms(t *testing.T) {
-	dir := marked(t)
+func TestConfirmForms(t *testing.T) {
+	dir := confirmed(t)
 	fp := fingerprint(t, dir, "lending/borrow.md")
 	at := "lending/borrow.md@" + fp
 	for _, tc := range []struct {
@@ -453,7 +457,7 @@ func TestMarkForms(t *testing.T) {
 		{[]string{at, "ok"}, ExitFailed, "ok needs evidence"},
 		{[]string{at, "fail"}, ExitFailed, "fail needs a reason"},
 		{[]string{at, "skip", "-m", " "}, ExitFailed, "skip needs a reason"},
-		{[]string{"nobody.md@" + fp, "ok", "-e", "src/loans.go"}, ExitFound, "unknown document: nobody.md"},
+		{[]string{"nobody.md@" + fp, "ok", "-e", "src/loans.go"}, ExitFailed, "unknown document: nobody.md"},
 		{[]string{at, "ok", "-e", "src/nothing.go"}, ExitFound, "evidence src/nothing.go is no file of the project"},
 		{[]string{at, "ok", "-e", "../outside.go"}, ExitFound, "is not path, path:line"},
 		{[]string{at, "ok", "-e", "src/loans.go", "--file", "docs/spec/roles/member.md"}, ExitFound, "lies in the spec folder"},
@@ -462,12 +466,12 @@ func TestMarkForms(t *testing.T) {
 		{[]string{at, "ok", "-e", "src/loans.go", "--file", "src/loans.go", "--check", "src/loans.go"}, ExitFound, "as an artifact and as a counter-check"},
 		{[]string{"lending/borrow.md@00000000", "ok", "-e", "src/loans.go"}, ExitFound, "is not the state now"},
 	} {
-		code, out, errOut := run(append([]string{"mark", "-C", dir}, tc.args...)...)
+		code, out, errOut := run(append([]string{"confirm", "-C", dir}, tc.args...)...)
 		if code != tc.code || out != "" || !strings.Contains(errOut, tc.want) {
 			t.Errorf("%v: %d %q %q", tc.args, code, out, errOut)
 		}
 	}
-	if code, _, errOut := run("check", "-C", dir, "-e", "x"); code != ExitFailed || !strings.Contains(errOut, "flags of mark") {
+	if code, _, errOut := run("check", "-C", dir, "-e", "x"); code != ExitFailed || !strings.Contains(errOut, "flags of confirm") {
 		t.Error(code, errOut)
 	}
 	// A skip at the state it was given is a note, not an entry.
@@ -479,7 +483,7 @@ func TestMarkForms(t *testing.T) {
 }
 
 func TestStateAsATable(t *testing.T) {
-	dir := marked(t)
+	dir := confirmed(t)
 	code, out, _ := run("table", "-C", dir)
 	want := "| Document | Verdict | Artifacts |\n| --- | --- | --- |\n" +
 		"| lending/borrow.md | ok | src/loans.go |\n| lending/return.md | ok | src/returns.go |\n" +
@@ -497,25 +501,25 @@ func TestStateAsATable(t *testing.T) {
 	}
 }
 
-// Marks change only .markitect/, so two marks in a row from one status both
+// Confirms change only .markitect/, so two confirms in a row from one status both
 // hold, even when the first maps a file.
-func TestMarksFromOneStatus(t *testing.T) {
+func TestConfirmsFromOneStatus(t *testing.T) {
 	dir := project(t, lending)
 	l := statusOf(t, dir)
 	borrow, _ := l.entry("lending/borrow.md")
 	member, _ := l.entry("roles/member.md")
-	if code, _, errOut := run("mark", "-C", dir, "lending/borrow.md@"+borrow.Fingerprint, "ok", "--file", "src/loans.go", "-e", "src/loans.go"); code != ExitOK {
+	if code, _, errOut := run("confirm", "-C", dir, "lending/borrow.md@"+borrow.Fingerprint, "ok", "--file", "src/loans.go", "-e", "src/loans.go"); code != ExitOK {
 		t.Fatal(errOut)
 	}
-	if code, _, errOut := run("mark", "-C", dir, "roles/member.md@"+member.Fingerprint, "ok", "--file", "src/member.go", "-e", "src/member.go"); code != ExitOK {
+	if code, _, errOut := run("confirm", "-C", dir, "roles/member.md@"+member.Fingerprint, "ok", "--file", "src/member.go", "-e", "src/member.go"); code != ExitOK {
 		t.Error(code, errOut)
 	}
 }
 
 // An edit of any project file after status, even an artifact of another
-// document, refuses the mark.
+// document, refuses the confirm.
 func TestAnyEditAfterStatusRefuses(t *testing.T) {
-	dir := marked(t)
+	dir := confirmed(t)
 	write(t, dir, "docs/spec/lending/borrow.md", read(t, dir, "docs/spec/lending/borrow.md")+"\nOne more rule.\n")
 	l := statusOf(t, dir)
 	borrow, _ := l.entry("lending/borrow.md")
@@ -525,7 +529,7 @@ func TestAnyEditAfterStatusRefuses(t *testing.T) {
 		{"lending/borrow.md@" + borrow.Fingerprint, "ok", "--file", "src/loans.go", "-e", "src/loans.go"},
 		{"roles/member.md@" + member.Fingerprint, "ok", "--file", "src/member.go", "-e", "src/member.go"},
 	} {
-		if code, _, errOut := run(append([]string{"mark", "-C", dir}, args...)...); code != ExitFound || !strings.Contains(errOut, "is not the state now") {
+		if code, _, errOut := run(append([]string{"confirm", "-C", dir}, args...)...); code != ExitFound || !strings.Contains(errOut, "is not the state now") {
 			t.Errorf("%v: %d %s", args, code, errOut)
 		}
 	}
@@ -537,10 +541,10 @@ func TestAnyEditAfterStatusRefuses(t *testing.T) {
 	}
 }
 
-// Marks of several documents at once each keep their row: the lock lets one
+// Confirms of several documents at once each keep their row: the lock lets one
 // write at a time, and each reads the state afresh.
-func TestParallelMarksLoseNoRow(t *testing.T) {
-	dir := marked(t)
+func TestParallelConfirmsLoseNoRow(t *testing.T) {
+	dir := confirmed(t)
 	docs := []string{"lending/borrow.md", "lending/return.md", "roles/member.md", "types/operation.md"}
 	fps := map[string]string{}
 	for _, doc := range docs {
@@ -549,7 +553,7 @@ func TestParallelMarksLoseNoRow(t *testing.T) {
 	done := make(chan string, len(docs))
 	for _, doc := range docs {
 		go func() {
-			code, _, errOut := run("mark", "-C", dir, doc+"@"+fps[doc], "skip", "-m", "reason of "+doc)
+			code, _, errOut := run("confirm", "-C", dir, doc+"@"+fps[doc], "skip", "-m", "reason of "+doc)
 			if code != ExitOK {
 				done <- doc + ": " + errOut
 				return
@@ -565,21 +569,21 @@ func TestParallelMarksLoseNoRow(t *testing.T) {
 	state := read(t, dir, ".markitect/state.jsonl")
 	for _, doc := range docs {
 		if !strings.Contains(state, `"reason":"reason of `+doc+`"`) {
-			t.Errorf("the mark of %s was lost:\n%s", doc, state)
+			t.Errorf("the confirm of %s was lost:\n%s", doc, state)
 		}
 	}
 }
 
 // Evidence alone maps no file.
 func TestEvidenceMapsNothing(t *testing.T) {
-	dir := marked(t)
+	dir := confirmed(t)
 	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "-e", "tests/counter-checks/loans_test.go")
 	same(t, "after evidence without --check", statusOf(t, dir).summary(), []string{"unexplained tests/counter-checks/loans_test.go"})
 }
 
 // Of several rows of which none matches, the closest names the change.
 func TestClosestRowNamesTheChange(t *testing.T) {
-	dir := marked(t)
+	dir := confirmed(t)
 	older := read(t, dir, ".markitect/state.jsonl")
 	write(t, dir, "src/loans.go", "package lending\n\nfunc Borrow() { lend() }\n")
 	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--check", "tests/counter-checks/loans_test.go", "-e", "tests/counter-checks/loans_test.go")
@@ -603,16 +607,14 @@ func TestSpecFolderBehindALink(t *testing.T) {
 		}
 	}
 	link(t, filepath.Join(dir, "handbook"), filepath.Join(dir, "docs"))
-	if code, _, errOut := run("init", "-C", dir); code != ExitOK {
-		t.Fatal(errOut)
-	}
+	markitectFiles(t, dir)
 	write(t, dir, ".markitect/ignore", lending[".markitect/ignore"])
 	same(t, "the project behind a link", statusOf(t, dir).summary(), []string{
 		"changed lending/borrow.md: no row", "changed lending/return.md: no row",
 		"changed roles/member.md: no row", "changed types/operation.md: no row",
 		"unexplained src/loans.go", "unexplained src/member.go", "unexplained src/returns.go", "unexplained tests/counter-checks/loans_test.go"})
 	fp := fingerprint(t, dir, "roles/member.md")
-	if code, _, errOut := run("mark", "-C", dir, "roles/member.md@"+fp, "ok", "--file", "handbook/spec/roles/member.md", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "lies in the spec folder") {
+	if code, _, errOut := run("confirm", "-C", dir, "roles/member.md@"+fp, "ok", "--file", "handbook/spec/roles/member.md", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "lies in the spec folder") {
 		t.Error(code, errOut)
 	}
 }
@@ -620,7 +622,7 @@ func TestSpecFolderBehindALink(t *testing.T) {
 // Files of the spec folder that are no documents: linked ones are inputs of
 // the documents that link them, the others are unexplained.
 func TestFilesOfTheSpecFolderThatAreNoDocuments(t *testing.T) {
-	dir := marked(t)
+	dir := confirmed(t)
 	write(t, dir, "docs/spec/run.sh", "echo lend\n")
 	write(t, dir, "docs/spec/lending/flow.png", "\x89PNG one")
 	write(t, dir, "docs/spec/lending/borrow.md", read(t, dir, "docs/spec/lending/borrow.md")+"\n![The flow](flow.png)\n")
@@ -629,12 +631,12 @@ func TestFilesOfTheSpecFolderThatAreNoDocuments(t *testing.T) {
 		"unexplained docs/spec/run.sh"})
 	verdict(t, dir, "lending/borrow.md", "ok", "--file", "src/loans.go", "--check", "tests/counter-checks/loans_test.go", "-e", "tests/counter-checks/loans_test.go")
 	verdict(t, dir, "roles/member.md", "ok", "--file", "src/member.go", "-e", "src/member.go")
-	same(t, "after the marks", statusOf(t, dir).summary(), []string{"unexplained docs/spec/run.sh"})
+	same(t, "after the confirms", statusOf(t, dir).summary(), []string{"unexplained docs/spec/run.sh"})
 	write(t, dir, "docs/spec/run.sh", "echo return\n")
 	write(t, dir, "docs/spec/lending/flow.png", "\x89PNG two")
 	same(t, "after both changed", statusOf(t, dir).summary(), []string{
 		"changed lending/borrow.md: asset:lending/flow.png", "unexplained docs/spec/run.sh"})
-	if code, _, errOut := run("mark", "-C", dir, "lending/borrow.md@"+fingerprint(t, dir, "lending/borrow.md"), "ok", "--file", "docs/spec/run.sh", "-e", "src/loans.go"); code != ExitFound || !strings.Contains(errOut, "lies in the spec folder") {
+	if code, _, errOut := run("confirm", "-C", dir, "lending/borrow.md@"+fingerprint(t, dir, "lending/borrow.md"), "ok", "--file", "docs/spec/run.sh", "-e", "src/loans.go"); code != ExitFound || !strings.Contains(errOut, "lies in the spec folder") {
 		t.Error(code, errOut)
 	}
 	if err := os.Remove(filepath.Join(dir, "docs", "spec", "lending", "flow.png")); err != nil {
@@ -646,14 +648,14 @@ func TestFilesOfTheSpecFolderThatAreNoDocuments(t *testing.T) {
 
 // show gives every document's fingerprint, so an ok can become a fail.
 func TestShowGivesTheFingerprint(t *testing.T) {
-	dir := marked(t)
+	dir := confirmed(t)
 	code, out, _ := run("show", "-C", dir, "lending/return")
 	first, _, _ := strings.Cut(out, "\n")
 	fp, ok := strings.CutPrefix(first, "lending/return.md@")
 	if code != ExitOK || !ok || len(fp) != 8 {
 		t.Fatal(code, out)
 	}
-	if code, _, errOut := run("mark", "-C", dir, "lending/return.md@"+fp, "fail", "--file", "src/returns.go", "-m", "late books are lent again"); code != ExitOK {
+	if code, _, errOut := run("confirm", "-C", dir, "lending/return.md@"+fp, "fail", "--file", "src/returns.go", "-m", "late books are lent again"); code != ExitOK {
 		t.Fatal(errOut)
 	}
 	same(t, "after ok became fail", statusOf(t, dir).summary(), []string{"changed lending/return.md: fail: late books are lent again"})
@@ -661,7 +663,7 @@ func TestShowGivesTheFingerprint(t *testing.T) {
 
 // A union merge of an ok and a fail at the same state is a conflict.
 func TestMergedOkAndFailConflict(t *testing.T) {
-	dir := marked(t)
+	dir := confirmed(t)
 	ours := read(t, dir, ".markitect/state.jsonl")
 	verdict(t, dir, "lending/borrow.md", "fail", "--file", "src/loans.go", "--check", "tests/counter-checks/loans_test.go", "-m", "lends a sixth book")
 	write(t, dir, ".markitect/state.jsonl", ours+read(t, dir, ".markitect/state.jsonl"))

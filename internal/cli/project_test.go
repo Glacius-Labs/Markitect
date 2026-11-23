@@ -2,7 +2,6 @@ package cli
 
 import (
 	"encoding/json"
-	"errors"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -36,101 +35,6 @@ func tree(t *testing.T, dir string) []string {
 	}
 	sort.Strings(out)
 	return out
-}
-
-func TestInitWritesOnlyMarkitectAndTheSpecFolder(t *testing.T) {
-	dir := t.TempDir()
-	code, out, errOut := run("init", "-C", dir)
-	if code != ExitOK || out != "created .markitect/\ncreated docs/spec/\n" || errOut != "" {
-		t.Fatal(code, out, errOut)
-	}
-	want := []string{".markitect/", ".markitect/.gitattributes", ".markitect/ignore", ".markitect/settings.md", ".markitect/spec", ".markitect/version", "docs/", "docs/spec/"}
-	if got := tree(t, dir); strings.Join(got, " ") != strings.Join(want, " ") {
-		t.Errorf("init wrote %v", got)
-	}
-	read := func(name string) string {
-		data, err := os.ReadFile(filepath.Join(dir, ".markitect", name))
-		if err != nil {
-			t.Fatal(err)
-		}
-		return string(data)
-	}
-	if read("version") != buildinfo.Version()+"\n" || read("spec") != "docs/spec\n" || read("ignore") != "" ||
-		read(".gitattributes") != "state.jsonl merge=union\nhistory.jsonl merge=union\n" {
-		t.Error("init wrote other contents")
-	}
-	before := tree(t, dir)
-	if code, out, errOut := run("init", "-C", dir); code != ExitFailed || out != "" || !strings.Contains(errOut, ".markitect/ exists already") {
-		t.Error(code, out, errOut)
-	}
-	if got := tree(t, dir); strings.Join(got, " ") != strings.Join(before, " ") {
-		t.Errorf("a refused init changed %v", got)
-	}
-}
-
-func TestInitWithASpecFolder(t *testing.T) {
-	dir := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(dir, "handbook"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "handbook", "lending.md"), []byte("# Lending\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	code, out, _ := run("init", "-C", dir, `--spec=handbook\`, "--json")
-	var doc initResult
-	if err := json.Unmarshal([]byte(out), &doc); err != nil {
-		t.Fatal(err)
-	}
-	if code != ExitOK || doc.Kind != "init" || doc.Spec != "handbook" || doc.Version != buildinfo.Version() || strings.Join(doc.Created, " ") != ".markitect/" {
-		t.Errorf("got %d %s", code, out)
-	}
-	if code, out, _ := run("check", "-C", dir); code != ExitOK || out != "0 errors in 1 document\n" {
-		t.Error(code, out)
-	}
-	for _, spec := range []string{"..", "/abs", ".markitect/spec", "."} {
-		if code, _, errOut := run("init", "-C", t.TempDir(), "--spec", spec); code != ExitFailed || !strings.Contains(errOut, "spec folder") {
-			t.Errorf("%s: %d %q", spec, code, errOut)
-		}
-	}
-	file := t.TempDir()
-	if err := os.WriteFile(filepath.Join(file, "spec"), nil, 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if code, _, errOut := run("init", "-C", file, "--spec", "spec"); code != ExitFailed || !strings.Contains(errOut, "is a file") {
-		t.Error(code, errOut)
-	}
-	if got := tree(t, file); strings.Join(got, " ") != "spec" {
-		t.Errorf("a refused init left %v", got)
-	}
-}
-
-// TestFailedInitLeavesNothing fails each step of init in turn and checks that
-// the folder is as it was, so that init can run again.
-func TestFailedInitLeavesNothing(t *testing.T) {
-	steps := 0
-	fault = func(int) error { steps++; return nil }
-	t.Cleanup(func() { fault = nil })
-	if code, _, errOut := run("init", "-C", t.TempDir(), "--spec", "docs/spec/main"); code != ExitOK {
-		t.Fatal(errOut)
-	}
-	if steps < 6 {
-		t.Fatalf("only %d steps", steps)
-	}
-	for k := 1; k <= steps; k++ {
-		dir := t.TempDir()
-		fault = func(step int) error {
-			if step == k {
-				return errors.New("injected")
-			}
-			return nil
-		}
-		if code, out, errOut := run("init", "-C", dir, "--spec", "docs/spec/main"); code != ExitFailed || out != "" || !strings.Contains(errOut, "injected") {
-			t.Errorf("step %d: %d %q %q", k, code, out, errOut)
-		}
-		if got := tree(t, dir); len(got) != 0 {
-			t.Errorf("step %d left %v", k, got)
-		}
-	}
 }
 
 func TestFindProject(t *testing.T) {
@@ -303,20 +207,6 @@ func TestReservedSpecFolders(t *testing.T) {
 		if code, _, errOut := run("init", "-C", t.TempDir(), "--spec", spec); code != ExitFailed || !strings.Contains(errOut, want) {
 			t.Errorf("%s: %d %q", spec, code, errOut)
 		}
-	}
-}
-
-func TestInitFolderMode(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("Windows has no Unix modes")
-	}
-	dir := initialized(t)
-	info, err := os.Stat(filepath.Join(dir, ".markitect"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if info.Mode().Perm() != 0o755 {
-		t.Errorf(".markitect/ has mode %v", info.Mode().Perm())
 	}
 }
 

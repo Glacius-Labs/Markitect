@@ -9,10 +9,10 @@ const hashA = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 func TestParseAndFormatState(t *testing.T) {
 	data := "\xef\xbb\xbf" +
-		`{"doc":"b.md","verdict":"ok","source":"mark","inputs":{"self":"` + hashA + `"},"evidence":[],"reason":"","later":1}` + "\r\n" +
+		`{"doc":"b.md","verdict":"ok","source":"confirm","inputs":{"self":"` + hashA + `"},"evidence":[],"reason":"","later":1}` + "\r\n" +
 		"\n" +
 		`{"doc":"a.md","verdict":"fail","source":"move","inputs":{"self":"` + hashA + `","file:src/a.go":"` + hashA + `"},"evidence":["src/a.go:1"],"reason":"why"}` + "\n" +
-		`{"doc":"b.md","verdict":"ok","source":"mark","inputs":{"self":"` + hashA + `"},"evidence":[],"reason":""}` + "\n"
+		`{"doc":"b.md","verdict":"ok","source":"confirm","inputs":{"self":"` + hashA + `"},"evidence":[],"reason":""}` + "\n"
 	rows, problems := ParseState([]byte(data))
 	if len(rows) != 3 || len(problems) != 0 {
 		t.Fatalf("%v %v", rows, problems)
@@ -21,7 +21,7 @@ func TestParseAndFormatState(t *testing.T) {
 		t.Error(got)
 	}
 	want := `{"doc":"a.md","verdict":"fail","source":"move","inputs":{"file:src/a.go":"` + hashA + `","self":"` + hashA + `"},"evidence":["src/a.go:1"],"reason":"why"}` + "\n" +
-		`{"doc":"b.md","verdict":"ok","source":"mark","inputs":{"self":"` + hashA + `"},"evidence":[],"reason":""}` + "\n"
+		`{"doc":"b.md","verdict":"ok","source":"confirm","inputs":{"self":"` + hashA + `"},"evidence":[],"reason":""}` + "\n"
 	if got := string(FormatState(rows)); got != want {
 		t.Errorf("got\n%s\nwant\n%s", got, want)
 	}
@@ -29,19 +29,19 @@ func TestParseAndFormatState(t *testing.T) {
 
 func TestUnreadableLines(t *testing.T) {
 	row := func(fields string) string {
-		return `{"doc":"a.md","verdict":"ok","source":"mark","inputs":{"self":"` + hashA + `"}` + fields + "}\n"
+		return `{"doc":"a.md","verdict":"ok","source":"confirm","inputs":{"self":"` + hashA + `"}` + fields + "}\n"
 	}
 	for _, tc := range []struct{ line, want string }{
 		{"not json\n", "not a JSON object"},
 		{`{"doc":"a.md"} {}` + "\n", "more than one JSON value"},
-		{`{"doc":"../a.md","verdict":"ok","source":"mark","inputs":{"self":"` + hashA + `"}}` + "\n", "not a path below the spec folder"},
-		{`{"doc":"a.md","verdict":"good","source":"mark","inputs":{"self":"` + hashA + `"}}` + "\n", `verdict "good"`},
+		{`{"doc":"../a.md","verdict":"ok","source":"confirm","inputs":{"self":"` + hashA + `"}}` + "\n", "not a path below the spec folder"},
+		{`{"doc":"a.md","verdict":"good","source":"confirm","inputs":{"self":"` + hashA + `"}}` + "\n", `verdict "good"`},
 		{`{"doc":"a.md","verdict":"ok","source":"hand","inputs":{"self":"` + hashA + `"}}` + "\n", `source "hand"`},
-		{`{"doc":"a.md","verdict":"ok","source":"mark","inputs":{}}` + "\n", "no self input"},
+		{`{"doc":"a.md","verdict":"ok","source":"confirm","inputs":{}}` + "\n", "no self input"},
 		{row(`,"evidence":"x"`), "not a JSON object"},
-		{`{"doc":"a.md","verdict":"ok","source":"mark","inputs":{"self":"sha256:xyz"}}` + "\n", "no sha256 hash"},
-		{`{"doc":"a.md","verdict":"ok","source":"mark","inputs":{"self":"` + hashA + `","blob:x":"` + hashA + `"}}` + "\n", "unknown input blob:x"},
-		{`{"doc":"a.md","verdict":"ok","source":"mark","inputs":{"self":"` + hashA + `","file:../x":"` + hashA + `"}}` + "\n", "not a clean relative path"},
+		{`{"doc":"a.md","verdict":"ok","source":"confirm","inputs":{"self":"sha256:xyz"}}` + "\n", "no sha256 hash"},
+		{`{"doc":"a.md","verdict":"ok","source":"confirm","inputs":{"self":"` + hashA + `","blob:x":"` + hashA + `"}}` + "\n", "unknown input blob:x"},
+		{`{"doc":"a.md","verdict":"ok","source":"confirm","inputs":{"self":"` + hashA + `","file:../x":"` + hashA + `"}}` + "\n", "not a clean relative path"},
 	} {
 		rows, problems := ParseState([]byte(row("") + tc.line))
 		if len(rows) != 1 || len(problems) != 1 || problems[0].Line != 2 || !strings.Contains(problems[0].String(), tc.want) ||

@@ -30,12 +30,10 @@ Product code and tests that handle a project's `.markitect/` folder use fixtures
 | The product as a whole | [Concept](docs/concept/README.md) |
 | Decisions in force and open questions | [Decisions](docs/decisions.md) |
 | The spec language and the commands | [Language reference](docs/guides/language-reference.md) |
-| The library built into the tool: packages, templates and the types the tool owns | [Library](docs/guides/library.md) |
+| The library built into the tool: packages, templates and the skills of the standard | [Library](docs/guides/library.md) |
 | The signals, the topic view, reference values, question catalogs and change signals | [Signals](docs/guides/signals.md) |
-| The project: finding it, `init`, the `.markitect/` layout, the walk of its files, their hashes, the state with `status`, `mark` and `move`, the history and `compare` | [Project reference](docs/guides/project-reference.md) |
-| The reports, settings and results of control samples of the tool as built: their value forms, what `check` finds in them, waiting entries and the figures of the factory | [Reports, settings and control samples](docs/guides/reports.md) |
-| The write table, the step check and the landing check of the tool as built | [Rights and landing](docs/guides/rights.md) |
-| The plugin as built: its skills and agents, the frame of a job, the answer form, the launcher and how firm its checks are | [The plugin](docs/guides/plugin.md) |
+| The project: finding it, `init`, the `.markitect/` layout, the walk of its files, their hashes, the state with `status`, `confirm` and `move`, the history and `compare` | [Project reference](docs/guides/project-reference.md) |
+| The plugin as built: the launcher that fetches the tool, and its start hooks | [The plugin](docs/guides/plugin.md) |
 | What makes a good spec, and how to write one | [Is the spec good?](docs/concept/is-the-spec-good.md) |
 | Packages, layers and the repository layout | [Architecture](docs/architecture.md) and the generated [code map](docs/development/code-map.md) |
 | Releases | [Releasing](docs/releasing.md) |
@@ -91,9 +89,9 @@ Local checks and the independent review are the basis for a merge, and CI is opt
 2. **Get one independent review of the complete diff,** by someone who did not write it: a person, or a fresh agent that has not seen your reasoning. Fix what it finds, and review again if the fixes are substantial.
 3. **Merge the reviewed head:** with a merge commit and the head matched, `gh pr merge NUMBER --merge --match-head-commit SHA`, without bypassing branch protection. Then read Main back.
 
-**Real agent runs.** The skills of the current plugin, `/markitect-architect`, `/markitect-build`, `/markitect-review`, `/markitect-bughunt`, `/markitect-cleanup`, `/markitect-improve`, `/markitect-control-sample`, `/markitect-read`, `/markitect-triage` and `/markitect-intake` start real agents. Run them only on a committed test project, in your own Claude Code session or a worktree of that project. Before a run, name the project and its source commit, the limits, when to abort and the cleanup; after it, report what happened, failures included, in the PR it informs. The tool's commands start no agent and run anywhere.
+**Real agent runs.** The skills of the standard, `markitect-assistant`, `markitect-capture`, `markitect-architect`, `markitect-finish-planning`, `markitect-build`, `markitect-review`, `markitect-analyze`, `markitect-accept`, `markitect-observe`, `markitect-create-observer`, `markitect-triage`, `markitect-record`, `markitect-brief` and `markitect-housekeeper`, run real agents. Run them only in a project set up with `init` that is a committed test project, in your own Claude Code session or a worktree of that project, bounded, and with the product owner's word. Before a run, name the project and its source commit, the limits, when to abort and the cleanup; after it, report what happened, failures included, in the PR it informs. The tool's commands start no agent and run anywhere.
 
-**Releases** follow [Releasing](docs/releasing.md) ([DEC-149](docs/decisions.md#dec-149-markitect-holds-the-work-and-init-lays-out-templates-and-skills)). There is no deployment.
+**Releases** follow [Releasing](docs/releasing.md) ([DEC-153](docs/decisions.md#dec-153-markitect-holds-the-work-init-lays-out-templates-and-skills-and-the-plugin-fetches-its-own-version)). There is no deployment.
 
 ## Reporting
 

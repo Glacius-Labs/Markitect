@@ -9,7 +9,7 @@ A rule that holds for everyone, such as on security or architecture, and the obs
 The Areas the rule concerns, through stories in those Areas that depend on the rule.
 
 ## Never
-Changes the code of a module: for that, a story arises in the module's Area and depends on the rule.
+Changes what another Area covers: for that, a story arises in that Area and depends on the rule.
 
 ## Usually planned by
 [Admin](../roles/admin.md)

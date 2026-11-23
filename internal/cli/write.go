@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/edit"
@@ -21,11 +22,22 @@ type newResult struct {
 	Path string `json:"path"`
 }
 
+// moveResult is the JSON document of move: the documents of the spec whose
+// links it rewrote, below the spec folder; the documents of the work whose
+// links it rewrote, below the project folder; and the documents of the work it
+// could not rewrite and left as they were, with the reason.
 type moveResult struct {
 	header
-	From    string   `json:"from"`
-	To      string   `json:"to"`
-	Changed []string `json:"changed"`
+	From    string     `json:"from"`
+	To      string     `json:"to"`
+	Changed []string   `json:"changed"`
+	Work    []string   `json:"work"`
+	Left    []leftJSON `json:"left"`
+}
+
+type leftJSON struct {
+	Path   string `json:"path"`
+	Reason string `json:"reason"`
 }
 
 type applyResult struct {
@@ -57,9 +69,9 @@ func newDocument(o options, stdout io.Writer) (int, error) {
 	return output(o, stdout, newResult{newHeader("new"), p}, "created "+p+"\n")
 }
 
-// move moves a document and carries the state: under the lock of mark, it
-// writes the moved and rewritten files, the state and the history in one
-// change set, all or nothing.
+// move moves a document and carries the state: under the lock of the state, it
+// writes the moved and rewritten files of the spec and of the work, the state
+// and the history in one change set, all or nothing.
 func move(o options, stdout io.Writer) (int, error) {
 	dir, err := mustProject(o)
 	if err != nil {
@@ -78,27 +90,50 @@ func move(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	if blocked := blockers(w, &state.Factory{}, problems); len(blocked) > 0 {
+	// What check finds in the spec does not stop a move. A line of the state
+	// that cannot be read does: the move carries the state and writes it
+	// again, and would lose it.
+	if unreadable := stateProblems(problems); len(unreadable) > 0 {
 		r := &edit.Refusal{}
-		for _, d := range blocked {
+		for _, d := range unreadable {
 			r.Problems = append(r.Problems, d.String())
 		}
-		r.Problems = append(r.Problems, "nothing is moved while the spec or the state has errors")
+		r.Problems = append(r.Problems, "nothing is moved while the state has lines it cannot read: moving would lose them")
 		return ExitFailed, r
 	}
 	m, err := edit.MoveDocument(w.Spec, w.SpecFS, o.positional[0], o.positional[1])
 	if err != nil {
 		return ExitFailed, err
 	}
-	f, err := factoryOf(w)
+	// The links of the work to the document are rewritten as those of the
+	// spec are; a document of the work that cannot be read or rewritten is
+	// left as it is.
+	work, err := state.ReadWorkLenient(w.Project)
 	if err != nil {
 		return ExitFailed, err
 	}
-	places := state.MovePlaces(w.Project, f.Reports, m.From, m.To)
-	changes, err := carry(dir, w, m, rows, places)
+	was, now := path.Join(w.SpecFolder, m.From), path.Join(w.SpecFolder, m.To)
+	rewrites, left := edit.RelinkWork(work.Documents, was, now)
+	// A document of the work that cannot be written stays as it is too: only
+	// the spec's own files make the move all or nothing.
+	var relinked []edit.Write
+	for _, wr := range rewrites {
+		if err := canWrite(filepath.Join(dir, filepath.FromSlash(wr.Path))); err != nil {
+			left = append(left, edit.Left{Path: wr.Path, Reason: "cannot be written: " + err.Error()})
+			continue
+		}
+		relinked = append(relinked, wr)
+	}
+	// What cannot be read may link the document or not; the tool cannot know.
+	for _, p := range work.Unreadable {
+		left = append(left, edit.Left{Path: p, Reason: "could not be read, so it was not searched for links to this document"})
+	}
+	sort.Slice(left, func(i, j int) bool { return left[i].Path < left[j].Path })
+	changes, err := carry(dir, w, m, rows)
 	if err != nil {
 		return ExitFailed, err
 	}
+	changes.Writes = append(changes.Writes, relinked...)
 	if !lock.held() {
 		return ExitFailed, errors.New("another command took over the lock of the state; nothing is moved")
 	}
@@ -106,14 +141,19 @@ func move(o options, stdout io.Writer) (int, error) {
 		return ExitFailed, err
 	}
 	text := "moved " + m.From + " -> " + m.To + "\n"
-	changed := append([]string{}, m.Changed...)
-	for _, p := range places {
-		changed = append(changed, p.Path)
-	}
+	changed, relinkedPaths, leftJSONs := append([]string{}, m.Changed...), []string{}, []leftJSON{}
 	for _, p := range changed {
 		text += "changed " + p + "\n"
 	}
-	return output(o, stdout, moveResult{newHeader("move"), m.From, m.To, changed}, text)
+	for _, wr := range relinked {
+		relinkedPaths = append(relinkedPaths, wr.Path)
+		text += "changed " + wr.Path + "\n"
+	}
+	for _, l := range left {
+		leftJSONs = append(leftJSONs, leftJSON{l.Path, l.Reason})
+		text += "left as it is " + l.Path + ": " + l.Reason + "\n"
+	}
+	return output(o, stdout, moveResult{newHeader("move"), m.From, m.To, changed, relinkedPaths, leftJSONs}, text)
 }
 
 func apply(o options, stdout io.Writer) (int, error) {
@@ -147,9 +187,8 @@ func apply(o options, stdout io.Writer) (int, error) {
 }
 
 // carry turns a move's change set into one below the project folder that
-// also writes the reports whose place it rewrote, the state the move carries
-// and the move appended to the history.
-func carry(dir string, w *workspace, m edit.Moved, rows []state.Row, places []state.File) (edit.Changes, error) {
+// also writes the state the move carries and the move appended to the history.
+func carry(dir string, w *workspace, m edit.Moved, rows []state.Row) (edit.Changes, error) {
 	rewritten := map[string]state.Text{}
 	for _, wr := range m.Changes.Writes {
 		old := wr.Path
@@ -168,13 +207,8 @@ func carry(dir string, w *workspace, m edit.Moved, rows []state.Row, places []st
 	for _, wr := range m.Changes.Writes {
 		c.Writes = append(c.Writes, edit.Write{Path: in(wr.Path), Data: wr.Data, Create: wr.Create})
 	}
-	var reports []string
-	for _, p := range places {
-		c.Writes = append(c.Writes, edit.Write{Path: p.Path, Data: p.Data})
-		reports = append(reports, p.Path)
-	}
 	return withHistory(dir, c, state.MoveRows(rows, m.From, m.To, rewritten),
-		state.Event{Time: now(), Type: state.EventMove, From: m.From, To: m.To, Rewritten: m.Changed, Reports: reports})
+		state.Event{Time: now(), Type: state.EventMove, From: m.From, To: m.To, Rewritten: m.Changed})
 }
 
 // withHistory adds to a change set the state, rewritten from rows when the

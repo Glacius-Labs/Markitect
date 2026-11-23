@@ -21,11 +21,11 @@ A spec starts from four small templates, which `init` lays out; each is a part o
 | Template | Says |
 |---|---|
 | **`project`** | Why the project exists and what is given: its purpose, its context, its guiding principles and its quality |
-| **`product`** | What the product should do, by topic. It has no fixed chapters, and it is structured, never flat |
+| **`product`** | What the product can do for its users, by capability: each a folder with a README of the type Capability of the `software` package. It has no fixed chapters, and it is structured, never flat |
 | **`architecture`** | How it is built: its building blocks and the rules for building |
 | **`factory`** | How the team works: roles and persons, the agents, the circle, meetings, dashboards and handbooks, the planning with its Areas and classes, and the types of the work. It is not empty: it holds the way of working as a standard, which the project changes like any part of its spec ([§8](the-circle.md)) |
 
-Areas belong to the planning, not to the architecture: one may want to plan differently from how the system is built, although they usually follow it. An Area is a document of its own in the `factory` part, with its owner and its class, never a folder of the spec.
+Areas belong to the planning, not to the architecture: one may want to plan differently from how the system is built, although they usually follow it. An Area is a document of its own in the `factory` part, with its owner, what it covers and its class, never a folder of the spec. It has no spec of its own: it names the parts of the product and the building blocks of the architecture it covers, and every change to them lands through a story.
 
 A business has the parts of the `company` package instead: its offer, its processes, its rules and its team. A business case, scenarios and operational tasks of a software project wait until a project needs them.
 

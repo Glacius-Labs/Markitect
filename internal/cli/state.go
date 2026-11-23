@@ -4,11 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
+	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/edit"
-	"github.com/Glacius-Labs/Markitect/internal/lang"
 	"github.com/Glacius-Labs/Markitect/internal/state"
 )
 
@@ -28,26 +30,24 @@ func evaluate(w *workspace) (*state.Status, []state.Problem, error) {
 	return s, problems, err
 }
 
-// factoryOf reads the reports, the results of control samples and the
-// settings of a loaded project, with what check finds in them.
-func factoryOf(w *workspace) (*state.Factory, error) {
-	return state.ReadFactory(w.Project)
+// workOf reads the documents of the work of a loaded project, with what
+// check finds in them.
+func workOf(w *workspace) (*state.Work, error) {
+	return state.ReadWork(w.Project)
 }
 
-// statusDocument is the JSON document of status.
+// statusDocument is the JSON document of status: what it lists, and the lines
+// of the state and of the history it cannot read, which it leaves out. What
+// check finds in the spec or in the work does not change it.
 type statusDocument struct {
 	header
-	Errors      []diagnostic  `json:"errors"`
 	Changed     []statusEntry `json:"changed"`
 	Suspect     []statusEntry `json:"suspect"`
 	Unexplained []string      `json:"unexplained"`
-	Waiting     []waitingJSON `json:"waiting"`
 	Notes       []statusNote  `json:"notes"`
-	// PlaceGone are the open reports whose place is gone: notes, which do
-	// not change the exit code.
-	PlaceGone []placeGoneJSON `json:"place_gone"`
-	// History holds the lines of the history status cannot read: notes,
-	// which do not change the exit code.
+	// State and History hold the lines of the state and of the history that
+	// status cannot read: notes, which do not change the exit code.
+	State   []diagnostic `json:"state"`
 	History []diagnostic `json:"history"`
 }
 
@@ -58,38 +58,16 @@ type statusEntry struct {
 	LookAt      []string `json:"look_at"`
 }
 
-// waitingJSON is a document waiting on reports; escalated says that it
-// waits on the owner, which does not make status fail.
-type waitingJSON struct {
-	Doc         string   `json:"doc"`
-	Fingerprint string   `json:"fingerprint"`
-	Reports     []string `json:"reports"`
-	Escalated   bool     `json:"escalated"`
-	Changes     []string `json:"changes"`
-	// Counts says that it makes status fail: it does not wait on the owner,
-	// or something changed that the report does not excuse.
-	Counts bool `json:"counts"`
-}
-
-type placeGoneJSON struct {
-	Report string `json:"report"`
-	Place  string `json:"place"`
-}
-
 type statusNote struct {
 	Doc     string `json:"doc"`
 	Verdict string `json:"verdict"`
 	Reason  string `json:"reason"`
 }
 
-// blockers are the errors of check, in the spec and in the files of the
-// factory, and the unreadable lines of the state, which keep status from
-// giving a list and mark from writing.
-func blockers(w *workspace, f *state.Factory, problems []state.Problem) []diagnostic {
+// stateProblems are the lines of the state that cannot be read, as
+// diagnostics.
+func stateProblems(problems []state.Problem) []diagnostic {
 	out := []diagnostic{}
-	for _, d := range append(lang.Check(w.Spec), f.Diagnostics...) {
-		out = append(out, diagnostic{File: d.Path, Line: d.Line, Code: d.Code, Message: d.Message})
-	}
 	for _, p := range problems {
 		out = append(out, diagnostic{File: state.StateFile, Line: p.Line, Code: state.CodeUnreadable, Message: p.Message})
 	}
@@ -100,10 +78,96 @@ func (d diagnostic) String() string {
 	return fmt.Sprintf("%s:%d: %s: %s", d.File, d.Line, d.Code, d.Message)
 }
 
-func status(o options, stdout io.Writer) (int, error) {
-	if o.statusFlags {
-		return statusChecks(o, stdout)
+// pathFilter says which entries of status the paths on its command line
+// name. A path names a document of the spec, with or without .md, or a folder
+// of the spec, below the spec folder; or a file or a folder of the project,
+// below the project folder. An entry is shown when it is that document or
+// file, or lies below that folder. A name that is both a folder of the spec
+// and a path of the project shows both readings. .markitect/ is a folder of
+// the project like any other: it holds no document of the spec and no file
+// that status lists, so it shows nothing.
+type pathFilter struct {
+	specFolder string
+	docs       []string // paths below the spec folder, with .md
+	folders    []string // folders below the spec folder
+	paths      []string // paths below the project folder
+}
+
+// newPathFilter reads the paths, which must each name a document of the spec,
+// one that has a row in the state, or a file or a folder of the project.
+func newPathFilter(w *workspace, s *state.Status, args []string) (*pathFilter, error) {
+	f := &pathFilter{specFolder: w.SpecFolder}
+	for _, arg := range args {
+		known := false
+		if doc, ok := edit.DocumentPath(arg); ok {
+			_, inSpec := w.Spec.Document(doc)
+			_, _, hasRow := s.Row(doc)
+			if inSpec || hasRow {
+				f.docs = append(f.docs, doc)
+				known = true
+			}
+		}
+		if p, ok := state.ProjectPath(arg); ok {
+			if _, err := os.Stat(filepath.Join(w.dir, filepath.FromSlash(p))); err == nil {
+				f.paths = append(f.paths, p)
+				known = true
+			}
+			// A folder of the spec: documents lie below it, or it is a folder
+			// on disk below the spec folder.
+			inFolder := false
+			for _, d := range w.Spec.Documents {
+				inFolder = inFolder || strings.HasPrefix(d.Path, p+"/")
+			}
+			if info, err := os.Stat(filepath.Join(w.specDir(), filepath.FromSlash(p))); err == nil && info.IsDir() || inFolder {
+				f.folders = append(f.folders, p)
+				known = true
+			}
+		}
+		if !known {
+			return nil, fmt.Errorf("unknown path: %s", arg)
+		}
 	}
+	return f, nil
+}
+
+// doc says whether a document of the spec, by its path below the spec folder,
+// is named.
+func (f *pathFilter) doc(doc string) bool {
+	if f == nil {
+		return true
+	}
+	for _, d := range f.docs {
+		if d == doc {
+			return true
+		}
+	}
+	for _, folder := range f.folders {
+		if strings.HasPrefix(doc, folder+"/") {
+			return true
+		}
+	}
+	return f.file(path.Join(f.specFolder, doc))
+}
+
+// file says whether a file of the project, by its path below the project
+// folder, is named.
+func (f *pathFilter) file(file string) bool {
+	if f == nil {
+		return true
+	}
+	for _, p := range f.paths {
+		if file == p || strings.HasPrefix(file, p+"/") {
+			return true
+		}
+	}
+	return false
+}
+
+// status lists what is changed, suspect or unexplained, for the paths on the
+// command line or for the whole project. It lists regardless of what check
+// finds, with what can be read: a document with an empty section, a dead link
+// or a type that resolves to nothing is a document like any other.
+func status(o options, stdout io.Writer) (int, error) {
 	w, err := load(o)
 	if err != nil {
 		return ExitFailed, err
@@ -112,33 +176,29 @@ func status(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	f, err := factoryOf(w)
-	if err != nil {
-		return ExitFailed, err
-	}
-	doc := statusDocument{header: newHeader("status"), Errors: blockers(w, f, problems),
-		Changed: []statusEntry{}, Suspect: []statusEntry{}, Unexplained: []string{}, Waiting: []waitingJSON{}, Notes: []statusNote{}, PlaceGone: []placeGoneJSON{}, History: []diagnostic{}}
-	if len(doc.Errors) == 0 {
-		s.Wait(f.Reports)
+	var filter *pathFilter
+	if len(o.positional) > 0 {
+		if filter, err = newPathFilter(w, s, o.positional); err != nil {
+			return ExitFailed, err
+		}
 	}
 	if err := s.Fingerprints(); err != nil {
 		return ExitFailed, err
 	}
+	doc := statusDocument{header: newHeader("status"), Changed: []statusEntry{}, Suspect: []statusEntry{}, Unexplained: []string{},
+		Notes: []statusNote{}, State: stateProblems(problems), History: []diagnostic{}}
 	var b strings.Builder
-	if len(doc.Errors) > 0 {
-		for _, d := range doc.Errors {
-			b.WriteString(d.String() + "\n")
-		}
-		b.WriteString("no list while check finds errors or the state has errors\n")
-		code, err := output(o, stdout, doc, b.String())
-		if err == nil {
-			code = ExitFound
-		}
-		return code, err
+	for _, d := range doc.State {
+		fmt.Fprintf(&b, "note: %s, left out\n", d)
 	}
+	shown := 0
 	entries := func(kind string, list []state.Entry) []statusEntry {
 		out := []statusEntry{}
 		for _, e := range list {
+			if !filter.doc(e.Doc) {
+				continue
+			}
+			shown++
 			out = append(out, statusEntry{Doc: e.Doc, Fingerprint: e.Fingerprint, Changes: e.Changes, LookAt: e.LookAt})
 			fmt.Fprintf(&b, "%s: %s@%s: %s\n", kind, e.Doc, e.Fingerprint, strings.Join(e.Changes, ", "))
 			if len(e.LookAt) > 0 {
@@ -150,21 +210,11 @@ func status(o options, stdout io.Writer) (int, error) {
 	doc.Changed = entries(state.Changed, s.Changed)
 	doc.Suspect = entries(state.Suspect, s.Suspect)
 	for _, u := range s.Unexplained {
-		doc.Unexplained = append(doc.Unexplained, u)
-		fmt.Fprintf(&b, "unexplained: %s\n", u)
-	}
-	onOwner := 0
-	for _, w := range s.Waiting {
-		doc.Waiting = append(doc.Waiting, waitingJSON{w.Doc, w.Fingerprint, w.Reports, w.Escalated, w.Changes, w.Counts()})
-		fmt.Fprintf(&b, "waiting: %s@%s: report %s", w.Doc, w.Fingerprint, strings.Join(w.Reports, ", report "))
-		if w.Escalated {
-			onOwner++
-			b.WriteString(" (escalated: waits on the owner)")
+		if filter.file(u) {
+			shown++
+			doc.Unexplained = append(doc.Unexplained, u)
+			fmt.Fprintf(&b, "unexplained: %s\n", u)
 		}
-		if len(w.Changes) > 0 {
-			b.WriteString(": " + strings.Join(w.Changes, ", "))
-		}
-		b.WriteString("\n")
 	}
 	_, historyProblems, err := state.ReadHistory(w.FS)
 	if err != nil {
@@ -176,37 +226,32 @@ func status(o options, stdout io.Writer) (int, error) {
 		fmt.Fprintf(&b, "note: %s\n", d)
 	}
 	for _, n := range s.Notes {
-		doc.Notes = append(doc.Notes, statusNote{n.Doc, n.Verdict, n.Reason})
-		fmt.Fprintf(&b, "note: %s: %s: %s\n", n.Doc, n.Verdict, n.Reason)
-	}
-	for _, g := range s.Gone {
-		doc.PlaceGone = append(doc.PlaceGone, placeGoneJSON{g.Report, g.Place})
-		fmt.Fprintf(&b, "note: report %s: place gone: %s\n", g.Report, g.Place)
-	}
-	fmt.Fprintf(&b, "%d changed, %d suspect, %d unexplained", len(s.Changed), len(s.Suspect), len(s.Unexplained))
-	if len(s.Waiting) > 0 {
-		fmt.Fprintf(&b, ", %d waiting", len(s.Waiting))
-		if onOwner > 0 {
-			fmt.Fprintf(&b, ", %d of them on the owner", onOwner)
+		if filter.doc(n.Doc) {
+			doc.Notes = append(doc.Notes, statusNote{n.Doc, n.Verdict, n.Reason})
+			fmt.Fprintf(&b, "note: %s: %s: %s\n", n.Doc, n.Verdict, n.Reason)
 		}
 	}
-	b.WriteString("\n")
+	fmt.Fprintf(&b, "%d changed, %d suspect, %d unexplained\n", len(doc.Changed), len(doc.Suspect), len(doc.Unexplained))
 	code, err := output(o, stdout, doc, b.String())
-	if err == nil && s.Lists() {
+	if err == nil && shown > 0 {
 		code = ExitFound
 	}
 	return code, err
 }
 
-// markResult is the JSON document of mark.
-type markResult struct {
+// confirmResult is the JSON document of confirm: the document, the verdict, and
+// the files that realize it and its counter-checks, all of them, which replace
+// the lists of an earlier confirm.
+type confirmResult struct {
 	header
-	Doc     string `json:"doc"`
-	Verdict string `json:"verdict"`
-	Removed bool   `json:"removed"`
+	Doc     string   `json:"doc"`
+	Verdict string   `json:"verdict"`
+	Removed bool     `json:"removed"`
+	Files   []string `json:"files"`
+	Checks  []string `json:"checks"`
 }
 
-func mark(o options, stdout io.Writer) (int, error) {
+func confirm(o options, stdout io.Writer) (int, error) {
 	docArg, fingerprint, ok := cutLast(o.positional[0], "@")
 	if !ok || fingerprint == "" {
 		return ExitFailed, fmt.Errorf("%s: name the document as DOCUMENT@FINGERPRINT, as status prints it", o.positional[0])
@@ -220,7 +265,10 @@ func mark(o options, stdout io.Writer) (int, error) {
 	}
 	doc, ok := edit.DocumentPath(docArg)
 	if !ok {
-		return ExitFound, &state.Refusal{Problems: []string{"unknown document: " + docArg}}
+		return ExitFailed, &state.Refusal{Problems: []string{"unknown document: " + docArg}}
+	}
+	if strings.HasPrefix(doc, state.Dir+"/") {
+		return ExitFailed, &state.Refusal{Problems: []string{docArg + " is a document of the work: confirm binds documents of the spec"}}
 	}
 	dir, err := mustProject(o)
 	if err != nil {
@@ -239,31 +287,28 @@ func mark(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	f, err := factoryOf(w)
-	if err != nil {
-		return ExitFailed, err
-	}
-	if blocked := blockers(w, f, problems); len(blocked) > 0 {
+	// What check finds in the spec or in the work does not stop a confirm. A
+	// line of the state that cannot be read does: confirming writes the state
+	// again, and would lose it.
+	if unreadable := stateProblems(problems); len(unreadable) > 0 {
 		r := &state.Refusal{}
-		for _, d := range blocked {
+		for _, d := range unreadable {
 			r.Problems = append(r.Problems, d.String())
 		}
-		r.Problems = append(r.Problems, "nothing is marked while check finds errors or the state has errors")
+		r.Problems = append(r.Problems, "nothing is confirmed while the state has lines it cannot read: confirming would lose them")
 		return ExitFound, r
 	}
-	checkFolder := ""
-	if f.Settings != nil {
-		checkFolder = f.Settings.CounterChecks
-	}
-	// The verdict event names what status lists as changed, which a waiting
-	// document is not.
-	s.Wait(f.Reports)
+	// A document that is in neither the spec nor the state is unknown, as to
+	// show and status; a wrong fingerprint is a refusal below.
 	_, inSpec := w.Spec.Document(doc)
+	if _, _, hasRow := s.Row(doc); !inSpec && !hasRow {
+		return ExitFailed, &state.Refusal{Problems: []string{"unknown document: " + docArg}}
+	}
 	if verdict == state.VerdictOK && inSpec && len(o.evidence) == 0 {
 		return ExitFailed, errors.New("ok needs evidence with -e")
 	}
-	rows, err := state.Mark(s, state.MarkRequest{Doc: doc, Fingerprint: fingerprint, Verdict: verdict,
-		Files: o.files, Checks: o.checks, Evidence: o.evidence, Reason: o.reason, CheckFolder: checkFolder})
+	rows, err := state.Confirm(s, state.ConfirmRequest{Doc: doc, Fingerprint: fingerprint, Verdict: verdict,
+		Files: o.files, Checks: o.checks, Evidence: o.evidence, Reason: o.reason})
 	if err != nil {
 		var r *state.Refusal
 		if errors.As(err, &r) {
@@ -272,12 +317,13 @@ func mark(o options, stdout io.Writer) (int, error) {
 		return ExitFailed, err
 	}
 	if !lock.held() {
-		return ExitFailed, errors.New("another mark took over the lock of the state; nothing is written")
+		return ExitFailed, errors.New("another confirm took over the lock of the state; nothing is written")
 	}
-	inputs := ""
+	inputs, files, checks := "", []string{}, []string{}
 	for _, r := range rows {
 		if r.Doc == doc {
 			inputs = state.InputsDigest(r.Inputs)
+			files, checks = append(files, r.Files()...), append(checks, r.Checks()...)
 		}
 	}
 	changes, err := withHistory(dir, edit.Changes{}, rows, s.VerdictEvent(now(), doc, verdict, inputs))
@@ -287,11 +333,15 @@ func mark(o options, stdout io.Writer) (int, error) {
 	if err := applyChanges(dir, changes); err != nil {
 		return ExitFailed, err
 	}
-	text := "marked " + doc + " " + verdict + "\n"
+	// The files named now are all the files that realize the document: they
+	// replace the list of an earlier confirm, they do not add to it.
+	text := "confirmed " + doc + " " + verdict + "\n" +
+		"files that realize it, all of them: " + orNone(strings.Join(files, ", "), "none") + "\n" +
+		"counter-checks, all of them: " + orNone(strings.Join(checks, ", "), "none") + "\n"
 	if !inSpec {
 		text = "removed the row of " + doc + ", which is gone\n"
 	}
-	return output(o, stdout, markResult{newHeader("mark"), doc, verdict, !inSpec}, text)
+	return output(o, stdout, confirmResult{newHeader("confirm"), doc, verdict, !inSpec, files, checks}, text)
 }
 
 // cutLast cuts s around the last sep.

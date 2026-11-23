@@ -6,10 +6,12 @@ import (
 	"io/fs"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/lang"
 	"github.com/Glacius-Labs/Markitect/internal/library"
 	"github.com/Glacius-Labs/Markitect/internal/signals"
+	"github.com/Glacius-Labs/Markitect/internal/state"
 )
 
 // shownPerSignal is how many findings of each signal the text of the whole
@@ -46,6 +48,35 @@ type topicDocument struct {
 	Mentions   []statementJSON          `json:"mentions"`
 	Signals    map[string][]findingJSON `json:"signals"`
 	Typed      []string                 `json:"typed_documents,omitempty"`
+	// Change holds the change signals computed from the history, for the
+	// topic of the whole spec only.
+	Change *changeDocument `json:"change_signals,omitempty"`
+}
+
+// changeDocument is the change signals of the history in the JSON document
+// of topic: the verdicts and moves read, the changes found, each signal with
+// the project's own reference, and the lines of the history that cannot be
+// read.
+type changeDocument struct {
+	Verdicts  int                     `json:"verdicts"`
+	Moves     int                     `json:"moves"`
+	Changes   []changeJSON            `json:"changes"`
+	Signals   map[string][]signalJSON `json:"signals"`
+	Reference map[string]string       `json:"reference"`
+	Weakening string                  `json:"weakening"`
+	History   []diagnostic            `json:"history"`
+}
+
+type changeJSON struct {
+	Time   string   `json:"time"`
+	Docs   []string `json:"docs"`
+	Events int      `json:"events"`
+}
+
+type signalJSON struct {
+	Docs   []string `json:"docs"`
+	Count  int      `json:"count"`
+	Detail string   `json:"detail"`
 }
 
 type statementJSON struct {
@@ -92,7 +123,52 @@ func topic(o options, stdout io.Writer) (int, error) {
 			doc.Signals[s] = append(doc.Signals[s], findingJSON{File: f.Path, Line: f.Line, Detail: f.Detail})
 		}
 	}
-	return output(o, stdout, doc, topicText(spec, t, o.all))
+	text := topicText(spec, t, o.all)
+	if name == "" {
+		events, problems, err := state.ReadHistory(w.FS)
+		if err != nil {
+			return ExitFailed, err
+		}
+		change, changeText := changeSignals(state.ComputeHistorySignals(spec, events), problems, o.all)
+		doc.Change = change
+		text += "\n" + changeText
+	}
+	return output(o, stdout, doc, text)
+}
+
+// changeSignals is what the history says: the change signals as a JSON
+// document and as text. Like the signals of the spec, each is shown with its
+// first findings unless all is set; the JSON document always holds every one.
+func changeSignals(h *state.HistorySignals, problems []state.HistoryProblem, all bool) (*changeDocument, string) {
+	doc := &changeDocument{Verdicts: h.Verdicts, Moves: h.Moves, Changes: []changeJSON{}, Signals: map[string][]signalJSON{},
+		Reference: h.Reference, Weakening: state.Weakening, History: []diagnostic{}}
+	var b strings.Builder
+	b.WriteString("# Change signals of the history\n\n")
+	for _, p := range problems {
+		d := diagnostic{File: state.HistoryFile, Line: p.Line, Code: state.CodeHistoryUnreadable, Message: p.Message}
+		doc.History = append(doc.History, d)
+		fmt.Fprintf(&b, "note: %s\n", d)
+	}
+	for _, c := range h.Changes {
+		doc.Changes = append(doc.Changes, changeJSON{c.Time.UTC().Format(time.RFC3339Nano), c.Docs, c.Events})
+	}
+	fmt.Fprintf(&b, "%s from %s; moves left out, since they are mechanical: %d\n", plural(len(h.Changes), "change"), plural(h.Verdicts, "verdict"), h.Moves)
+	for _, s := range state.ChangeSignals {
+		list := h.Signals[s]
+		doc.Signals[s] = []signalJSON{}
+		fmt.Fprintf(&b, "\n### %s (%d)\n\nreference: %s\n", s, len(list), h.Reference[s])
+		for i, sig := range list {
+			doc.Signals[s] = append(doc.Signals[s], signalJSON{sig.Docs, sig.Count, sig.Detail})
+			switch {
+			case !all && i == shownPerSignal:
+				fmt.Fprintf(&b, "… %d more; --all shows them\n", len(list)-i)
+			case all || i < shownPerSignal:
+				b.WriteString(sig.Detail + "\n")
+			}
+		}
+	}
+	fmt.Fprintf(&b, "\n### weakening\n\n%s\n", state.Weakening)
+	return doc, b.String()
 }
 
 func statementsJSON(list []signals.Statement) []statementJSON {

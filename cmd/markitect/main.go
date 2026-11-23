@@ -1,6 +1,7 @@
-// Command markitect is the Markitect tool: init, check, show, table, new,
-// move, apply, topic, questions, status, mark, compare, figures, reports,
-// settings, version and licenses. It delegates everything to internal/cli.
+// Command markitect is the Markitect tool: show, table, topic, questions and
+// compare to look; check and status to check; new, apply and move to change
+// the spec; confirm; and init, version and licenses to set up. It delegates
+// everything to internal/cli.
 package main
 
 import (

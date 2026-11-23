@@ -5,6 +5,7 @@ The reference values of the types of the software package, against which the sig
 | Type | Statements per document | Words per statement |
 |---|---|---|
 | architecture | 1–5 | 5–25 |
+| capability | 1–5 | 5–25 |
 | component | 1–5 | 5–25 |
 | context | 1–5 | 5–25 |
 | domain | 1–5 | 5–25 |

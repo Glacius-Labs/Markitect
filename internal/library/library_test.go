@@ -6,9 +6,11 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"go.yaml.in/yaml/v3"
 )
 
-func TestEmbedsPackagesTemplatesAndTheReportType(t *testing.T) {
+func TestEmbedsPackagesAndTemplates(t *testing.T) {
 	folders := func(dir string) []string {
 		entries, err := fs.ReadDir(FS(), dir)
 		if err != nil {
@@ -29,27 +31,70 @@ func TestEmbedsPackagesTemplatesAndTheReportType(t *testing.T) {
 	if got := strings.Join(folders("templates"), " "); got != "architecture company factory product project software" {
 		t.Errorf("templates: %s", got)
 	}
-	report, err := fs.ReadFile(FS(), ReportType)
+	if got := strings.Join(folders("."), " "); got != "packages questions references templates" {
+		t.Errorf("the library holds %s", got)
+	}
+}
+
+// The skills lie apart from the library: they are plain files, and a skill
+// starts with front matter that no document of the language has.
+func TestSkillsAreFoldersWithASkillFileAndItsName(t *testing.T) {
+	names, err := SkillNames()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.HasPrefix(string(report), "# Report\n") {
-		t.Errorf("report type starts %q", strings.SplitN(string(report), "\n", 2)[0])
+	if len(names) == 0 {
+		t.Fatal("no skills")
 	}
-	// A package may hold a type of the same file name, such as factory/report.md;
-	// what it must not hold is a copy of a type the tool owns.
-	for _, own := range []string{ReportType, SettingsType, SampleType} {
-		root, err := fs.ReadFile(FS(), own)
+	for _, name := range names {
+		data, err := fs.ReadFile(Skills(), name+"/SKILL.md")
 		if err != nil {
-			t.Error(err)
+			t.Errorf("%s: %v", name, err)
 			continue
 		}
-		matches, _ := fs.Glob(FS(), path.Join("packages", "*", own))
-		for _, m := range matches {
-			if got, _ := fs.ReadFile(FS(), m); string(got) == string(root) {
-				t.Errorf("the type %s is copied inside packages/: %s", own, m)
-			}
+		text := strings.ReplaceAll(string(data), "\r\n", "\n")
+		rest, ok := strings.CutPrefix(text, "---\n")
+		head, _, closed := strings.Cut(rest, "\n---\n")
+		if !ok || !closed {
+			t.Errorf("%s/SKILL.md: no front matter between --- lines", name)
+			continue
 		}
+		var fields struct {
+			Name        string `yaml:"name"`
+			Description string `yaml:"description"`
+		}
+		if err := yaml.Unmarshal([]byte(head), &fields); err != nil {
+			t.Errorf("%s/SKILL.md: front matter: %v", name, err)
+		}
+		if fields.Name != name {
+			t.Errorf("%s/SKILL.md: name is %q, not the folder's name", name, fields.Name)
+		}
+		if strings.TrimSpace(fields.Description) == "" {
+			t.Errorf("%s/SKILL.md: no description", name)
+		}
+	}
+}
+
+// There is one skill for each Agent document of the factory template, named
+// markitect- and the file name of the document, no more and no fewer.
+func TestSkillsAreTheAgentsOfTheFactoryTemplate(t *testing.T) {
+	entries, err := fs.ReadDir(FS(), "templates/factory/agents")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var agents []string
+	for _, e := range entries {
+		if name, ok := strings.CutSuffix(e.Name(), ".md"); ok && name != "README" {
+			agents = append(agents, "markitect-"+name)
+		}
+	}
+	sort.Strings(agents)
+	skills, err := SkillNames()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(skills, " ") != strings.Join(agents, " ") {
+		t.Errorf("skills %v, agents %v", skills, agents)
 	}
 }
 

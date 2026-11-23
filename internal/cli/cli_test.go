@@ -6,8 +6,12 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
+	"github.com/Glacius-Labs/Markitect/internal/state"
 )
 
 func run(args ...string) (int, string, string) {
@@ -16,17 +20,25 @@ func run(args ...string) (int, string, string) {
 	return code, out.String(), errOut.String()
 }
 
-// initialized is a new project that init set up.
+// initialized is a new project with the files of .markitect/ that init writes
+// and an empty spec folder, without the templates and skills init lays out:
+// the project the tests of the commands start from.
 func initialized(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	saved := fault
-	fault = nil
-	defer func() { fault = saved }()
-	if code, _, errOut := run("init", "-C", dir); code != ExitOK {
-		t.Fatal(errOut)
+	markitectFiles(t, dir)
+	if err := os.MkdirAll(specOf(dir), 0o755); err != nil {
+		t.Fatal(err)
 	}
 	return dir
+}
+
+// markitectFiles writes the files of .markitect/ that init writes into dir.
+func markitectFiles(t *testing.T, dir string) {
+	t.Helper()
+	for _, f := range state.InitFiles(buildinfo.Version(), state.DefaultSpec) {
+		write(t, dir, f.Path, string(f.Data))
+	}
 }
 
 // specOf is the spec folder of a project that init set up.
@@ -83,7 +95,7 @@ func TestCheckJSON(t *testing.T) {
 			t.Fatalf("%v: %s", err, out)
 		}
 		want := map[string]any{
-			"format_version": float64(1), "kind": "check", "documents": float64(2), "reports": float64(0), "samples": float64(0), "settings": true,
+			"format_version": float64(1), "kind": "check", "documents": float64(2), "work": float64(0),
 			"diagnostics": []any{map[string]any{"file": "sub/b.md", "line": float64(3), "code": "link.unresolved", "message": `no document at "../ghost.md"`}},
 		}
 		if code != ExitFound || !reflect.DeepEqual(doc, want) {
@@ -93,6 +105,35 @@ func TestCheckJSON(t *testing.T) {
 	clean := spec(t, map[string]string{"a.md": "# A\n"})
 	if code, out, _ := run("check", "--json", "-C", clean); code != ExitOK || !strings.Contains(out, `"diagnostics": []`) {
 		t.Errorf("got %d %s", code, out)
+	}
+}
+
+// The help groups the commands under five headings, in the order of the
+// concept, and names every command once.
+func TestHelpGroupsTheCommands(t *testing.T) {
+	_, out, _ := run("help")
+	at := -1
+	for _, heading := range []string{"Look", "Check", "Change the spec", "Confirm", "Set up"} {
+		i := strings.Index(out, "\n"+heading+"\n")
+		if i <= at {
+			t.Fatalf("heading %s is missing or out of order in\n%s", heading, out)
+		}
+		at = i
+	}
+	for name := range commands {
+		if n := strings.Count(out, "\n  "+name+" "); n != 1 {
+			t.Errorf("the help names %s %d times", name, n)
+		}
+	}
+	// The commands are exactly the fourteen of the concept.
+	var names []string
+	for name := range commands {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	const want = "apply check compare confirm init licenses move new questions show status table topic version"
+	if got := strings.Join(names, " "); got != want {
+		t.Errorf("the commands are %s, want %s", got, want)
 	}
 }
 
@@ -112,7 +153,7 @@ func TestUsage(t *testing.T) {
 		{[]string{"check", "-C", ""}, "flag -C needs a folder"},
 		{[]string{"check", "-C", dir, "--spec", "x"}, "--spec is a flag of init"},
 		{[]string{"init", "--spec"}, "flag --spec needs a value"},
-		{[]string{"status", "-C", dir, "--all"}, "--all is a flag of topic and figures"},
+		{[]string{"status", "-C", dir, "--all"}, "--all is a flag of topic"},
 		{[]string{"check", "-C", filepath.Join(dir, "missing")}, "not a folder"},
 		{[]string{"check", "-C", file}, "not a folder"},
 		{[]string{"check", "-C", specOf(dir)}, "holds no .markitect/version; markitect init makes one"},
@@ -125,6 +166,100 @@ func TestUsage(t *testing.T) {
 	for _, help := range []string{"help", "-h", "--help"} {
 		if code, out, _ := run(help); code != ExitOK || !strings.Contains(out, "init [--spec PATH]") {
 			t.Errorf("%s: %d %q", help, code, out)
+		}
+	}
+}
+
+// The flags may stand before the command, as Git's do, and between its
+// arguments.
+func TestFlagsMayStandBeforeTheCommand(t *testing.T) {
+	dir := spec(t, map[string]string{"a.md": "# A\n"})
+	for _, args := range [][]string{
+		{"-C", dir, "check"},
+		{"--json", "-C", dir, "check"},
+		{"-C", dir, "--json", "check"},
+		{"-C", dir, "show", "a"},
+		{"--json", "-C", dir, "show", "a"},
+		{"-C", dir, "table"},
+		{"-C", dir, "status", "--json"},
+	} {
+		code, out, errOut := run(args...)
+		if code != ExitOK && !(args[len(args)-1] == "status" || args[len(args)-2] == "status") || errOut != "" || out == "" {
+			t.Errorf("%v: %d %q %q", args, code, out, errOut)
+		}
+	}
+	// The same as with the flags after the command.
+	_, before, _ := run("check", "-C", dir, "--json")
+	if _, after, _ := run("--json", "-C", dir, "check"); after != before {
+		t.Errorf("%s differs from %s", after, before)
+	}
+	// A value of a flag is no command, and a missing command is an error.
+	if code, _, errOut := run("-C", dir); code != ExitFailed || !strings.Contains(errOut, "flag -C needs a value") && !strings.Contains(errOut, "no command given") {
+		t.Errorf("%d %q", code, errOut)
+	}
+	if code, _, errOut := run("-C", dir, "show"); code != ExitFailed || !strings.Contains(errOut, "usage: markitect show DOCUMENT") {
+		t.Errorf("%d %q", code, errOut)
+	}
+}
+
+// A wrong number of arguments prints the error and the one line of usage of
+// the command, not the whole help.
+func TestWrongArgumentsPrintOneLineOfUsage(t *testing.T) {
+	dir := spec(t, map[string]string{"a.md": "# A\n"})
+	for args, want := range map[string]string{
+		"show":         "usage: markitect show DOCUMENT [-C PROJECT] [--json]",
+		"confirm a.md": "usage: markitect confirm DOCUMENT@FINGERPRINT VERDICT",
+		"check extra":  "usage: markitect check [-C PROJECT] [--json]",
+		"move a":       "usage: markitect move OLD NEW",
+	} {
+		code, out, errOut := run(append(strings.Fields(args), "-C", dir)...)
+		if code != ExitFailed || out != "" || !strings.HasPrefix(errOut, "markitect "+strings.Fields(args)[0]+": wrong number of arguments\n") ||
+			!strings.Contains(errOut, want) || strings.Count(errOut, "\n") > 4 || strings.Contains(errOut, "Change the spec") {
+			t.Errorf("%s: %d %q", args, code, errOut)
+		}
+	}
+	if code, _, errOut := run("frobnicate"); code != ExitFailed || strings.Count(errOut, "\n") != 1 || !strings.Contains(errOut, "markitect --help") {
+		t.Errorf("%d %q", code, errOut)
+	}
+}
+
+// A flag's value may be named like a command, and what stands before the
+// command is told as plainly as what stands after it.
+func TestFlagsBeforeTheCommandAreRead(t *testing.T) {
+	parent := t.TempDir()
+	project := filepath.Join(parent, "check")
+	markitectFiles(t, project)
+	if err := os.MkdirAll(filepath.Join(project, "docs", "spec"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(parent)
+	if code, out, errOut := run("-C", "check", "check"); code != ExitOK || out != "0 errors in 0 documents\n" {
+		t.Errorf("-C check check: %d %q %q", code, out, errOut)
+	}
+	for _, tc := range []struct {
+		args []string
+		code int
+		want string // in the error, or in the output when the code is 0
+	}{
+		{[]string{"--version"}, ExitFailed, "unknown flag --version"},
+		{[]string{"-x"}, ExitFailed, "unknown flag -x"},
+		{[]string{"-C"}, ExitFailed, "flag -C needs a value"},
+		{[]string{"--frob", "p1", "check"}, ExitFailed, "unknown flag --frob"},
+		{[]string{"--json"}, ExitFailed, "no command given"},
+		{[]string{"-C", "check"}, ExitFailed, "no command given"},
+		{[]string{"-C", "p1", "--help"}, ExitOK, "usage: markitect COMMAND"},
+		{[]string{"--json", "help"}, ExitOK, "usage: markitect COMMAND"},
+		{[]string{"check", "--help"}, ExitOK, "usage: markitect COMMAND"},
+		{[]string{"show", "a", "-h"}, ExitOK, "usage: markitect COMMAND"},
+		{[]string{"-C", "check", "frobnicate"}, ExitFailed, `unknown command "frobnicate"`},
+	} {
+		code, out, errOut := run(tc.args...)
+		got := errOut
+		if tc.code == ExitOK {
+			got = out
+		}
+		if code != tc.code || !strings.Contains(got, tc.want) || strings.Contains(errOut, `command ""`) {
+			t.Errorf("%v: %d %q %q", tc.args, code, out, errOut)
 		}
 	}
 }

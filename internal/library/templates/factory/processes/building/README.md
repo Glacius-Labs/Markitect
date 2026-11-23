@@ -3,7 +3,7 @@
 Type: [Process](../../../../packages/company/process.md)
 
 ## Trigger
-A story is `ready` and all its predecessors are `done` ([when a story starts](../../rules/plan/when-a-story-starts.md)). [Norman](../../agents/norman.md) starts a Builder when a person comes back from planning, or the [Housekeeper](../../agents/housekeeper.md) does in its daily run.
+A story is `ready` and all its predecessors are `done` ([when a story starts](../../rules/plan/when-a-story-starts.md)). [The Assistant](../../agents/assistant.md) starts a Builder when a person comes back from planning, or the [Housekeeper](../../agents/housekeeper.md) does in its daily run.
 
 ## Steps
 1. [Claim](claim.md)
