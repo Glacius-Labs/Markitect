@@ -128,15 +128,15 @@ func TestFixedValues(t *testing.T) {
 	// What follows the first line is free, and so is a second paragraph.
 	expect(t, checkFiles(t, object("draft\nbecause it is new.\n\nMore.", "Ada\n\nAda Lovelace")))
 	// Compared exactly, case regarded, the whole first line.
-	expect(t, checkFiles(t, object("Live", "Ada")), wrong(5, "Live"))
-	expect(t, checkFiles(t, object("live and well", "Ada")), wrong(5, "live and well"))
-	expect(t, checkFiles(t, object("wip", "ada")), wrong(5, "wip"),
-		"home.md:8: property.value: the first line of section \"Name\" is \"ada\", not one of `Ada`")
+	expect(t, checkFiles(t, object("Live", "Ada")), wrong(6, "Live"))
+	expect(t, checkFiles(t, object("live and well", "Ada")), wrong(6, "live and well"))
+	expect(t, checkFiles(t, object("wip", "ada")), wrong(6, "wip"),
+		"home.md:9: property.value: the first line of section \"Name\" is \"ada\", not one of `Ada`")
 	// The first line as plain text, the way table reads it: markup is dropped.
 	expect(t, checkFiles(t, object("**live**", "[Ada](site.md)")))
 	expect(t, checkFiles(t, object("- live\n- draft", "`Ada`")))
 	expect(t, checkFiles(t, object("> live", "Ada")))
-	expect(t, checkFiles(t, object("**live** now", "Ada")), wrong(5, "live now"))
+	expect(t, checkFiles(t, object("**live** now", "Ada")), wrong(6, "live now"))
 	// A section without text stays section.empty and is not checked again.
 	expect(t, checkFiles(t, object("", "Ada")), `home.md:5: section.empty: empty section "State"`)
 	expect(t, checkFiles(t, object("<!-- later -->", "Ada")), `home.md:5: section.empty: empty section "State"`)
@@ -150,7 +150,7 @@ func TestFixedValues(t *testing.T) {
 	// An optional property is checked when it is there.
 	f["site.md"] = "# State site\n\nA site.\n\n## State (optional)\nType: `draft`\n"
 	f["home.md"] = "# Home\n\nType: [State site](site.md)\n\n## State\nlive\n"
-	expect(t, checkFiles(t, f), "home.md:5: property.value: the first line of section \"State\" is \"live\", not one of `draft`")
+	expect(t, checkFiles(t, f), "home.md:6: property.value: the first line of section \"State\" is \"live\", not one of `draft`")
 	f["home.md"] = "# Home\n\nType: [State site](site.md)\n"
 	expect(t, checkFiles(t, f))
 }
@@ -169,10 +169,10 @@ func TestPropertyTypeComesDownTheChain(t *testing.T) {
 	// An object of C is checked against the properties of the whole chain, each
 	// with the nearest type that gives one; an object of B has those of A.
 	expect(t, checkFiles(t, files),
-		"e.md:5: property.value: the first line of section \"State\" is \"z\", not one of `y`, `x`",
+		"e.md:6: property.value: the first line of section \"State\" is \"z\", not one of `y`, `x`",
 		"e.md:9: reference.type: section \"Link\" refers to documents of c.md or a type that extends it, but \"a.md\" is a type",
-		"e.md:14: property.value: the first line of section \"Own\" is \"2\", not one of `1`",
-		"f.md:5: property.value: the first line of section \"State\" is \"z\", not one of `x`, `y`",
+		"e.md:15: property.value: the first line of section \"Own\" is \"2\", not one of `1`",
+		"f.md:6: property.value: the first line of section \"State\" is \"z\", not one of `x`, `y`",
 		"f.md:9: reference.type: section \"Link\" refers to documents of c.md or a type that extends it, but \"f.md\" is a document of b.md",
 	)
 	s := specOf(t, withReadmes(files))
@@ -280,4 +280,94 @@ func TestFootnoteLinksAreNoReferences(t *testing.T) {
 	// The same link in the section is a reference.
 	files["home.md"] = "# Home\n\nType: [Site](site.md)\n\n## Pages\n[Start](start.md), [free](free.md)\n"
 	expect(t, checkFiles(t, files), `home.md:6: reference.type: section "Pages" refers to documents of page.md or a type that extends it, but "free.md" is a document without a type`)
+}
+
+func TestPropertyDeclaredTwice(t *testing.T) {
+	stray := "a type line stands only on the first line after the title"
+	files := map[string]string{
+		"page.md":  pageType,
+		"other.md": "# Other\n\nO.\n",
+		// The first heading of a name declares the property, with or without a line;
+		// a later one, in any case, declares nothing, and its line is a stray line.
+		"plain.md": "# Plain\n\nA.\n\n## Pages\nNo line.\n\n## pages\nType: [Page](page.md)\n",
+		"first.md": "# First\n\nA.\n\n## Pages\nType: [Page](page.md)\n\n## PAGES\nType: [Other](other.md)\n",
+		"bad.md":   "# Bad\n\nA.\n\n## Pages\nType: nonsense\n\n## Pages\nType: [Page](page.md)\n",
+	}
+	expect(t, checkFiles(t, files),
+		"bad.md:6: property.line: property type line must be links to documents or code spans, separated by commas",
+		"bad.md:9: type.line: "+stray,
+		"first.md:9: type.line: "+stray,
+		"plain.md:9: type.line: "+stray,
+	)
+	s := specOf(t, withReadmes(files))
+	// plain.md and bad.md have no property type; first.md has the first line's.
+	if p := s.PropertyType(mustDoc(t, s, "plain.md"), "Pages"); p.Kind != "" {
+		t.Errorf("plain: %+v", p)
+	}
+	if p := s.PropertyType(mustDoc(t, s, "bad.md"), "Pages"); p.Kind != "" {
+		t.Errorf("bad: %+v", p)
+	}
+	if p := s.PropertyType(mustDoc(t, s, "first.md"), "pages"); !reflect.DeepEqual(p.Refs, []string{"page.md"}) {
+		t.Errorf("first: %+v", p)
+	}
+	// Only the first line marks a type: page.md by first.md, nothing by the others.
+	for path, want := range map[string]bool{"plain.md": false, "bad.md": false, "first.md": true, "page.md": true, "other.md": false} {
+		if got := s.IsType(mustDoc(t, s, path)); got != want {
+			t.Errorf("IsType(%s) = %v, want %v", path, got, want)
+		}
+	}
+	// A later heading makes no dependency and is not checked for visibility.
+	modules := map[string]string{
+		"a/t.md": "# T\n\nA.\n\n## Peer\nText.\n\n## peer\nType: [U](../b/u.md)\n",
+		"b/u.md": "# U\n\nB.\n\n## Peer\nType: [T](../a/t.md)\n",
+		"b/v.md": "# V\n\nB.\n",
+	}
+	expect(t, checkFiles(t, modules), "a/t.md:9: type.line: "+stray)
+	modules["b/README.md"] = "# B\n\n## Contents\n- [U](u.md)\n"
+	modules["a/t.md"] = "# T\n\nA.\n\n## Peer\nText.\n\n## peer\nType: [V](../b/v.md)\n"
+	expect(t, checkFiles(t, modules), "a/t.md:9: type.line: "+stray)
+	// With the line first, it counts: a cycle and a link that is internal.
+	modules["a/t.md"] = "# T\n\nA.\n\n## Peer\nType: [V](../b/v.md)\n\n## peer\nText.\n"
+	expect(t, checkFiles(t, modules),
+		`a/t.md:6: link.internal: "b/v.md" is internal to b: b/README.md does not list it under Contents`,
+		"a/t.md:6: module.cycle: module cycle a -> b -> a: a/t.md:6 declares a reference to b/v.md, b/u.md:6 declares a reference to a/t.md")
+}
+
+func TestFixedValueWrittenWithBackticks(t *testing.T) {
+	for value, want := range map[string]string{
+		"live": "`live`", "a`b": "``a`b``", "`x": "`` `x ``", "x`": "`` x` ``", "a``b`": "``` a``b` ```",
+		"a b": "`a b`",
+	} {
+		if got := QuoteValue(value); got != want {
+			t.Errorf("QuoteValue(%q) = %s, want %s", value, got, want)
+		}
+		// Written so, it reads back as the value.
+		d := Parse("t.md", []byte("# T\n\n## A\nType: "+QuoteValue(value)+"\n"))
+		if got := d.Sections[0].Property.Values; len(got) != 1 || got[0] != value {
+			t.Errorf("%q reads back as %q", value, got)
+		}
+	}
+	expect(t, checkFiles(t, map[string]string{
+		"t.md": "# T\n\nA.\n\n## State\nType: ``a`b``, `live`\n",
+		"o.md": "# O\n\nType: [T](t.md)\n\n## State\nwip\n",
+	}), "o.md:6: property.value: the first line of section \"State\" is \"wip\", not one of ``a`b``, `live`")
+}
+
+func TestFixedValueIsReportedAtItsLine(t *testing.T) {
+	state := "# T\n\nA.\n\n## State\nType: `a`\n"
+	line := func(body string) []string {
+		return checkFiles(t, map[string]string{"t.md": state, "o.md": "# O\n\nType: [T](t.md)\n\n## State\n" + body})
+	}
+	// The first line of the text, not the heading: after a comment, in a list, in
+	// code, in a quote and in a table.
+	wrong := func(n int, first string) []string {
+		return []string{"o.md:" + strconv.Itoa(n) + `: property.value: the first line of section "State" is "` + first + "\", not one of `a`"}
+	}
+	expect(t, line("wip\n"), wrong(6, "wip")...)
+	expect(t, line("<!-- later -->\n\nwip\nmore\n"), wrong(8, "wip")...)
+	expect(t, line("\n\n- wip\n- b\n"), wrong(8, "wip")...)
+	expect(t, line("```\nwip\n```\n"), wrong(7, "wip")...)
+	expect(t, line("> wip\n"), wrong(6, "wip")...)
+	expect(t, line("| x |\n|---|\n| y |\n"), wrong(6, "x")...)
+	expect(t, line("a\n"))
 }

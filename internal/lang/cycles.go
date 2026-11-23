@@ -25,7 +25,17 @@ type dependency struct {
 	file   string
 	line   int
 	target string
+	// verb says what the link does, for a message.
+	verb string
 }
+
+// The verbs of the four kinds of dependency.
+const (
+	verbTypeLine    = "is of type"
+	verbExtendsLine = "extends"
+	verbPropertyRef = "declares a reference to"
+	verbReference   = "refers to"
+)
 
 func (a dependency) before(b dependency) bool {
 	if a.file != b.file {
@@ -45,7 +55,7 @@ func (s *Spec) moduleEdges() map[moduleEdge]dependency {
 	edges := map[moduleEdge]dependency{}
 	for _, d := range s.Documents {
 		from := path.Dir(d.Path)
-		add := func(target string, line int) {
+		add := func(target string, line int, verb string) {
 			if _, ok := s.byPath[target]; !ok {
 				return
 			}
@@ -53,22 +63,22 @@ func (s *Spec) moduleEdges() map[moduleEdge]dependency {
 			if key.from == key.to {
 				return
 			}
-			dep := dependency{d.Path, line, target}
+			dep := dependency{d.Path, line, target, verb}
 			if old, ok := edges[key]; !ok || dep.before(old) {
 				edges[key] = dep
 			}
 		}
 		if d.HasType() {
-			add(d.TypePath, d.TypeLine)
+			add(d.TypePath, d.TypeLine, verbTypeLine)
 		}
 		if d.HasExtends() {
-			add(d.ExtendsPath, d.ExtendsLine)
+			add(d.ExtendsPath, d.ExtendsLine, verbExtendsLine)
 		}
 		if d.holdsProperties() {
 			for _, sec := range d.Sections {
 				for _, r := range sec.Property.Refs {
 					if !isReadmeDocument(s, r.Target) {
-						add(r.Target, sec.Property.Line)
+						add(r.Target, sec.Property.Line, verbPropertyRef)
 					}
 				}
 			}
@@ -86,7 +96,7 @@ func (s *Spec) moduleEdges() map[moduleEdge]dependency {
 				continue
 			}
 			for _, l := range referenceLinks(d, sec) {
-				add(l.Target, l.Line)
+				add(l.Target, l.Line, verbReference)
 			}
 		}
 	}
@@ -143,7 +153,7 @@ func (s *Spec) checkModuleCycles() []Diagnostic {
 			names = append(names, moduleName(m))
 			if i+1 < len(cycle) {
 				dep := edges[moduleEdge{m, cycle[i+1]}]
-				steps = append(steps, fmt.Sprintf("%s:%d refers to %s", dep.file, dep.line, dep.target))
+				steps = append(steps, fmt.Sprintf("%s:%d %s %s", dep.file, dep.line, dep.verb, dep.target))
 			}
 		}
 		first := edges[moduleEdge{cycle[0], cycle[1]}]

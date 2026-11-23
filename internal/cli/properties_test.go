@@ -87,7 +87,7 @@ func TestTypeByPropertyLineAloneIsAType(t *testing.T) {
 	if !strings.Contains(out, `"topic_kind": "type"`) {
 		t.Error(out)
 	}
-	// The text under its sections is no statement, and its title is no mention.
+	// The text under its sections is no statement, and its title is no name.
 	_, out, _ = run("topic", "-C", dir, "sites/elsewhere", "--json")
 	if !strings.Contains(out, `"topic_kind": "document"`) {
 		t.Error(out)
@@ -102,7 +102,7 @@ func TestCheckPropertyTypes(t *testing.T) {
 	files["sites/home.md"] = "# Home\n\nType: [Website](../types/website.md)\n\n## Owner\nAda\n\n## State\nwip\n\n## Pages\n[Start](start.md), [Elsewhere](elsewhere.md)\n\n## Hosting\nSomewhere.\n"
 	files["sites/README.md"] = readme("Sites", "home.md", "start.md", "elsewhere.md")
 	code, out, _ := run("check", "-C", spec(t, files))
-	want := "sites/home.md:8: property.value: the first line of section \"State\" is \"wip\", not one of `draft`, `live`, `retired`\n" +
+	want := "sites/home.md:9: property.value: the first line of section \"State\" is \"wip\", not one of `draft`, `live`, `retired`\n" +
 		"sites/home.md:12: reference.type: section \"Pages\" refers to documents of types/page.md or a type that extends it, but \"sites/elsewhere.md\" is a document without a type\n" +
 		"types/website.md:8: property.unresolved: no document at \"ghost.md\"\n" +
 		"3 errors in 9 documents\n"
@@ -117,11 +117,23 @@ func TestCheckPropertyTypes(t *testing.T) {
 	}
 	dir := spec(t, files)
 	code, out, _ = run("check", "-C", dir)
-	if code != ExitFound || out != "a/x.md:3: module.cycle: module cycle a -> b -> a: a/x.md:3 refers to b/t.md, b/y.md:3 refers to a/t.md\n1 error in 6 documents\n" {
+	if code != ExitFound || out != "a/x.md:3: module.cycle: module cycle a -> b -> a: a/x.md:3 is of type b/t.md, b/y.md:3 is of type a/t.md\n1 error in 6 documents\n" {
 		t.Errorf("%d\n%s", code, out)
 	}
 	_, out, _ = run("check", "-C", dir, "--json")
 	if !strings.Contains(out, `"code": "module.cycle"`) || !strings.Contains(out, `"file": "a/x.md"`) {
+		t.Error(out)
+	}
+}
+
+func TestShowFixedValuesWithBackticks(t *testing.T) {
+	dir := spec(t, map[string]string{"t.md": "# T\n\nA.\n\n## State\nType: ``a`b``, `live`\n"})
+	_, out, _ := run("show", "-C", dir, "t")
+	if !strings.Contains(out, "Sections:\n  State: one of ``a`b``, `live`\n") {
+		t.Error(out)
+	}
+	_, out, _ = run("show", "-C", dir, "t", "--json")
+	if !strings.Contains(out, "\"a`b\"") {
 		t.Error(out)
 	}
 }

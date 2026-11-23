@@ -23,9 +23,9 @@ type Topic struct {
 	Strong []Statement
 	// LinkedFrom are the statements of other documents that link to it.
 	LinkedFrom []Statement
-	// Mentions are the statements of other documents that name it by title
+	// Named is the statements of other documents that name it by title
 	// in a document without a link to it.
-	Mentions []Statement
+	Named []Statement
 	// Findings are the signals' findings that concern it, by signal.
 	Findings map[string][]Finding
 }
@@ -86,17 +86,17 @@ func (a *Analysis) Topic(name string) (*Topic, bool) {
 		for _, x := range st.Targets {
 			linked = linked || about[x]
 		}
-		for _, x := range a.Mentions[i] {
+		for _, x := range a.Named[i] {
 			named = named || own[x] && !a.links[st.Doc][x]
 		}
-		if (linked || named || anyIn(a.Mentions[i], own)) && len(st.Strong) > 0 {
+		if (linked || named || anyIn(a.Named[i], own)) && len(st.Strong) > 0 {
 			t.Strong = append(t.Strong, st)
 		}
 		if linked {
 			t.LinkedFrom = append(t.LinkedFrom, st)
 		}
 		if named {
-			t.Mentions = append(t.Mentions, st)
+			t.Named = append(t.Named, st)
 		}
 	}
 	for _, name := range Names {

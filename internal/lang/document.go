@@ -100,6 +100,8 @@ type Section struct {
 	// First is the first line of text under the heading that shows something,
 	// as plain text.
 	First string
+	// FirstLine is the line of the source that holds First, 0 without text.
+	FirstLine int
 	// Property is the property type line of the section, zero without one.
 	Property PropertyLine
 }
@@ -350,6 +352,9 @@ func (p *parser) read(root ast.Node) {
 			d.Sections[sec].HasText = true
 			if d.Sections[sec].First == "" {
 				d.Sections[sec].First = p.firstLine(n)
+				if d.Sections[sec].First != "" {
+					d.Sections[sec].FirstLine = p.firstTextLine(n)
+				}
 			}
 		}
 		p.links(n, section, p.sectionLine)

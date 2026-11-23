@@ -18,7 +18,7 @@ type title struct {
 	docs  []string
 }
 
-// newTitles indexes the titles that count as mentions: every document's title
+// newTitles indexes the titles that count as names: every document's title
 // except those of types, whose names stand in prose as ordinary words, and
 // one-word titles shorter than four letters.
 func newTitles(spec *lang.Spec) *titles {

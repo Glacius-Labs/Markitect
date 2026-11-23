@@ -72,7 +72,7 @@ func (s *smoke) propertyTypes(project string, total int) error {
 	} else if err := requireContains(out,
 		"domain/retyped.md:6: property.retyped: property \"State\" is one of `draft`, `live` in domain/site.md, not one of `a`\n",
 		"domain/shop-site.md:6: reference.type: section \"Pages\" refers to documents of domain/operation.md or a type that extends it, but \"domain/member.md\" is a document of core/concept.md\n",
-		"domain/shop-site.md:8: property.value: the first line of section \"State\" is \"wip\", not one of `draft`, `live`\n",
+		"domain/shop-site.md:9: property.value: the first line of section \"State\" is \"wip\", not one of `draft`, `live`\n",
 		fmt.Sprintf("3 errors in %d documents\n", total+3)); err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func (s *smoke) propertyTypes(project string, total int) error {
 	if out, err := markitect(1, "check"); err != nil {
 		return err
 	} else if err := requireContains(out,
-		"left/a.md:3: module.cycle: module cycle left -> right -> left: left/a.md:3 refers to right/t.md, right/b.md:3 refers to left/t.md\n",
+		"left/a.md:3: module.cycle: module cycle left -> right -> left: left/a.md:3 is of type right/t.md, right/b.md:3 is of type left/t.md\n",
 		fmt.Sprintf("1 error in %d documents\n", total+6)); err != nil {
 		return err
 	}

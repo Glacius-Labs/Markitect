@@ -30,7 +30,7 @@ func TestModuleCycleThroughATypeLineAndAReference(t *testing.T) {
 		"b/y.md":     "# Y\n\nType: [Thing](thing.md)\n\n## Peer\n[X](../a/x.md)\n",
 	}
 	expect(t, checkFiles(t, files),
-		"a/x.md:3: module.cycle: module cycle a -> b -> a: a/x.md:3 refers to b/thing.md, b/y.md:6 refers to a/x.md")
+		"a/x.md:3: module.cycle: module cycle a -> b -> a: a/x.md:3 is of type b/thing.md, b/y.md:6 refers to a/x.md")
 }
 
 func TestModuleCycleThroughExtends(t *testing.T) {
@@ -39,7 +39,7 @@ func TestModuleCycleThroughExtends(t *testing.T) {
 		"a/derived.md": "# Derived\n\nExtends: [Other](../b/other.md)\n\nA type.\n",
 		"b/other.md":   "# Other\n\nExtends: [Base](../a/base.md)\n\nAnother.\n",
 	}),
-		"a/derived.md:3: module.cycle: module cycle a -> b -> a: a/derived.md:3 refers to b/other.md, b/other.md:3 refers to a/base.md")
+		"a/derived.md:3: module.cycle: module cycle a -> b -> a: a/derived.md:3 extends b/other.md, b/other.md:3 extends a/base.md")
 }
 
 func TestModuleCycleThroughAPropertyTypeLine(t *testing.T) {
@@ -48,7 +48,7 @@ func TestModuleCycleThroughAPropertyTypeLine(t *testing.T) {
 		"b/line.md":   "# Line\n\nA line.\n\n## Order\nType: [Order](../a/order.md)\n",
 		"b/values.md": "# Values\n\nAnother.\n\n## State\nType: `a`, `b`\n",
 	}),
-		"a/order.md:6: module.cycle: module cycle a -> b -> a: a/order.md:6 refers to b/line.md, b/line.md:6 refers to a/order.md")
+		"a/order.md:6: module.cycle: module cycle a -> b -> a: a/order.md:6 declares a reference to b/line.md, b/line.md:6 declares a reference to a/order.md")
 }
 
 func TestModuleCycleBetweenAParentAndItsChild(t *testing.T) {
@@ -59,7 +59,7 @@ func TestModuleCycleBetweenAParentAndItsChild(t *testing.T) {
 		"shop/fines/old.md": "# Old\n\nType: [Kind](../kind.md)\n",
 	}
 	expect(t, checkFiles(t, files),
-		"shop/borrow.md:3: module.cycle: module cycle shop -> shop/fines -> shop: shop/borrow.md:3 refers to shop/fines/law.md, shop/fines/old.md:3 refers to shop/kind.md")
+		"shop/borrow.md:3: module.cycle: module cycle shop -> shop/fines -> shop: shop/borrow.md:3 is of type shop/fines/law.md, shop/fines/old.md:3 is of type shop/kind.md")
 	// Only the child's way up: no cycle.
 	files["shop/borrow.md"] = "# Borrow\n\nNo type.\n"
 	expect(t, checkFiles(t, files))
@@ -70,7 +70,7 @@ func TestModuleCycleBetweenAParentAndItsChild(t *testing.T) {
 		"a/law.md": "# Law\n\nA law.\n",
 		"a/y.md":   "# Y\n\nType: [Kind](../kind.md)\n",
 	}),
-		"x.md:3: module.cycle: module cycle (spec folder) -> a -> (spec folder): x.md:3 refers to a/law.md, a/y.md:3 refers to kind.md")
+		"x.md:3: module.cycle: module cycle (spec folder) -> a -> (spec folder): x.md:3 is of type a/law.md, a/y.md:3 is of type kind.md")
 }
 
 func TestModuleCycleOfThreeModules(t *testing.T) {
@@ -83,7 +83,7 @@ func TestModuleCycleOfThreeModules(t *testing.T) {
 		"c/z.md": "# Z\n\nType: [T](../a/t.md)\n",
 	}
 	expect(t, checkFiles(t, files),
-		"a/x.md:3: module.cycle: module cycle a -> b -> c -> a: a/x.md:3 refers to b/t.md, b/y.md:3 refers to c/t.md, c/z.md:3 refers to a/t.md")
+		"a/x.md:3: module.cycle: module cycle a -> b -> c -> a: a/x.md:3 is of type b/t.md, b/y.md:3 is of type c/t.md, c/z.md:3 is of type a/t.md")
 }
 
 func TestTwoSeparateModuleCycles(t *testing.T) {
@@ -100,8 +100,8 @@ func TestTwoSeparateModuleCycles(t *testing.T) {
 		"a/v.md": "# V\n\nType: [T](../c/t.md)\n",
 	}
 	expect(t, checkFiles(t, files),
-		"a/x.md:3: module.cycle: module cycle a -> b -> a: a/x.md:3 refers to b/t.md, b/y.md:3 refers to a/t.md",
-		"c/z.md:3: module.cycle: module cycle c -> d -> c: c/z.md:3 refers to d/t.md, d/w.md:3 refers to c/t.md")
+		"a/x.md:3: module.cycle: module cycle a -> b -> a: a/x.md:3 is of type b/t.md, b/y.md:3 is of type a/t.md",
+		"c/z.md:3: module.cycle: module cycle c -> d -> c: c/z.md:3 is of type d/t.md, d/w.md:3 is of type c/t.md")
 }
 
 func TestOneReportForAGroupWithSeveralCycles(t *testing.T) {
@@ -120,12 +120,12 @@ func TestOneReportForAGroupWithSeveralCycles(t *testing.T) {
 		"b/u.md": "# U\n\nType: [T](../d/t.md)\n",
 	}
 	expect(t, checkFiles(t, files),
-		"a/x.md:3: module.cycle: module cycle a -> b -> c -> a: a/x.md:3 refers to b/t.md, b/y.md:3 refers to c/t.md, c/z.md:3 refers to a/t.md")
+		"a/x.md:3: module.cycle: module cycle a -> b -> c -> a: a/x.md:3 is of type b/t.md, b/y.md:3 is of type c/t.md, c/z.md:3 is of type a/t.md")
 	// The first link of a dependency is the first by file and line.
 	files["a/x.md"] = "# X\n\nType: [T](../c/t.md)\n"
 	files["a/w.md"] = "# W\n\nType: [T](../b/t.md)\n"
 	expect(t, checkFiles(t, files),
-		"a/x.md:3: module.cycle: module cycle a -> c -> a: a/x.md:3 refers to c/t.md, c/z.md:3 refers to a/t.md")
+		"a/x.md:3: module.cycle: module cycle a -> c -> a: a/x.md:3 is of type c/t.md, c/z.md:3 is of type a/t.md")
 }
 
 func TestMentionsAndReadmesCloseNoCycle(t *testing.T) {
@@ -162,7 +162,7 @@ func TestBrokenDependenciesInCycles(t *testing.T) {
 	files["a/README.md"] = "# A\n\n## Contents\n- [X](x.md)\n"
 	files["b/z.md"] = "# Z\n\nType: [Internal](../a/internal.md)\n"
 	expect(t, checkFiles(t, files),
-		"a/x.md:3: module.cycle: module cycle a -> b -> a: a/x.md:3 refers to b/kind.md, b/z.md:3 refers to a/internal.md",
+		"a/x.md:3: module.cycle: module cycle a -> b -> a: a/x.md:3 is of type b/kind.md, b/z.md:3 is of type a/internal.md",
 		`b/z.md:3: link.internal: "a/internal.md" is internal to a: a/README.md does not list it under Contents`)
 }
 
@@ -187,7 +187,7 @@ func TestModuleCycleIsDeterministic(t *testing.T) {
 	}
 	// Of two cycles of the same length the first by path counts: through b.
 	expect(t, want,
-		"a/1.md:3: module.cycle: module cycle a -> b -> d -> a: a/1.md:3 refers to b/t.md, b/1.md:3 refers to d/t.md, d/1.md:3 refers to a/t.md")
+		"a/1.md:3: module.cycle: module cycle a -> b -> d -> a: a/1.md:3 is of type b/t.md, b/1.md:3 is of type d/t.md, d/1.md:3 is of type a/t.md")
 }
 
 func TestAMentionThatWouldCloseACycle(t *testing.T) {
@@ -204,5 +204,5 @@ func TestAMentionThatWouldCloseACycle(t *testing.T) {
 	files["a/x.md"] = "# X\n\nType: [T](../b/t.md)\n\n## Notes\n[Y](../b/y.md)\n"
 	files["b/y.md"] = "# Y\n\nType: [T](t.md)\n\n## Notes\n[X](../a/x.md)\n"
 	expect(t, checkFiles(t, files),
-		"a/x.md:3: module.cycle: module cycle a -> b -> a: a/x.md:3 refers to b/t.md, b/y.md:6 refers to a/x.md")
+		"a/x.md:3: module.cycle: module cycle a -> b -> a: a/x.md:3 is of type b/t.md, b/y.md:6 refers to a/x.md")
 }

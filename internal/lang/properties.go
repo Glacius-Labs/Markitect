@@ -28,14 +28,26 @@ const (
 // readProperties reads the property type line of every level-2 heading: the
 // first line of the block right after the heading, when that block is a
 // paragraph and the line starts with "Type:". The line is marked as read, so
-// that it is neither a stray type line, nor a link, nor prose.
+// that it is neither a stray type line, nor a link, nor prose. A heading of a
+// name that an earlier heading has already, in any case, declares nothing: a
+// line under it is no property type line but a stray type line.
 func (p *parser) readProperties(root ast.Node) {
 	p.properties = map[int]PropertyLine{}
+	var declared []string
 	for n := root.FirstChild(); n != nil; n = n.NextSibling() {
 		h, ok := n.(*ast.Heading)
 		if !ok || h.Level != 2 {
 			continue
 		}
+		name := SectionName(p.headingText(h))
+		again := false
+		for _, d := range declared {
+			again = again || strings.EqualFold(d, name)
+		}
+		if again {
+			continue
+		}
+		declared = append(declared, name)
 		para, ok := nextBlock(n.NextSibling()).(*ast.Paragraph)
 		if !ok {
 			continue
@@ -113,15 +125,16 @@ func SectionName(heading string) string {
 }
 
 // propertyLine returns the property type line of the section name in the
-// document, the first section of that name that has a valid one, when the
-// document is of a kind that holds such lines.
+// document, when the first section of that name has a valid one and the
+// document is of a kind that holds such lines. A later section of the name
+// declares nothing.
 func (d *Document) propertyLine(name string) (PropertyLine, bool) {
 	if !d.holdsProperties() {
 		return PropertyLine{}, false
 	}
 	for _, sec := range d.Sections {
-		if sec.Property.Kind != "" && strings.EqualFold(SectionName(sec.Heading), name) {
-			return sec.Property, true
+		if strings.EqualFold(SectionName(sec.Heading), name) {
+			return sec.Property, sec.Property.Kind != ""
 		}
 	}
 	return PropertyLine{}, false
@@ -206,10 +219,33 @@ func (p Property) describe() string {
 	return "text"
 }
 
-func quoteValues(values []string) string {
+func quoteValues(values []string) string { return QuoteValues(values) }
+
+// QuoteValue writes a fixed value as a code span that reads back as the value:
+// the delimiter is longer than any run of backticks in it, and a value that
+// starts or ends with a backtick is padded with a space at each end.
+func QuoteValue(v string) string {
+	longest, run := 0, 0
+	for _, c := range v {
+		if c == '`' {
+			run++
+			longest = max(longest, run)
+		} else {
+			run = 0
+		}
+	}
+	fence := strings.Repeat("`", longest+1)
+	if strings.HasPrefix(v, "`") || strings.HasSuffix(v, "`") {
+		v = " " + v + " "
+	}
+	return fence + v + fence
+}
+
+// QuoteValues writes fixed values as code spans, separated by commas.
+func QuoteValues(values []string) string {
 	quoted := make([]string, len(values))
 	for i, v := range values {
-		quoted[i] = "`" + v + "`"
+		quoted[i] = QuoteValue(v)
 	}
 	return strings.Join(quoted, ", ")
 }
@@ -365,7 +401,7 @@ func (s *Spec) checkProperties(d, t *Document) []Diagnostic {
 				found = found || v == sec.First
 			}
 			if !found {
-				add(sec.Line, CodePropertyValue, "the first line of section \"%s\" is \"%s\", not one of %s", want.Name, sec.First, quoteValues(prop.Values))
+				add(max(sec.FirstLine, sec.Line), CodePropertyValue, "the first line of section \"%s\" is \"%s\", not one of %s", want.Name, sec.First, quoteValues(prop.Values))
 			}
 		case PropertyRefs:
 			types := s.declaredTypes(prop)

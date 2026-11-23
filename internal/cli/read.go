@@ -212,11 +212,7 @@ func showText(doc showDocument) string {
 			}
 			line += ": reference to " + strings.Join(refs, ", ")
 		case len(s.Values) > 0:
-			quoted := make([]string, len(s.Values))
-			for i, v := range s.Values {
-				quoted[i] = "`" + v + "`"
-			}
-			line += ": one of " + strings.Join(quoted, ", ")
+			line += ": one of " + lang.QuoteValues(s.Values)
 		}
 		sections = append(sections, line)
 	}

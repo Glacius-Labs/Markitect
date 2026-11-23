@@ -17,11 +17,11 @@ const (
 	TextBeforeSections = "text-before-sections"
 	LinkGroup          = "link-group"
 	ScatteredRules     = "scattered-rules"
-	UnlinkedMention    = "unlinked-mention"
+	UnlinkedName       = "unlinked-name"
 )
 
 // Names lists the signals in the order they are shown.
-var Names = []string{Weak, StrongStatements, Complexity, Size, TextBeforeSections, LinkGroup, ScatteredRules, UnlinkedMention}
+var Names = []string{Weak, StrongStatements, Complexity, Size, TextBeforeSections, LinkGroup, ScatteredRules, UnlinkedName}
 
 // Finding is one entry of a signal's list, at a line of a document.
 type Finding struct {
@@ -45,11 +45,11 @@ type Analysis struct {
 	Statements []Statement
 	// Findings holds each signal's list, strongest first.
 	Findings map[string][]Finding
-	// Mentions holds, per statement index, the documents it names by title.
-	Mentions [][]string
-	links    map[string]map[string]bool // the documents each document links to
-	inbound  map[string]map[string]bool // the documents that link to or mention each document
-	refs     References
+	// Named holds, per statement index, the documents it names by title.
+	Named   [][]string
+	links   map[string]map[string]bool // the documents each document links to
+	inbound map[string]map[string]bool // the documents that link to or name each document
+	refs    References
 }
 
 // Analyze computes the statements and the signals of a spec, with refs as the
@@ -73,7 +73,7 @@ func Analyze(spec *lang.Spec, refs References) *Analysis {
 	}
 	titles := newTitles(spec)
 	for _, st := range a.Statements {
-		a.Mentions = append(a.Mentions, titles.find(st.Words, st.Doc))
+		a.Named = append(a.Named, titles.find(st.Words, st.Doc))
 	}
 	for from, targets := range a.links {
 		for t := range targets {
@@ -81,7 +81,7 @@ func Analyze(spec *lang.Spec, refs References) *Analysis {
 		}
 	}
 	for i, st := range a.Statements {
-		for _, t := range a.Mentions[i] {
+		for _, t := range a.Named[i] {
 			a.addInbound(t, st.Doc)
 		}
 	}
@@ -92,7 +92,7 @@ func Analyze(spec *lang.Spec, refs References) *Analysis {
 	a.textBeforeSections()
 	a.linkGroups()
 	a.scatteredRules()
-	a.unlinkedMentions()
+	a.unlinkedNames()
 	for name, list := range a.Findings {
 		sort.SliceStable(list, func(i, j int) bool {
 			if list[i].rank != list[j].rank {
@@ -126,7 +126,7 @@ func (a *Analysis) add(f Finding) { a.Findings[f.Signal] = append(a.Findings[f.S
 // refersTo returns the documents a statement links to or names by title.
 func (a *Analysis) refersTo(i int) []string {
 	out := append([]string(nil), a.Statements[i].Targets...)
-	for _, m := range a.Mentions[i] {
+	for _, m := range a.Named[i] {
 		if !contains(out, m) {
 			out = append(out, m)
 		}
@@ -316,12 +316,12 @@ func bearsRule(st Statement) bool {
 	return false
 }
 
-func (a *Analysis) unlinkedMentions() {
+func (a *Analysis) unlinkedNames() {
 	type pair struct{ doc, target string }
 	count := map[pair]int{}
 	first := map[pair]int{}
 	for i, st := range a.Statements {
-		for _, t := range a.Mentions[i] {
+		for _, t := range a.Named[i] {
 			if a.links[st.Doc][t] {
 				continue
 			}
@@ -334,7 +334,7 @@ func (a *Analysis) unlinkedMentions() {
 	}
 	for p, n := range count {
 		d, _ := a.Spec.Document(p.target)
-		a.add(Finding{Signal: UnlinkedMention, Path: p.doc, Line: first[p], Docs: []string{p.doc, p.target}, rank: float64(n),
+		a.add(Finding{Signal: UnlinkedName, Path: p.doc, Line: first[p], Docs: []string{p.doc, p.target}, rank: float64(n),
 			Detail: fmt.Sprintf("%q (%s) %s, never linked", d.Title, p.target, plural(n, "time"))})
 	}
 }

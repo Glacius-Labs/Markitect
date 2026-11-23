@@ -4,7 +4,7 @@ import "testing"
 
 // A type that has a property type line, or that a property type line names, is a
 // type like any other: the text under its sections is no statement, its title
-// is no mention, and the line itself is no prose.
+// is no name, and the line itself is no prose.
 func TestTypesByPropertyTypeLines(t *testing.T) {
 	a := Analyze(spec(t, map[string]string{
 		"types/shop.md":    "# Shop\n\nWhere a customer buys things.\n\n## Orders\nType: [Order](order.md)\n\nEvery order is listed here, always.\n\n## Currency\nType: `euro`, `dollar`\n\nOnly these two are allowed.\n",
@@ -28,9 +28,9 @@ func TestTypesByPropertyTypeLines(t *testing.T) {
 		"types/order.md|What a customer buys.",
 		"types/shop.md|Where a customer buys things.",
 	})
-	// The titles of types are no mentions: Shop, Order and Orphan are types, one by
+	// The titles of types are named by no one: Shop, Order and Orphan are types, one by
 	// the line that names it, one by being named, one by its own line.
-	eq(t, a.Mentions[0], []string(nil))
+	eq(t, a.Named[0], []string(nil))
 	for path, kind := range map[string]string{"types/shop": "type", "types/order": "type", "types/orphan": "type", "shops/town": "document", "notes": "document"} {
 		if topic, ok := a.Topic(path); !ok || topic.Kind != kind {
 			t.Errorf("%s is %s", path, topic.Kind)

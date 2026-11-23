@@ -98,13 +98,13 @@ func TestSpecTable(t *testing.T) {
 func TestTopicAndQuestions(t *testing.T) {
 	dir := spec(t, branches)
 	code, out, _ := run("topic", "-C", dir)
-	if code != ExitOK || !strings.HasPrefix(out, "# Signals of the spec\n") || !strings.Contains(out, "\n### weak (") || !strings.Contains(out, "\n### unlinked-mention (") ||
+	if code != ExitOK || !strings.HasPrefix(out, "# Signals of the spec\n") || !strings.Contains(out, "\n### weak (") || !strings.Contains(out, "\n### unlinked-name (") ||
 		strings.Contains(out, "hange signals") {
 		t.Fatal(code, out)
 	}
 	code, out, _ = run("topic", "-C", dir, "places/central")
 	for _, part := range []string{"# Topic: places/central.md (document)\n", "\n## Strong statements about it\n", "\n## Text\n\n# Central\n",
-		"\n## Linked from\n\nmembers/ada.md:10 (Branch): Central, see Grace.\n", "\n## Mentioned without a link\n", "\n## Signals\n"} {
+		"\n## Linked from\n\nmembers/ada.md:10 (Branch): Central, see Grace.\n", "\n## Named without a link\n", "\n## Signals\n"} {
 		if code != ExitOK || !strings.Contains(out, part) {
 			t.Errorf("missing %q in\n%s", part, out)
 		}

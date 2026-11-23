@@ -5,6 +5,7 @@ import (
 
 	"github.com/yuin/goldmark/ast"
 	east "github.com/yuin/goldmark/extension/ast"
+	"github.com/yuin/goldmark/text"
 )
 
 // firstLine returns the first line of a block's text that shows something,
@@ -18,6 +19,43 @@ func (p *parser) firstLine(block ast.Node) string {
 		}
 	}
 	return ""
+}
+
+// firstTextLine returns the line of the source where the text of a block that
+// firstLine shows begins: the first text, code line or address in it that is
+// not blank, or the line of the block.
+func (p *parser) firstTextLine(block ast.Node) int {
+	line := 0
+	blank := func(seg text.Segment) bool { return strings.TrimSpace(string(seg.Value(p.source))) == "" }
+	_ = ast.Walk(block, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+		if !entering {
+			return ast.WalkContinue, nil
+		}
+		switch n := n.(type) {
+		case *ast.Text:
+			if !blank(n.Segment) {
+				line = p.line(n.Segment.Start)
+			}
+		case *ast.AutoLink:
+			line = p.line(n.Pos())
+		case *ast.FencedCodeBlock, *ast.CodeBlock, *ast.HTMLBlock:
+			for i := 0; i < n.Lines().Len(); i++ {
+				seg := n.Lines().At(i)
+				if visible(withoutTags(string(seg.Value(p.source)))) {
+					line = p.line(seg.Start)
+					break
+				}
+			}
+		}
+		if line != 0 {
+			return ast.WalkStop, nil
+		}
+		return ast.WalkContinue, nil
+	})
+	if line == 0 {
+		line = p.line(block.Pos())
+	}
+	return line
 }
 
 // plain renders a block as plain text, one line per line of text.
