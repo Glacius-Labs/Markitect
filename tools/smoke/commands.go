@@ -203,7 +203,7 @@ func (s *smoke) projectCommands() error {
 	if out, err := markitect(1, "check"); err != nil {
 		return err
 	} else if err := requireContains(out, "domain/shopping.md:3: link.internal: \"shop/cart.md\" is internal to shop: shop has no README.md\n",
-		"shop/README.md:1: module.readme: the folder \"shop\" holds documents and has no README.md\n", fmt.Sprintf("2 errors in %d documents\n", total+2)); err != nil {
+		"shop/README.md:1: module.readme: the folder shop holds documents and has no README.md\n", fmt.Sprintf("2 errors in %d documents\n", total+2)); err != nil {
 		return err
 	}
 	if err := writeFile(project, "docs/spec/shop/README.md", "# Shop\n\nWhat customers buy.\n"); err != nil {

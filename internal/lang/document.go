@@ -56,13 +56,12 @@ type Document struct {
 	ExtendsPath string
 	// StrayExtendsLines are the other lines of text that start with "Extends:".
 	StrayExtendsLines []int
-	// ReadmeHeadLine is the line of a type line or an extends line that a README
-	// carries, and ReadmeHeadKind says which: "type" or "extends". A README is
+	// ReadmeHeads are the type lines and extends lines that a README carries, in
+	// the head block after its title, by line, each as "type" or "extends". A README is
 	// read without that line, so that it has no type and extends nothing: its
 	// TypeLine, ExtendsLine and their paths are empty. Both are zero for any
 	// other document.
-	ReadmeHeadLine int
-	ReadmeHeadKind string
+	ReadmeHeads []ReadmeHead
 	// HeadReadme is the path of the README that the type line or the extends
 	// line of the document names, a document that is no type; the type line or
 	// extends line is then read as naming no type: TypePath and ExtendsPath are
@@ -98,6 +97,13 @@ type Section struct {
 	// First is the first line of text under the heading that shows something,
 	// as plain text.
 	First string
+}
+
+// ReadmeHead is a type line or an extends line of a README.
+type ReadmeHead struct {
+	Line int
+	// Kind is "type" or "extends".
+	Kind string
 }
 
 // CodeSpan is a code span in the text of a document.

@@ -88,7 +88,7 @@ func shopFiles(extra map[string]string) map[string]string {
 
 func TestModuleNeedsAReadme(t *testing.T) {
 	expect(t, checkExactly(t, map[string]string{"shop/cart.md": "# Cart\n"}),
-		`shop/README.md:1: module.readme: the folder "shop" holds documents and has no README.md`)
+		`shop/README.md:1: module.readme: the folder shop holds documents and has no README.md`)
 	// A folder that holds only folders, or no Markdown at all, is transparent.
 	expect(t, checkExactly(t, map[string]string{
 		"a/README.md":      "# A\n\n## Contents\n- [B](x/b/README.md)\n",
@@ -103,7 +103,7 @@ func TestModuleNeedsAReadme(t *testing.T) {
 	expect(t, checkExactly(t, map[string]string{
 		"a/README.md":   "# A\n",
 		"a/x/b/note.md": "# Note\n",
-	}), `a/x/b/README.md:1: module.readme: the folder "a/x/b" holds documents and has no README.md`)
+	}), `a/x/b/README.md:1: module.readme: the folder a/x/b holds documents and has no README.md`)
 	// Every module is reported once, and the spec folder is one when it holds
 	// a document directly.
 	expect(t, checkExactly(t, map[string]string{
@@ -113,15 +113,15 @@ func TestModuleNeedsAReadme(t *testing.T) {
 		"b/c/inner.md": "# Inner\n",
 	}),
 		`README.md:1: module.readme: the spec folder holds documents and has no README.md`,
-		`a/README.md:1: module.readme: the folder "a" holds documents and has no README.md`,
-		`b/c/README.md:1: module.readme: the folder "b/c" holds documents and has no README.md`)
+		`a/README.md:1: module.readme: the folder a holds documents and has no README.md`,
+		`b/c/README.md:1: module.readme: the folder b/c holds documents and has no README.md`)
 	// The spec folder holds only folders: no README is needed there.
 	expect(t, checkExactly(t, map[string]string{"a/README.md": "# A\n"}))
 	// A folder with only a README is a module with a README.
 	expect(t, checkExactly(t, map[string]string{"a/README.md": "# A\n", "b/README.md": "# B\n"}))
 	// A README is exactly README.md: another name is no manifest.
 	expect(t, checkExactly(t, map[string]string{"a/readme.md": "# A\n"}),
-		`a/README.md:1: module.readme: the folder "a" holds documents and has no README.md`)
+		`a/README.md:1: module.readme: the folder a holds documents and has no README.md`)
 }
 
 func TestReadmeHasNoTypeOrExtendsLine(t *testing.T) {
@@ -149,7 +149,7 @@ func TestReadmeIsReadWithoutItsHead(t *testing.T) {
 	})
 	for _, p := range []string{"types/README.md", "base/README.md"} {
 		d, _ := s.Document(p)
-		if d.HasType() || d.HasExtends() || d.TypeLine != 0 || d.ExtendsLine != 0 || s.IsType(d) || d.ReadmeHeadLine != 3 {
+		if d.HasType() || d.HasExtends() || d.TypeLine != 0 || d.ExtendsLine != 0 || s.IsType(d) || len(d.ReadmeHeads) != 1 || d.ReadmeHeads[0].Line != 3 {
 			t.Errorf("%s: %+v", p, d)
 		}
 	}
@@ -315,7 +315,7 @@ func TestLinksIntoAModule(t *testing.T) {
 			map[string]string{"shop/cart.md": "# Cart\n", "other/README.md": "# Other\n", "other/a.md": "# A\n\n[cart](../shop/cart.md)\n"},
 			[]string{
 				`other/a.md:3: link.internal: "shop/cart.md" is internal to shop: shop has no README.md`,
-				`shop/README.md:1: module.readme: the folder "shop" holds documents and has no README.md`,
+				`shop/README.md:1: module.readme: the folder shop holds documents and has no README.md`,
 			}},
 		"the spec folder as a module": {
 			map[string]string{
@@ -405,5 +405,5 @@ func TestDiagnosticsOfModulesAreSortedWithTheRest(t *testing.T) {
 	expect(t, got,
 		`README.md:1: module.readme: the spec folder holds documents and has no README.md`,
 		`b.md:3: link.unresolved: no document at "ghost.md"`,
-		`sub/README.md:1: module.readme: the folder "sub" holds documents and has no README.md`)
+		`sub/README.md:1: module.readme: the folder sub holds documents and has no README.md`)
 }

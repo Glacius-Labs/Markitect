@@ -35,17 +35,31 @@ func readmeOf(dir string) string {
 }
 
 // readWithoutHead reads a README without its type line or extends line: it has
-// neither, so it is never an object and never a type. The line is kept in
-// ReadmeHeadLine for check.
+// neither, so it is never an object and never a type. Every such line of the
+// head block is kept in ReadmeHeads for check, and is no stray line.
 func (d *Document) readWithoutHead() {
-	switch {
-	case d.TypeLine != 0:
-		d.ReadmeHeadLine, d.ReadmeHeadKind = d.TypeLine, "type"
-	case d.ExtendsLine != 0:
-		d.ReadmeHeadLine, d.ReadmeHeadKind = d.ExtendsLine, "extends"
+	if d.TypeLine != 0 {
+		d.ReadmeHeads = append(d.ReadmeHeads, ReadmeHead{d.TypeLine, "type"})
+	}
+	if d.ExtendsLine != 0 {
+		d.ReadmeHeads = append(d.ReadmeHeads, ReadmeHead{d.ExtendsLine, "extends"})
 	}
 	d.TypeLine, d.TypeRaw, d.TypePath = 0, "", ""
 	d.ExtendsLine, d.ExtendsRaw, d.ExtendsPath = 0, "", ""
+	keep := func(lines []int, kind string) []int {
+		var rest []int
+		for _, line := range lines {
+			if d.inHead(line) {
+				d.ReadmeHeads = append(d.ReadmeHeads, ReadmeHead{line, kind})
+			} else {
+				rest = append(rest, line)
+			}
+		}
+		return rest
+	}
+	d.StrayTypeLines = keep(d.StrayTypeLines, "type")
+	d.StrayExtendsLines = keep(d.StrayExtendsLines, "extends")
+	sort.Slice(d.ReadmeHeads, func(i, j int) bool { return d.ReadmeHeads[i].Line < d.ReadmeHeads[j].Line })
 }
 
 // readHeadReadme reads a type line or an extends line that names a README as
@@ -181,7 +195,7 @@ func (s *Spec) checkModules() []Diagnostic {
 	sort.Strings(dirs)
 	var out []Diagnostic
 	for _, dir := range dirs {
-		message := fmt.Sprintf("the folder \"%s\" holds documents and has no README.md", dir)
+		message := fmt.Sprintf("the folder %s holds documents and has no README.md", dir)
 		if dir == specFolder {
 			message = "the spec folder holds documents and has no README.md"
 		}
@@ -194,21 +208,17 @@ func (s *Spec) checkModules() []Diagnostic {
 // type line or extends line that names a README.
 func (s *Spec) checkReadmeType(d *Document) []Diagnostic {
 	switch {
-	case d.ReadmeHeadLine != 0:
-		return []Diagnostic{{Path: d.Path, Line: d.ReadmeHeadLine, Code: CodeReadmeType, Message: fmt.Sprintf("a README has no %s line", d.ReadmeHeadKind)}}
+	case len(d.ReadmeHeads) > 0:
+		var out []Diagnostic
+		for _, h := range d.ReadmeHeads {
+			out = append(out, Diagnostic{Path: d.Path, Line: h.Line, Code: CodeReadmeType, Message: fmt.Sprintf("a README has no %s line", h.Kind)})
+		}
+		return out
 	case d.HeadReadme != "":
 		line := max(d.TypeLine, d.ExtendsLine)
 		return []Diagnostic{{Path: d.Path, Line: line, Code: CodeReadmeType, Message: fmt.Sprintf("\"%s\" is a README, which is no type", d.HeadReadme)}}
 	}
 	return nil
-}
-
-// moduleName names a module folder in a message.
-func moduleName(dir string) string {
-	if dir == specFolder {
-		return "the spec folder"
-	}
-	return dir
 }
 
 // checkInternal reports every link of d, in text, on its type line or on its
@@ -250,12 +260,22 @@ func (s *Spec) checkInternal(d *Document, shown map[string]map[string]bool) []Di
 			if need == target {
 				what = "it"
 			}
+			// The cause: a module on the way without a README, or a README that
+			// does not list what is behind it. The module that is checked is
+			// never the spec folder, which holds the linking document.
 			reason := fmt.Sprintf("%s does not list %s under %s", readmeOf(dir), what, contentsSection)
-			if _, ok := s.byPath[readmeOf(dir)]; !ok {
-				reason = moduleName(dir) + " has no README.md"
+			onTheWay := []string{dir}
+			if i < len(chain)-1 {
+				onTheWay = append(onTheWay, chain[i+1])
+			}
+			for _, m := range onTheWay {
+				if _, ok := s.byPath[readmeOf(m)]; !ok {
+					reason = m + " has no README.md"
+					break
+				}
 			}
 			out = append(out, Diagnostic{Path: d.Path, Line: line, Code: CodeLinkInternal,
-				Message: fmt.Sprintf("\"%s\" is internal to %s: %s", target, moduleName(dir), reason)})
+				Message: fmt.Sprintf("\"%s\" is internal to %s: %s", target, dir, reason)})
 			return
 		}
 	}
