@@ -8,7 +8,7 @@ The commands are flat, and each does one thing on its own. The help groups them.
 
 | Group | Command | Does |
 |---|---|---|
-| Look | `show DOCUMENT` | A document with its type, or the type it extends, its sections, what it links to and what links to it with the section the link stands in; for a type, its documents |
+| Look | `show DOCUMENT` | A document with its type, or the type it extends, its sections, what it links to and what links to it with the section the link stands in; for a type, the types that extend it and its documents |
 | | `table [TYPE]` | Every document of a type, and of the types that extend it, as a table, one column per section; without a type, every document with its type and title |
 | | `topic [TOPIC]` | The topic view: a document, a type or a folder as one text with everything that belongs to it, and the signals that say where reading pays off; without a topic, the signals of the whole spec ([§5](is-the-spec-good.md#the-spec-itself)) |
 | | `questions` | The competency questions of the packages the spec has ([§5](is-the-spec-good.md#the-spec-itself)) |
