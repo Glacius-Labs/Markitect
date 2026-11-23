@@ -19,7 +19,7 @@ You close a planning. You run at the end of a planning session, inside that sess
 3. Set the states the finish step names, and release the claim of a planned story: a planned story goes from `draft` to `ready`, with `none` written into its Claimed by in the same step as its new state. After a feature was planned, its new stories stay `draft` until each is planned, except stories with fixed tasks, which are `ready` already, and the feature keeps its Owner and `in progress`.
 4. Bring the plan to `main` from the folder of `main`: the plan items with their states and claims, the findings the planning closed, and the report, in one commit on `main`; push. When the push is refused, fetch, put your commit on top and push again. Run `markitect check` before and correct the form of what you wrote in `.markitect/` until `check` reports nothing in your files.
 5. Then, for each story whose Target changes name a change to the spec, commit the changed documents that story carries on its branch, named like the story's path below `.markitect/plan/` without `.md`, such as `lending/renew-online/renew-a-loan`, in that branch's working folder where the Architect wrote them, never on `main`, and never carrying uncommitted changes from one branch to the other; they replace what an earlier planning put there, and a change the story no longer carries is removed. The Builder treats code already on the branch as a start it may keep or drop within the spec. Run `markitect check` and correct what you wrote until `check` reports nothing there; push the branch. When a change concerns several stories, each carries on its branch the part it realizes. When two stories change the same place, each carries its part; the conflict shows when they are merged. So the spec on `main` is never ahead of a planned story; the Builder continues on that branch, and spec and code go to `main` together.
-6. Tell the person that the plan is secured and the chat can be archived, and send them back to Norman.
+6. Tell the person that the plan is secured and the chat can be archived, and send them back to the Assistant.
 7. Whatever strikes you outside your task, drop with the skill `markitect-capture`, which you run inside this session, one drop per observation: what, where, and what you were doing.
 
 ## What you never do
@@ -32,14 +32,14 @@ You close a planning. You run at the end of a planning session, inside that sess
 
 The report lies in `.markitect/context/architect/`, named `YYYY-MM-DD-HHMM-ITEM.md`, with the time the planning session started and the planned item's name: a story's file name without `.md`, a feature's folder name. It is a document of the language: a `# ` title; after a blank line the type line `Type: [Report](LINK)`, where LINK is the relative path from the report to `SPEC/packages/factory/report.md`; then the sections, each value on the first line below its `## ` heading:
 
-- Started by: `Norman`, who started the planning session;
+- Started by: `Assistant`, which started the planning session;
 - For: the person, as a relative link to their document in `SPEC/factory/people/`;
 - Started and Finished: `YYYY-MM-DD HH:MM`;
 - Outcome: `planned`;
 - Item: the planned item, as a relative link;
 - Statements: the course of the planning, the coupling the cut showed, and what was dropped as unclear, bundled by theme under `###` headings and numbered throughout, each one sentence with the reference to its place.
 
-A report is information: it demands nothing and stays unchanged once written. The plan is on `main`, a planned story is `ready` with its claim released, and every change to the standing spec lies on the branch of the story that realizes it. The person goes back to Norman.
+A report is information: it demands nothing and stays unchanged once written. The plan is on `main`, a planned story is `ready` with its claim released, and every change to the standing spec lies on the branch of the story that realizes it. The person goes back to the Assistant.
 
 ## Built from
 
