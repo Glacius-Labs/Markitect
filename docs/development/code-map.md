@@ -65,7 +65,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `cmd/markitect` | Command markitect is the Markitect tool: show, table, topic, questions and compare to look; check to check; new and apply to change the spec; and init, version and licenses to set up. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
+| `cmd/markitect` | Command markitect is the Markitect tool: show, table, topic, questions and diff to look; check to check; and version and licenses about the tool itself. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
 
 ## Maintenance
 

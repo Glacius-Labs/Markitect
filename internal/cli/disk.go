@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -46,23 +45,14 @@ func realPath(p string, links int) (string, error) {
 }
 
 // specInside refuses a spec folder that, through a symbolic link or a
-// junction, lies outside the project folder dir. A spec folder that does not
-// exist yet is judged by the nearest folder above it that does.
+// junction, lies outside the project folder dir. The spec folder exists: the
+// project is loaded before this is asked.
 func specInside(dir, spec string) error {
 	project, err := realPath(dir, 0)
 	if err != nil {
 		return err
 	}
-	at := filepath.Join(dir, filepath.FromSlash(spec))
-	for {
-		if _, err := os.Lstat(at); err == nil {
-			break
-		} else if !errors.Is(err, fs.ErrNotExist) {
-			return err
-		}
-		at = filepath.Dir(at)
-	}
-	real, err := realPath(at, 0)
+	real, err := realPath(filepath.Join(dir, filepath.FromSlash(spec)), 0)
 	if err != nil {
 		return err
 	}

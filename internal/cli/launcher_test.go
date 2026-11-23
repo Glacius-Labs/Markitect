@@ -406,8 +406,8 @@ func TestDevelopmentLauncherStartsTheBuildOnThePath(t *testing.T) {
 	}
 	path := "PATH=" + strings.Join([]string{bin, source, pathWithoutMarkitect()}, string(os.PathListSeparator))
 	data := testkit.TempDir(t)
-	out, code := launch(t, root, "http://unused.invalid", data, []string{path}, "status", "--json", "two words")
-	if code != 0 || !strings.Contains(out, "from source: status --json two words") {
+	out, code := launch(t, root, "http://unused.invalid", data, []string{path}, "check", "--json", "two words")
+	if code != 0 || !strings.Contains(out, "from source: check --json two words") {
 		t.Fatalf("exit %d:\n%s", code, out)
 	}
 	if entries, _ := os.ReadDir(data); len(entries) != 0 {
@@ -418,9 +418,9 @@ func TestDevelopmentLauncherStartsTheBuildOnThePath(t *testing.T) {
 	// folder of the test's own.
 	if runtime.GOOS == "windows" {
 		if _, err := exec.LookPath("git"); err == nil {
-			cmd := exec.Command("cmd", "/d", "/c", "markitect status")
+			cmd := exec.Command("cmd", "/d", "/c", "markitect check")
 			cmd.Env = append(os.Environ(), path, "CLAUDE_PLUGIN_DATA="+data, "HOME="+testkit.TempDir(t))
-			if out, err := cmd.CombinedOutput(); err != nil || !strings.Contains(string(out), "from source: status") {
+			if out, err := cmd.CombinedOutput(); err != nil || !strings.Contains(string(out), "from source: check") {
 				t.Fatalf("markitect.cmd: %v\n%s", err, out)
 			}
 		}

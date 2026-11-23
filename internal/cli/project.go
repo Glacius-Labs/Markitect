@@ -53,11 +53,31 @@ func workingFolder(o options) (string, error) {
 const noProjectNote = "that file holds one line, the path of the spec folder below the project folder"
 
 // noProject says that no project was found, and what the missing file holds.
+// Where .markitect/spec exists but is no file, it says that instead.
 func noProject(o options, at string) error {
 	if o.dir != "" {
-		return fmt.Errorf("%s holds no %s; %s", o.dir, project.SpecFile, noProjectNote)
+		return notAProject(o.dir, at)
+	}
+	for dir := at; ; {
+		if _, err := os.Stat(filepath.Join(dir, filepath.FromSlash(project.SpecFile))); err == nil {
+			return notAProject(dir, dir)
+		}
+		up := filepath.Dir(dir)
+		if up == dir {
+			break
+		}
+		dir = up
 	}
 	return fmt.Errorf("no folder from %s upward holds %s; %s", at, project.SpecFile, noProjectNote)
+}
+
+// notAProject says why the folder dir, which the user named as shown, is no
+// project: it lacks .markitect/spec, or that is no file.
+func notAProject(shown, dir string) error {
+	if _, err := os.Stat(filepath.Join(dir, filepath.FromSlash(project.SpecFile))); err == nil {
+		return fmt.Errorf("%s: %s is no file, but a project needs one there; %s", shown, project.SpecFile, noProjectNote)
+	}
+	return fmt.Errorf("%s holds no %s; %s", shown, project.SpecFile, noProjectNote)
 }
 
 // mustProject is the project a command works in: the folder -C names, which

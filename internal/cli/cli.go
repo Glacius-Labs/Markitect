@@ -289,10 +289,6 @@ type diagnostic struct {
 	Message string `json:"message"`
 }
 
-func (d diagnostic) String() string {
-	return fmt.Sprintf("%s:%d: %s: %s", d.File, d.Line, d.Code, d.Message)
-}
-
 // output prints a JSON document with --json and the text otherwise.
 func output(o options, stdout io.Writer, doc any, text string) (int, error) {
 	if o.json {

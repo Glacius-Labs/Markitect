@@ -2,7 +2,7 @@
 // project folder: the file .markitect/spec that makes a folder a project and
 // names its spec folder, the project loaded with its spec, and the difference
 // between the specs of two projects. It reads only the file system it is
-// handed, so that two projects, such as two states to compare, load the same
+// handed, so that two projects, such as the two that diff compares, load the same
 // way.
 //
 // The rules are in docs/guides/project-reference.md.

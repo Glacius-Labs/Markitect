@@ -21,7 +21,7 @@ func projectAt(arg string) (string, error) {
 		return "", fmt.Errorf("not a folder: %s", arg)
 	}
 	if !isProject(abs) {
-		return "", fmt.Errorf("%s holds no %s; %s", arg, project.SpecFile, noProjectNote)
+		return "", notAProject(arg, abs)
 	}
 	return abs, nil
 }

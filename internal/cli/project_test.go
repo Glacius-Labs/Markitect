@@ -2,40 +2,15 @@ package cli
 
 import (
 	"encoding/json"
-	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 )
-
-// tree lists every file and folder below dir, folders with a trailing slash.
-func tree(t *testing.T, dir string) []string {
-	t.Helper()
-	var out []string
-	err := filepath.WalkDir(dir, func(p string, e fs.DirEntry, err error) error {
-		if err != nil || p == dir {
-			return err
-		}
-		rel, _ := filepath.Rel(dir, p)
-		rel = filepath.ToSlash(rel)
-		if e.IsDir() {
-			rel += "/"
-		}
-		out = append(out, rel)
-		return nil
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	sort.Strings(out)
-	return out
-}
 
 func TestFindProject(t *testing.T) {
 	root := filepath.Join("C:", "work")
