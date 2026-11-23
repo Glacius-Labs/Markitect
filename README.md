@@ -56,9 +56,10 @@ go install github.com/Glacius-Labs/Markitect/cmd/markitect@main
 A project is set up by hand. In an empty folder:
 
 1. **Name the spec folder.** Write the file `.markitect/spec` with the one line `docs/spec`.
-2. **Copy the default.** From a clone of this repository, copy the module `internal/library/core/`, six general types such as Rule and Role, to `docs/spec/core/`.
-3. **Write your modules.** Each module is a folder with a `README.md` that says what it is for and lists under `Contents` what other modules may link, such as `docs/spec/lending/`. Write its documents with your agent.
-4. **Check it.** `markitect check` names what is off: a missing section, a link to no document, a link into what a module keeps internal. Fix it until `check` reports nothing.
+2. **Name what to leave out.** Write the file `.markitect/ignore` with the files that are not your project's own, one pattern per line, such as `.git/` and your build output; `markitect diff` counts everything else.
+3. **Copy the default.** From a clone of this repository, copy the module `internal/library/core/`, six general types such as Rule and Role, to `docs/spec/core/`.
+4. **Write your modules.** Each module is a folder with a `README.md` that says what it is for and lists under `Contents` what other modules may link, such as `docs/spec/lending/`. Write its documents with your agent.
+5. **Check it.** `markitect check` names what is off: a missing section, a link to no document, a link into what a module keeps internal. Fix it until `check` reports nothing.
 
 The [project reference](docs/guides/project-reference.md#setting-up-a-project-by-hand) gives the details, the [library](docs/guides/library.md) the default, and the [language reference](docs/guides/language-reference.md) modules and every command. The plugin in [`plugin/`](plugin/) only fetches the tool for Claude Code ([the plugin](docs/guides/plugin.md)).
 
