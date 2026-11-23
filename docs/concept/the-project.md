@@ -1,12 +1,12 @@
 # The project
 
-**A project is the nearest folder upward that holds the file `.markitect/spec`** ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)). Its one line names the spec folder, an ordinary folder of documentation such as `docs/spec/`. Beside it, the file `.markitect/ignore`, optional, names what is not the project's own files, such as build output and fetched dependencies, so that `diff` leaves it out ([project reference](../guides/project-reference.md#the-ignore-file)). These two files are all Markitect keeps in a project, both in the one folder `.markitect/`: the tool reads nothing else from it, and nothing creates them. A person writes them.
+**A project is the nearest folder upward that holds the file `.markitect/spec`** ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads)). Its one line names the spec folder, an ordinary folder of documentation such as `docs/spec/`. Beside it, the file `.markitect/ignore`, optional, names files that are not the project's own, such as build output and fetched dependencies, so that `diff` leaves them out ([project reference](../guides/project-reference.md#the-ignore-file)). These two files are all Markitect keeps in a project, both in the one folder `.markitect/`: the tool reads nothing else from it, and nothing creates them. A person writes them.
 
 Deleting the folder `.markitect/` and the tool leaves an ordinary repository with its documentation, code and tests.
 
 ## The spec and the files
 
-The spec says what should hold, and the project's files are what is. Each module's README names under `Realized in` where in the project the module is built ([§3](the-language.md#modules)), so two states of a project show which modules moved, and where the spec and the files moved apart ([DEC-158](../decisions.md#dec-158-a-module-says-where-it-is-built-and-diff-compares-its-spec-and-its-files)). `diff` compares them module by module with nothing stored, the older state being any copy of the project, and shows a change without judging it: files that changed without their spec may be drift or a rebuild to the same spec, and the tool cannot know which ([§6](the-tool.md#reading-the-spec)).
+The spec says what should hold, and the project's files are what is. Each module's README names under `Realized in` where in the project the module is built ([§3](the-language.md#modules)), so that `diff` can compare two states of a project module by module and report a change without judging it ([§6](the-tool.md#reading-the-spec), [DEC-158](../decisions.md#dec-158-a-module-says-where-it-is-built-and-diff-compares-its-spec-and-its-files)).
 
 ## Setting up a project
 
@@ -21,7 +21,7 @@ The default is what ships with Markitect ([DEC-156](../decisions.md#dec-156-a-mo
 
 ## The way of working
 
-A way of working is always the project's own, also when it starts from one that a default ships; today the default ships none. The project describes how its people and agents work in its spec, with general types such as Role, Rule and Decision of `core` and types of its own, and skills, agents and scripts realize it, as code realizes the product ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)). Markitect ships no skill and no folder for the work.
+A way of working is always the project's own, also when it starts from one that a default ships; today the default ships none. The project describes how its people and agents work in its spec, with general types such as Role, Rule and Decision of `core` and types of its own, and skills, agents and scripts realize it, as code realizes the product ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads)). Markitect ships no skill and no folder for the work.
 
 ## The plugin and the version
 

@@ -89,13 +89,13 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 ## The default and the tool
 
-**Analogy.** Terraform runs the same command line everywhere and copies modules from a registry into the configuration, which then owns them. Markitect's tool and the module of its default are cut the same way, except that a person copies the module by hand ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
+**Analogy.** Terraform runs the same command line everywhere and copies modules from a registry into the configuration, which then owns them. Markitect's tool and the module of its default are cut the same way, except that a person copies the module by hand ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads)).
 
 **Differs.** The way of working is no process document beside the project and no part of the default: the project states it in its own spec, with general types, and its skills, agents and scripts realize it.
 
 ## The tool's conventions
 
-**Taken.** A diagnostic reads `file:line: code: message`, as compilers and linters print it; exit code 0 means all is well, 1 that something was found and 2 that the command could not run; and `--json` prints one document for scripts. Commands are named after what they do ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
+**Taken.** A diagnostic reads `file:line: code: message`, as compilers and linters print it; exit code 0 means all is well, 1 that something was found and 2 that the command could not run; and `--json` prints one document for scripts. Commands are named after what they do ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads)).
 
 ## Related practice
 

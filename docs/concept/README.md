@@ -15,11 +15,11 @@ Make one clean and simple version that works reliably ([DEC-120](../decisions.md
 | Is the spec sound in itself? | `check` finds what is technically wrong: titles, types, missing or empty sections, references and values that do not fit their property, dead links, links into what a module keeps internal and cycles between modules ([§3](the-language.md#what-check-catches)) |
 | Is the spec good? | Signals say where reading pays off, and competency questions measure the spec by its purpose; a reader judges ([§5](is-the-spec-good.md)) |
 | What is the project? | The spec, shown by the tool and explained by an agent with a citation for each statement ([§6](the-tool.md#reading-the-spec)) |
-| What changed? | The repository's ordinary diff, like every change, and `diff` between two states of a project: the documents of the spec, and for each module whether its spec, its files or both changed, shown and not judged ([§6](the-tool.md#reading-the-spec)) |
+| What changed? | The repository's ordinary diff, like every change, and `diff` between two states of a project: the documents of the spec, and for each module whether its spec, its files or both changed, reported and not judged ([§6](the-tool.md#reading-the-spec)) |
 
 ## What Markitect leaves to the project
 
-The way a project works is not part of Markitect ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)). How what happens is noted, how planning goes, which meetings there are, what a story or a report is, how work is reviewed and accepted and where the work lies belong to the project's own way of working. The project describes it in its own spec, with general types, and skills, agents and scripts realize that spec, as code realizes the product ([§7](the-project.md#the-way-of-working)).
+The way a project works is not part of Markitect ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads)). How what happens is noted, how planning goes, which meetings there are, what a story or a report is, how work is reviewed and accepted and where the work lies belong to the project's own way of working. The project describes it in its own spec, with general types, and skills, agents and scripts realize that spec, as code realizes the product ([§7](the-project.md#the-way-of-working)).
 
 ## The other pages
 

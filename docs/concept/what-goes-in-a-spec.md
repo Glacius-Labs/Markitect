@@ -12,7 +12,7 @@ So it is clear what a defect is. Where something differs from what the spec stat
 
 The spec describes the project as it should be now, as if it came from an ideal process; the way there is in the repository's history. It describes what should hold, not the work that changes the spec: a backlog, a plan, the tasks towards a goal and the risks of the project stay out. What a running operation does belongs in: its processes and recurring tasks, the way of working of the project, and goals with a date, which say what should hold by then.
 
-**The work is not the target.** A plan item, a ticket or a report is the occasion for a change: it changes its state all the time, and a finished one is history. How a project keeps its work, in which form and where, is part of its way of working, which its spec states ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
+**The work is not the target.** A plan item, a ticket or a report is the occasion for a change: it changes its state all the time, and a finished one is history. How a project keeps its work, in which form and where, is part of its way of working, which its spec states ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads)).
 
 ## What a software project states
 

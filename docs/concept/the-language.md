@@ -116,7 +116,7 @@ The property's type gives a value its form. A fixed value, such as the status of
 
 - The text before its first section says what the module is for.
 - `Responsible`, optional, links the role that answers for the module. Without it, the role of the module above answers.
-- `Realized in`, optional, says where in the project the module is built: paths written as code, relative to the project folder, with the wildcards of the patterns below; a path that ends with `/` is a folder with everything below it ([DEC-158](../decisions.md#dec-158-a-module-says-where-it-is-built-and-diff-compares-its-spec-and-its-files)). `diff` reads them to show for each module whether its spec, its files or both changed ([§6](the-tool.md#reading-the-spec)).
+- `Realized in`, optional, says where in the project the module is built: paths written as code, relative to the project folder, with the wildcards of the patterns below; a path that ends with `/` is a folder with everything below it ([DEC-158](../decisions.md#dec-158-a-module-says-where-it-is-built-and-diff-compares-its-spec-and-its-files)). `diff` reads them to report for each module whether its spec, its files or both changed ([§6](the-tool.md#reading-the-spec)).
 - `Contents` lists what the module shows to the other modules.
 
 A README is never itself the thing it describes: in a module `shop`, the shop is a document `shop/shop.md` of its own, and the README says what the module holds.

@@ -2,7 +2,7 @@
 
 **The spec is a typed, declarative specification language in Markdown** ([DEC-119](../decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)). It works like declarative programming, with an agent as the executor: it states what should hold, not how to get there, and agents make the project match it. It is a specification language as TLA+ and Alloy are, and nothing in it is executed. Its structure is formal and checked by the tool; its content is prose that an agent interprets. Because an agent can be wrong, its results are checked.
 
-The spec describes the whole project, its way of working included. That way of working is the project's own: Markitect gives the language to state it and nothing of it ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
+The spec describes the whole project, its way of working included. That way of working is the project's own: Markitect gives the language to state it and nothing of it ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads)).
 
 ## Terraform is the image
 
@@ -19,7 +19,7 @@ A compiler would be the other image. Terraform fits better, because the work is 
 
 ## Three things
 
-Markitect is three things ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads-the-spec)).
+Markitect is three things ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads)).
 
 | Thing | What it is |
 |---|---|

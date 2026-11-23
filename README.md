@@ -133,7 +133,7 @@ The tool and the default are built on Main and covered by tests and a command sm
 | Page | Covers |
 | --- | --- |
 | [Language reference](docs/guides/language-reference.md) | The spec language and every command |
-| [Project reference](docs/guides/project-reference.md) | The project, setting one up by hand, `version` and `diff` |
+| [Project reference](docs/guides/project-reference.md) | The project, its ignore file, setting one up by hand, `version` and `diff` |
 | [The plugin](docs/guides/plugin.md) | The launcher that fetches the tool, and its start hooks |
 | [Library](docs/guides/library.md), [Signals](docs/guides/signals.md) | The default, and the signals of a spec |
 | [Concept](docs/concept/README.md) | The one description of the product |
