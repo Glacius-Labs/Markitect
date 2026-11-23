@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -79,13 +80,19 @@ func TestEachDefectOfTheWorkHasItsDiagnostic(t *testing.T) {
 	if code != ExitFound || out != want || errOut != "" {
 		t.Errorf("got %d\n%s%s\nwant\n%s", code, out, errOut, want)
 	}
-	// The errors keep status and confirm from giving a list or writing.
+	// The errors of the work block neither status nor confirm: both are about
+	// the spec and its artifacts.
 	code, out, _ = run("status", "-C", dir)
-	if code != ExitFound || !strings.Contains(out, ".markitect/plan/lending/renew-online/no-goal.md:3: section.missing") || !strings.HasSuffix(out, "no list while check finds errors or the state has errors\n") {
+	if code != ExitFound || strings.Contains(out, ".markitect") || strings.Contains(out, "no list while") || !strings.Contains(out, "changed: lending/renew.md@") {
 		t.Errorf("status: %d %s", code, out)
 	}
-	if code, _, errOut := run("confirm", "-C", dir, "lending/renew.md@00000000", "ok", "-e", "src/renew.go"); code != ExitFound || !strings.Contains(errOut, "nothing is confirmed while check finds errors") {
-		t.Errorf("confirm: %d %s", code, errOut)
+	if code, out, errOut := run("confirm", "-C", dir, "lending/renew.md@"+fingerprint(t, dir, "lending/renew.md"), "ok", "-e", "src/renew.go"); code != ExitOK {
+		t.Errorf("confirm: %d %s %s", code, out, errOut)
+	}
+	// The errors of the spec still block them.
+	write(t, dir, "docs/spec/lending/renew.md", "# Renew\n\nSee [nothing](gone.md).\n")
+	if code, out, _ := run("status", "-C", dir); code != ExitFound || !strings.HasSuffix(out, "no list while the spec or the state has errors\n") {
+		t.Errorf("status: %d %s", code, out)
 	}
 }
 
@@ -178,20 +185,103 @@ func TestCompareNamesTheDocumentsOfTheWork(t *testing.T) {
 	}
 }
 
-// move rewrites links in the spec only: a link from the work to a document
-// that moved is dead afterwards, and check names it.
-func TestMoveLeavesTheLinksOfTheWorkToCheck(t *testing.T) {
+// move rewrites the links of the work to the document as it rewrites those of
+// the spec, type lines included, so that check stays clean.
+func TestMoveRewritesTheLinksOfTheWork(t *testing.T) {
 	dir := project(t, workFiles())
 	code, out, errOut := run("move", "-C", dir, "lending/renew", "lending/renewal")
-	if code != ExitOK || out != "moved lending/renew.md -> lending/renewal.md\n" {
-		t.Fatal(code, out, errOut)
+	want := "moved lending/renew.md -> lending/renewal.md\nchanged .markitect/findings/pending/late-fee.md\nchanged .markitect/plan/lending/renew-online/feature.md\n"
+	if code != ExitOK || out != want {
+		t.Fatalf("%d %s %s\nwant\n%s", code, out, errOut, want)
 	}
-	code, out, _ = run("check", "-C", dir)
-	if code != ExitFound || !strings.Contains(out, `.markitect/findings/pending/late-fee.md:6: link.unresolved: no file at "../../../docs/spec/lending/renew.md"`) ||
-		!strings.Contains(out, "2 errors in 6 documents, 7 documents of the work") {
-		t.Errorf("%d\n%s", code, out)
+	if code, out, _ := run("check", "-C", dir); code != ExitOK || out != "0 errors in 6 documents, 7 documents of the work\n" {
+		t.Errorf("check after the move: %d %s", code, out)
 	}
-	if got := read(t, dir, ".markitect/findings/pending/late-fee.md"); got != workFiles()[".markitect/findings/pending/late-fee.md"] {
-		t.Error("move changed a document of the work")
+	files := workFiles()
+	if got, want := read(t, dir, ".markitect/findings/pending/late-fee.md"), strings.Replace(files[".markitect/findings/pending/late-fee.md"], "lending/renew.md", "lending/renewal.md", 1); got != want {
+		t.Errorf("late-fee.md is\n%q\nwant\n%q", got, want)
+	}
+	if got := read(t, dir, ".markitect/context/build/checkpoint.md"); got != files[".markitect/context/build/checkpoint.md"] {
+		t.Error("move changed a document of the work that links nothing that moved")
+	}
+	// The type line of a document of the work names a type that moves too.
+	code, out, _ = run("move", "-C", dir, "packages/factory/story", "packages/factory/tale", "--json")
+	var doc moveResult
+	if err := json.Unmarshal([]byte(out), &doc); err != nil || code != ExitOK {
+		t.Fatal(code, out)
+	}
+	same(t, "work", doc.Work, []string{".markitect/plan/lending/renew-online/renew-a-loan.md"})
+	if len(doc.Left) != 0 || len(doc.Changed) != 0 {
+		t.Errorf("%+v", doc)
+	}
+	if got := read(t, dir, ".markitect/plan/lending/renew-online/renew-a-loan.md"); !strings.Contains(got, "Type: [Story](../../../../docs/spec/packages/factory/tale.md)\n") {
+		t.Error(got)
+	}
+	if code, out, _ := run("check", "-C", dir); code != ExitOK {
+		t.Errorf("check after the second move: %d %s", code, out)
+	}
+	// A move brings no change to the state of the spec because of the work.
+	for _, line := range statusOf(t, dir).summary() {
+		if strings.Contains(line, ".markitect") {
+			t.Errorf("status lists %s", line)
+		}
+	}
+}
+
+// A document of the work that cannot be read does not stop a move: it stays
+// as it is and the move names it.
+func TestMoveLeavesAnUnreadableDocumentOfTheWorkAsItIs(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows has no Unix modes")
+	}
+	dir := project(t, workFiles())
+	locked := filepath.Join(dir, ".markitect", "findings", "pending", "late-fee.md")
+	if err := os.Chmod(locked, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chmod(locked, 0o644) })
+	if _, err := os.ReadFile(locked); err == nil {
+		t.Skip("this user reads a file without permission")
+	}
+	code, out, errOut := run("move", "-C", dir, "lending/renew", "lending/renewal")
+	if code != ExitOK || !strings.Contains(out, "changed .markitect/plan/lending/renew-online/feature.md\n") ||
+		!strings.Contains(out, "left as it is .markitect/findings/pending/late-fee.md: cannot be read\n") {
+		t.Fatalf("%d %s %s", code, out, errOut)
+	}
+}
+
+// What the project's .gitignore files exclude is not read, as the walk does not
+// read it: check and compare skip it. .markitect/ignore does not apply, and a
+// folder that starts with a dot stays skipped.
+func TestTheWorkIsReadLikeTheRestOfTheProject(t *testing.T) {
+	files := workFiles()
+	files[".gitignore"] = "local/\n*.draft.md\n"
+	files[".markitect/context/local/notes.md"] = "no title, [dead](gone.md)\n"
+	files[".markitect/plan/lending/idea.draft.md"] = "no title either\n"
+	older := project(t, files)
+	if code, out, _ := run("check", "-C", older); code != ExitOK || out != "0 errors in 6 documents, 7 documents of the work\n" {
+		t.Errorf("check: %d %s", code, out)
+	}
+	// .markitect/ignore names files that realize nothing; it does not hide a
+	// document of the work from check.
+	write(t, older, ".markitect/context/capture/no-title.md", "text without a title\n")
+	write(t, older, ".markitect/ignore", ".markitect/context/capture/no-title.md\n")
+	if code, out, _ := run("check", "-C", older); code != ExitFound || !strings.Contains(out, ".markitect/context/capture/no-title.md:1: title: missing level-1 title") {
+		t.Errorf("check with .markitect/ignore: %d %s", code, out)
+	}
+	if err := os.Remove(filepath.Join(older, ".markitect", "context", "capture", "no-title.md")); err != nil {
+		t.Fatal(err)
+	}
+	newer := copyTree(t, older, false)
+	write(t, newer, ".markitect/context/local/more.md", "ignored too\n")
+	write(t, newer, ".markitect/plan/lending/other.draft.md", "ignored too\n")
+	write(t, newer, ".markitect/context/capture/.raw/new.md", "a hidden folder\n")
+	if code, out, _ := run("compare", older, newer); code != ExitOK || !strings.Contains(out, "## Work (0)\n") {
+		t.Errorf("compare: %d %s", code, out)
+	}
+	// Excluding the folder of the work excludes what lies in it.
+	write(t, newer, ".gitignore", "local/\n*.draft.md\n.markitect/plan/\n")
+	if code, out, _ := run("check", "-C", newer); code != ExitOK || !strings.Contains(out, "5 documents of the work") {
+		t.Errorf("check with an ignored folder: %d %s", code, out)
 	}
 }

@@ -21,11 +21,22 @@ type newResult struct {
 	Path string `json:"path"`
 }
 
+// moveResult is the JSON document of move: the documents of the spec whose
+// links it rewrote, below the spec folder; the documents of the work whose
+// links it rewrote, below the project folder; and the documents of the work it
+// could not rewrite and left as they were, with the reason.
 type moveResult struct {
 	header
-	From    string   `json:"from"`
-	To      string   `json:"to"`
-	Changed []string `json:"changed"`
+	From    string     `json:"from"`
+	To      string     `json:"to"`
+	Changed []string   `json:"changed"`
+	Work    []string   `json:"work"`
+	Left    []leftJSON `json:"left"`
+}
+
+type leftJSON struct {
+	Path   string `json:"path"`
+	Reason string `json:"reason"`
 }
 
 type applyResult struct {
@@ -58,8 +69,8 @@ func newDocument(o options, stdout io.Writer) (int, error) {
 }
 
 // move moves a document and carries the state: under the lock of the state, it
-// writes the moved and rewritten files, the state and the history in one
-// change set, all or nothing.
+// writes the moved and rewritten files of the spec and of the work, the state
+// and the history in one change set, all or nothing.
 func move(o options, stdout io.Writer) (int, error) {
 	dir, err := mustProject(o)
 	if err != nil {
@@ -78,7 +89,7 @@ func move(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	if blocked := blockers(w, nil, problems); len(blocked) > 0 {
+	if blocked := blockers(w, problems); len(blocked) > 0 {
 		r := &edit.Refusal{}
 		for _, d := range blocked {
 			r.Problems = append(r.Problems, d.String())
@@ -90,10 +101,23 @@ func move(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
+	// The links of the work to the document are rewritten as those of the
+	// spec are; a document of the work that cannot be read or rewritten is
+	// left as it is.
+	work, err := state.ReadWorkLenient(w.Project)
+	if err != nil {
+		return ExitFailed, err
+	}
+	was, now := path.Join(w.SpecFolder, m.From), path.Join(w.SpecFolder, m.To)
+	relinked, left := edit.RelinkWork(work.Documents, was, now)
+	for _, p := range work.Unreadable {
+		left = append(left, edit.Left{Path: p, Reason: "cannot be read"})
+	}
 	changes, err := carry(dir, w, m, rows)
 	if err != nil {
 		return ExitFailed, err
 	}
+	changes.Writes = append(changes.Writes, relinked...)
 	if !lock.held() {
 		return ExitFailed, errors.New("another command took over the lock of the state; nothing is moved")
 	}
@@ -101,11 +125,19 @@ func move(o options, stdout io.Writer) (int, error) {
 		return ExitFailed, err
 	}
 	text := "moved " + m.From + " -> " + m.To + "\n"
-	changed := append([]string{}, m.Changed...)
+	changed, relinkedPaths, leftJSONs := append([]string{}, m.Changed...), []string{}, []leftJSON{}
 	for _, p := range changed {
 		text += "changed " + p + "\n"
 	}
-	return output(o, stdout, moveResult{newHeader("move"), m.From, m.To, changed}, text)
+	for _, wr := range relinked {
+		relinkedPaths = append(relinkedPaths, wr.Path)
+		text += "changed " + wr.Path + "\n"
+	}
+	for _, l := range left {
+		leftJSONs = append(leftJSONs, leftJSON{l.Path, l.Reason})
+		text += "left as it is " + l.Path + ": " + l.Reason + "\n"
+	}
+	return output(o, stdout, moveResult{newHeader("move"), m.From, m.To, changed, relinkedPaths, leftJSONs}, text)
 }
 
 func apply(o options, stdout io.Writer) (int, error) {

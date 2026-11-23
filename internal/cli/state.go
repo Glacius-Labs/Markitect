@@ -60,17 +60,13 @@ type statusNote struct {
 	Reason  string `json:"reason"`
 }
 
-// blockers are the errors of check, in the spec and in the documents of the
-// work, and the unreadable lines of the state, which keep status from giving
-// a list and confirm from writing. work is nil where only the spec and the
-// state count.
-func blockers(w *workspace, work *state.Work, problems []state.Problem) []diagnostic {
+// blockers are the errors of check in the spec and the unreadable lines of
+// the state, which keep status from giving a list and confirm and move from
+// writing. The documents of the work are no part of the spec: their errors
+// block nothing.
+func blockers(w *workspace, problems []state.Problem) []diagnostic {
 	out := []diagnostic{}
-	found := lang.Check(w.Spec)
-	if work != nil {
-		found = append(found, work.Diagnostics...)
-	}
-	for _, d := range found {
+	for _, d := range lang.Check(w.Spec) {
 		out = append(out, diagnostic{File: d.Path, Line: d.Line, Code: d.Code, Message: d.Message})
 	}
 	for _, p := range problems {
@@ -92,11 +88,7 @@ func status(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	work, err := workOf(w)
-	if err != nil {
-		return ExitFailed, err
-	}
-	doc := statusDocument{header: newHeader("status"), Errors: blockers(w, work, problems),
+	doc := statusDocument{header: newHeader("status"), Errors: blockers(w, problems),
 		Changed: []statusEntry{}, Suspect: []statusEntry{}, Unexplained: []string{}, Notes: []statusNote{}, History: []diagnostic{}}
 	if err := s.Fingerprints(); err != nil {
 		return ExitFailed, err
@@ -106,7 +98,7 @@ func status(o options, stdout io.Writer) (int, error) {
 		for _, d := range doc.Errors {
 			b.WriteString(d.String() + "\n")
 		}
-		b.WriteString("no list while check finds errors or the state has errors\n")
+		b.WriteString("no list while the spec or the state has errors\n")
 		code, err := output(o, stdout, doc, b.String())
 		if err == nil {
 			code = ExitFound
@@ -195,16 +187,12 @@ func confirm(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	work, err := workOf(w)
-	if err != nil {
-		return ExitFailed, err
-	}
-	if blocked := blockers(w, work, problems); len(blocked) > 0 {
+	if blocked := blockers(w, problems); len(blocked) > 0 {
 		r := &state.Refusal{}
 		for _, d := range blocked {
 			r.Problems = append(r.Problems, d.String())
 		}
-		r.Problems = append(r.Problems, "nothing is confirmed while check finds errors or the state has errors")
+		r.Problems = append(r.Problems, "nothing is confirmed while the spec or the state has errors")
 		return ExitFound, r
 	}
 	_, inSpec := w.Spec.Document(doc)

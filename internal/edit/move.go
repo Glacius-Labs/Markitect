@@ -93,3 +93,40 @@ func verify(p string, fresh []byte, before []lang.Ref, pick func(*lang.Document)
 	}
 	return nil
 }
+
+// Left is a document that a change leaves as it is, with the reason.
+type Left struct{ Path, Reason string }
+
+// RelinkWork rewrites, in documents outside the spec folder, such as the
+// documents of the work, every link to the document at from, so that it
+// points to to; both are paths below the project folder, as the documents'
+// own paths are. The rewrite is the one MoveDocument makes in the spec:
+// type lines and link reference definitions included, the #section and every
+// other byte kept. A document whose links cannot be rewritten so that each
+// still reaches what it did is left as it is and named in left.
+func RelinkWork(docs []*lang.Document, from, to string) (writes []Write, left []Left) {
+	for _, d := range docs {
+		target := func(r lang.Ref) string {
+			if r.Target == from {
+				return to
+			}
+			return r.Target
+		}
+		fresh, err := rewrite(d, d.Refs, func(r lang.Ref) (string, bool) {
+			if r.Target != from {
+				return "", false
+			}
+			return rel(to, dir(d.Path)), true
+		})
+		if err == nil && !bytes.Equal(fresh, d.Source) {
+			err = verify(d.Path, fresh, d.Refs, func(d *lang.Document) []lang.Ref { return d.Refs }, target)
+		}
+		switch {
+		case err != nil:
+			left = append(left, Left{d.Path, strings.TrimPrefix(err.Error(), d.Path+": ")})
+		case !bytes.Equal(fresh, d.Source):
+			writes = append(writes, Write{Path: d.Path, Data: fresh})
+		}
+	}
+	return writes, left
+}

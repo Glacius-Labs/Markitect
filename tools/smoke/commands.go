@@ -197,7 +197,7 @@ func (s *smoke) projectCommands() error {
 	}
 	if out, err := markitect(1, "status"); err != nil {
 		return err
-	} else if err := requireContains(out, "no list while check finds errors"); err != nil {
+	} else if err := requireContains(out, "no list while the spec or the state has errors"); err != nil {
 		return err
 	}
 
@@ -378,6 +378,12 @@ func (s *smoke) projectCommands() error {
 		return err
 	} else if err := requireContains(out, ".markitect/plan/story.md:3: section.missing: missing section \"State\" required by packages/factory/story.md\n",
 		".markitect/plan/story.md:5: link.unresolved: no file at \"../../docs/spec/gone.md\"\n"); err != nil {
+		return err
+	}
+	// The errors of the work block nothing of status.
+	if out, err := markitect(1, "status"); err != nil {
+		return err
+	} else if err := requireContains(out, "1 changed, 2 suspect, 0 unexplained\n"); err != nil {
 		return err
 	}
 	if err := os.Remove(filepath.Join(repo, ".markitect", "plan", "story.md")); err != nil {

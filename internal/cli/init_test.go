@@ -124,8 +124,17 @@ func TestInitLaysOutTheProject(t *testing.T) {
 	if strings.Contains(out, "\nfactory/") || strings.HasPrefix(out, "factory/") {
 		t.Errorf("check finds something in factory/:\n%s", out)
 	}
-	if code, _, errOut := run("status", "-C", dir); code == ExitFailed {
-		t.Error(errOut)
+	// status gives no list while the templates have empty sections: it prints
+	// the errors check printed, and says why.
+	var lines []string
+	for _, line := range strings.Split(out, "\n") {
+		if line != "" && !strings.Contains(line, " errors in ") {
+			lines = append(lines, line)
+		}
+	}
+	code, statusOut, _ := run("status", "-C", dir)
+	if want := strings.Join(lines, "\n") + "\nno list while the spec or the state has errors\n"; code != ExitFound || statusOut != want {
+		t.Errorf("status: %d\n%s\nwant\n%s", code, statusOut, want)
 	}
 }
 
@@ -262,14 +271,50 @@ func TestInitRefusesWhatIsInTheWay(t *testing.T) {
 	})
 }
 
+// contents lists every file below dir with its text.
+func contents(t *testing.T, dir string) map[string]string {
+	t.Helper()
+	out := map[string]string{}
+	err := filepath.WalkDir(dir, func(p string, e fs.DirEntry, err error) error {
+		if err != nil || e.IsDir() {
+			return err
+		}
+		rel, _ := filepath.Rel(dir, p)
+		data, err := os.ReadFile(p)
+		out[filepath.ToSlash(rel)] = string(data)
+		return err
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return out
+}
+
 // TestFailedInitLeavesNothing fails steps of init in turn, the first ones,
 // the last ones and a spread between, and checks that the folder is as it
 // was, so that init can run again.
 func TestFailedInitLeavesNothing(t *testing.T) {
+	// The project holds files that init must leave as they are: its AGENTS.md,
+	// skills of other names, and documents in the spec folder, among them
+	// a package of the library that apply would not overwrite.
+	ours := map[string]string{
+		"AGENTS.md":                         "# Ours\n",
+		".claude/skills/mine/SKILL.md":      "---\nname: mine\n---\n",
+		".agents/skills/theirs/SKILL.md":    "---\nname: theirs\n---\n",
+		"docs/spec/main/own/README.md":      "# Own\n",
+		"docs/spec/main/packages/core/x.md": "# Kept\n",
+	}
+	laidOut := func() string {
+		dir := t.TempDir()
+		for p, text := range ours {
+			write(t, dir, p, text)
+		}
+		return dir
+	}
 	steps := 0
 	fault = func(int) error { steps++; return nil }
 	t.Cleanup(func() { fault = nil })
-	if code, _, errOut := run("init", "-C", t.TempDir(), "--spec", "docs/spec/main"); code != ExitOK {
+	if code, _, errOut := run("init", "-C", laidOut(), "--spec", "docs/spec/main"); code != ExitOK {
 		t.Fatal(errOut)
 	}
 	if steps < 100 {
@@ -279,8 +324,7 @@ func TestFailedInitLeavesNothing(t *testing.T) {
 		if k > 12 && k < steps-3 && k%(steps/30) != 0 {
 			continue
 		}
-		dir := t.TempDir()
-		write(t, dir, "AGENTS.md", "# Ours\n")
+		dir := laidOut()
 		fault = func(step int) error {
 			if step == k {
 				return errors.New("injected")
@@ -290,10 +334,25 @@ func TestFailedInitLeavesNothing(t *testing.T) {
 		if code, out, errOut := run("init", "-C", dir, "--spec", "docs/spec/main"); code != ExitFailed || out != "" || !strings.Contains(errOut, "injected") {
 			t.Errorf("step %d: %d %q %q", k, code, out, errOut)
 		}
-		if got := tree(t, dir); strings.Join(got, " ") != "AGENTS.md" || read(t, dir, "AGENTS.md") != "# Ours\n" {
-			t.Errorf("step %d left %v", k, got)
+		if got := contents(t, dir); !equalMaps(got, ours) {
+			t.Errorf("step %d left %v, want %v", k, got, ours)
+		}
+		if got := tree(t, dir); len(got) != len(ours)+countDirs(ours) {
+			t.Errorf("step %d left folders: %v", k, got)
 		}
 	}
+}
+
+// countDirs is the number of distinct folders the files of ours lie in,
+// the project folder left out.
+func countDirs(files map[string]string) int {
+	dirs := map[string]bool{}
+	for p := range files {
+		for d := path.Dir(p); d != "."; d = path.Dir(d) {
+			dirs[d] = true
+		}
+	}
+	return len(dirs)
 }
 
 func TestInitModes(t *testing.T) {

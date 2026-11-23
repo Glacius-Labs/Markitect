@@ -238,3 +238,35 @@ func TestMovedDocumentIsSuspect(t *testing.T) {
 		t.Error(s)
 	}
 }
+
+// Like the signals of the spec, each change signal shows its first findings
+// and says how many more there are; --all shows every one, and the JSON
+// document always holds every one.
+func TestAllShowsEveryChangeSignal(t *testing.T) {
+	clock(t)
+	dir := confirmed(t)
+	saved := now
+	at := time.Date(2026, 11, 21, 9, 0, 0, 0, time.UTC)
+	now = func() time.Time { at = at.Add(2 * time.Hour); return at }
+	t.Cleanup(func() { now = saved })
+	// Twelve more changes, each of one document and an hour or more apart,
+	// make thirteen with the first.
+	for i := 0; i < 12; i++ {
+		write(t, dir, "docs/spec/roles/member.md", read(t, dir, "docs/spec/roles/member.md")+"\nOne more line.\n")
+		verdict(t, dir, "roles/member.md", "ok", "--file", "src/member.go", "-e", "src/member.go")
+	}
+	count := func(out string) int { return strings.Count(out, " changed together at ") }
+	_, short, _ := run("topic", "-C", dir)
+	if n := count(short); n != 10 || !strings.Contains(short, "… 3 more; --all shows them\n") {
+		t.Errorf("without --all: %d lines\n%s", n, short)
+	}
+	_, long, _ := run("topic", "-C", dir, "--all")
+	if n := count(long); n != 13 || strings.Contains(long[strings.Index(long, "# Change signals"):], "--all shows them") {
+		t.Errorf("with --all: %d lines", n)
+	}
+	_, js, _ := run("topic", "-C", dir, "--json")
+	var doc topicDocument
+	if err := json.Unmarshal([]byte(js), &doc); err != nil || doc.Change == nil || len(doc.Change.Signals["wide-change"]) != 13 {
+		t.Errorf("%v %s", err, js)
+	}
+}

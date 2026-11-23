@@ -387,7 +387,7 @@ func TestErrorsGiveNoList(t *testing.T) {
 	fp := fingerprint(t, dir, "roles/member.md")
 	write(t, dir, "docs/spec/lending/borrow.md", "# Borrow\n\nSee [the fines](fines.md).\n")
 	code, out, _ := run("status", "-C", dir)
-	if code != ExitFound || out != "lending/borrow.md:3: link.unresolved: no document at \"fines.md\"\nno list while check finds errors or the state has errors\n" {
+	if code != ExitFound || out != "lending/borrow.md:3: link.unresolved: no document at \"fines.md\"\nno list while the spec or the state has errors\n" {
 		t.Error(code, out)
 	}
 	if code, _, errOut := run("confirm", "-C", dir, "roles/member.md@"+fp, "ok", "-e", "src/member.go"); code != ExitFound || !strings.Contains(errOut, "link.unresolved") {

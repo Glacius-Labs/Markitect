@@ -1,6 +1,7 @@
 package state
 
 import (
+	"errors"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -42,7 +43,7 @@ func workDiagnostics(t *testing.T, work map[string]string) []string {
 	return out
 }
 
-func TestWorkDocumentsPass(t *testing.T) {
+func TestWorkDocumentsPassWithLinksToExistingFilesAndFolders(t *testing.T) {
 	p := workProject(t, map[string]string{
 		".markitect/plan/lending/renew-online/renew-a-loan.md": "# Renew a loan\n\nType: [Story](../../../../docs/spec/packages/factory/story.md)\n\n## Goal\nMembers renew online, see [the rule](../../../../docs/spec/lending/renew.md) and [the code](../../../../src/renew.go).\n",
 		".markitect/context/build/checkpoint.md":               "# Checkpoint\n\nContinue with [the plan item](../../plan/lending/renew-online/renew-a-loan.md).\n",
@@ -134,5 +135,64 @@ func TestWorkChangesByPath(t *testing.T) {
 	}
 	if strings.Join(got, ", ") != "changed b.md, gone c.md, new d.md" {
 		t.Error(got)
+	}
+}
+
+// A type link whose case differs from the file's names no type of the spec,
+// as a link of a spec document would not.
+func TestWorkTypeLinkIsCaseExact(t *testing.T) {
+	got := workDiagnostics(t, map[string]string{
+		".markitect/plan/a.md": "# A\n\nType: [Story](../../docs/spec/packages/factory/Story.md)\n",
+	})
+	want := `.markitect/plan/a.md:3: type.unresolved: no document at "../../docs/spec/packages/factory/Story.md"`
+	if len(got) != 1 || got[0] != want {
+		t.Errorf("got %v", got)
+	}
+}
+
+// failingRead is a project file system in which one file cannot be read.
+type failingRead struct {
+	fstest.MapFS
+	bad string
+}
+
+func (f failingRead) ReadFile(name string) ([]byte, error) {
+	if name == f.bad {
+		return nil, errors.New("denied")
+	}
+	return f.MapFS.ReadFile(name)
+}
+
+// The lenient reading leaves out what it cannot read and names it; the strict
+// one, which check uses, fails.
+func TestReadWorkLenientNamesWhatItCannotRead(t *testing.T) {
+	p := workProject(t, map[string]string{
+		".markitect/plan/a.md": "# A\n",
+		".markitect/plan/b.md": "# B\n",
+	})
+	p.FS = failingRead{p.FS.(fstest.MapFS), ".markitect/plan/b.md"}
+	if _, err := ReadWork(p); err == nil {
+		t.Error("the strict reading did not fail")
+	}
+	w, err := ReadWorkLenient(p)
+	if err != nil || len(w.Documents) != 1 || w.Documents[0].Path != ".markitect/plan/a.md" || strings.Join(w.Unreadable, " ") != ".markitect/plan/b.md" {
+		t.Errorf("%v %+v", err, w)
+	}
+}
+
+// What the .gitignore files exclude is not read, whatever its depth.
+func TestWorkLeavesOutWhatGitignoreExcludes(t *testing.T) {
+	p := workProject(t, map[string]string{
+		".gitignore":                         "*.draft.md\n",
+		".markitect/.gitignore":              "local/\n",
+		".markitect/plan/idea.draft.md":      "no title\n",
+		".markitect/context/local/n.md":      "no title\n",
+		".markitect/context/kept/n.md":       "# Kept\n",
+		".markitect/context/kept/.gitignore": "/private.md\n",
+		".markitect/context/kept/private.md": "no title\n",
+	})
+	w, err := ReadWork(p)
+	if err != nil || len(w.Documents) != 1 || w.Documents[0].Path != ".markitect/context/kept/n.md" || len(w.Diagnostics) != 0 {
+		t.Errorf("%v %+v", err, w)
 	}
 }

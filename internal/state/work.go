@@ -35,25 +35,63 @@ type Work struct {
 	// Documents are sorted by path below the project folder.
 	Documents   []*lang.Document
 	Diagnostics []lang.Diagnostic
+	// Unreadable are the files ReadWorkLenient could not read, by path.
+	Unreadable []string
 }
 
 // ReadWork reads the documents of the work of a project and checks them: a
 // title; a type line, when there is one, that names a document of the spec,
 // and then the sections that type requires; and every relative link, which
-// must lead to a file or a folder of the project. A document without a type
-// line is checked for its title and its links only. A folder whose name
-// starts with a dot and every file that is no Markdown document are passed
-// over, and a missing folder of the work is no error. A file that cannot be
-// read fails.
-func ReadWork(p *Project) (*Work, error) {
+// must lead to an existing file or folder of the project. A document without
+// a type line is checked for its title and its links only. A folder whose
+// name starts with a dot, every file that is no Markdown document and
+// everything the project's .gitignore files exclude, matched as the walk
+// matches, are passed over, and a missing folder of the work is no error.
+// .markitect/ignore does not apply: it names files that realize nothing. A
+// file that cannot be read fails.
+func ReadWork(p *Project) (*Work, error) { return readWork(p, false) }
+
+// ReadWorkLenient reads the documents of the work as ReadWork does, without
+// checking them, and leaves a file that cannot be read out, naming it in
+// Unreadable.
+func ReadWorkLenient(p *Project) (*Work, error) { return readWork(p, true) }
+
+func readWork(p *Project, lenient bool) (*Work, error) {
 	w := &Work{}
+	git := &walker{fsys: p.FS, git: map[string][]pattern{}}
 	for _, root := range WorkRoots {
+		// A folder that .gitignore excludes is not read, nor is one inside
+		// an excluded folder.
+		skip := false
+		for _, folder := range []string{Dir, root} {
+			ex, err := git.excluded(folder, true)
+			if err != nil {
+				return nil, err
+			}
+			skip = skip || ex
+		}
+		if skip {
+			continue
+		}
 		err := fs.WalkDir(p.FS, root, func(file string, e fs.DirEntry, err error) error {
 			switch {
 			case errors.Is(err, fs.ErrNotExist) && file == root:
 				return fs.SkipDir
 			case err != nil:
 				return err
+			}
+			if file != root {
+				ex, err := git.excluded(file, e.IsDir())
+				if err != nil {
+					return err
+				}
+				if ex && e.IsDir() {
+					return fs.SkipDir
+				} else if ex {
+					return nil
+				}
+			}
+			switch {
 			case e.IsDir():
 				if file != root && strings.HasPrefix(e.Name(), ".") {
 					return fs.SkipDir
@@ -68,7 +106,10 @@ func ReadWork(p *Project) (*Work, error) {
 				}
 			}
 			data, err := fs.ReadFile(p.FS, file)
-			if err != nil {
+			if err != nil && lenient {
+				w.Unreadable = append(w.Unreadable, file)
+				return nil
+			} else if err != nil {
 				return err
 			}
 			w.Documents = append(w.Documents, lang.Parse(file, data))
@@ -79,6 +120,9 @@ func ReadWork(p *Project) (*Work, error) {
 		}
 	}
 	sort.Slice(w.Documents, func(i, j int) bool { return w.Documents[i].Path < w.Documents[j].Path })
+	if lenient {
+		return w, nil
+	}
 	for _, d := range w.Documents {
 		w.Diagnostics = append(w.Diagnostics, p.checkWork(d)...)
 	}
@@ -93,8 +137,8 @@ func ReadWork(p *Project) (*Work, error) {
 
 // checkWork checks one document of the work as lang.Check checks one of the
 // spec: its title, its type line, the sections its type requires and its
-// links; its type is a document of the spec, and a link leads to any file of
-// the project.
+// links; its type is a document of the spec, and a link leads to any existing
+// file or folder of the project.
 func (p *Project) checkWork(d *lang.Document) []lang.Diagnostic {
 	out := lang.CheckTitle(d)
 	add := func(line int, code, format string, args ...any) {
