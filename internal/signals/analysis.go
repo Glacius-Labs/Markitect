@@ -199,7 +199,7 @@ func (a *Analysis) complexity() {
 }
 
 // reference returns the reference values of a document's type, if its type
-// is a type of a module of the library.
+// is a type of the default's module core, whose reference values the tool holds.
 func (a *Analysis) reference(doc string) (Reference, bool) {
 	d, ok := a.Spec.Document(doc)
 	if !ok || !d.HasType() {

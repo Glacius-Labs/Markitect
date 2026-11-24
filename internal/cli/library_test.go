@@ -133,27 +133,50 @@ func TestTheDefaultHoldsOnlyMarkdown(t *testing.T) {
 	}
 }
 
-// The reference values name a type of core each, and every one of them is a
-// document of core; the catalog stays as it is and covers six of its types.
-func TestReferenceValuesNameTypesOfCore(t *testing.T) {
+// Every type of core is on exactly one of two lists: the types with reference
+// values and the types without. The first values were set for types whose
+// documents hold a few statements; no first value exists yet for the other
+// types, and a wrong range would make topic report every such document. A new
+// type of core fails this test until someone decides which list it belongs to.
+func TestEveryTypeOfCoreHasOrLacksReferenceValuesOnPurpose(t *testing.T) {
+	with := []string{"concept", "decision", "goal", "role", "rule", "term"}
+	without := []string{"activity", "actor", "agent", "ai-model", "artifact", "level", "person"}
 	refs, err := references()
 	if err != nil {
 		t.Fatal(err)
 	}
-	for key := range refs {
-		module, name, _ := strings.Cut(key, "/")
-		if module != "core" {
-			t.Errorf("reference values for %s, which is in no module of the default but core", key)
-		}
-		if _, err := fs.Stat(defaultFolder(), module+"/"+name+".md"); err != nil {
-			t.Errorf("reference values for %s, which is no type of the default", key)
-		}
-		if _, ok := refs.For(module + "/" + name + ".md"); !ok {
-			t.Errorf("no reference value found for %s", key)
+	listed := map[string]bool{}
+	for _, name := range with {
+		listed[name] = true
+		if _, ok := refs.For("core/" + name + ".md"); !ok {
+			t.Errorf("core/%s is listed with reference values and has none", name)
 		}
 	}
-	if len(refs) != 6 {
-		t.Errorf("%d types with reference values", len(refs))
+	for _, name := range without {
+		listed[name] = true
+		if _, ok := refs.For("core/" + name + ".md"); ok {
+			t.Errorf("core/%s is listed without reference values and has some", name)
+		}
+	}
+	entries, err := fs.ReadDir(defaultFolder(), "core")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		if name := strings.TrimSuffix(e.Name(), ".md"); name != "README" && !listed[name] {
+			t.Errorf("core/%s is on neither list; decide whether it has reference values", name)
+		}
+	}
+	for key := range refs {
+		module, name, _ := strings.Cut(key, "/")
+		if module != "core" || !listed[name] {
+			t.Errorf("reference values for %s, which is no type of core on a list", key)
+		}
+	}
+	for _, name := range with {
+		if _, err := fs.Stat(defaultFolder(), "core/"+name+".md"); err != nil {
+			t.Errorf("core/%s has reference values and is no type of the default", name)
+		}
 	}
 }
 

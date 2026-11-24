@@ -86,11 +86,11 @@ func TestPluginHasTheVersionOfTheSource(t *testing.T) {
 	}
 }
 
-// The plugin only fetches the tool: it holds no skills, agents or jobs. Beside
+// The plugin holds no skills, agents or jobs. Beside
 // the launcher and its hook it carries the default, default/, which is plain
 // Markdown that a project copies into its spec folder and no component that
 // Claude Code loads.
-func TestPluginOnlyFetchesTheTool(t *testing.T) {
+func TestPluginHoldsTheLauncherAndTheDefaultAndNothingElse(t *testing.T) {
 	for _, name := range []string{"skills", "agents", "jobs.md"} {
 		if _, err := os.Stat(filepath.Join(pluginDir, name)); err == nil {
 			t.Errorf("the plugin holds %s", name)

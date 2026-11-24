@@ -16,7 +16,7 @@ import (
 // spec shows; --all shows every one, and --json always does.
 const shownPerSignal = 10
 
-// references reads the reference values of every module of the library.
+// references reads the reference values built into the tool, one file per module of the default.
 func references() (signals.References, error) {
 	refs := signals.References{}
 	entries, err := fs.ReadDir(library.FS(), "references")
