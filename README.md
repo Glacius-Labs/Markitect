@@ -38,7 +38,7 @@ Markitect gives the project that statement, and agents build to it.
 
 **Agents build to spec.** Code, tests, configuration and documentation are the implementations of the spec, and where they differ from it, the spec is right. Agents build to it, and their work is checked against it, so that nobody has to read the work to trust it.
 
-**Your way of working is yours.** How your team works, how you plan, what a story or a report is and where the work lies, you describe in your spec too, with general types; skills, agents and scripts in your repository realize it. Markitect ships the language, a default module of general types to start from, and the `markitect` tool, which checks the spec, analyses it and helps reading it. The tool never writes and keeps no state.
+**Your way of working is yours.** How your team works, how you plan, what a story or a report is and where the work lies, you describe in your spec too, with general types; skills, agents and scripts in your repository realize it. Markitect ships the language, a default to start from, a whole spec with general types, a way of working and modules for the work, which you copy and then own, and the `markitect` tool, which checks the spec, analyses it and helps reading it. The tool never writes and keeps no state.
 
 Markitect builds on Terraform's declared configuration, static typing and the characteristics of good requirements, and a project's way of working uses the coding agents' own skills, subagents and scheduled tasks. The [vision](docs/vision.md#why-markitect-exists) gives the full reasoning.
 
@@ -55,13 +55,13 @@ go install github.com/Glacius-Labs/Markitect/cmd/markitect@main
 
 A project is set up by hand. In an empty folder:
 
-1. **Name the spec folder.** Write the file `.markitect/spec` with the one line `docs/spec`.
+1. **Name the spec folder.** Write the file `.markitect/spec` with the one line `model`.
 2. **Name what to leave out.** Write the file `.markitect/ignore` with the files that are not your project's own, one pattern per line, such as `.git/` and your build output; `markitect diff` counts everything else.
-3. **Copy the default.** From a clone of this repository, copy the module `internal/library/core/`, six general types such as Rule and Role, to `docs/spec/core/`.
-4. **Write your modules.** Each module is a folder with a `README.md` that says what it is for and lists under `Contents` what other modules may link, such as `docs/spec/lending/`. Write its documents with your agent.
+3. **Copy the default.** From a clone of this repository, copy the contents of `plugin/default/` to `model/`: general types such as Rule and Role, a way of working, and modules for the work. Every file of the copy is yours to change.
+4. **Write your modules.** Each module is a folder with a `README.md` that says what it is for and lists under `Contents` what other modules may link, such as `model/lending/`; list it in turn in the README of `model/`. Write its documents with your agent. The default's [set-up](plugin/default/way-of-working/set-up.md) says what else belongs to your project, such as your people and their roles.
 5. **Check it.** `markitect check` names what is off: a missing section, a link to no document, a link into what a module keeps internal. Fix it until `check` reports nothing.
 
-The [project reference](docs/guides/project-reference.md#setting-up-a-project-by-hand) gives the details, the [library](docs/guides/library.md) the default, and the [language reference](docs/guides/language-reference.md) modules and every command. The plugin in [`plugin/`](plugin/) only fetches the tool for Claude Code ([the plugin](docs/guides/plugin.md)).
+The [project reference](docs/guides/project-reference.md#setting-up-a-project-by-hand) gives the details, the [library](docs/guides/library.md) the default, and the [language reference](docs/guides/language-reference.md) modules and every command. The plugin in [`plugin/`](plugin/) fetches the tool for Claude Code and holds the default ([the plugin](docs/guides/plugin.md)).
 
 ## How it works
 
@@ -117,15 +117,16 @@ lending/borrow.md:15: link.unresolved: no document at "loan-limt.md"
 The tool runs anywhere Go runs, on Windows, Linux and macOS.
 
 - **From source,** as in the [quick start](#quick-start): `go install github.com/Glacius-Labs/Markitect/cmd/markitect@main`. `markitect version` names the version and build of the tool on your `PATH`.
-- **The Claude Code plugin** in [`plugin/`](plugin/) brings the tool and nothing else: its launcher downloads the binary of the plugin's version on first use and checks it against the release's checksums. The plugin on Main is a development version, which has no release binary: load the repository's `plugin/` folder as a local plugin, and its launcher starts the next `markitect` on the PATH after the plugin's own `bin/`, the build from source ([the plugin](docs/guides/plugin.md#the-launcher)).
+- **The Claude Code plugin** in [`plugin/`](plugin/) brings the tool and holds the default, and no skill or agent: its launcher downloads the binary of the plugin's version on first use and checks it against the release's checksums. The plugin on Main is a development version, which has no release binary: load the repository's `plugin/` folder as a local plugin, and its launcher starts the next `markitect` on the PATH after the plugin's own `bin/`, the build from source ([the plugin](docs/guides/plugin.md#the-launcher)).
 
 ## Status
 
-The tool and the default are built on Main and covered by tests and a command smoke. Markitect ships no way of working yet; the [roadmap](docs/roadmap.md#next) names what comes next.
+The tool is built on Main and covered by tests and a command smoke, and the default, with its way of working, lies on Main as documents. The skills that realize that way of working are not built, nor is the skill that sets a project up; the [roadmap](docs/roadmap.md#next) names what comes next.
 
 ### Limits
 
 - **Set up by hand.** Nothing creates a project or copies the default for you.
+- **No skills.** The default's way of working names a skill for each activity an agent does, and none of them is built: the way of working is documents that an agent can read, not skills it runs.
 - **Structure only.** `check` sees titles, types, sections and links. Whether the spec says what you meant, readers and use show, and whether the project realizes it, your way of working has to check.
 - **Your machine, your rights.** Agents run with your permissions. Don't let them read untrusted input, such as issue text or web pages, without an isolated machine with limited rights around them.
 
@@ -135,8 +136,8 @@ The tool and the default are built on Main and covered by tests and a command sm
 | --- | --- |
 | [Language reference](docs/guides/language-reference.md) | The spec language and every command |
 | [Project reference](docs/guides/project-reference.md) | The project, its ignore file, setting one up by hand, `version` and `diff` |
-| [The plugin](docs/guides/plugin.md) | The launcher that fetches the tool, and its start hooks |
-| [Library](docs/guides/library.md), [Signals](docs/guides/signals.md) | The default, and the signals of a spec |
+| [The plugin](docs/guides/plugin.md) | The launcher that fetches the tool, its start hooks, and the default it holds |
+| [Library](docs/guides/library.md), [Signals](docs/guides/signals.md) | The default, its modules and types, and the signals of a spec |
 | [Concept](docs/concept/README.md) | The one description of the product |
 | [Vision](docs/vision.md) | Why Markitect exists and what it leaves to people |
 | [Decisions](docs/decisions.md) | What holds today, and the open questions |

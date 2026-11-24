@@ -1,6 +1,6 @@
 # The plugin
 
-The Claude Code plugin `markitect` only fetches the tool: it brings the `markitect` command into a session. It holds no skill and no agent. [The project](../concept/the-project.md#the-plugin-and-the-version) in the concept and [DEC-135](../decisions.md#dec-135-the-tool-stays-in-go-and-is-rebuilt-for-the-language) say why; this page says what the plugin holds, how its launcher gets the tool and how firm that is.
+The Claude Code plugin `markitect` fetches the tool: it brings the `markitect` command into a session. Beside its launcher it holds the default, which a project copies into its spec by hand ([library](library.md)). It holds no skill and no agent. [The project](../concept/the-project.md#the-plugin-and-the-version) in the concept, [DEC-135](../decisions.md#dec-135-the-tool-stays-in-go-and-is-rebuilt-for-the-language) and [DEC-159](../decisions.md#dec-159-the-default-is-a-whole-spec-to-start-from-and-lies-in-the-plugin) say why; this page says what the plugin holds, how its launcher gets the tool and how firm that is.
 
 ## What it holds
 
@@ -11,6 +11,7 @@ The plugin is the folder [`plugin/`](../../plugin/), named `markitect` in its ma
 | `.claude-plugin/plugin.json` | The manifest: the name `markitect`, the description and the version, which the launcher reads |
 | `bin/markitect`, `bin/markitect.cmd` | The launcher, a POSIX shell script, and its shim for PowerShell and cmd on Windows |
 | `hooks/hooks.json`, `hooks/path.sh` | Two hooks at the start of a session, both for the launcher |
+| `default/` | The default, a whole spec that a project copies into its spec folder ([library](library.md)). It lies here because a skill of the plugin will copy it into a project, and a plugin reaches only its own files; that skill is not built |
 
 The plugin and the tool always have the same version: a test refuses a difference, and the [release workflow](../releasing.md#what-a-tag-publishes) checks it again.
 
@@ -34,11 +35,11 @@ The two hooks at the start of a session serve the launcher alone. The first puts
 
 ## How firm it is
 
-The plugin brings the tool and nothing else, so it checks and steers nothing in a session.
+The plugin brings the tool and holds the default as plain files, so it checks and steers nothing in a session.
 
 - **The download is checked,** against the checksums of the same release, over HTTPS to GitHub: that guards against a damaged or swapped file. The binary is not signed ([releasing](../releasing.md#rules)).
 - **The version is the plugin's.** The launcher starts the release of the plugin's own version, and a development plugin starts whatever `markitect` follows it on the PATH; `markitect version` names which one runs.
-- **Nothing depends on the plugin.** A project that does not use it runs the same tool, built from source or downloaded from a release ([install](../../README.md#install)).
+- **Nothing depends on the plugin.** A project that does not use it runs the same tool, built from source or downloaded from a release ([install](../../README.md#install)), and copies the default from a clone of the repository.
 
 ## The check of the plugin
 

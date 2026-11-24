@@ -9,7 +9,7 @@ Markitect is a language, the default that ships with it, and a small Go tool wit
 3. **Keep it simple.** Choose the clean design even when it is more work, add no aliases or compatibility paths, and delete what is obsolete together with its tests and pages ([DEC-139](docs/decisions.md#dec-139-quality-simplicity-and-stability-over-effort-and-compatibility)).
 4. **Work in parallel only apart.** Several sessions may work at once when their files do not overlap. Shared files, such as `go.mod`, the [architecture rule table](internal/tooling/architecture/rules.go) and generated pages, have one writer at a time.
 
-Product code and tests that handle a project's `.markitect/spec` or `.markitect/ignore` use fixtures, never this repository's own files.
+Product code and tests that handle a project's `.markitect/spec` or `.markitect/ignore` use fixtures, never this repository's own files. The default in `plugin/default/` is a spec for target projects, not one of Markitect; the tests in `internal/cli/library_test.go` check that `check` finds nothing in it.
 
 ## Where things go
 
@@ -17,7 +17,8 @@ Product code and tests that handle a project's `.markitect/spec` or `.markitect/
 |---|---|---|
 | Go package | `internal/<responsibility>/` | A row in the architecture rule table, a package doc comment, and the code map regenerated ([architecture](docs/architecture.md#adding-changing-or-removing-a-package)) |
 | Shipped command | `cmd/<name>/` | A row in the rule table |
-| Module of the default, and a file the binary embeds | Inside its Go package, such as `internal/library/` | |
+| Document or module of the default | `plugin/default/` | The [library](docs/guides/library.md) guide, when it changes a module or a type of `core` |
+| Reference values or question catalog of a module of the default, and any other file the binary embeds | Inside its Go package, such as `internal/library/` | |
 | Fixture of one package | `<package>/testdata/` | |
 | Check that must not import product code | `tools/` | A CI step |
 | Maintainer script | `scripts/` | Its tests beside it |
@@ -30,10 +31,10 @@ Product code and tests that handle a project's `.markitect/spec` or `.markitect/
 | The product as a whole | [Concept](docs/concept/README.md) |
 | Decisions in force and open questions | [Decisions](docs/decisions.md) |
 | The spec language and the commands | [Language reference](docs/guides/language-reference.md) |
-| The default, its modules, and the library folder that holds them | [Library](docs/guides/library.md) |
+| The default, its modules and types, and what the tool has built in for it | [Library](docs/guides/library.md) |
 | The signals, the topic view, reference values and question catalogs | [Signals](docs/guides/signals.md) |
 | The project: finding it, `.markitect/spec` and `.markitect/ignore`, setting one up by hand, `version` and `diff` | [Project reference](docs/guides/project-reference.md) |
-| The plugin as built: the launcher that fetches the tool, and its start hooks | [The plugin](docs/guides/plugin.md) |
+| The plugin as built: the launcher that fetches the tool, its start hooks, and the default it holds | [The plugin](docs/guides/plugin.md) |
 | What makes a good spec, and how to write one | [Is the spec good?](docs/concept/is-the-spec-good.md) |
 | Go packages, layers and the repository layout | [Architecture](docs/architecture.md) and the generated [code map](docs/development/code-map.md) |
 | Releases | [Releasing](docs/releasing.md) |

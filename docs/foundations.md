@@ -60,7 +60,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 - **Goals, environment and system** (Meyer 2022): a description says what the system is for, what holds in the world around it and what the system does. A software project's spec states them apart ([what goes in a spec](concept/what-goes-in-a-spec.md#what-a-software-project-states)).
 - **The world is not ours to decide** (Zave and Jackson 1997; Meyer 2022): what is imposed is a constraint, and what is taken for granted so that the system can be simpler is an assumption, with who ensures it. Both are given from outside. What the project chooses is a rule.
 
-**Differs.** Meyer's fourth book, the Project, describes the work: roles, schedule, tasks and risks. The spec leaves out the work that changes it, and keeps what should hold: the processes an operation runs and the way of working of a project.
+**Differs.** Meyer's fourth book, the Project, describes the work: roles, schedule, tasks and risks. What the spec says should hold leaves out the work that changes it, and keeps the processes an operation runs and the way of working of a project. Whether the work lies in the spec beside it is a matter of that way of working; the default's keeps it there, in modules of its own.
 
 ## Behaviour as contracts
 
@@ -85,13 +85,13 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 - A decision has no status: the spec holds what is decided now, and the repository's history keeps what was superseded. It may say what would reopen it.
 - Views are not declared. ISO/IEC/IEEE 42010:2022 and Views and Beyond describe an architecture through views written for their readers; Markitect generates every view from the spec, so each fact is stated once ([DEC-131](decisions.md#dec-131-the-tool-shows-claude-explains)).
-- arc42's risks and technical debt have no place: they describe the work, not the system as it should be.
+- arc42's risks and technical debt have no place in what should hold: they describe the work, not the system as it should be.
 
 ## The default and the tool
 
-**Analogy.** Terraform runs the same command line everywhere and copies modules from a registry into the configuration, which then owns them. Markitect's tool and the module of its default are cut the same way, except that a person copies the module by hand ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads)).
+**Analogy.** Terraform runs the same command line everywhere and copies modules from a registry into the configuration, which then owns them. Markitect's tool and its default are cut the same way, except that a person copies the default by hand ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads), [DEC-159](decisions.md#dec-159-the-default-is-a-whole-spec-to-start-from-and-lies-in-the-plugin)).
 
-**Differs.** The way of working is no process document beside the project and no part of the default: the project states it in its own spec, with general types, and its skills, agents and scripts realize it.
+**Differs.** The way of working is no process document beside the project: the default ships one as part of the spec a project copies, written in the same language, and the project owns it from then on and realizes it with its skills, agents and scripts.
 
 ## The tool's conventions
 

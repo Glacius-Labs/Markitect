@@ -42,17 +42,17 @@ What the ignore file leaves out is left out even when a module names it under `R
 
 ## Setting up a project by hand
 
-Nothing sets up a project: a person writes `.markitect/spec` and `.markitect/ignore`, copies the default from Markitect's repository and writes the project's own modules. The default is the module `core` in [`internal/library/core/`](../../internal/library/core/) ([library](library.md)). The tool knows it as the folder `core` directly below the spec folder, so the copy goes there. Nothing rewrites links: a document that names a type of `core` links it by its relative path, such as `../core/rule.md` from a module directly below the spec folder, and `check` names every link that is off.
+Nothing sets up a project: a person writes `.markitect/spec` and `.markitect/ignore`, copies the default from Markitect's repository and writes the project's own modules. The default is the folder [`plugin/default/`](../../plugin/default/), a whole spec with general types, a way of working and modules for the work ([library](library.md)). Its contents become the spec folder: its README the README of the spec folder, and its module `core` the folder `core` directly below the spec folder, where the tool knows it. Nothing rewrites links: a document that names a type of `core` links it by its relative path, such as `../core/rule.md` from a module directly below the spec folder, and `check` names every link that is off.
 
-From an empty folder, with the spec in `docs/spec/`:
+From an empty folder, with the spec in `model/`:
 
-1. Write `.markitect/spec` with the one line `docs/spec`.
+1. Write `.markitect/spec` with the one line `model`.
 2. Write `.markitect/ignore` with the files that are not the project's own, such as `.git/` for the folder of a version control and the folders of build output ([above](#the-ignore-file)). Without it, `diff` counts every file of the project that is not always left out.
-3. Copy `internal/library/core/` to `docs/spec/core/`.
-4. Write the project's own modules, each a folder with a `README.md` ([language reference](language-reference.md#modules)), such as `docs/spec/lending/README.md`, and their documents beside it.
+3. Copy the contents of `plugin/default/` to `model/`. `markitect check` then reports `0 errors in 176 documents`.
+4. Write the project's own modules, each a folder with a `README.md` ([language reference](language-reference.md#modules)), such as `model/lending/README.md`, and their documents beside it, and list them under `Contents` in the README of the spec folder. The default's [set-up](../../plugin/default/way-of-working/set-up.md) names what else belongs to the project: its people, the role responsible for each module, and a module for its infrastructure.
 5. Run `markitect check`, and fix what it reports until it prints `0 errors in N documents` and exits 0.
 
-The spec owns its copy: a project may change `core` like any of its modules.
+The spec owns its copy: a project may change any file of the default like any of its modules, the way of working included.
 
 ## version
 
