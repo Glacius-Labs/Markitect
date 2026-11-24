@@ -24,7 +24,7 @@ func (s *smoke) version() error {
 }
 
 // smokeFiles are the documents of a small lending library that a person writes
-// by hand into the spec beside the module core: a module domain with its README,
+// by hand into the spec beside the default: a module domain with its README,
 // a concept of core's type, a type of their own with an operation of it, and a
 // type that extends another with a document of it.
 var smokeFiles = map[string]string{
@@ -91,16 +91,31 @@ func documents(markitect func(int, ...string) (string, error), want int) (int, e
 }
 
 // layOut builds a project by hand, the way a person does since no command lays
-// one out: an empty folder, the module core copied from the library of the
+// one out: an empty folder, the default copied from plugin/default/ of the
 // repository into a spec folder, docs/spec, and the file .markitect/spec that
 // names that folder.
 func layOut(repo, project string) error {
-	library := filepath.Join(repo, "internal", "library")
-	spec := filepath.Join(project, "docs", "spec")
-	if err := copyTree(filepath.Join(library, "core"), filepath.Join(spec, "core")); err != nil {
+	if err := copyTree(defaultFolder(repo), filepath.Join(project, "docs", "spec")); err != nil {
 		return err
 	}
 	return writeFile(project, ".markitect/spec", "docs/spec\n")
+}
+
+// defaultFolder is the default that ships with Markitect: the spec folder that a
+// project copies.
+func defaultFolder(repo string) string { return filepath.Join(repo, "plugin", "default") }
+
+// countDocuments counts the Markdown files below dir, which are the documents
+// that check counts once the folder is a spec.
+func countDocuments(dir string) (int, error) {
+	n := 0
+	err := filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
+		if err == nil && !d.IsDir() && strings.HasSuffix(p, ".md") {
+			n++
+		}
+		return err
+	})
+	return n, err
 }
 
 // projectCommands drives the built CLI over a small project that it lays out
@@ -136,12 +151,16 @@ func (s *smoke) projectCommands() error {
 		return fmt.Errorf(".markitect/ holds %d entries, not only spec", len(entries))
 	}
 
-	// The module alone passes check, and table lists its documents, sorted by
+	// The default alone passes check, and table lists its documents, sorted by
 	// path, with their type and title.
+	inDefault, err := countDocuments(defaultFolder(s.repo))
+	if err != nil {
+		return err
+	}
 	if out, err := markitect(0, "check"); err != nil {
 		return err
-	} else if out != "0 errors in 7 documents\n" {
-		return fmt.Errorf("check over the module core: %s", tail(out))
+	} else if out != fmt.Sprintf("0 errors in %d documents\n", inDefault) {
+		return fmt.Errorf("check over the default: %s", tail(out))
 	}
 	if out, err := markitect(0, "table"); err != nil {
 		return err

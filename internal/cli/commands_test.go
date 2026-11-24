@@ -125,7 +125,7 @@ func TestTopicAndQuestions(t *testing.T) {
 		t.Error(code, out)
 	}
 	applied := initialized(t)
-	copyFromLibrary(t, applied, "core")
+	copyFromDefault(t, applied, "core")
 	_, out, _ = run("questions", "-C", applied)
 	if !strings.HasPrefix(out, "## core\n\n1. ") || strings.Contains(out, "\n## ") {
 		t.Error(out)

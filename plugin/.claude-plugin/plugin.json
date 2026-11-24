@@ -1,7 +1,7 @@
 {
   "name": "markitect",
   "version": "0.35.0-dev",
-  "description": "Brings the markitect command: its launcher downloads the release binary of the plugin's own version and checks it against the checksums of that release",
+  "description": "Brings the markitect command and carries the default spec: its launcher downloads the release binary of the plugin's own version and checks it against the checksums of that release",
   "author": {
     "name": "Glacius Labs"
   },

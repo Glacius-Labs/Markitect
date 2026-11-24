@@ -19,7 +19,7 @@ Make one clean and simple version that works reliably ([DEC-120](../decisions.md
 
 ## What Markitect leaves to the project
 
-The way a project works is not part of Markitect ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads)). How what happens is noted, how planning goes, which meetings there are, what a story or a report is, how work is reviewed and accepted and where the work lies belong to the project's own way of working. The project describes it in its own spec, with general types, and skills, agents and scripts realize that spec, as code realizes the product ([§7](the-project.md#the-way-of-working)).
+The way a project works is the project's own ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads)). How what happens is noted, how planning goes, which meetings there are, what a story or a report is, how work is reviewed and accepted and where the work lies belong to the project's own way of working. The project describes it in its own spec, with general types, and skills, agents and scripts realize that spec, as code realizes the product. The default ships a way of working to start from, which the project copies and then owns like any part of its spec ([§7](the-project.md#the-way-of-working)).
 
 ## The other pages
 

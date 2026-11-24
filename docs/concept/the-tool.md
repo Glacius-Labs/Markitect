@@ -1,6 +1,6 @@
 # The tool
 
-**The `markitect` program checks the spec, analyses it and helps reading it** ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads)). It never writes and stores nothing. It starts no agent and steers nothing. It neither needs nor knows Git or any other version control ([DEC-097](../decisions.md#dec-097-markitect-neither-needs-nor-knows-version-control)): it reads folders. Every command but `diff` reads `.markitect/spec` and the spec folder it names, and nothing else of the project; `diff` also reads the project's files and `.markitect/ignore`. So it does not know where it runs, and gives the same answer in a session and in CI. Anything more is a separate tool or a script of the project.
+**The `markitect` program checks the spec, analyses it and helps reading it** ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads)). It never writes and stores nothing. It starts no agent and steers nothing. It neither needs nor knows Git or any other version control ([DEC-097](../decisions.md#dec-097-the-language-and-the-tool-neither-need-nor-know-version-control)): it reads folders. Every command but `diff` reads `.markitect/spec` and the spec folder it names, and nothing else of the project; `diff` also reads the project's files and `.markitect/ignore`. So it does not know where it runs, and gives the same answer in a session and in CI. Anything more is a separate tool or a script of the project.
 
 ## Commands
 

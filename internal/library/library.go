@@ -1,8 +1,8 @@
-// Package library is the library of Markitect: the module core, the types that
-// a person copies into a spec by hand, and per module its reference values and
-// its question catalog, which the tool reads and never copies. Only the
-// reference values and the question catalog are built into the tool; the module
-// is a plain folder of this folder.
+// Package library is what the tool knows of the default that ships with
+// Markitect: per module its reference values and its question catalog, which
+// the tool reads and never copies. Both are built into the tool. The default
+// itself, the spec folder that a project copies, is the folder plugin/default/
+// of the repository and is no part of the binary.
 //
 // Its contents are described in docs/guides/library.md.
 package library

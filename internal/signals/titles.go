@@ -77,7 +77,7 @@ type Reference struct {
 type References map[string]Reference
 
 // For returns the reference values of the type at typePath, a path below the
-// spec folder: MODULE/NAME.md matches MODULE's NAME, a module of the library
+// spec folder: MODULE/NAME.md matches MODULE's NAME, the module of the default
 // being the folder of its name directly below the spec folder.
 func (r References) For(typePath string) (Reference, bool) {
 	parts := strings.Split(typePath, "/")

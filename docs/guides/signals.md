@@ -49,7 +49,7 @@ Each signal is a list sorted strongest first; equal ones stand in path and line 
 
 **Name without a link.** A statement that names a document's title without linking it is no mention, since a mention is a link in text ([language reference](language-reference.md#properties-and-their-types)); this signal lists such statements. A title is found as whole words, without regard to case; at each word the longest title counts. One-word titles shorter than four letters do not count, nor do the titles of types, which stand in prose as ordinary words, such as "the role". A document does not name itself.
 
-**Two reference points.** Where a signal shows a number, it shows the project's values beside it, and the reference value of the document's type when the type is a type of the default's module: `core/rule.md`, directly below the spec folder, matches `core`'s `rule`. A project's own types have no reference value and show only the project's values.
+**Two reference points.** Where a signal shows a number, it shows the project's values beside it, and the reference value of the document's type when the tool has one for it: `core/rule.md`, directly below the spec folder, matches `core`'s `rule`. A type without a reference value, such as a project's own, one of the default's way of working or one of `core` that the table does not list, shows only the project's values.
 
 ## The topic view
 
@@ -65,7 +65,7 @@ A link to the README of a folder that holds a topic document counts as a link to
 
 ## Reference values
 
-The reference values of the default's module `core` ship inside the tool and are not copied into a spec. They are a Markdown table with a row per type: its name, the statements per document and the words per statement, each as low–high. Every type starts with 1–5 statements per document, since a document of more than a few sentences is too big, and 5–25 words per statement. These are first values, to be replaced by values measured on proven reference specs, those that the people who answer for them name as a reference.
+The reference values of the default's module `core` ship inside the tool and are not copied into a spec. They are a Markdown table with a row per type, today for six of its types, concept, decision, goal, role, rule and term: its name, the statements per document and the words per statement, each as low–high. Every type starts with 1–5 statements per document, since a document of more than a few sentences is too big, and 5–25 words per statement. These are first values, to be replaced by values measured on proven reference specs, those that the people who answer for them name as a reference.
 
 ## Question catalogs
 

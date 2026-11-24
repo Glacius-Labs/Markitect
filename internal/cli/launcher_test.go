@@ -86,12 +86,26 @@ func TestPluginHasTheVersionOfTheSource(t *testing.T) {
 	}
 }
 
-// The plugin only fetches the tool: it holds no skills, agents or jobs.
-func TestPluginOnlyFetchesTheTool(t *testing.T) {
+// The plugin holds no skills, agents or jobs. Beside
+// the launcher and its hook it carries the default, default/, which is plain
+// Markdown that a project copies into its spec folder and no component that
+// Claude Code loads.
+func TestPluginHoldsTheLauncherAndTheDefaultAndNothingElse(t *testing.T) {
 	for _, name := range []string{"skills", "agents", "jobs.md"} {
 		if _, err := os.Stat(filepath.Join(pluginDir, name)); err == nil {
 			t.Errorf("the plugin holds %s", name)
 		}
+	}
+	entries, err := os.ReadDir(pluginDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, e := range entries {
+		names = append(names, e.Name())
+	}
+	if got := strings.Join(names, " "); got != ".claude-plugin bin default hooks" {
+		t.Errorf("the plugin holds %s", got)
 	}
 	var manifest struct{ Description string }
 	readJSON(t, filepath.Join(pluginDir, ".claude-plugin", "plugin.json"), &manifest)

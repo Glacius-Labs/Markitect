@@ -15,7 +15,7 @@ A link says that one document concerns another, and where it stands decides what
 
 ## Types
 
-A type is a class, and a document that names it in its type line is its object. A document is a type when another document names it in its type line, its extends line or a property type line, when it extends a type itself, or when it has a property type line; nothing else marks it. Its text before the first section says what the type is. Each of its sections declares a **property** of its objects, and the text under it says what belongs there. A property is required unless its heading ends with `(optional)`. A project defines its own types, and the default ships six general ones in the module `core`: concept, decision, goal, role, rule and term ([§7](the-project.md#the-default)).
+A type is a class, and a document that names it in its type line is its object. A document is a type when another document names it in its type line, its extends line or a property type line, when it extends a type itself, or when it has a property type line; nothing else marks it. Its text before the first section says what the type is. Each of its sections declares a **property** of its objects, and the text under it says what belongs there. A property is required unless its heading ends with `(optional)`. A project defines its own types, and the default ships general ones in the module `core`, such as concept, rule, decision, role and activity ([§7](the-project.md#the-default)).
 
 **A property names its type** in a line directly under its heading, the property type line ([DEC-157](../decisions.md#dec-157-a-property-names-its-type-and-modules-depend-on-each-other-without-a-cycle)):
 
@@ -106,7 +106,7 @@ Where a property is a reference, each object links what it refers to; where it i
 
 ## Values
 
-The property's type gives a value its form. A fixed value, such as the status of an operation, stands in the first line of its section and is exactly one of the values its type lists. The references of a reference property, such as the roles that call an operation, may stand anywhere in its section, and every link there is one. In a property without a property type line, the value is text, and a link in it is a mention: `core`'s Rule declares no type for `Responsible`, so a role linked there is a mention, and a project that wants it checked gives its copy of Rule a property type line. There are no lines in the head but the type line, or in a type the extends line.
+The property's type gives a value its form. A fixed value, such as the status of an operation, stands in the first line of its section and is exactly one of the values its type lists. The references of a reference property, such as the roles that call an operation, may stand anywhere in its section, and every link there is one. In a property without a property type line, the value is text, and a link in it is a mention, as under the Operation's `Does` above. `core`'s Rule declares the type Role for `Responsible`, so a role linked there is a reference, and `check` reports a link there that is no role. There are no lines in the head but the type line, or in a type the extends line.
 
 ## Modules
 
@@ -121,7 +121,7 @@ The property's type gives a value its form. A fixed value, such as the status of
 
 A README is never itself the thing it describes: in a module `shop`, the shop is a document `shop/shop.md` of its own, and the README says what the module holds.
 
-**Public and internal.** What a README links under `Contents`, a document of its folder or the README of a module directly below, is public; the README itself is public as well. Everything else in the module is internal, and a link to it from outside the module is an error. Inside a module a document may link everything of its own folder, and what is internal to the modules above it, as with Go's internal packages; a module below shows it only what that module's README lists under `Contents`. This holds for every link, the type line, the extends line and the property type line included: a type that other modules use stands in the `Contents` of its module, as `core`'s README lists its six types.
+**Public and internal.** What a README links under `Contents`, a document of its folder or the README of a module directly below, is public; the README itself is public as well. Everything else in the module is internal, and a link to it from outside the module is an error. Inside a module a document may link everything of its own folder, and what is internal to the modules above it, as with Go's internal packages; a module below shows it only what that module's README lists under `Contents`. This holds for every link, the type line, the extends line and the property type line included: a type that other modules use stands in the `Contents` of its module, as `core`'s README lists all its types.
 
 **Patterns.** A README may also show documents of its folder by a pattern over their file names, written as code: in a module `reports` whose monthly reports keep arriving, `` `report-*.md` `` under `Contents` shows each new one without a change to the README, and `` `*.md` `` would show the whole folder. A pattern never reaches into a module below.
 
@@ -129,7 +129,7 @@ A library has a module `lending` with one public and one internal document:
 
 ```text
 docs/spec/
-  core/         the default's module: README.md and six types
+  core/         the default's general types
   lending/
     README.md
     borrow.md       public, an Operation
