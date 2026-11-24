@@ -53,7 +53,7 @@ var Table = Rules{
 	Layers: []Layer{
 		{Name: "build", Title: "Build data", Meaning: "Version identity and embedded license notices."},
 		{Name: "language", Title: "Language", Meaning: "The spec language over a supplied file system: documents, types, sections, links and check."},
-		{Name: "library", Title: "Library", Meaning: "The library: the module core, and the reference values and question catalog built into the tool."},
+		{Name: "library", Title: "Library", Meaning: "The library: the reference values and question catalog of the default's modules, built into the tool."},
 		{Name: "signals", Title: "Signals", Meaning: "The statements of a spec, its signals and the topic view, over a parsed spec.", Imports: []string{"language"}},
 		{Name: "project", Title: "Project", Meaning: "A project over a supplied file system: the file .markitect/spec, the project loaded with its spec, its ignore file, and the difference between two projects: their specs and, for each module, its files.", Imports: []string{"language"}},
 		{Name: "command-line", Title: "Command line", Meaning: "The command line: its arguments, the project it works in, the commands that read its spec, version and licenses, and the text and JSON output. It writes nothing.", Imports: []string{"build", "language", "library", "signals", "project"}},

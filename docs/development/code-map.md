@@ -16,7 +16,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 |---|---|---|---|
 | `build` | Version identity and embedded license notices. | nothing | 1 |
 | `language` | The spec language over a supplied file system: documents, types, sections, links and check. | nothing | 1 |
-| `library` | The library: the module core, and the reference values and question catalog built into the tool. | nothing | 1 |
+| `library` | The library: the reference values and question catalog of the default's modules, built into the tool. | nothing | 1 |
 | `signals` | The statements of a spec, its signals and the topic view, over a parsed spec. | `language` | 1 |
 | `project` | A project over a supplied file system: the file .markitect/spec, the project loaded with its spec, its ignore file, and the difference between two projects: their specs and, for each module, its files. | `language` | 1 |
 | `command-line` | The command line: its arguments, the project it works in, the commands that read its spec, version and licenses, and the text and JSON output. It writes nothing. | `build`, `language`, `library`, `signals`, `project` | 1 |
@@ -41,7 +41,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/library` | Package library is the library of Markitect: the module core, the types that a person copies into a spec by hand, and per module its reference values and its question catalog, which the tool reads and never copies. | [docs/guides/library.md](../guides/library.md) |
+| `internal/library` | Package library is what the tool knows of the default that ships with Markitect: per module its reference values and its question catalog, which the tool reads and never copies. | [docs/guides/library.md](../guides/library.md) |
 
 ## Signals
 
@@ -83,4 +83,4 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `tools/smoke` | Command smoke builds markitect from the repository and drives its commands over a small project that it builds by hand, the way a person does: an empty folder, the module core of the library copied into a spec folder, a few documents of its own and the file .markitect/spec. | [docs/architecture.md#distribution](../architecture.md#distribution) |
+| `tools/smoke` | Command smoke builds markitect from the repository and drives its commands over a small project that it builds by hand, the way a person does: an empty folder, the default (plugin/default/) copied into a spec folder, a few documents of its own and the file .markitect/spec. | [docs/architecture.md#distribution](../architecture.md#distribution) |
