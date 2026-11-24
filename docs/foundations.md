@@ -107,7 +107,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 - **Rules on layers** between modules, as layered architectures have, beyond the rule that forbids a cycle. A module only groups and shows, and a rule names what it applies to by links ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-and-modules)).
 - **Declared imports** between modules, as Go's import declarations. They would state again what type lines, extends lines and references already say ([DEC-157](decisions.md#dec-157-a-property-names-its-type-and-modules-depend-on-each-other-without-a-cycle)).
 - **Architecture metrics of the spec,** such as coupling, cohesion and abstractness, and fixed thresholds. They measure structure, not whether a spec serves its purpose ([DEC-123](decisions.md#dec-123-a-good-spec-has-five-characteristics-and-shows-them-in-four-sources)).
-- **Attributes per requirement**, such as priority, risk, owner and history, which requirements standards keep. They describe the work, not the system, and the spec states only the system as it should be.
+- **Attributes per requirement**, such as priority, risk, owner and history, which requirements standards keep. They describe the work, not the system, and what the spec says should hold states only the system as it should be.
 - **Views as declared things.** A declared view states the same facts twice ([DEC-131](decisions.md#dec-131-the-tool-shows-claude-explains)).
 
 ## Sources

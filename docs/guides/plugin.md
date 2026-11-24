@@ -11,7 +11,7 @@ The plugin is the folder [`plugin/`](../../plugin/), named `markitect` in its ma
 | `.claude-plugin/plugin.json` | The manifest: the name `markitect`, the description and the version, which the launcher reads |
 | `bin/markitect`, `bin/markitect.cmd` | The launcher, a POSIX shell script, and its shim for PowerShell and cmd on Windows |
 | `hooks/hooks.json`, `hooks/path.sh` | Two hooks at the start of a session, both for the launcher |
-| `default/` | The default, a whole spec that a project copies into its spec folder ([library](library.md)). It lies here because a skill of the plugin will copy it into a project, and a plugin reaches only its own files; that skill is not built |
+| `default/` | The default, a whole spec that a project copies into its spec folder ([library](library.md)). It lies here because a skill of a plugin reaches only the plugin's own files; the skill that sets a project up is not built |
 
 The plugin and the tool always have the same version: a test refuses a difference, and the [release workflow](../releasing.md#what-a-tag-publishes) checks it again.
 
