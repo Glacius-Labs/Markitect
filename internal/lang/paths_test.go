@@ -105,7 +105,7 @@ func TestRealizedInSections(t *testing.T) {
 		`shop/README.md:19: readme.pattern: bad pattern "w/[": a pattern uses the wildcards *, ? and [a-z]`)
 }
 
-func TestSpecRealizedIn(t *testing.T) {
+func TestModelRealizedIn(t *testing.T) {
 	fsys := fstest.MapFS{
 		"README.md":            {Data: []byte("# Root\n\n## Realized in\n- `cmd/`\n")},
 		"a.md":                 {Data: []byte("# A\n")},

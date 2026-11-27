@@ -1,4 +1,4 @@
-# Spec
+# Model
 
 ## Contents
 - [reader](reader.md)

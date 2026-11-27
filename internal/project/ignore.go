@@ -18,7 +18,7 @@ const IgnoreFile = ".markitect/ignore"
 // Ignore is the ignore file of a project: the files and folders that diff does
 // not look at. It reads like the ignore files of a version control, so that
 // someone who has written one can write this. Nothing else is left out but what
-// the tool fixes: the folder .markitect/ at the top, the spec folder, links,
+// the tool fixes: the folder .markitect/ at the top, the model folder, links,
 // junctions and special files, and a project that lies inside the other. A name
 // that starts with a dot is a name like any other. The zero value, a pointer to
 // it and nil leave out nothing more.

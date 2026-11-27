@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// branches is a small spec of members and branches.
+// branches is a small model of members and branches.
 var branches = map[string]string{
 	"types/member.md":   "# Member\n\nA card holder.\n\n## Card\nThe number.\n\n## Branch\nThe home branch, as a link.\n\n## Notes (optional)\nAnything else.\n",
 	"types/branch.md":   "# Branch\n\nA place that lends books.\n",
@@ -16,7 +16,7 @@ var branches = map[string]string{
 }
 
 func TestShow(t *testing.T) {
-	dir := spec(t, branches)
+	dir := model(t, branches)
 	code, out, _ := run("show", "-C", dir, `members\ada`)
 	want := "members/ada.md\nTitle: Ada Lovelace\nType: types/member.md\nSections:\n  Card\n  Branch\n" +
 		"Links to:\n  members/grace.md\n  places/central.md\nLinked from: (none)\n"
@@ -53,7 +53,7 @@ func TestShow(t *testing.T) {
 }
 
 func TestTable(t *testing.T) {
-	dir := spec(t, branches)
+	dir := model(t, branches)
 	code, out, _ := run("table", "-C", dir, "types/member")
 	want := "| Title | Card | Branch | Notes |\n| --- | --- | --- | --- |\n" +
 		"| Ada Lovelace | L-1 \\| gold | Central, see Grace. |  |\n" +
@@ -63,8 +63,8 @@ func TestTable(t *testing.T) {
 	}
 }
 
-func TestSpecTable(t *testing.T) {
-	dir := spec(t, map[string]string{
+func TestModelTable(t *testing.T) {
+	dir := model(t, map[string]string{
 		"types/operation.md": "# Operation\n\n## Rule\nWhat holds.\n",
 		"lending/borrow.md":  "# Borrow | Lend\n\nType: [Operation](../types/operation.md)\n\n## Rule\nA member borrows.\n",
 		"lending/ghost.md":   "# Ghost\n\nType: [Nothing](../types/nothing.md)\n",
@@ -90,15 +90,15 @@ func TestSpecTable(t *testing.T) {
 		doc.Rows[1].Path != "lending/borrow.md" || doc.Rows[1].Title != "Borrow | Lend" || strings.Join(doc.Rows[1].Cells, " ") != "types/operation.md" {
 		t.Errorf("got %d %s", code, out)
 	}
-	if code, out, _ := run("table", "-C", spec(t, nil)); code != ExitOK || out != "| Document | Type | Title |\n| --- | --- | --- |\n" {
-		t.Errorf("an empty spec: %d %q", code, out)
+	if code, out, _ := run("table", "-C", model(t, nil)); code != ExitOK || out != "| Document | Type | Title |\n| --- | --- | --- |\n" {
+		t.Errorf("an empty model: %d %q", code, out)
 	}
 }
 
 func TestTopicAndQuestions(t *testing.T) {
-	dir := spec(t, branches)
+	dir := model(t, branches)
 	code, out, _ := run("topic", "-C", dir)
-	if code != ExitOK || !strings.HasPrefix(out, "# Signals of the spec\n") || !strings.Contains(out, "\n### weak (") || !strings.Contains(out, "\n### unlinked-name (") ||
+	if code != ExitOK || !strings.HasPrefix(out, "# Signals of the model\n") || !strings.Contains(out, "\n### weak (") || !strings.Contains(out, "\n### unlinked-name (") ||
 		strings.Contains(out, "hange signals") {
 		t.Fatal(code, out)
 	}
@@ -130,7 +130,7 @@ func TestTopicAndQuestions(t *testing.T) {
 	if !strings.HasPrefix(out, "## core\n\n1. ") || strings.Contains(out, "\n## ") {
 		t.Error(out)
 	}
-	if code, out, _ := run("topic", "-C", applied, "--json"); code != ExitOK || !strings.Contains(out, `"topic_kind": "spec"`) {
+	if code, out, _ := run("topic", "-C", applied, "--json"); code != ExitOK || !strings.Contains(out, `"topic_kind": "model"`) {
 		t.Error(code, out)
 	}
 }

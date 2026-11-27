@@ -1,12 +1,12 @@
 {
   "name": "markitect",
   "version": "0.35.0-dev",
-  "description": "Brings the markitect command and carries the default spec: its launcher downloads the release binary of the plugin's own version and checks it against the checksums of that release",
+  "description": "Brings the markitect command and carries the default model: its launcher downloads the release binary of the plugin's own version and checks it against the checksums of that release",
   "author": {
     "name": "Glacius Labs"
   },
   "homepage": "https://github.com/Glacius-Labs/Markitect",
   "repository": "https://github.com/Glacius-Labs/Markitect",
   "license": "Apache-2.0",
-  "keywords": ["markitect", "spec"]
+  "keywords": ["markitect", "model"]
 }

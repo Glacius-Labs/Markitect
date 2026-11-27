@@ -1,6 +1,6 @@
 # Markitect agent entrypoint
 
-With Markitect, people architect their project in a typed, declarative specification language in Markdown ([DEC-119](docs/decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)). They maintain one spec of it, its way of working included, which is the project's own. Markitect is the language, the default that ships with it, a whole spec with general types, a way of working and modules for the work that a project copies and owns, and the `markitect` tool, which checks the spec, analyses it and helps reading it; the tool never writes and keeps no state ([DEC-154](docs/decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads), [roadmap](docs/roadmap.md#where-main-is)).
+With Markitect, people architect their project in a typed, declarative modeling language in Markdown ([DEC-119](docs/decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-modeling-language)). They maintain one model of it, its way of working included, which is the project's own. Markitect is the language, the default that ships with it, a whole model with general types, a way of working and modules for the work that a project copies and owns, and the `markitect` tool, which checks the model, analyses it and helps reading it; the tool never writes and keeps no state ([DEC-154](docs/decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads), [roadmap](docs/roadmap.md#where-main-is)).
 
 **Before you assess or change the product's direction,** read, in this order:
 
@@ -12,7 +12,7 @@ With Markitect, people architect their project in a typed, declarative specifica
 
 **Easy to miss:**
 
-- Markitect itself has no spec. `.markitect/` (its files `spec` and `ignore`) in code and tests belongs to a target project and is handled with fixtures, and `plugin/default/` is the default that a target project copies, not a spec of Markitect.
+- Markitect itself has no model. `.markitect/` (its files `model` and `ignore`) in code and tests belongs to a target project and is handled with fixtures, and `plugin/default/` is the default that a target project copies, not a model of Markitect.
 - Documentation is in English and describes only the current state, with one concept and no quotes.
 
 [CONTRIBUTING](CONTRIBUTING.md#where-things-go) names the page for every topic, and the [roadmap](docs/roadmap.md) what comes next.

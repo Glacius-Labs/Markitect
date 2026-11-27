@@ -1,6 +1,6 @@
-// Package signals finds where reading a spec pays off: it splits the prose of
+// Package signals finds where reading a model pays off: it splits the prose of
 // the documents into statements, finds the marker words in them, computes the
-// eight signals of the spec itself and gathers the topic view of a document,
+// eight signals of the model itself and gathers the topic view of a document,
 // a type or a folder. It judges nothing and has no thresholds; each signal is
 // a list, strongest first.
 //

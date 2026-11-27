@@ -8,22 +8,22 @@ import (
 	"strings"
 )
 
-// Spec is the documents of one spec folder, sorted by path.
-type Spec struct {
+// Model is the documents of one model folder, sorted by path.
+type Model struct {
 	Documents []*Document
 	byPath    map[string]*Document
 	types     map[string]bool // the paths of the documents that are types
-	modules   map[string]bool // the folders that hold a document directly; "." is the spec folder
+	modules   map[string]bool // the folders that hold a document directly; "." is the model folder
 }
 
-// NewSpec indexes documents by path and sorts them. A type line or an extends
+// NewModel indexes documents by path and sorts them. A type line or an extends
 // line that names a README names no type: the document keeps the line and
 // HeadReadme holds the path. A type is a document that a type line, an extends
 // line or a property type line names, that has an extends line or that has a
 // property type line; a README is none, and the property type lines of a
 // document with a type line are errors that name nothing.
-func NewSpec(docs []*Document) *Spec {
-	s := &Spec{Documents: append([]*Document(nil), docs...), byPath: make(map[string]*Document, len(docs)), types: map[string]bool{}, modules: map[string]bool{}}
+func NewModel(docs []*Document) *Model {
+	s := &Model{Documents: append([]*Document(nil), docs...), byPath: make(map[string]*Document, len(docs)), types: map[string]bool{}, modules: map[string]bool{}}
 	sort.SliceStable(s.Documents, func(i, j int) bool { return s.Documents[i].Path < s.Documents[j].Path })
 	for _, d := range s.Documents {
 		s.byPath[d.Path] = d
@@ -59,17 +59,17 @@ func NewSpec(docs []*Document) *Spec {
 	return s
 }
 
-// Document returns the document at a path below the spec folder. Paths are
+// Document returns the document at a path below the model folder. Paths are
 // compared exactly, case included.
-func (s *Spec) Document(p string) (*Document, bool) {
+func (s *Model) Document(p string) (*Document, bool) {
 	d, ok := s.byPath[p]
 	return d, ok
 }
 
-// Load reads every document of the spec at the root of fsys: every file at
+// Load reads every document of the model at the root of fsys: every file at
 // any depth whose name ends in .md, in any case, after at least one other
 // character. Other files are ignored.
-func Load(fsys fs.FS) (*Spec, error) {
+func Load(fsys fs.FS) (*Model, error) {
 	var docs []*Document
 	err := fs.WalkDir(fsys, ".", func(p string, e fs.DirEntry, err error) error {
 		if err != nil {
@@ -94,7 +94,7 @@ func Load(fsys fs.FS) (*Spec, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewSpec(docs), nil
+	return NewModel(docs), nil
 }
 
 // IsDocumentName reports whether a file name names a document: it ends in .md,
@@ -137,7 +137,7 @@ func checkTitle(d *Document) []Diagnostic {
 // checkSections checks the sections of the type t, its own and those of every
 // type up its chain: a required one missing is reported at line, and one the
 // document has must hold text.
-func (s *Spec) checkSections(d, t *Document, line int) []Diagnostic {
+func (s *Model) checkSections(d, t *Document, line int) []Diagnostic {
 	var out []Diagnostic
 	for _, want := range s.ChainSections(t) {
 		sec, has := d.Section(want.Name)
@@ -164,11 +164,11 @@ func (d Diagnostic) String() string {
 	return fmt.Sprintf("%s:%d: %s: %s", d.Path, d.Line, d.Code, d.Message)
 }
 
-// Check checks every document of the spec: its title, its type line or
+// Check checks every document of the model: its title, its type line or
 // extends line, the sections its type requires and its links, and every module
 // of it: its README and what its links may reach. The result is sorted by path,
 // then by line.
-func Check(s *Spec) []Diagnostic {
+func Check(s *Model) []Diagnostic {
 	out := s.checkModules()
 	shown := s.shownByModule()
 	for _, d := range s.Documents {

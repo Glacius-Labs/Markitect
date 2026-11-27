@@ -64,7 +64,7 @@ func (a *Analysis) linkGroups() {
 	}
 	sections := map[string]*section{}
 	var names []string
-	for _, d := range a.Spec.Documents {
+	for _, d := range a.Model.Documents {
 		for _, s := range d.Sections {
 			targets := map[string]bool{}
 			for _, l := range d.Links {
@@ -162,7 +162,7 @@ func (a *Analysis) linkGroups() {
 			}
 			sort.Strings(targets)
 			first := sec.places[g.holders[0]]
-			heading := sectionHeading(a.Spec, first.doc, first.line)
+			heading := sectionHeading(a.Model, first.doc, first.line)
 			a.add(Finding{Signal: LinkGroup, Path: first.doc, Line: first.line, Docs: append(append([]string(nil), docs...), targets...),
 				rank:   float64(len(docs)) + float64(len(targets))/100,
 				Detail: fmt.Sprintf("section %q links the same %d documents in %s: %s (links: %s)", heading, len(targets), plural(len(docs), "document"), strings.Join(docs, ", "), strings.Join(targets, ", "))})

@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// sites is a small spec with a chain of three types: artifact, website that
+// sites is a small model with a chain of three types: artifact, website that
 // extends it and blog that extends website, and a document of each.
 var sites = map[string]string{
 	"types/artifact.md": "# Artifact\n\nSomething a team makes.\n\n## Owner\nWho answers for it.\n\n## Notes (optional)\nAnything else.\n",
@@ -26,7 +26,7 @@ func TestCheckDerivedTypes(t *testing.T) {
 	for p, text := range sites {
 		withReadmes[p] = text
 	}
-	dir := spec(t, withReadmes)
+	dir := model(t, withReadmes)
 	if code, out, _ := run("check", "-C", dir); code != ExitOK || out != "0 errors in 9 documents\n" {
 		t.Fatalf("%d %s", code, out)
 	}
@@ -39,7 +39,7 @@ func TestCheckDerivedTypes(t *testing.T) {
 	broken["types/lost.md"] = "# Lost\n\nExtends: [Nowhere](nowhere.md)\n"
 	broken["types/loose.md"] = "# Loose\n\nExtends: [Artifact](artifact.md)\n\n## Owner (optional)\nO.\n"
 	broken["types/bad.md"] = "# Bad\n\nExtends: artifact\n\nExtends: [Artifact](artifact.md)\n"
-	code, out, _ := run("check", "-C", spec(t, broken))
+	code, out, _ := run("check", "-C", model(t, broken))
 	want := `sites/news.md:3: section.missing: missing section "Notes" required by types/blog.md` + "\n" +
 		`sites/news.md:5: section.empty: empty section "Owner"` + "\n" +
 		`types/bad.md:3: extends.line: extends line must be exactly one link to a document` + "\n" +
@@ -54,7 +54,7 @@ func TestCheckDerivedTypes(t *testing.T) {
 }
 
 func TestShowDerivedType(t *testing.T) {
-	dir := spec(t, sites)
+	dir := model(t, sites)
 	code, out, _ := run("show", "-C", dir, "types/blog")
 	want := "types/blog.md\nTitle: Blog\nExtends: types/website.md\nSections:\n  Owner (from types/artifact.md)\n  Notes\n  Pages (from types/website.md)\n  Feed\n" +
 		"Links to: (none)\nLinked from: (none)\nDocuments:\n  sites/news.md\n"
@@ -115,7 +115,7 @@ func TestShowDerivedType(t *testing.T) {
 		t.Error(out)
 	}
 	// A base that is no document; an extends line that is no link counts for nothing.
-	dir = spec(t, map[string]string{
+	dir = model(t, map[string]string{
 		"lost.md": "# Lost\n\nExtends: [Nowhere](nowhere.md)\n\n## Own\nO.\n",
 		"bad.md":  "# Bad\n\nExtends: nowhere\n\n## Own\nO.\n",
 	})
@@ -132,7 +132,7 @@ func TestShowDerivedType(t *testing.T) {
 }
 
 func TestTableOfDerivedTypes(t *testing.T) {
-	dir := spec(t, sites)
+	dir := model(t, sites)
 	_, out, _ := run("table", "-C", dir, "types/artifact")
 	// Rows are in path order: sites/ before things/.
 	want := "| Title | Owner | Notes |\n| --- | --- | --- |\n" +
@@ -161,7 +161,7 @@ func TestTableOfDerivedTypes(t *testing.T) {
 }
 
 func TestTopicOfDerivedTypes(t *testing.T) {
-	dir := spec(t, sites)
+	dir := model(t, sites)
 	_, out, _ := run("topic", "-C", dir, "types/artifact", "--json")
 	var doc struct {
 		TopicKind string   `json:"topic_kind"`
@@ -183,7 +183,7 @@ func TestTopicOfDerivedTypes(t *testing.T) {
 	if !strings.Contains(out, `"topic_kind": "type"`) {
 		t.Error(out)
 	}
-	dir = spec(t, map[string]string{"types/blog.md": sites["types/blog.md"], "types/website.md": sites["types/website.md"], "types/artifact.md": sites["types/artifact.md"]})
+	dir = model(t, map[string]string{"types/blog.md": sites["types/blog.md"], "types/website.md": sites["types/website.md"], "types/artifact.md": sites["types/artifact.md"]})
 	for _, p := range []string{"types/blog", "types/website", "types/artifact"} {
 		if _, out, _ := run("topic", "-C", dir, p, "--json"); !strings.Contains(out, `"topic_kind": "type"`) {
 			t.Errorf("%s: %s", p, out)

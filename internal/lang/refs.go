@@ -16,7 +16,7 @@ type Ref struct {
 	Dest string
 	// Raw is its path as written, without the #section.
 	Raw string
-	// Target is the path resolved below the spec folder.
+	// Target is the path resolved below the model folder.
 	Target string
 	Line   int
 	// Start and End delimit Dest in the document's bytes; Start is -1 when

@@ -196,7 +196,7 @@ func TestUnknownPackageFails(t *testing.T) {
 	}
 	// An import of a package the table does not classify is a violation.
 	root := t.TempDir()
-	writeFixture(t, root, map[string]string{"README.md": "# Owner\n", "internal/signals/o.go": "package signals\nimport _ \"" + ModulePath + "internal/spec\"\n"})
+	writeFixture(t, root, map[string]string{"README.md": "# Owner\n", "internal/signals/o.go": "package signals\nimport _ \"" + ModulePath + "internal/model\"\n"})
 	got, err := fixtureRules(t, "internal/signals").CheckRepository(root)
 	if err != nil || len(got) != 1 || !strings.Contains(got[0].Rule, "unclassified package") {
 		t.Fatalf("import of an unclassified package accepted: %v %v", got, err)

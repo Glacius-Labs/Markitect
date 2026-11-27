@@ -10,7 +10,7 @@ body:
     id: problem
     attributes:
       label: Problem to solve
-      description: Describe the concrete problem with writing, checking or realizing a spec.
+      description: Describe the concrete problem with writing, checking or realizing a model.
     validations:
       required: true
   - type: textarea
@@ -24,7 +24,7 @@ body:
     id: boundaries
     attributes:
       label: Product boundaries
-      description: Note effects on the spec language, the record of what was verified, the agents' rights or a project's own files.
+      description: Note effects on the modeling language, the record of what was verified, the agents' rights or a project's own files.
       render: markdown
   - type: textarea
     id: alternatives

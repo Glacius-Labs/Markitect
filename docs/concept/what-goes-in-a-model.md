@@ -1,0 +1,25 @@
+# What goes in a model
+
+**The model declares everything that is fixed about what it describes** ([DEC-122](../decisions.md#dec-122-the-model-declares-what-is-fixed-like-an-interface)). Fixed is what someone relies on or what was decided. What could differ without bothering anyone is free and stays out.
+
+The image is an interface: it says what holds and hides how it is done, as a component of software states its responsibility and keeps its decisions behind it. The model is more than an interface, since decisions about the inside, such as the building blocks of a system or its technology, belong in it too, and no interface would show them. What belongs in it follows from what it describes, not from who reads it.
+
+The test keeps the model short. For software, what whoever relies on it depends on is fixed: inputs and their validation, data shapes, the answer to a refused call, stored data. Detail one can observe but not reasonably depend on, such as the wording of a message or the format of an identifier, is free unless the project fixes it. Loops and data structures are the agents'. For a business, prices, who may do what and opening hours are fixed.
+
+So it is clear what a defect is. Where something differs from what the model states, it is a defect of the artifact. Where something someone relies on is missing, it is a defect of the model.
+
+## The end state, not the way
+
+What the model says should hold describes the project as it should be now, as if it came from an ideal process; the way there is in the repository's history. The work that changes it, a backlog, a plan, the tasks towards a goal and the risks of the project, is no part of what should hold. What a running operation does is: its processes and recurring tasks, the way of working of the project, and goals with a date, which say what should hold by then.
+
+**The work is not the target.** A plan item, a ticket or a report is the occasion for a change: it changes its state all the time, and a finished one is history. What a model holds beyond what should be is a matter of the project's way of working, which its model states ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads)). The default's way of working keeps the work in the model, in modules of its own: features and stories, findings, reports, briefings and dropped material lie beside the modules that say what should hold, name no realization, and are linked from what should hold only to name them, never in a reference ([DEC-159](../decisions.md#dec-159-the-default-is-a-whole-model-to-start-from-and-lies-in-the-plugin)). The tool knows nothing of the work: for it, these are documents like any others.
+
+## What a software project states
+
+A software project's model answers, in modules of its own choosing ([§3](the-language.md#modules)), why the system exists, what is given from outside, what the system does, how it is reached, how well it must work and how it is built. The default ships no types for these, only the general ones of `core` and those of its way of working ([§7](the-project.md#the-default)); a project defines the types it needs.
+
+- **World and system.** What is given from outside stands apart from what is built. An assumption states what the system takes for granted so that it can be simpler, who ensures it and what is therefore not built; without it a missing check looks like a bug. A constraint links the rule that imposes it.
+- **Behaviour as contracts.** An operation says what it does, what the caller gives, and when it is refused, each condition with its reason and the answer the caller gets, since the caller relies on which answer it gets. A concept's rules are its invariants, and an example under a rule illustrates without fixing anything.
+- **Quality with a measure.** How well the system must work follows the nine characteristics of ISO/IEC 25010, and each quality requirement has a measure that decides whether it is met.
+- **Deployment.** The model says where and how the system runs.
+- **Decisions.** A decision states the choice, why, and the alternatives weighed, so that it is not reopened without new evidence. Its optional section "Reopen when" names the evidence that would reopen it.

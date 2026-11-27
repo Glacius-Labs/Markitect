@@ -11,7 +11,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/lang"
 )
 
-func spec(t *testing.T, files map[string]string) *lang.Spec {
+func model(t *testing.T, files map[string]string) *lang.Model {
 	t.Helper()
 	fsys := fstest.MapFS{}
 	for p, text := range files {
@@ -63,7 +63,7 @@ func TestMarkers(t *testing.T) {
 	eq(t, s, []string{"no one", "must not", "each"})
 }
 
-// branches is a small spec: members, branches and rules of a lending library.
+// branches is a small model: members, branches and rules of a lending library.
 var branches = map[string]string{
 	"types/member.md":   "# Member\n\nA card holder.\n\n## Card\nThe number.\n\n## Branch\nThe home branch.\n",
 	"types/policy.md":   "# Policy\n\nSomething that holds.\n\n## Policy\nWhat holds.\n",
@@ -90,7 +90,7 @@ func findings(a *Analysis, signal string) []string {
 }
 
 func TestWeakAndStrong(t *testing.T) {
-	a := Analyze(spec(t, branches), nil)
+	a := Analyze(model(t, branches), nil)
 	eq(t, findings(a, Weak), []string{
 		`members/alan.md:6: weak: 2 (conditions if; vague usually): "L-3, usually renewed if the Central Library asks."`,
 		`rules/loans.md:7: weak: 2 (conditions only if, unless): "A member may keep a book longer only if the Central Library agrees, unless it is reserved."`,
@@ -113,7 +113,7 @@ func TestComplexityAndSize(t *testing.T) {
 	for k, v := range branches {
 		files[strings.Replace(k, "types/member.md", "lib/member.md", 1)] = strings.ReplaceAll(v, "../types/member.md", "../lib/member.md")
 	}
-	a := Analyze(spec(t, files), refs)
+	a := Analyze(model(t, files), refs)
 	c := findings(a, Complexity)
 	eq(t, c[:4], []string{
 		"rules/loans.md:7: complexity: 17 words (project median 3, max 17), 1 term, 2 conditions",
@@ -133,7 +133,7 @@ func TestComplexityAndSize(t *testing.T) {
 }
 
 func TestStructureSignals(t *testing.T) {
-	a := Analyze(spec(t, branches), nil)
+	a := Analyze(model(t, branches), nil)
 	eq(t, findings(a, TextBeforeSections), []string{"members/ada.md:5: text-before-sections: 2 statements before the first section"})
 	eq(t, findings(a, LinkGroup), []string{
 		`members/ada.md:10: link-group: section "Branch" links the same 3 documents in 2 documents: members/ada.md, members/grace.md (links: places/README.md, places/central.md, places/east.md)`,
@@ -149,7 +149,7 @@ func TestStructureSignals(t *testing.T) {
 }
 
 func TestTopic(t *testing.T) {
-	a := Analyze(spec(t, branches), nil)
+	a := Analyze(model(t, branches), nil)
 	topic, ok := a.Topic("places/east")
 	if !ok || topic.Kind != "document" {
 		t.Fatal(topic)
@@ -208,9 +208,9 @@ func TestTiesAreOrderedByDetail(t *testing.T) {
 		"east.md": "# East Branch\n",
 		"west.md": "# West Branch\n",
 	}
-	first := strings.Join(findings(Analyze(spec(t, files), nil), UnlinkedName), "\n")
+	first := strings.Join(findings(Analyze(model(t, files), nil), UnlinkedName), "\n")
 	for i := 0; i < 20; i++ {
-		if got := strings.Join(findings(Analyze(spec(t, files), nil), UnlinkedName), "\n"); got != first {
+		if got := strings.Join(findings(Analyze(model(t, files), nil), UnlinkedName), "\n"); got != first {
 			t.Fatalf("run %d:\n%s\nfirst:\n%s", i, got, first)
 		}
 	}
@@ -219,8 +219,8 @@ func TestTiesAreOrderedByDetail(t *testing.T) {
 	}
 }
 
-func TestEmptySpec(t *testing.T) {
-	a := Analyze(spec(t, map[string]string{}), nil)
+func TestEmptyModel(t *testing.T) {
+	a := Analyze(model(t, map[string]string{}), nil)
 	if topic, ok := a.Topic(""); !ok || len(topic.Docs) != 0 {
 		t.Error(topic, ok)
 	}
@@ -234,7 +234,7 @@ func TestRuleBearingStatements(t *testing.T) {
 		"c.md":    "# C\n\nThe Front Desk opens at nine.\n",
 		"d.md":    "# D\n\nOnly the Front Desk lends maps.\n",
 	}
-	eq(t, findings(Analyze(spec(t, files), nil), ScatteredRules), []string{
+	eq(t, findings(Analyze(model(t, files), nil), ScatteredRules), []string{
 		"desk.md:1: scattered-rules: conditional or restricting statements in 3 other documents refer to it: a.md, b.md, d.md",
 	})
 }
@@ -244,7 +244,7 @@ func TestTypeSectionsAreGuidance(t *testing.T) {
 		"types/shelf.md":    "# Shelf\n\nA shelf holds books of one kind.\n\n## Place\nWhere it stands, in a few words.\n",
 		"shelves/novels.md": "# Novels\n\nType: [Shelf](../types/shelf.md)\n\n## Place\nBy the window.\n",
 	}
-	a := Analyze(spec(t, files), nil)
+	a := Analyze(model(t, files), nil)
 	var got []string
 	for _, st := range a.Statements {
 		got = append(got, st.Doc+": "+st.Text)
@@ -266,11 +266,11 @@ func TestLinkGroupSharedByAllButNoPair(t *testing.T) {
 		"b.md": doc("B", "t1", "t2", "t3", "t4", "t6"),
 		"c.md": doc("C", "t1", "t2", "t3", "t5", "t6"),
 	}
-	got := findings(Analyze(spec(t, files), nil), LinkGroup)
+	got := findings(Analyze(model(t, files), nil), LinkGroup)
 	eq(t, got[0], `a.md:3: link-group: section "Rules" links the same 3 documents in 3 documents: a.md, b.md, c.md (links: t1.md, t2.md, t3.md)`)
 	eq(t, len(got), 4)
 	for i := 0; i < 10; i++ {
-		eq(t, findings(Analyze(spec(t, files), nil), LinkGroup), got)
+		eq(t, findings(Analyze(model(t, files), nil), LinkGroup), got)
 	}
 }
 
@@ -289,7 +289,7 @@ func TestLinkGroupsDense(t *testing.T) {
 		files["tasks/t"+strconv.Itoa(i)+".md"] = "# T" + strconv.Itoa(i) + "\n\n## Performed by\n" + strings.Join(links, ", ") + "\n"
 	}
 	start := time.Now()
-	a := Analyze(spec(t, files), nil)
+	a := Analyze(model(t, files), nil)
 	t.Logf("%d link groups in %v", len(a.Findings[LinkGroup]), time.Since(start))
 	if len(a.Findings[LinkGroup]) == 0 {
 		t.Error("no groups")
@@ -304,7 +304,7 @@ func TestRootReadmeDoesNotSpread(t *testing.T) {
 		"rules/a.md":       "# A\n\nEvery visitor follows [the house rules](../README.md).\n",
 		"rules/b.md":       "# B\n\nEvery visitor may use [the places](../places/README.md).\n",
 	}
-	topic, _ := Analyze(spec(t, files), nil).Topic("places/east")
+	topic, _ := Analyze(model(t, files), nil).Topic("places/east")
 	var linked []string
 	for _, st := range topic.LinkedFrom {
 		linked = append(linked, st.Doc)

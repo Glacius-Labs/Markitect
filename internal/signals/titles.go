@@ -21,11 +21,11 @@ type title struct {
 // newTitles indexes the titles that count as names: every document's title
 // except those of types, whose names stand in prose as ordinary words, and
 // one-word titles shorter than four letters.
-func newTitles(spec *lang.Spec) *titles {
+func newTitles(model *lang.Model) *titles {
 	byWords := map[string]*title{}
-	for _, d := range spec.Documents {
+	for _, d := range model.Documents {
 		ws := words(d.Title)
-		if spec.IsType(d) || len(ws) == 0 || len(ws) == 1 && len([]rune(ws[0])) < 4 {
+		if model.IsType(d) || len(ws) == 0 || len(ws) == 1 && len([]rune(ws[0])) < 4 {
 			continue
 		}
 		key := strings.Join(ws, " ")
@@ -77,8 +77,8 @@ type Reference struct {
 type References map[string]Reference
 
 // For returns the reference values of the type at typePath, a path below the
-// spec folder: MODULE/NAME.md matches MODULE's NAME, the module of the default
-// being the folder of its name directly below the spec folder.
+// model folder: MODULE/NAME.md matches MODULE's NAME, the module of the default
+// being the folder of its name directly below the model folder.
 func (r References) For(typePath string) (Reference, bool) {
 	parts := strings.Split(typePath, "/")
 	if len(parts) != 2 {

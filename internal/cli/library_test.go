@@ -13,12 +13,12 @@ import (
 )
 
 // defaultFolder is the default as plain files, the way a person finds it in the
-// repository: the whole spec folder that a project copies, with the module
+// repository: the whole model folder that a project copies, with the module
 // core, the way of working and the modules that start empty.
 func defaultFolder() fs.FS { return os.DirFS(filepath.Join("..", "..", "plugin", "default")) }
 
 // copyFromDefault copies folders of the default, such as core, to the same
-// paths below the spec folder of a project. The folder "." copies the whole
+// paths below the model folder of a project. The folder "." copies the whole
 // default.
 func copyFromDefault(t *testing.T, project string, folders ...string) {
 	t.Helper()
@@ -31,7 +31,7 @@ func copyFromDefault(t *testing.T, project string, folders ...string) {
 			if err != nil {
 				return err
 			}
-			write(t, project, "docs/spec/"+p, string(data))
+			write(t, project, "docs/model/"+p, string(data))
 			return nil
 		})
 		if err != nil {
@@ -56,8 +56,8 @@ func documentsOf(t *testing.T, folder string) int {
 	return n
 }
 
-// The default as a spec, the way a person copies it: the module core on its own,
-// the whole default on its own and the whole default as the spec folder of a
+// The default as a model, the way a person copies it: the module core on its own,
+// the whole default on its own and the whole default as the model folder of a
 // project. check finds nothing in any of them, so the default passes the rules of
 // the language itself: a README in every folder, and under Contents every type
 // that a document outside it may link to.
@@ -75,7 +75,7 @@ func TestTheDefaultChecksClean(t *testing.T) {
 	}{
 		{"core alone", core, documentsOf(t, "core")},
 		{"the default alone", defaultFolder(), documentsOf(t, ".")},
-		{"the default as a spec", os.DirFS(specOf(dir)), documentsOf(t, ".")},
+		{"the default as a model", os.DirFS(modelOf(dir)), documentsOf(t, ".")},
 	}
 	for _, c := range cases {
 		s, err := lang.Load(c.fsys)
@@ -180,8 +180,8 @@ func TestEveryTypeOfCoreHasOrLacksReferenceValuesOnPurpose(t *testing.T) {
 	}
 }
 
-// A project whose spec folder is the whole default: every command that reads a
-// spec runs on it, in text and in JSON, and prints what it should. The question
+// A project whose model folder is the whole default: every command that reads a
+// model runs on it, in text and in JSON, and prints what it should. The question
 // catalog speaks of the module core alone, however many modules the default has.
 func TestTheCommandsRunOnTheWholeDefault(t *testing.T) {
 	dir := initialized(t)
@@ -227,13 +227,13 @@ func TestTheCommandsRunOnTheWholeDefault(t *testing.T) {
 	}
 
 	topic := exec("topic")
-	if !strings.HasPrefix(topic, "# Signals of the spec\n") {
+	if !strings.HasPrefix(topic, "# Signals of the model\n") {
 		t.Errorf("topic: %.300s", topic)
 	}
-	if all := exec("topic", "--all"); !strings.HasPrefix(all, "# Signals of the spec\n") || len(all) < len(topic) {
+	if all := exec("topic", "--all"); !strings.HasPrefix(all, "# Signals of the model\n") || len(all) < len(topic) {
 		t.Errorf("topic --all: %.300s", all)
 	}
-	if doc := asJSON("topic"); doc["kind"] != "topic" || doc["topic_kind"] != "spec" || len(doc["signals"].(map[string]any)) == 0 {
+	if doc := asJSON("topic"); doc["kind"] != "topic" || doc["topic_kind"] != "model" || len(doc["signals"].(map[string]any)) == 0 {
 		t.Errorf("topic --json: %.300v", doc)
 	}
 	asJSON("topic", "--all")
@@ -259,18 +259,18 @@ func TestTheCommandsRunOnTheWholeDefault(t *testing.T) {
 	}
 }
 
-// A project laid out by hand, the way a person does: core copied into the spec
+// A project laid out by hand, the way a person does: core copied into the model
 // folder, and a module of their own whose documents are of core's types. The
-// questions of core are found by the folder name core directly below the spec
+// questions of core are found by the folder name core directly below the model
 // folder, and so are core's reference values, which topic shows beside the
 // numbers of a document; a module of the project's own has neither.
 func TestAHandLaidProjectHasTheQuestionsAndReferenceValuesOfCore(t *testing.T) {
 	dir := initialized(t)
 	copyFromDefault(t, dir, "core")
-	write(t, dir, "docs/spec/lending/README.md", "# Lending\n\nHow books are lent.\n")
-	write(t, dir, "docs/spec/lending/loan.md", "# Loan\n\nType: [Concept](../core/concept.md)\n\n## Definition\nA member keeps a copy for three weeks. The copy goes back to the shelf. A fee is due after that. The librarian waives it.\n\n## Rules (optional)\nA copy is on loan to one member. A member holds five loans. Nothing else.\n")
-	write(t, dir, "docs/spec/lending/own-type.md", "# Own type\n\nSomething of the project.\n\n## Part\nIt.\n")
-	write(t, dir, "docs/spec/lending/thing.md", "# Thing\n\nType: [Own type](own-type.md)\n\n## Part\nA part.\n")
+	write(t, dir, "docs/model/lending/README.md", "# Lending\n\nHow books are lent.\n")
+	write(t, dir, "docs/model/lending/loan.md", "# Loan\n\nType: [Concept](../core/concept.md)\n\n## Definition\nA member keeps a copy for three weeks. The copy goes back to the shelf. A fee is due after that. The librarian waives it.\n\n## Rules (optional)\nA copy is on loan to one member. A member holds five loans. Nothing else.\n")
+	write(t, dir, "docs/model/lending/own-type.md", "# Own type\n\nSomething of the project.\n\n## Part\nIt.\n")
+	write(t, dir, "docs/model/lending/thing.md", "# Thing\n\nType: [Own type](own-type.md)\n\n## Part\nA part.\n")
 
 	code, out, errOut := run("check", "-C", dir)
 	if code != ExitOK {
@@ -326,13 +326,13 @@ func TestAHandLaidProjectHasTheQuestionsAndReferenceValuesOfCore(t *testing.T) {
 		t.Errorf("size of a document of the project's own type: %v", got)
 	}
 
-	// The folder of core is found only directly below the spec folder.
+	// The folder of core is found only directly below the model folder.
 	moved := initialized(t)
 	copyFromDefault(t, moved, "core")
-	if err := os.Rename(filepath.Join(specOf(moved), "core"), filepath.Join(specOf(moved), "elsewhere")); err != nil {
+	if err := os.Rename(filepath.Join(modelOf(moved), "core"), filepath.Join(modelOf(moved), "elsewhere")); err != nil {
 		t.Fatal(err)
 	}
-	if code, out, _ := run("questions", "-C", moved); code != ExitOK || !strings.Contains(out, "The spec has no module of the default, so there are no questions.") {
+	if code, out, _ := run("questions", "-C", moved); code != ExitOK || !strings.Contains(out, "The model has no module of the default, so there are no questions.") {
 		t.Errorf("a folder of another name: %d %s", code, out)
 	}
 }
@@ -342,7 +342,7 @@ func TestAHandLaidProjectHasTheQuestionsAndReferenceValuesOfCore(t *testing.T) {
 // names no type. check reports each at its line, show and table treat the
 // documents as untyped.
 func TestReadmeIsNoObjectAndNoType(t *testing.T) {
-	dir := spec(t, map[string]string{
+	dir := model(t, map[string]string{
 		"types/README.md":  "# Types\n\n## Contents\n- [Member](member.md)\n",
 		"types/member.md":  "# Member\n\nA person.\n\n## Card\nThe number.\n",
 		"people/README.md": "# People\n\nType: [Member](../types/member.md)\n\n## Card\nNone.\n",

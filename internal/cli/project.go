@@ -10,10 +10,10 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
-// isProject says whether dir holds .markitect/spec, so that a .markitect/
+// isProject says whether dir holds .markitect/model, so that a .markitect/
 // folder of another kind, such as the one in the home folder, is no project.
 func isProject(dir string) bool {
-	info, err := os.Stat(filepath.Join(dir, filepath.FromSlash(project.SpecFile)))
+	info, err := os.Stat(filepath.Join(dir, filepath.FromSlash(project.ModelFile)))
 	return err == nil && info.Mode().IsRegular()
 }
 
@@ -50,16 +50,16 @@ func workingFolder(o options) (string, error) {
 
 // noProjectNote says what the file that makes a folder a project holds; no
 // command creates it.
-const noProjectNote = "that file holds one line, the path of the spec folder below the project folder"
+const noProjectNote = "that file holds one line, the path of the model folder below the project folder"
 
 // noProject says that no project was found, and what the missing file holds.
-// Where .markitect/spec exists but is no file, it says that instead.
+// Where .markitect/model exists but is no file, it says that instead.
 func noProject(o options, at string) error {
 	if o.dir != "" {
 		return notAProject(o.dir, at)
 	}
 	for dir := at; ; {
-		if _, err := os.Stat(filepath.Join(dir, filepath.FromSlash(project.SpecFile))); err == nil {
+		if _, err := os.Stat(filepath.Join(dir, filepath.FromSlash(project.ModelFile))); err == nil {
 			return notAProject(dir, dir)
 		}
 		up := filepath.Dir(dir)
@@ -68,20 +68,20 @@ func noProject(o options, at string) error {
 		}
 		dir = up
 	}
-	return fmt.Errorf("no folder from %s upward holds %s; %s", at, project.SpecFile, noProjectNote)
+	return fmt.Errorf("no folder from %s upward holds %s; %s", at, project.ModelFile, noProjectNote)
 }
 
 // notAProject says why the folder dir, which the user named as shown, is no
-// project: it lacks .markitect/spec, or that is no file.
+// project: it lacks .markitect/model, or that is no file.
 func notAProject(shown, dir string) error {
-	if _, err := os.Stat(filepath.Join(dir, filepath.FromSlash(project.SpecFile))); err == nil {
-		return fmt.Errorf("%s: %s is no file, but a project needs one there; %s", shown, project.SpecFile, noProjectNote)
+	if _, err := os.Stat(filepath.Join(dir, filepath.FromSlash(project.ModelFile))); err == nil {
+		return fmt.Errorf("%s: %s is no file, but a project needs one there; %s", shown, project.ModelFile, noProjectNote)
 	}
-	return fmt.Errorf("%s holds no %s; %s", shown, project.SpecFile, noProjectNote)
+	return fmt.Errorf("%s holds no %s; %s", shown, project.ModelFile, noProjectNote)
 }
 
 // mustProject is the project a command works in: the folder -C names, which
-// must hold .markitect/spec, or the nearest folder from the working directory
+// must hold .markitect/model, or the nearest folder from the working directory
 // upward that holds it. It is an error when there is none.
 func mustProject(o options) (string, error) {
 	at, err := workingFolder(o)
@@ -116,7 +116,7 @@ func loadDir(dir string) (*project.Project, error) {
 	if err != nil {
 		return nil, fmt.Errorf("the project %s: %w", dir, err)
 	}
-	if err := specInside(dir, p.SpecFolder); err != nil {
+	if err := modelInside(dir, p.ModelFolder); err != nil {
 		return nil, err
 	}
 	return p, nil

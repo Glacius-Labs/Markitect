@@ -147,12 +147,12 @@ func checkRealized(d *Document) []Diagnostic {
 	return out
 }
 
-// SpecModule is the module that is the spec folder itself.
-const SpecModule = specFolder
+// ModelFolderModule is the module that is the model folder itself.
+const ModelFolderModule = modelFolder
 
-// Modules returns the folders of the spec that are modules, the spec folder
+// Modules returns the folders of the model that are modules, the model folder
 // first, which holds a document directly, and the others by path.
-func (s *Spec) Modules() []string {
+func (s *Model) Modules() []string {
 	out := make([]string, 0, len(s.modules))
 	for m := range s.modules {
 		out = append(out, m)
@@ -164,7 +164,7 @@ func (s *Spec) Modules() []string {
 // RealizedIn returns the path patterns of the sections Realized in of the
 // README of a module, those that are well-formed; a module without a README
 // has none.
-func (s *Spec) RealizedIn(module string) []PathPattern {
+func (s *Model) RealizedIn(module string) []PathPattern {
 	readme, ok := s.byPath[readmeOf(module)]
 	if !ok {
 		return nil

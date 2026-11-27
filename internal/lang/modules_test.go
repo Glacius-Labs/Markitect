@@ -43,7 +43,7 @@ func withReadmes(files map[string]string) map[string]string {
 		sort.Strings(shown)
 		title := path.Base(dir)
 		if dir == "." {
-			title = "Spec"
+			title = "Model"
 		}
 		text := "# " + title + "\n\n## Contents\n"
 		for _, p := range shown {
@@ -104,7 +104,7 @@ func TestModuleNeedsAReadme(t *testing.T) {
 		"a/README.md":   "# A\n",
 		"a/x/b/note.md": "# Note\n",
 	}), `a/x/b/README.md:1: module.readme: the folder a/x/b holds documents and has no README.md`)
-	// Every module is reported once, and the spec folder is one when it holds
+	// Every module is reported once, and the model folder is one when it holds
 	// a document directly.
 	expect(t, checkExactly(t, map[string]string{
 		"top.md":       "# Top\n",
@@ -112,10 +112,10 @@ func TestModuleNeedsAReadme(t *testing.T) {
 		"a/two.md":     "# Two\n",
 		"b/c/inner.md": "# Inner\n",
 	}),
-		`README.md:1: module.readme: the spec folder holds documents and has no README.md`,
+		`README.md:1: module.readme: the model folder holds documents and has no README.md`,
 		`a/README.md:1: module.readme: the folder a holds documents and has no README.md`,
 		`b/c/README.md:1: module.readme: the folder b/c holds documents and has no README.md`)
-	// The spec folder holds only folders: no README is needed there.
+	// The model folder holds only folders: no README is needed there.
 	expect(t, checkExactly(t, map[string]string{"a/README.md": "# A\n"}))
 	// A folder with only a README is a module with a README.
 	expect(t, checkExactly(t, map[string]string{"a/README.md": "# A\n", "b/README.md": "# B\n"}))
@@ -141,7 +141,7 @@ func TestReadmeHasNoTypeOrExtendsLine(t *testing.T) {
 }
 
 func TestReadmeIsReadWithoutItsHead(t *testing.T) {
-	s := specOf(t, map[string]string{
+	s := modelOf(t, map[string]string{
 		"types/README.md":  "# Types\n\nType: [Member](member.md)\n\n## Contents\n- [Member](member.md)\n",
 		"types/member.md":  member,
 		"base/README.md":   "# Base\n\nExtends: [Member](../types/member.md)\n",
@@ -180,7 +180,7 @@ func TestTypeLineNamingAReadme(t *testing.T) {
 		`a/missing.md:3: type.unresolved: no document at "../zzz/README.md"`,
 		`a/own.md:3: readme.type: "a/README.md" is a README, which is no type`)
 	// The document is no object of anything and its sections are not checked.
-	s := specOf(t, files)
+	s := modelOf(t, files)
 	d, _ := s.Document("a/ada.md")
 	if d.HasType() || d.TypeLine != 3 || d.HeadReadme != "types/README.md" {
 		t.Errorf("%+v", d)
@@ -317,32 +317,32 @@ func TestLinksIntoAModule(t *testing.T) {
 				`other/a.md:3: link.internal: "shop/cart.md" is internal to shop: shop has no README.md`,
 				`shop/README.md:1: module.readme: the folder shop holds documents and has no README.md`,
 			}},
-		"the spec folder as a module": {
+		"the model folder as a module": {
 			map[string]string{
-				"README.md":      "# Spec\n\n## Contents\n- [Intro](intro.md)\n- [Shop](shop/README.md)\n",
+				"README.md":      "# Model\n\n## Contents\n- [Intro](intro.md)\n- [Shop](shop/README.md)\n",
 				"intro.md":       "# Intro\n\n[shop](shop/README.md) and [cart](shop/cart.md)\n",
 				"hidden.md":      "# Hidden\n",
 				"shop/README.md": "# Shop\n",
 				"shop/cart.md":   "# Cart\n\nBack to [hidden](../hidden.md) and [intro](../intro.md).\n",
 			},
 			[]string{`intro.md:3: link.internal: "shop/cart.md" is internal to shop: shop/README.md does not list it under Contents`}},
-		"a module links to the internal documents of the spec folder": {
+		"a module links to the internal documents of the model folder": {
 			map[string]string{
-				"README.md":      "# Spec\n",
+				"README.md":      "# Model\n",
 				"intro.md":       "# Intro\n",
 				"shop/README.md": "# Shop\n",
 				"shop/cart.md":   "# Cart\n\nBack to [intro](../intro.md).\n",
 			}, nil},
-		"a module that the spec folder does not list links to its internal documents": {
+		"a module that the model folder does not list links to its internal documents": {
 			map[string]string{
-				"README.md":   "# Spec\n",
+				"README.md":   "# Model\n",
 				"hidden.md":   "# Hidden\n",
 				"a/README.md": "# A\n\n## Contents\n- [Doc](doc.md)\n",
 				"a/doc.md":    "# Doc\n\n[hidden](../hidden.md)\n",
 			}, nil},
-		"the spec folder links to the internal document of a module": {
+		"the model folder links to the internal document of a module": {
 			map[string]string{
-				"README.md":      "# Spec\n\n[cart](shop/cart.md)\n",
+				"README.md":      "# Model\n\n[cart](shop/cart.md)\n",
 				"shop/README.md": "# Shop\n",
 				"shop/cart.md":   "# Cart\n",
 			},
@@ -403,7 +403,7 @@ func TestDiagnosticsOfModulesAreSortedWithTheRest(t *testing.T) {
 		"sub/z/README.md": "# Z\n",
 	})
 	expect(t, got,
-		`README.md:1: module.readme: the spec folder holds documents and has no README.md`,
+		`README.md:1: module.readme: the model folder holds documents and has no README.md`,
 		`b.md:3: link.unresolved: no document at "ghost.md"`,
 		`sub/README.md:1: module.readme: the folder sub holds documents and has no README.md`)
 }

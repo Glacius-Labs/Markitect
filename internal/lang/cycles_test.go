@@ -63,14 +63,14 @@ func TestModuleCycleBetweenAParentAndItsChild(t *testing.T) {
 	// Only the child's way up: no cycle.
 	files["shop/borrow.md"] = "# Borrow\n\nNo type.\n"
 	expect(t, checkFiles(t, files))
-	// A cycle through the spec folder.
+	// A cycle through the model folder.
 	expect(t, checkFiles(t, map[string]string{
 		"kind.md":  "# Kind\n\nA kind.\n",
 		"x.md":     "# X\n\nType: [Law](a/law.md)\n",
 		"a/law.md": "# Law\n\nA law.\n",
 		"a/y.md":   "# Y\n\nType: [Kind](../kind.md)\n",
 	}),
-		"x.md:3: module.cycle: module cycle (spec folder) -> a -> (spec folder): x.md:3 is of type a/law.md, a/y.md:3 is of type kind.md")
+		"x.md:3: module.cycle: module cycle (model folder) -> a -> (model folder): x.md:3 is of type a/law.md, a/y.md:3 is of type kind.md")
 }
 
 func TestModuleCycleOfThreeModules(t *testing.T) {
@@ -179,9 +179,9 @@ func TestModuleCycleIsDeterministic(t *testing.T) {
 		"d/1.md": "# 1\n\nType: [T](../a/t.md)\n",
 		"d/2.md": "# 2\n\nType: [T](../a/t.md)\n",
 	})
-	want := lines(t, specOf(t, files))
+	want := lines(t, modelOf(t, files))
 	for i := 0; i < 30; i++ {
-		if got := lines(t, specOf(t, files)); !reflect.DeepEqual(got, want) {
+		if got := lines(t, modelOf(t, files)); !reflect.DeepEqual(got, want) {
 			t.Fatalf("run %d: got %v, want %v", i, got, want)
 		}
 	}

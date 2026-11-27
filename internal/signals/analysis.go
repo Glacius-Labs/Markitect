@@ -39,9 +39,9 @@ func (f Finding) String() string {
 	return fmt.Sprintf("%s:%d: %s: %s", f.Path, f.Line, f.Signal, f.Detail)
 }
 
-// Analysis is what the signals found in a spec.
+// Analysis is what the signals found in a model.
 type Analysis struct {
-	Spec       *lang.Spec
+	Model      *lang.Model
 	Statements []Statement
 	// Findings holds each signal's list, strongest first.
 	Findings map[string][]Finding
@@ -52,16 +52,16 @@ type Analysis struct {
 	refs    References
 }
 
-// Analyze computes the statements and the signals of a spec, with refs as the
+// Analyze computes the statements and the signals of a model, with refs as the
 // reference values by type.
-func Analyze(spec *lang.Spec, refs References) *Analysis {
-	a := &Analysis{Spec: spec, Findings: map[string][]Finding{}, links: map[string]map[string]bool{},
+func Analyze(model *lang.Model, refs References) *Analysis {
+	a := &Analysis{Model: model, Findings: map[string][]Finding{}, links: map[string]map[string]bool{},
 		inbound: map[string]map[string]bool{}, refs: refs}
-	for _, d := range spec.Documents {
+	for _, d := range model.Documents {
 		for _, st := range Statements(d) {
 			// The text under a type's sections guides the writer; only what
 			// stands before its first section says what the type is.
-			if spec.IsType(d) && (st.Section != "" || len(d.Sections) > 0 && st.Line > d.Sections[0].Line) {
+			if model.IsType(d) && (st.Section != "" || len(d.Sections) > 0 && st.Line > d.Sections[0].Line) {
 				continue
 			}
 			a.Statements = append(a.Statements, st)
@@ -71,7 +71,7 @@ func Analyze(spec *lang.Spec, refs References) *Analysis {
 			a.links[d.Path][r.Target] = true
 		}
 	}
-	titles := newTitles(spec)
+	titles := newTitles(model)
 	for _, st := range a.Statements {
 		a.Named = append(a.Named, titles.find(st.Words, st.Doc))
 	}
@@ -201,7 +201,7 @@ func (a *Analysis) complexity() {
 // reference returns the reference values of a document's type, if its type
 // is a type of the default's module core, whose reference values the tool holds.
 func (a *Analysis) reference(doc string) (Reference, bool) {
-	d, ok := a.Spec.Document(doc)
+	d, ok := a.Model.Document(doc)
 	if !ok || !d.HasType() {
 		return Reference{}, false
 	}
@@ -214,12 +214,12 @@ func (a *Analysis) size() {
 		count[st.Doc]++
 	}
 	byType := map[string][]int{}
-	for _, d := range a.Spec.Documents {
+	for _, d := range a.Model.Documents {
 		if d.HasType() {
 			byType[d.TypePath] = append(byType[d.TypePath], count[d.Path])
 		}
 	}
-	for _, d := range a.Spec.Documents {
+	for _, d := range a.Model.Documents {
 		if !d.HasType() {
 			continue
 		}
@@ -238,7 +238,7 @@ func (a *Analysis) textBeforeSections() {
 	first := map[string]int{}
 	n := map[string]int{}
 	for _, st := range a.Statements {
-		d, _ := a.Spec.Document(st.Doc)
+		d, _ := a.Model.Document(st.Doc)
 		if d == nil || !d.HasType() || st.Section != "" || len(d.Sections) > 0 && st.Line > d.Sections[0].Line {
 			continue
 		}
@@ -253,8 +253,8 @@ func (a *Analysis) textBeforeSections() {
 	}
 }
 
-func sectionHeading(spec *lang.Spec, doc string, line int) string {
-	d, _ := spec.Document(doc)
+func sectionHeading(model *lang.Model, doc string, line int) string {
+	d, _ := model.Document(doc)
 	for _, s := range d.Sections {
 		if s.Line == line {
 			return s.Heading
@@ -273,7 +273,7 @@ func (a *Analysis) scatteredRules() {
 			if x == st.Doc {
 				continue
 			}
-			if _, ok := a.Spec.Document(x); !ok {
+			if _, ok := a.Model.Document(x); !ok {
 				continue
 			}
 			if from[x] == nil {
@@ -284,7 +284,7 @@ func (a *Analysis) scatteredRules() {
 	}
 	for x, docs := range from {
 		list := sortedKeys(docs)
-		d, _ := a.Spec.Document(x)
+		d, _ := a.Model.Document(x)
 		a.add(Finding{Signal: ScatteredRules, Path: x, Line: max(d.TitleLine, 1), Docs: append([]string{x}, list...), rank: float64(len(list)),
 			Detail: fmt.Sprintf("conditional or restricting statements in %s refer to it: %s", plural(len(list), "other document"), strings.Join(list, ", "))})
 	}
@@ -333,7 +333,7 @@ func (a *Analysis) unlinkedNames() {
 		}
 	}
 	for p, n := range count {
-		d, _ := a.Spec.Document(p.target)
+		d, _ := a.Model.Document(p.target)
 		a.add(Finding{Signal: UnlinkedName, Path: p.doc, Line: first[p], Docs: []string{p.doc, p.target}, rank: float64(n),
 			Detail: fmt.Sprintf("%q (%s) %s, never linked", d.Title, p.target, plural(n, "time"))})
 	}

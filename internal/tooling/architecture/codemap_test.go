@@ -123,7 +123,7 @@ func TestSummariesNeedExactlyOneDocComment(t *testing.T) {
 		files map[string]string
 		want  string
 	}{
-		{"one", map[string]string{"a.go": "// Package lang checks specs. More text.\npackage lang\n", "b.go": "package lang\n", "a_test.go": "// Package lang tests.\npackage lang\n"}, "Package lang checks specs."},
+		{"one", map[string]string{"a.go": "// Package lang checks models. More text.\npackage lang\n", "b.go": "package lang\n", "a_test.go": "// Package lang tests.\npackage lang\n"}, "Package lang checks models."},
 		{"none", map[string]string{"a.go": "package lang\n"}, "package internal/lang has no package doc comment"},
 		{"build constraint only", map[string]string{"a.go": "//go:build windows\n\npackage lang\n"}, "package internal/lang has no package doc comment"},
 		{"two", map[string]string{"a.go": "// Package lang a.\npackage lang\n", "b.go": "// Package lang b.\npackage lang\n"}, "package internal/lang has package doc comments in a.go, b.go; keep one"},
@@ -175,7 +175,7 @@ func TestRenderCodeMapLinksFromPageDirectory(t *testing.T) {
 		"| `cmd/markitect` | Command markitect runs. | [CONTRIBUTING.md](../../CONTRIBUTING.md) |",
 		"| `internal/buildinfo` | Package buildinfo knows the version. | [docs/development/other.md](other.md) |",
 		"| `internal/tooling/architecture` | Package architecture checks. | [internal/tooling/architecture/README.md](../../internal/tooling/architecture/README.md) |",
-		"| `language` | The spec language over a supplied file system: documents, types, sections, links and check. | nothing | 1 |",
+		"| `language` | The modeling language over a supplied file system: documents, types, sections, links and check. | nothing | 1 |",
 		"| `entrypoint` | The thin entrypoint of markitect. | `command-line` | 1 |",
 		"| `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 0 |",
 		"| `cmd/markitect` | `internal/lang` | all | A fixture edge. |\n| `internal/tooling/architecture` | `internal/buildinfo` | tests only | Tests read the notices. |",

@@ -6,10 +6,10 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 | Markitect's solution | Builds on |
 |---|---|
-| [The spec in the repository](#the-spec-in-the-repository) | Docs as code; Parnas and Clements on documenting the end state |
-| [A typed, declarative specification language](#a-typed-declarative-specification-language) | Static typing, declarative languages and specification languages such as TLA+ and Alloy, as analogies; classes, objects and typed properties; Go's packages and internal folders; Martin's acyclic dependencies principle |
-| [The spec as an interface](#the-spec-as-an-interface) | Parnas's information hiding |
-| [Designing a good spec](#designing-a-good-spec) | ISO/IEC/IEEE 29148; competency questions; Tornhill's hotspots and change coupling |
+| [The model in the repository](#the-model-in-the-repository) | Docs as code; Parnas and Clements on documenting the end state |
+| [A typed, declarative modeling language](#a-typed-declarative-modeling-language) | Static typing, declarative languages and specification languages such as TLA+ and Alloy, as analogies; classes, objects and typed properties; Go's packages and internal folders; Martin's acyclic dependencies principle |
+| [The model as an interface](#the-model-as-an-interface) | Parnas's information hiding |
+| [Designing a good model](#designing-a-good-model) | ISO/IEC/IEEE 29148; competency questions; Tornhill's hotspots and change coupling |
 | [Purpose, world and system](#purpose-world-and-system) | Meyer's Handbook of Requirements and Business Analysis; Zave and Jackson |
 | [Behaviour as contracts](#behaviour-as-contracts) | Meyer's Design by Contract |
 | [Quality](#quality) | ISO/IEC 25010; the quality attribute scenario |
@@ -19,54 +19,54 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 [Related practice](#related-practice) says how Markitect differs from spec-driven development, and [weighed and not taken](#weighed-and-not-taken) what was considered and left out.
 
-## The spec in the repository
+## The model in the repository
 
-**Taken.** Documentation is written, versioned and reviewed with the tools of code, beside the code: Markdown in the repository, changed by pull request (Write the Docs). The spec states the project as it should be now, as if it came from an ideal process, and leaves the way there to the repository's history, as Parnas and Clements (1986) advise for design documents. The same rule holds for Markitect's own pages ([DEC-071](decisions.md#dec-071-main-holds-only-the-current-state)).
+**Taken.** Documentation is written, versioned and reviewed with the tools of code, beside the code: Markdown in the repository, changed by pull request (Write the Docs). The model states the project as it should be now, as if it came from an ideal process, and leaves the way there to the repository's history, as Parnas and Clements (1986) advise for design documents. The same rule holds for Markitect's own pages ([DEC-071](decisions.md#dec-071-main-holds-only-the-current-state)).
 
-**Differs.** In docs as code, documentation sits beside the code and follows it. The spec has authority over the code: where they differ, the code is wrong ([DEC-122](decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)).
+**Differs.** In docs as code, documentation sits beside the code and follows it. The model has authority over the code: where they differ, the code is wrong ([DEC-122](decisions.md#dec-122-the-model-declares-what-is-fixed-like-an-interface)).
 
-## A typed, declarative specification language
+## A typed, declarative modeling language
 
-**Analogy.** A statically typed language reports a contradiction when it compiles, a dynamically typed one only when the program runs into it. A declarative language states what should hold and leaves how to an executor, as SQL leaves the plan to the database and Terraform the steps to its providers. TLA+ (Lamport) and Alloy (Jackson) are specification languages: formal, and never executed. The spec borrows all three images ([DEC-119](decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-specification-language)): it is typed, it is declarative with an agent as its executor, and nothing in it is executed. `markitect check` is the type checker, and a borrowed idea, not a guarantee ([DEC-138](decisions.md#dec-138-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)).
+**Analogy.** A statically typed language reports a contradiction when it compiles, a dynamically typed one only when the program runs into it. A declarative language states what should hold and leaves how to an executor, as SQL leaves the plan to the database and Terraform the steps to its providers. TLA+ (Lamport) and Alloy (Jackson) are specification languages: formal, and never executed. The model borrows all three images ([DEC-119](decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-modeling-language)): it is typed, it is declarative with an agent as its executor, and nothing in it is executed. `markitect check` is the type checker, and a borrowed idea, not a guarantee ([DEC-138](decisions.md#dec-138-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)).
 
-**Taken.** Types and their instances, as classes and objects: a type declares the properties of its objects, and a checker enforces them ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-and-modules)). A property names its type, as the property of a class does: a property typed by a class holds references to objects of that class or of a class derived from it, and an enumeration fixes the values a property may take ([DEC-157](decisions.md#dec-157-a-property-names-its-type-and-modules-depend-on-each-other-without-a-cycle)). A type extends another as a class extends its base class, and inherits its properties without changing their types ([DEC-155](decisions.md#dec-155-a-type-extends-another-with-a-line-of-its-own)). A module shows some of what it holds and keeps the rest internal, as a Go package exports some names, and inside it everything may use what is internal to the modules above it, as Go's internal folders allow ([DEC-156](decisions.md#dec-156-a-module-is-a-folder-and-its-readme-says-what-it-shows)). Modules do not depend on each other in a cycle, after the acyclic dependencies principle (Martin 2002), as Go forbids a package to import itself, directly or indirectly.
+**Taken.** Types and their instances, as classes and objects: a type declares the properties of its objects, and a checker enforces them ([DEC-121](decisions.md#dec-121-a-model-is-plain-markdown-with-types-and-modules)). A property names its type, as the property of a class does: a property typed by a class holds references to objects of that class or of a class derived from it, and an enumeration fixes the values a property may take ([DEC-157](decisions.md#dec-157-a-property-names-its-type-and-modules-depend-on-each-other-without-a-cycle)). A type extends another as a class extends its base class, and inherits its properties without changing their types ([DEC-155](decisions.md#dec-155-a-type-extends-another-with-a-line-of-its-own)). A module shows some of what it holds and keeps the rest internal, as a Go package exports some names, and inside it everything may use what is internal to the modules above it, as Go's internal folders allow ([DEC-156](decisions.md#dec-156-a-module-is-a-folder-and-its-readme-says-what-it-shows)). Modules do not depend on each other in a cycle, after the acyclic dependencies principle (Martin 2002), as Go forbids a package to import itself, directly or indirectly.
 
 **Differs.** Only the structure is formal. A module shows whole documents, by links in its README, not names marked in each document, and declares no imports: its dependencies follow from type lines, extends lines and references, and a mention never counts. The content is prose that an agent interprets, so the result is checked, not derived. A property holds text, references or fixed values, with no other value forms and no check rules, and everything stays plain Markdown with ordinary links.
 
-## The spec as an interface
+## The model as an interface
 
-**Taken.** A component of software states what it is responsible for and hides the decisions behind it (Parnas 1972). The spec plays that role for a whole project: it declares what is fixed, what someone relies on or what was decided, and leaves free what nobody relies on ([DEC-122](decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)).
+**Taken.** A component of software states what it is responsible for and hides the decisions behind it (Parnas 1972). The model plays that role for a whole project: it declares what is fixed, what someone relies on or what was decided, and leaves free what nobody relies on ([DEC-122](decisions.md#dec-122-the-model-declares-what-is-fixed-like-an-interface)).
 
-**Differs.** An interface shows only the outside. The spec also holds decisions about the inside, such as components and technology, since they are decided and so fixed.
+**Differs.** An interface shows only the outside. The model also holds decisions about the inside, such as components and technology, since they are decided and so fixed.
 
-## Designing a good spec
+## Designing a good model
 
 **Taken.**
 
-- **Characteristics of good requirements** (ISO/IEC/IEEE 29148): a good spec is necessary, complete, consistent, unambiguous and verifiable, and structured, each fact singular and on its level ([DEC-123](decisions.md#dec-123-a-good-spec-has-five-characteristics-and-shows-them-in-four-sources)). Vague words that the standard names as signs of a weak requirement are one of the signals that say where reading pays off.
-- **Competency questions** (Grüninger and Fox 1995): an ontology is judged by the questions it must be able to answer. A spec is questioned the same way, with a catalog of questions that ships with the default, each answer taken from the spec with a citation.
-- **Hotspots and change coupling** (Tornhill 2015, 2018): a hotspot is what changes often and costs much; change coupling is what changes together without a link. Both are among the signals of a spec's changes.
+- **Characteristics of good requirements** (ISO/IEC/IEEE 29148): a good model is necessary, complete, consistent, unambiguous and verifiable, and structured, each fact singular and on its level ([DEC-123](decisions.md#dec-123-a-good-model-has-five-characteristics-and-shows-them-in-four-sources)). Vague words that the standard names as signs of a weak requirement are one of the signals that say where reading pays off.
+- **Competency questions** (Grüninger and Fox 1995): an ontology is judged by the questions it must be able to answer. A model is questioned the same way, with a catalog of questions that ships with the default, each answer taken from the model with a citation.
+- **Hotspots and change coupling** (Tornhill 2015, 2018): a hotspot is what changes often and costs much; change coupling is what changes together without a link. Both are among the signals of a model's changes.
 
 **Differs.**
 
 - The characteristics are judged by readers, guided by signals with no fixed thresholds. Each number stands beside the reference value of its type and the rest of the project.
 - A hotspot weighs how often a document changed by how many documents link to it, not by its complexity. The tool computes no signal of the changes: an agent reads them from the repository's history.
-- Correctness, whether the spec says what is meant, is not among the characteristics a reader checks: only use shows it.
+- Correctness, whether the model says what is meant, is not among the characteristics a reader checks: only use shows it.
 
 ## Purpose, world and system
 
 **Taken.**
 
-- **Goals, environment and system** (Meyer 2022): a description says what the system is for, what holds in the world around it and what the system does. A software project's spec states them apart ([what goes in a spec](concept/what-goes-in-a-spec.md#what-a-software-project-states)).
+- **Goals, environment and system** (Meyer 2022): a description says what the system is for, what holds in the world around it and what the system does. A software project's model states them apart ([what goes in a model](concept/what-goes-in-a-model.md#what-a-software-project-states)).
 - **The world is not ours to decide** (Zave and Jackson 1997; Meyer 2022): what is imposed is a constraint, and what is taken for granted so that the system can be simpler is an assumption, with who ensures it. Both are given from outside. What the project chooses is a rule.
 
-**Differs.** Meyer's fourth book, the Project, describes the work: roles, schedule, tasks and risks. What the spec says should hold leaves out the work that changes it, and keeps the processes an operation runs and the way of working of a project. Whether the work lies in the spec beside it is a matter of that way of working; the default's keeps it there, in modules of its own.
+**Differs.** Meyer's fourth book, the Project, describes the work: roles, schedule, tasks and risks. What the model says should hold leaves out the work that changes it, and keeps the processes an operation runs and the way of working of a project. Whether the work lies in the model beside it is a matter of that way of working; the default's keeps it there, in modules of its own.
 
 ## Behaviour as contracts
 
-**Taken.** An operation is specified by its precondition, its postcondition and the invariant of its class (Meyer 1992, 1997). In a spec an operation says what it does, what the caller gives and when it is refused, and a concept's rules are its invariants. An example illustrates and fixes nothing, as Meyer (2022) gives scenarios that role.
+**Taken.** An operation is specified by its precondition, its postcondition and the invariant of its class (Meyer 1992, 1997). In a model an operation says what it does, what the caller gives and when it is refused, and a concept's rules are its invariants. An example illustrates and fixes nothing, as Meyer (2022) gives scenarios that role.
 
-**Differs.** Each condition of refusal states the answer the caller gets, since a caller relies on which answer it gets ([DEC-122](decisions.md#dec-122-the-spec-declares-what-is-fixed-like-an-interface)).
+**Differs.** Each condition of refusal states the answer the caller gets, since a caller relies on which answer it gets ([DEC-122](decisions.md#dec-122-the-model-declares-what-is-fixed-like-an-interface)).
 
 ## Quality
 
@@ -78,20 +78,20 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 **Taken.**
 
-- **arc42** (Starke and Hruschka): what its sections on cross-cutting concepts, building blocks, deployment and decisions describe is stated in the spec.
+- **arc42** (Starke and Hruschka): what its sections on cross-cutting concepts, building blocks, deployment and decisions describe is stated in the model.
 - **Architecture decision records** (Nygard 2011; MADR): a decision is one choice with its reason and the alternatives it rejected.
 
 **Differs.**
 
-- A decision has no status: the spec holds what is decided now, and the repository's history keeps what was superseded. It may say what would reopen it.
-- Views are not declared. ISO/IEC/IEEE 42010:2022 and Views and Beyond describe an architecture through views written for their readers; Markitect generates every view from the spec, so each fact is stated once ([DEC-131](decisions.md#dec-131-the-tool-shows-claude-explains)).
+- A decision has no status: the model holds what is decided now, and the repository's history keeps what was superseded. It may say what would reopen it.
+- Views are not declared. ISO/IEC/IEEE 42010:2022 and Views and Beyond describe an architecture through views written for their readers; Markitect generates every view from the model, so each fact is stated once ([DEC-131](decisions.md#dec-131-the-tool-shows-claude-explains)).
 - arc42's risks and technical debt have no place in what should hold: they describe the work, not the system as it should be.
 
 ## The default and the tool
 
-**Analogy.** Terraform runs the same command line everywhere and copies modules from a registry into the configuration, which then owns them. Markitect's tool and its default are cut the same way, except that a person copies the default by hand ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads), [DEC-159](decisions.md#dec-159-the-default-is-a-whole-spec-to-start-from-and-lies-in-the-plugin)).
+**Analogy.** Terraform runs the same command line everywhere and copies modules from a registry into the configuration, which then owns them. Markitect's tool and its default are cut the same way, except that a person copies the default by hand ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads), [DEC-159](decisions.md#dec-159-the-default-is-a-whole-model-to-start-from-and-lies-in-the-plugin)).
 
-**Differs.** The way of working is no process document beside the project: the default ships one as part of the spec a project copies, written in the same language, and the project owns it from then on and realizes it with its skills, agents and scripts.
+**Differs.** The way of working is no process document beside the project: the default ships one as part of the model a project copies, written in the same language, and the project owns it from then on and realizes it with its skills, agents and scripts.
 
 ## The tool's conventions
 
@@ -99,15 +99,15 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 ## Related practice
 
-**Spec-driven development**, as GitHub Spec Kit and Kiro practise it, writes a spec for each feature or fix, plans and implements it, and keeps standing project knowledge apart: Spec Kit's constitution, Kiro's steering files. Markitect keeps one standing spec of the whole project: a change is a change to that spec, which stays current after the change is built. What both share is that the agent works from a written statement of what is wanted rather than a prompt.
+**Spec-driven development**, as GitHub Spec Kit and Kiro practise it, writes a spec for each feature or fix, plans and implements it, and keeps standing project knowledge apart: Spec Kit's constitution, Kiro's steering files. Markitect keeps one standing model of the whole project: a change is a change to that model, which stays current after the change is built. What both share is that the agent works from a written statement of what is wanted rather than a prompt.
 
 ## Weighed and not taken
 
-- **An ontology language or SysML v2 as the form of the spec,** and front matter with typed fields. RDF with OWL and SHACL, SysML v2 and TypeScript were weighed. Markdown is what people and agents already write ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-and-modules)).
-- **Rules on layers** between modules, as layered architectures have, beyond the rule that forbids a cycle. A module only groups and shows, and a rule names what it applies to by links ([DEC-121](decisions.md#dec-121-a-spec-is-plain-markdown-with-types-and-modules)).
+- **An ontology language or SysML v2 as the form of the model,** and front matter with typed fields. RDF with OWL and SHACL, SysML v2 and TypeScript were weighed. Markdown is what people and agents already write ([DEC-121](decisions.md#dec-121-a-model-is-plain-markdown-with-types-and-modules)).
+- **Rules on layers** between modules, as layered architectures have, beyond the rule that forbids a cycle. A module only groups and shows, and a rule names what it applies to by links ([DEC-121](decisions.md#dec-121-a-model-is-plain-markdown-with-types-and-modules)).
 - **Declared imports** between modules, as Go's import declarations. They would state again what type lines, extends lines and references already say ([DEC-157](decisions.md#dec-157-a-property-names-its-type-and-modules-depend-on-each-other-without-a-cycle)).
-- **Architecture metrics of the spec,** such as coupling, cohesion and abstractness, and fixed thresholds. They measure structure, not whether a spec serves its purpose ([DEC-123](decisions.md#dec-123-a-good-spec-has-five-characteristics-and-shows-them-in-four-sources)).
-- **Attributes per requirement**, such as priority, risk, owner and history, which requirements standards keep. They describe the work, not the system, and what the spec says should hold states only the system as it should be.
+- **Architecture metrics of the model,** such as coupling, cohesion and abstractness, and fixed thresholds. They measure structure, not whether a model serves its purpose ([DEC-123](decisions.md#dec-123-a-good-model-has-five-characteristics-and-shows-them-in-four-sources)).
+- **Attributes per requirement**, such as priority, risk, owner and history, which requirements standards keep. They describe the work, not the system, and what the model says should hold states only the system as it should be.
 - **Views as declared things.** A declared view states the same facts twice ([DEC-131](decisions.md#dec-131-the-tool-shows-claude-explains)).
 
 ## Sources

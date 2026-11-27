@@ -44,10 +44,10 @@ func readme(title string, patterns ...string) string {
 // that nobody names.
 func dotted() map[string]string {
 	return map[string]string{
-		".markitect/spec":                "docs/spec\n",
-		"docs/spec/skills/README.md":     readme("Skills", ".claude/skills/triage/"),
-		"docs/spec/ci/README.md":         readme("CI", ".github/workflows/*.yaml"),
-		"docs/spec/editor/README.md":     readme("Editor", ".editorconfig"),
+		".markitect/model":               "docs/model\n",
+		"docs/model/skills/README.md":    readme("Skills", ".claude/skills/triage/"),
+		"docs/model/ci/README.md":        readme("CI", ".github/workflows/*.yaml"),
+		"docs/model/editor/README.md":    readme("Editor", ".editorconfig"),
 		".claude/skills/triage/SKILL.md": "triage",
 		".claude/skills/triage/run.sh":   "run",
 		".claude/skills/triage/.hidden":  "hidden",
@@ -108,7 +108,7 @@ func TestModuleInADotFolderWithAnIgnoreFile(t *testing.T) {
 	got, opened := diffRecording(t, dotted(), changedDotted(), ignore)
 	// What lies below the folder of the pattern is the module's, a dot name too. The
 	// other skill is taken in by the ignore file, and no module names it.
-	want := "skills spec=false files=true\n" +
+	want := "skills model=false files=true\n" +
 		"  changed .claude/skills/triage/.hidden\n  changed .claude/skills/triage/SKILL.md\n  new .claude/skills/triage/new.md\n  gone .claude/skills/triage/run.sh\n" +
 		"unassigned: changed .claude/skills/other/SKILL.md; changed .github/CODEOWNERS; changed .gitignore; changed src/.env;\ntotal 6 differs true\n"
 	if got != want {
@@ -150,7 +150,7 @@ func TestNoIgnoreFile(t *testing.T) {
 	newer[".markitect/ignore"] = "never read\n"
 	newer[".markitect/extra"] = "never read\n"
 	got, opened := diffRecording(t, dotted(), newer, "")
-	want := "skills spec=false files=true\n" +
+	want := "skills model=false files=true\n" +
 		"  changed .claude/skills/triage/.hidden\n  changed .claude/skills/triage/SKILL.md\n  new .claude/skills/triage/new.md\n  gone .claude/skills/triage/run.sh\n" +
 		"unassigned: changed .claude/skills/other/SKILL.md; gone .claude/worktrees/w1/big.txt; new .claude/worktrees/w2/new.txt; changed .git/HEAD; new .git/objects/ab/new; changed .github/CODEOWNERS; changed .gitignore; changed src/.env;\n" +
 		"total 10 differs true\n"
@@ -165,8 +165,8 @@ func TestNoIgnoreFile(t *testing.T) {
 // The folder .markitect/ is never read, whatever names it, and the ignore file
 // cannot take it in.
 func TestMarkitectFolderIsNeverRead(t *testing.T) {
-	files := with(dotted(), map[string]string{"docs/spec/all/README.md": readme("All", ".*/", ".markitect/", "**")})
-	newer := with(files, map[string]string{".markitect/spec": "docs/spec\n", ".markitect/other": "new", ".git/HEAD": "changed"})
+	files := with(dotted(), map[string]string{"docs/model/all/README.md": readme("All", ".*/", ".markitect/", "**")})
+	newer := with(files, map[string]string{".markitect/model": "docs/model\n", ".markitect/other": "new", ".git/HEAD": "changed"})
 	got, opened := diffRecording(t, files, newer, "!.markitect/\n")
 	if !strings.Contains(got, "  changed .git/HEAD\n") || strings.Contains(got, ".markitect") {
 		t.Errorf("got\n%s", got)
@@ -180,13 +180,13 @@ func TestMarkitectFolderIsNeverRead(t *testing.T) {
 // are the same, those below a dot folder too: no file is new, gone or changed.
 func TestOnlyRealizedInChangesAndTheFilesAreTheSame(t *testing.T) {
 	newer := with(dotted(), map[string]string{
-		"docs/spec/skills/README.md": readme("Skills", ".claude/skills/"),
-		"docs/spec/ci/README.md":     readme("CI", ".github/"),
-		"docs/spec/editor/README.md": readme("Editor"),
+		"docs/model/skills/README.md": readme("Skills", ".claude/skills/"),
+		"docs/model/ci/README.md":     readme("CI", ".github/"),
+		"docs/model/editor/README.md": readme("Editor"),
 	})
 	for _, ignore := range []string{"", ".git/\n.claude/worktrees/\n"} {
 		got, _ := diffRecording(t, dotted(), newer, ignore)
-		if !strings.HasPrefix(got, "ci spec=true files=false\neditor spec=true files=false\nskills spec=true files=false\nunassigned:\ntotal ") || !strings.HasSuffix(got, " differs true\n") {
+		if !strings.HasPrefix(got, "ci model=true files=false\neditor model=true files=false\nskills model=true files=false\nunassigned:\ntotal ") || !strings.HasSuffix(got, " differs true\n") {
 			t.Errorf("ignore %q:\n%s", ignore, got)
 		}
 	}
@@ -196,14 +196,14 @@ func TestOnlyRealizedInChangesAndTheFilesAreTheSame(t *testing.T) {
 // module takes what it names, as for any file; a folder pattern covers all below.
 func TestDotFolderNamedByParentAndChild(t *testing.T) {
 	files := map[string]string{
-		".markitect/spec":                   "docs/spec\n",
-		"docs/spec/skills/README.md":        readme("Skills", ".claude/skills/"),
-		"docs/spec/skills/triage/README.md": readme("Triage", ".claude/skills/triage/*.md"),
-		".claude/skills/triage/SKILL.md":    "triage",
-		".claude/skills/triage/run.sh":      "run",
-		".claude/skills/other/SKILL.md":     "other",
-		".claude/skills/.cache/x":           "cache",
-		".claude/settings.json":             "settings",
+		".markitect/model":                   "docs/model\n",
+		"docs/model/skills/README.md":        readme("Skills", ".claude/skills/"),
+		"docs/model/skills/triage/README.md": readme("Triage", ".claude/skills/triage/*.md"),
+		".claude/skills/triage/SKILL.md":     "triage",
+		".claude/skills/triage/run.sh":       "run",
+		".claude/skills/other/SKILL.md":      "other",
+		".claude/skills/.cache/x":            "cache",
+		".claude/settings.json":              "settings",
 	}
 	newer := with(files, map[string]string{
 		".claude/skills/triage/SKILL.md": "changed",
@@ -212,8 +212,8 @@ func TestDotFolderNamedByParentAndChild(t *testing.T) {
 		".claude/skills/.cache/x":        "changed",
 		".claude/settings.json":          "changed",
 	})
-	want := "skills spec=false files=true\n  changed .claude/skills/.cache/x\n  changed .claude/skills/other/SKILL.md\n  changed .claude/skills/triage/run.sh\n" +
-		"skills/triage spec=false files=true\n  changed .claude/skills/triage/SKILL.md\n" +
+	want := "skills model=false files=true\n  changed .claude/skills/.cache/x\n  changed .claude/skills/other/SKILL.md\n  changed .claude/skills/triage/run.sh\n" +
+		"skills/triage model=false files=true\n  changed .claude/skills/triage/SKILL.md\n" +
 		"unassigned: changed .claude/settings.json;\ntotal 1 differs true\n"
 	if got := diffOf(t, files, newer, ""); got != want {
 		t.Errorf("got\n%s", got)
@@ -224,21 +224,21 @@ func TestDotFolderNamedByParentAndChild(t *testing.T) {
 // file at the top is named by a pattern that spells it.
 func TestWildcardsAndDotNames(t *testing.T) {
 	files := map[string]string{
-		".markitect/spec":           "docs/spec\n",
-		"docs/spec/flows/README.md": readme("Flows", "*/workflows/", "src/*", "**/gen/", ".editor*"),
-		".github/workflows/ci.yaml": "ci",
-		"app/workflows/run.yaml":    "run",
-		"src/.env":                  "secret",
-		"src/a":                     "a",
-		".a/b/gen/x":                "x",
-		".editorconfig":             "root",
-		".gitignore":                "x",
+		".markitect/model":           "docs/model\n",
+		"docs/model/flows/README.md": readme("Flows", "*/workflows/", "src/*", "**/gen/", ".editor*"),
+		".github/workflows/ci.yaml":  "ci",
+		"app/workflows/run.yaml":     "run",
+		"src/.env":                   "secret",
+		"src/a":                      "a",
+		".a/b/gen/x":                 "x",
+		".editorconfig":              "root",
+		".gitignore":                 "x",
 	}
 	newer := with(files, map[string]string{
 		".github/workflows/ci.yaml": "changed", "app/workflows/run.yaml": "changed", "src/.env": "changed", "src/a": "changed",
 		".a/b/gen/x": "changed", ".editorconfig": "changed", ".gitignore": "changed",
 	})
-	want := "flows spec=false files=true\n  changed .a/b/gen/x\n  changed .editorconfig\n  changed .github/workflows/ci.yaml\n  changed app/workflows/run.yaml\n  changed src/.env\n  changed src/a\n" +
+	want := "flows model=false files=true\n  changed .a/b/gen/x\n  changed .editorconfig\n  changed .github/workflows/ci.yaml\n  changed app/workflows/run.yaml\n  changed src/.env\n  changed src/a\n" +
 		"unassigned: changed .gitignore;\ntotal 1 differs true\n"
 	if got := diffOf(t, files, newer, ""); got != want {
 		t.Errorf("got\n%s", got)

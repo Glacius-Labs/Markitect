@@ -12,7 +12,7 @@ import (
 )
 
 // projectAt is a project folder named on the command line, which must hold
-// .markitect/spec.
+// .markitect/model.
 func projectAt(arg string) (string, error) {
 	abs, err := filepath.Abs(arg)
 	if err != nil {
@@ -33,17 +33,17 @@ type diffDocument struct {
 	New     []string      `json:"new"`
 	Gone    []string      `json:"gone"`
 	Changed []changedJSON `json:"changed"`
-	// Modules are the modules whose spec or files changed; Unassigned the
+	// Modules are the modules whose model or files changed; Unassigned the
 	// changed files that no module names.
 	Modules    []moduleJSON   `json:"modules"`
 	Unassigned unassignedJSON `json:"unassigned"`
 }
 
-// moduleJSON is a module with a change; Module is the folder below the spec
-// folder, "." for the spec folder itself.
+// moduleJSON is a module with a change; Module is the folder below the model
+// folder, "." for the model folder itself.
 type moduleJSON struct {
 	Module       string   `json:"module"`
-	Spec         bool     `json:"spec"`
+	Model        bool     `json:"model"`
 	Files        bool     `json:"files"`
 	NewFiles     []string `json:"new_files"`
 	GoneFiles    []string `json:"gone_files"`
@@ -67,7 +67,7 @@ type changedJSON struct {
 	Diff string `json:"diff"`
 }
 
-// diff compares the spec of the project OLD with that of NEW, by default the
+// diff compares the model of the project OLD with that of NEW, by default the
 // project the command works in.
 func diff(o options, stdout io.Writer) (int, error) {
 	oldDir, err := projectAt(o.positional[0])
@@ -100,7 +100,7 @@ func diff(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	c := d.Spec
+	c := d.Model
 	doc := diffDocument{header: newHeader("diff"), New: nonNil(c.New), Gone: nonNil(c.Gone), Changed: []changedJSON{},
 		Modules: []moduleJSON{}, Unassigned: unassignedJSON{Changes: []unassignedFileJSON{}, Total: d.UnassignedTotal}}
 	var b strings.Builder
@@ -132,7 +132,7 @@ func diff(o options, stdout io.Writer) (int, error) {
 		if i > 0 {
 			b.WriteString("\n")
 		}
-		doc.Modules = append(doc.Modules, moduleJSON{Module: m.Module, Spec: m.Spec, Files: m.Files,
+		doc.Modules = append(doc.Modules, moduleJSON{Module: m.Module, Model: m.Model, Files: m.Files,
 			NewFiles: nonNil(m.New), GoneFiles: nonNil(m.Gone), ChangedFiles: nonNil(m.Changed)})
 		fmt.Fprintf(&b, "%s: %s changed%s\n", moduleName(m.Module), what(m), count(m))
 		for _, f := range m.Changes() {
@@ -153,10 +153,10 @@ func diff(o options, stdout io.Writer) (int, error) {
 	return code, err
 }
 
-// moduleName names a module in the text: its folder below the spec folder.
+// moduleName names a module in the text: its folder below the model folder.
 func moduleName(m string) string {
-	if m == lang.SpecModule {
-		return "(spec folder)"
+	if m == lang.ModelFolderModule {
+		return "(model folder)"
 	}
 	return m
 }
@@ -202,10 +202,10 @@ func inside(inner, outer string) project.Folder {
 // what says what changed in a module that has a change.
 func what(m project.ModuleChange) string {
 	switch {
-	case m.Spec && m.Files:
-		return "spec and files"
-	case m.Spec:
-		return "spec"
+	case m.Model && m.Files:
+		return "model and files"
+	case m.Model:
+		return "model"
 	}
 	return "files"
 }

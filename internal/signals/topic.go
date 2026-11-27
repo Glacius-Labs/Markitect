@@ -31,7 +31,7 @@ type Topic struct {
 }
 
 // Topic gathers the topic view of name: a document path, with or without
-// .md, or a folder below the spec folder. ok is false when it is neither.
+// .md, or a folder below the model folder. ok is false when it is neither.
 func (a *Analysis) Topic(name string) (*Topic, bool) {
 	name = strings.Trim(strings.ReplaceAll(name, "\\", "/"), "/")
 	t := &Topic{Findings: map[string][]Finding{}}
@@ -39,12 +39,12 @@ func (a *Analysis) Topic(name string) (*Topic, bool) {
 	if !strings.HasSuffix(strings.ToLower(doc), ".md") {
 		doc += ".md"
 	}
-	if d, ok := a.Spec.Document(path.Clean(doc)); ok {
+	if d, ok := a.Model.Document(path.Clean(doc)); ok {
 		t.Kind, t.Path, t.Docs = "document", d.Path, []string{d.Path}
-		if a.Spec.IsType(d) {
+		if a.Model.IsType(d) {
 			t.Kind = "type"
 		}
-		for _, o := range a.Spec.Objects(d) {
+		for _, o := range a.Model.Objects(d) {
 			t.Documents = append(t.Documents, o.Path)
 		}
 	} else {
@@ -52,7 +52,7 @@ func (a *Analysis) Topic(name string) (*Topic, bool) {
 		if folder == "." {
 			folder = ""
 		}
-		for _, d := range a.Spec.Documents {
+		for _, d := range a.Model.Documents {
 			if folder == "" || strings.HasPrefix(d.Path, folder+"/") {
 				t.Docs = append(t.Docs, d.Path)
 			}
@@ -66,14 +66,14 @@ func (a *Analysis) Topic(name string) (*Topic, bool) {
 	for _, d := range t.Docs {
 		own[d] = true
 	}
-	// A link to the README of a folder below the spec root that holds a topic
+	// A link to the README of a folder below the model root that holds a topic
 	// document counts as a link to the topic; the root's README does not.
 	about := map[string]bool{}
 	for _, d := range t.Docs {
 		about[d] = true
 		for dir := path.Dir(d); dir != "."; dir = path.Dir(dir) {
 			readme := dir + "/README.md"
-			if _, ok := a.Spec.Document(readme); ok && readme != d && !own[readme] {
+			if _, ok := a.Model.Document(readme); ok && readme != d && !own[readme] {
 				about[readme] = true
 			}
 		}

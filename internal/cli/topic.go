@@ -13,7 +13,7 @@ import (
 )
 
 // shownPerSignal is how many findings of each signal the text of the whole
-// spec shows; --all shows every one, and --json always does.
+// model shows; --all shows every one, and --json always does.
 const shownPerSignal = 10
 
 // references reads the reference values built into the tool, one file per module of the default.
@@ -66,12 +66,12 @@ func topic(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	spec := w.Spec
+	model := w.Model
 	refs, err := references()
 	if err != nil {
 		return ExitFailed, err
 	}
-	a := signals.Analyze(spec, refs)
+	a := signals.Analyze(model, refs)
 	name := ""
 	if len(o.positional) > 0 {
 		name = o.positional[0]
@@ -81,7 +81,7 @@ func topic(o options, stdout io.Writer) (int, error) {
 		return ExitFailed, fmt.Errorf("unknown topic: %s", name)
 	}
 	if name == "" {
-		t.Kind, t.Path = "spec", ""
+		t.Kind, t.Path = "model", ""
 	}
 	doc := topicDocument{header: newHeader("topic"), Topic: t.Path, TopicKind: t.Kind, Documents: t.Docs,
 		Strong: statementsJSON(t.Strong), LinkedFrom: statementsJSON(t.LinkedFrom), Named: statementsJSON(t.Named),
@@ -92,7 +92,7 @@ func topic(o options, stdout io.Writer) (int, error) {
 			doc.Signals[s] = append(doc.Signals[s], findingJSON{File: f.Path, Line: f.Line, Detail: f.Detail})
 		}
 	}
-	return output(o, stdout, doc, topicText(spec, t, o.all))
+	return output(o, stdout, doc, topicText(model, t, o.all))
 }
 
 func statementsJSON(list []signals.Statement) []statementJSON {
@@ -103,7 +103,7 @@ func statementsJSON(list []signals.Statement) []statementJSON {
 	return out
 }
 
-func topicText(spec *lang.Spec, t *signals.Topic, all bool) string {
+func topicText(model *lang.Model, t *signals.Topic, all bool) string {
 	var b strings.Builder
 	statements := func(heading string, list []signals.Statement, withSection bool) {
 		b.WriteString("\n## " + heading + "\n\n")
@@ -118,20 +118,20 @@ func topicText(spec *lang.Spec, t *signals.Topic, all bool) string {
 			b.WriteString(where + ": " + st.Text + "\n")
 		}
 	}
-	if t.Kind != "spec" {
+	if t.Kind != "model" {
 		fmt.Fprintf(&b, "# Topic: %s (%s)\n", t.Path, t.Kind)
 		statements("Strong statements about it", t.Strong, false)
 		switch t.Kind {
 		case "type":
-			d, _ := spec.Document(t.Path)
-			b.WriteString("\n## Definition\n\n" + text(d) + "\n## Documents\n\n" + tableText(tableOf(spec, d)))
+			d, _ := model.Document(t.Path)
+			b.WriteString("\n## Definition\n\n" + text(d) + "\n## Documents\n\n" + tableText(tableOf(model, d)))
 		case "document":
-			d, _ := spec.Document(t.Path)
+			d, _ := model.Document(t.Path)
 			b.WriteString("\n## Text\n\n" + text(d))
 		default:
 			b.WriteString("\n## Documents\n")
 			for _, p := range t.Docs {
-				d, _ := spec.Document(p)
+				d, _ := model.Document(p)
 				b.WriteString("\n### " + p + "\n\n" + text(d))
 			}
 		}
@@ -139,7 +139,7 @@ func topicText(spec *lang.Spec, t *signals.Topic, all bool) string {
 		statements("Named without a link", t.Named, false)
 		b.WriteString("\n## Signals\n")
 	} else {
-		fmt.Fprintf(&b, "# Signals of the spec\n")
+		fmt.Fprintf(&b, "# Signals of the model\n")
 	}
 	for _, s := range signals.Names {
 		list := t.Findings[s]
@@ -148,7 +148,7 @@ func topicText(spec *lang.Spec, t *signals.Topic, all bool) string {
 			b.WriteString("(none)\n")
 		}
 		for i, f := range list {
-			if t.Kind == "spec" && !all && i == shownPerSignal {
+			if t.Kind == "model" && !all && i == shownPerSignal {
 				fmt.Fprintf(&b, "… %d more; --all shows them\n", len(list)-i)
 				break
 			}
@@ -183,7 +183,7 @@ func questions(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	fsys := w.SpecFS
+	fsys := w.ModelFS
 	doc := questionsDocument{header: newHeader("questions"), Modules: []moduleQuestions{}}
 	entries, _ := fs.ReadDir(fsys, ".")
 	var b strings.Builder
@@ -209,7 +209,7 @@ func questions(o options, stdout io.Writer) (int, error) {
 		b.WriteString("\n")
 	}
 	if len(doc.Modules) == 0 {
-		b.WriteString("The spec has no module of the default, so there are no questions.\n")
+		b.WriteString("The model has no module of the default, so there are no questions.\n")
 	}
 	return output(o, stdout, doc, strings.TrimSuffix(b.String(), "\n\n")+"\n")
 }

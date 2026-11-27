@@ -6,7 +6,7 @@
 </h1>
 
 <p align="center">
-  Architect in Markdown. Agents build to spec.
+  Architect in Markdown. Agents build to the model.
 </p>
 
 <p align="center">
@@ -34,11 +34,11 @@ The usual fixes have no measure. A session that checks whether everything fits h
 
 Markitect gives the project that statement, and agents build to it.
 
-**You architect in Markdown.** The spec is the plan of the whole project: one place you own, where what is written is binding. You decide what the project is, how it is divided and which rules hold, and an agent writes it down with you. The spec is a typed, declarative specification language in Markdown: documents with a type and ordinary links, which say what should hold, not how. The `markitect` tool checks its structure, never its meaning.
+**You architect in Markdown.** The model is the plan of the whole project: one place you own, where what is written is binding. You decide what the project is, how it is divided and which rules hold, and an agent writes it down with you. The model is written in a typed, declarative modeling language in Markdown: documents with a type and ordinary links, which say what should hold, not how. The `markitect` tool checks its structure, never its meaning.
 
-**Agents build to spec.** Code, tests, configuration and documentation are the implementations of the spec, and where they differ from it, the spec is right. Agents build to it, and their work is checked against it, so that nobody has to read the work to trust it.
+**Agents build to the model.** Code, tests, configuration and documentation are the implementations of the model, and where they differ from it, the model is right. Agents build to it, and their work is checked against it, so that nobody has to read the work to trust it.
 
-**Your way of working is yours.** How your team works, how you plan, what a story or a report is and where the work lies, you describe in your spec too, with general types; skills, agents and scripts in your repository realize it. Markitect ships the language, a default to start from, a whole spec with general types, a way of working and modules for the work, which you copy and then own, and the `markitect` tool, which checks the spec, analyses it and helps reading it. The tool never writes and keeps no state.
+**Your way of working is yours.** How your team works, how you plan, what a story or a report is and where the work lies, you describe in your model too, with general types; skills, agents and scripts in your repository realize it. Markitect ships the language, a default to start from, a whole model with general types, a way of working and modules for the work, which you copy and then own, and the `markitect` tool, which checks the model, analyses it and helps reading it. The tool never writes and keeps no state.
 
 Markitect builds on Terraform's declared configuration, static typing and the characteristics of good requirements, and a project's way of working uses the coding agents' own skills, subagents and scheduled tasks. The [vision](docs/vision.md#why-markitect-exists) gives the full reasoning.
 
@@ -55,7 +55,7 @@ go install github.com/Glacius-Labs/Markitect/cmd/markitect@main
 
 A project is set up by hand. In an empty folder:
 
-1. **Name the spec folder.** Write the file `.markitect/spec` with the one line `model`.
+1. **Name the model folder.** Write the file `.markitect/model` with the one line `model`.
 2. **Name what to leave out.** Write the file `.markitect/ignore` with the files that are not your project's own, one pattern per line, such as `.git/` and your build output; `markitect diff` counts everything else.
 3. **Copy the default.** From a clone of this repository, copy the contents of `plugin/default/` to `model/`: general types such as Rule and Role, a way of working, and modules for the work. Every file of the copy is yours to change.
 4. **Write your modules.** Each module is a folder with a `README.md` that says what it is for and lists under `Contents` what other modules may link, such as `model/lending/`; list it in turn in the README of `model/`. Write its documents with your agent. The default's [set-up](plugin/default/way-of-working/set-up.md) says what else belongs to your project, such as your people and their roles; the skills it names are not built, so you do those steps by hand.
@@ -67,16 +67,16 @@ The [project reference](docs/guides/project-reference.md#setting-up-a-project-by
 
 The [concept](docs/concept/README.md) describes the whole; this is the short form.
 
-1. **You write the spec** with an agent. A document is an ordinary Markdown file: a title, a type line that links its type, and the sections the type asks for. Folders group documents into modules, and each module's README says what the others may link.
+1. **You write the model** with an agent. A document is an ordinary Markdown file: a title, a type line that links its type, and the sections the type asks for. Folders group documents into modules, and each module's README says what the others may link.
 2. **`markitect check` checks its structure:** titles, types, missing or empty sections, references and values that do not fit their property, links that point to no document, links into what a module keeps internal, and cycles between modules. It never judges meaning.
 3. **The tool helps reading it.** `show` gives a document with what it links to and what links to it, `table` every object of a type, `topic` everything about a document, a type or a folder with the signals that say where reading pays off, and `questions` the competency questions of the default's types.
-4. **Agents build to it,** in the way of working your spec describes. A change to the spec is seen in the repository's diff like every change. Each module's README can name under `Realized in` where the module is built, and `markitect diff` compares the project with another state of it: document by document, and for each module whether its spec, its files or both changed.
+4. **Agents build to it,** in the way of working your model describes. A change to the model is seen in the repository's diff like every change. Each module's README can name under `Realized in` where the module is built, and `markitect diff` compares the project with another state of it: document by document, and for each module whether its model, its files or both changed.
 
 No `markitect` command writes a file or starts an agent.
 
 ## Example: one rule changes
 
-A small library allows each member five open loans. The limit lives in one rule of the spec:
+A small library allows each member five open loans. The limit lives in one rule of the model:
 
 ```markdown
 # Loan limit
@@ -127,17 +127,17 @@ The tool is built on Main and covered by tests and a command smoke, and the defa
 
 - **Set up by hand.** Nothing creates a project or copies the default for you.
 - **No skills.** The default's way of working names a skill for each activity an agent does, and none of them is built: the way of working is documents that an agent can read, not skills it runs.
-- **Structure only.** `check` sees titles, types, sections and links. Whether the spec says what you meant, readers and use show, and whether the project realizes it, your way of working has to check.
+- **Structure only.** `check` sees titles, types, sections and links. Whether the model says what you meant, readers and use show, and whether the project realizes it, your way of working has to check.
 - **Your machine, your rights.** Agents run with your permissions. Don't let them read untrusted input, such as issue text or web pages, without an isolated machine with limited rights around them.
 
 ## Documentation
 
 | Page | Covers |
 | --- | --- |
-| [Language reference](docs/guides/language-reference.md) | The spec language and every command |
+| [Language reference](docs/guides/language-reference.md) | The modeling language and every command |
 | [Project reference](docs/guides/project-reference.md) | The project, its ignore file, setting one up by hand, `version` and `diff` |
 | [The plugin](docs/guides/plugin.md) | The launcher that fetches the tool, its start hooks, and the default it holds |
-| [Library](docs/guides/library.md), [Signals](docs/guides/signals.md) | The default, its modules and types, and the signals of a spec |
+| [Library](docs/guides/library.md), [Signals](docs/guides/signals.md) | The default, its modules and types, and the signals of a model |
 | [Concept](docs/concept/README.md) | The one description of the product |
 | [Vision](docs/vision.md) | Why Markitect exists and what it leaves to people |
 | [Decisions](docs/decisions.md) | What holds today, and the open questions |

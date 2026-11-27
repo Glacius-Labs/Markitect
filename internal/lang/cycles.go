@@ -51,7 +51,7 @@ type moduleEdge struct{ from, to string }
 
 // moduleEdges returns each dependency between two different modules with the
 // first link that causes it, by file, line and target.
-func (s *Spec) moduleEdges() map[moduleEdge]dependency {
+func (s *Model) moduleEdges() map[moduleEdge]dependency {
 	edges := map[moduleEdge]dependency{}
 	for _, d := range s.Documents {
 		from := path.Dir(d.Path)
@@ -103,18 +103,18 @@ func (s *Spec) moduleEdges() map[moduleEdge]dependency {
 	return edges
 }
 
-// moduleLess orders modules by path, the spec folder first.
+// moduleLess orders modules by path, the model folder first.
 func moduleLess(a, b string) bool {
-	if a == specFolder || b == specFolder {
-		return a == specFolder && b != specFolder
+	if a == modelFolder || b == modelFolder {
+		return a == modelFolder && b != modelFolder
 	}
 	return a < b
 }
 
 // moduleName names a module in a message.
 func moduleName(m string) string {
-	if m == specFolder {
-		return "(spec folder)"
+	if m == modelFolder {
+		return "(model folder)"
 	}
 	return m
 }
@@ -122,7 +122,7 @@ func moduleName(m string) string {
 // checkModuleCycles reports each group of modules that all reach each other,
 // once, at the first link of one shortest cycle through the first module of the
 // group in path order.
-func (s *Spec) checkModuleCycles() []Diagnostic {
+func (s *Model) checkModuleCycles() []Diagnostic {
 	edges := s.moduleEdges()
 	if len(edges) == 0 {
 		return nil

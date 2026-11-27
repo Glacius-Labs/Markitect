@@ -20,12 +20,12 @@ const (
 // differs.
 type FileChange struct{ Path, Kind string }
 
-// ModuleChange is a module whose spec, its files, or both changed. Module is
-// the folder below the spec folder, lang.SpecModule for the spec folder itself.
+// ModuleChange is a module whose model, its files, or both changed. Module is
+// the folder below the model folder, lang.ModelFolderModule for the model folder itself.
 type ModuleChange struct {
 	Module string
-	// Spec is whether a document directly in the module is new, gone or changed.
-	Spec bool
+	// Model is whether a document directly in the module is new, gone or changed.
+	Model bool
 	// Files is whether a file the module names is new, gone or changed; the lists
 	// hold those files, each sorted by path.
 	Files              bool
@@ -44,12 +44,12 @@ func (m ModuleChange) Changes() []FileChange {
 	return out
 }
 
-// ProjectDiff is what differs between two projects: their specs, each module
-// whose spec or files changed, and the changed files that no module names.
+// ProjectDiff is what differs between two projects: their models, each module
+// whose model or files changed, and the changed files that no module names.
 type ProjectDiff struct {
-	Spec *SpecDiff
+	Model *ModelDiff
 	// Modules are the modules of either project where something changed, the
-	// spec folder first and then by path.
+	// model folder first and then by path.
 	Modules []ModuleChange
 	// Unassigned are the files that no module names, in the state they belong to,
 	// that are new, gone or changed, sorted by path.
@@ -60,7 +60,7 @@ type ProjectDiff struct {
 
 // Differs says whether the projects differ, in a document or in a file.
 func (d *ProjectDiff) Differs() bool {
-	return d.Spec.Differs() || len(d.Modules) > 0 || len(d.Unassigned) > 0
+	return d.Model.Differs() || len(d.Modules) > 0 || len(d.Unassigned) > 0
 }
 
 // side is one state of a project: its files that are looked at, and the
@@ -75,8 +75,8 @@ type side struct {
 
 // within reports whether the module child lies within the module parent.
 func within(child, parent string) bool {
-	if parent == lang.SpecModule {
-		return child != lang.SpecModule
+	if parent == lang.ModelFolderModule {
+		return child != lang.ModelFolderModule
 	}
 	return strings.HasPrefix(child, parent+"/")
 }
@@ -84,13 +84,13 @@ func within(child, parent string) bool {
 func newSide(p *Project, ig *Ignore, inside Folder) (*side, error) {
 	patterns := map[string][]lang.PathPattern{}
 	var modules []string
-	for _, m := range p.Spec.Modules() {
-		if list := p.Spec.RealizedIn(m); len(list) > 0 {
+	for _, m := range p.Model.Modules() {
+		if list := p.Model.RealizedIn(m); len(list) > 0 {
 			patterns[m] = list
 			modules = append(modules, m)
 		}
 	}
-	files, err := listFiles(p.FS, ig, Folder{Path: p.SpecFolder}, inside)
+	files, err := listFiles(p.FS, ig, Folder{Path: p.ModelFolder}, inside)
 	if err != nil {
 		return nil, err
 	}
@@ -121,20 +121,20 @@ func newSide(p *Project, ig *Ignore, inside Folder) (*side, error) {
 	return s, nil
 }
 
-// DiffProjects compares an older project with a newer one: their specs, and,
+// DiffProjects compares an older project with a newer one: their models, and,
 // from the files of both that the ignore file does not leave out, which of them
 // is new, gone or changed, byte for byte and without loading either in whole.
 // A file is new, gone or changed by itself, whatever the READMEs say. A new or
 // changed file belongs to the modules that name it in the newer project, a gone
 // file to those that named it in the older one, a module below another taking
-// the file from the one above in that state. A module whose spec or whose files
+// the file from the one above in that state. A module whose model or whose files
 // changed is a change of the project; a changed file that no module names, in
 // the state it belongs to, is listed apart. oldInside is the folder of the older
 // project below the newer one, newInside that of the newer below the older, the
 // zero Folder where the project does not lie inside the other: a copy kept inside a project
 // is left out of that project's files.
 func DiffProjects(older, newer *Project, ig *Ignore, oldInside, newInside Folder) (*ProjectDiff, error) {
-	d := &ProjectDiff{Spec: DiffSpecs(older, newer)}
+	d := &ProjectDiff{Model: DiffModels(older, newer)}
 	before, err := newSide(older, ig, newInside)
 	if err != nil {
 		return nil, fmt.Errorf("the old project: %w", err)
@@ -202,17 +202,17 @@ func DiffProjects(older, newer *Project, ig *Ignore, oldInside, newInside Folder
 		}
 	}
 
-	specDirs := map[string]bool{}
-	for _, list := range [][]string{d.Spec.New, d.Spec.Gone} {
+	modelDirs := map[string]bool{}
+	for _, list := range [][]string{d.Model.New, d.Model.Gone} {
 		for _, p := range list {
-			specDirs[path.Dir(p)] = true
+			modelDirs[path.Dir(p)] = true
 		}
 	}
-	for _, c := range d.Spec.Changed {
-		specDirs[path.Dir(c.Doc)] = true
+	for _, c := range d.Model.Changed {
+		modelDirs[path.Dir(c.Doc)] = true
 	}
 	moduleSet := map[string]bool{}
-	for m := range specDirs {
+	for m := range modelDirs {
 		moduleSet[m] = true
 	}
 	for m := range byModule {
@@ -228,7 +228,7 @@ func DiffProjects(older, newer *Project, ig *Ignore, oldInside, newInside Folder
 		if c == nil {
 			c = &ModuleChange{Module: m}
 		}
-		c.Spec = specDirs[m]
+		c.Model = modelDirs[m]
 		c.Files = len(c.New)+len(c.Gone)+len(c.Changed) > 0
 		d.Modules = append(d.Modules, *c)
 	}

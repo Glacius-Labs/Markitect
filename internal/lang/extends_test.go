@@ -11,7 +11,7 @@ const (
 	website  = "# Website\n\nExtends: [Artifact](artifact.md)\n\nA site people open in a browser.\n\n## Pages\nThe pages, each a page.\n"
 )
 
-func specOf(t *testing.T, files map[string]string) *Spec {
+func modelOf(t *testing.T, files map[string]string) *Model {
 	t.Helper()
 	fsys := fstest.MapFS{}
 	for p, text := range files {
@@ -71,7 +71,7 @@ func TestChainOfThreeTypes(t *testing.T) {
 		`mid.md:3: section.missing: missing section "Pages" required by blog.md`,
 		`top.md:3: section.missing: missing section "Owner" required by artifact.md`,
 	)
-	s := specOf(t, files)
+	s := modelOf(t, files)
 	var names []string
 	for _, c := range s.ChainSections(mustDoc(t, s, "blog.md")) {
 		names = append(names, c.Name+"/"+c.DeclaredBy+"/"+c.RequiredBy)
@@ -94,7 +94,7 @@ func TestChainOfThreeTypes(t *testing.T) {
 	}
 }
 
-func mustDoc(t *testing.T, s *Spec, p string) *Document {
+func mustDoc(t *testing.T, s *Model, p string) *Document {
 	t.Helper()
 	d, ok := s.Document(p)
 	if !ok {
@@ -159,7 +159,7 @@ func TestExtendsCycles(t *testing.T) {
 		`object.md:3: section.missing: missing section "Three" required by self.md`,
 		"self.md:3: extends.cycle: "+cycle,
 	)
-	s := specOf(t, files)
+	s := modelOf(t, files)
 	var objects []string
 	for _, o := range s.Objects(mustDoc(t, s, "b.md")) {
 		objects = append(objects, o.Path)
@@ -236,7 +236,7 @@ func TestTypeLineStaysForObjects(t *testing.T) {
 		"hold.md": "# Hold\n\nType: [Loan](loan.md)\n\n## Purpose\nA hold.\n\n## Due\nTomorrow.\n",
 	}
 	expect(t, checkFiles(t, files))
-	s := specOf(t, files)
+	s := modelOf(t, files)
 	if got := len(s.ChainSections(mustDoc(t, s, "loan.md"))); got != 2 {
 		t.Errorf("loan has %d sections", got)
 	}
@@ -274,7 +274,7 @@ func TestSectionsMatchWithoutCase(t *testing.T) {
 		`doc.md:3: section.missing: missing section "Own" required by derived.md`,
 		`doc2.md:3: section.missing: missing section "DUE DATE" required by derived.md`,
 	)
-	s := specOf(t, files)
+	s := modelOf(t, files)
 	var got []string
 	for _, c := range s.ChainSections(mustDoc(t, s, "derived.md")) {
 		got = append(got, strings.Join([]string{c.Name, c.DeclaredBy, c.RequiredBy}, "/"))
@@ -295,14 +295,14 @@ func TestInvalidExtendsLineMakesNoType(t *testing.T) {
 		`lost.md:3: extends.unresolved: no document at "nowhere.md"`,
 		`object.md:3: section.missing: missing section "Two" required by bad.md`,
 	)
-	s := specOf(t, files)
+	s := modelOf(t, files)
 	// bad.md is a type only because object.md names it.
 	for p, want := range map[string]bool{"base.md": true, "fine.md": true, "lost.md": true, "bad.md": true, "object.md": false} {
 		if got := s.IsType(mustDoc(t, s, p)); got != want {
 			t.Errorf("IsType(%s) = %v", p, got)
 		}
 	}
-	solo := specOf(t, map[string]string{"bad.md": files["bad.md"]})
+	solo := modelOf(t, map[string]string{"bad.md": files["bad.md"]})
 	if solo.IsType(mustDoc(t, solo, "bad.md")) {
 		t.Error("an invalid extends line makes a type")
 	}

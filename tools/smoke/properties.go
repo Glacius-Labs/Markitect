@@ -13,10 +13,10 @@ import (
 // It leaves the project as it found it, total documents.
 func (s *smoke) propertyTypes(project string, total int) error {
 	markitect := func(want int, args ...string) (string, error) { return s.exit(project, want, args...) }
-	spec := func(name string) string { return "docs/spec/" + name }
+	model := func(name string) string { return "docs/model/" + name }
 	remove := func(names ...string) error {
 		for _, name := range names {
-			if err := os.RemoveAll(filepath.Join(project, filepath.FromSlash(spec(name)))); err != nil {
+			if err := os.RemoveAll(filepath.Join(project, filepath.FromSlash(model(name)))); err != nil {
 				return err
 			}
 		}
@@ -24,7 +24,7 @@ func (s *smoke) propertyTypes(project string, total int) error {
 	}
 	write := func(files map[string]string) error {
 		for name, content := range files {
-			if err := writeFile(project, spec(name), content); err != nil {
+			if err := writeFile(project, model(name), content); err != nil {
 				return err
 			}
 		}

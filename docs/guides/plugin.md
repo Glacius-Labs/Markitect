@@ -1,6 +1,6 @@
 # The plugin
 
-The Claude Code plugin `markitect` fetches the tool: it brings the `markitect` command into a session. Beside its launcher it holds the default, which a project copies into its spec by hand ([library](library.md)). It holds no skill and no agent. [The project](../concept/the-project.md#the-plugin-and-the-version) in the concept, [DEC-135](../decisions.md#dec-135-the-tool-stays-in-go-and-is-rebuilt-for-the-language) and [DEC-159](../decisions.md#dec-159-the-default-is-a-whole-spec-to-start-from-and-lies-in-the-plugin) say why; this page says what the plugin holds, how its launcher gets the tool and how firm that is.
+The Claude Code plugin `markitect` fetches the tool: it brings the `markitect` command into a session. Beside its launcher it holds the default, which a project copies into its model by hand ([library](library.md)). It holds no skill and no agent. [The project](../concept/the-project.md#the-plugin-and-the-version) in the concept, [DEC-135](../decisions.md#dec-135-the-tool-stays-in-go-and-is-rebuilt-for-the-language) and [DEC-159](../decisions.md#dec-159-the-default-is-a-whole-model-to-start-from-and-lies-in-the-plugin) say why; this page says what the plugin holds, how its launcher gets the tool and how firm that is.
 
 ## What it holds
 
@@ -11,7 +11,7 @@ The plugin is the folder [`plugin/`](../../plugin/), named `markitect` in its ma
 | `.claude-plugin/plugin.json` | The manifest: the name `markitect`, the description and the version, which the launcher reads |
 | `bin/markitect`, `bin/markitect.cmd` | The launcher, a POSIX shell script, and its shim for PowerShell and cmd on Windows |
 | `hooks/hooks.json`, `hooks/path.sh` | Two hooks at the start of a session, both for the launcher |
-| `default/` | The default, a whole spec that a project copies into its spec folder ([library](library.md)). It lies here because a skill of a plugin reaches only the plugin's own files; the skill that sets a project up is not built |
+| `default/` | The default, a whole model that a project copies into its model folder ([library](library.md)). It lies here because a skill of a plugin reaches only the plugin's own files; the skill that sets a project up is not built |
 
 The plugin and the tool always have the same version: a test refuses a difference, and the [release workflow](../releasing.md#what-a-tag-publishes) checks it again.
 

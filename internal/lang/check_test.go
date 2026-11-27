@@ -10,7 +10,7 @@ import (
 )
 
 // lines renders what Check finds as path:line: code: message.
-func lines(t *testing.T, s *Spec) []string {
+func lines(t *testing.T, s *Model) []string {
 	t.Helper()
 	out := []string{}
 	for _, d := range Check(s) {
@@ -28,7 +28,7 @@ func checkFolder(t *testing.T, folder string) []string {
 	return lines(t, s)
 }
 
-// checkFiles checks a spec of the given files, path to content, with the
+// checkFiles checks a model of the given files, path to content, with the
 // README.md that each of its modules needs and the fixture leaves out, so that
 // a test of another rule meets no rule of the modules.
 func checkFiles(t *testing.T, files map[string]string) []string {
@@ -36,7 +36,7 @@ func checkFiles(t *testing.T, files map[string]string) []string {
 	return checkExactly(t, withReadmes(files))
 }
 
-// checkExactly checks a spec of exactly the given files.
+// checkExactly checks a model of exactly the given files.
 func checkExactly(t *testing.T, files map[string]string) []string {
 	t.Helper()
 	fsys := fstest.MapFS{}
@@ -63,7 +63,7 @@ func expect(t *testing.T, got []string, want ...string) {
 func TestCheckFixtures(t *testing.T) {
 	missing := "type line must be exactly one link to a document"
 	cases := map[string][]string{
-		// A clean spec of members and branches: a heading in another case, sections in
+		// A clean model of members and branches: a heading in another case, sections in
 		// another order, a name with a space linked as %20 and as <...> with a title and a
 		// section, and links the check leaves alone: web, mail and ftp addresses, a bare
 		// #section, an image, a code span and a fenced block, all to missing files.
@@ -76,7 +76,7 @@ func TestCheckFixtures(t *testing.T) {
 		"type.line":       {"reader.md:3: type.line: " + missing, "remote.md:3: type.line: " + missing, "visitor.md:3: type.line: " + missing},
 		"section.missing": {`ada.md:3: section.missing: missing section "Card" required by member.md`},
 		"section.empty":   {`ada.md:5: section.empty: empty section "Card"`},
-		// Paths are relative to the linking document, a path above the spec folder names
+		// Paths are relative to the linking document, a path above the model folder names
 		// nothing, and a path linked twice, once with a section, is one report at its
 		// first line.
 		"link.unresolved": {
@@ -117,7 +117,7 @@ func TestFiles(t *testing.T) {
 			"B.MD":        {Data: []byte("# B\n")},
 			"dir.md/c.md": {Data: []byte("# C\n")},
 			// The README each module needs.
-			"README.md":        {Data: []byte("# Spec\n\n## Contents\n- [A](a.md)\n- [B](B.MD)\n- [C](dir.md/README.md)\n")},
+			"README.md":        {Data: []byte("# Model\n\n## Contents\n- [A](a.md)\n- [B](B.MD)\n- [C](dir.md/README.md)\n")},
 			"dir.md/README.md": {Data: []byte("# Dir\n\n## Contents\n- [C](c.md)\n")},
 		})
 		var paths []string

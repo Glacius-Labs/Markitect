@@ -127,7 +127,7 @@ func TestPropertyLineIsRecognizedAsType(t *testing.T) {
 		"obj.md":    "# Obj\n\nType: [Page](page.md)\n\n## A\nType: `x`\n",
 		"one.md":    "# One\n\nType: [Values](values.md)\n\n## A\nx\n",
 	}
-	s := specOf(t, withReadmes(files))
+	s := modelOf(t, withReadmes(files))
 	for path, want := range map[string]bool{
 		// A type by its own line alone, and by being named in a line.
 		"refs.md": true, "values.md": true, "page.md": true,
@@ -156,7 +156,7 @@ func TestPropertyLineInAnObjectOrAReadme(t *testing.T) {
 		"values.md": "# Values\n\nType: [Page](page.md)\n\n## Body\nType: `a`\nText.\n",
 		// A document with a broken type line is no better.
 		"broken.md": "# Broken\n\nType: [Page](page.md), more\n\n## Extra\nType: `a`\nx\n",
-		"README.md": "# Spec\n\n## Contents\nType: [Page](page.md)\n\n- [Page](page.md)\n- [Obj](obj.md)\n- [Values](values.md)\n- [Broken](broken.md)\n",
+		"README.md": "# Model\n\n## Contents\nType: [Page](page.md)\n\n- [Page](page.md)\n- [Obj](obj.md)\n- [Values](values.md)\n- [Broken](broken.md)\n",
 	}
 	expect(t, checkExactly(t, files),
 		"README.md:4: property.line: a README has no property type line",
@@ -166,7 +166,7 @@ func TestPropertyLineInAnObjectOrAReadme(t *testing.T) {
 		"obj.md:6: property.line: "+object,
 		"values.md:6: property.line: "+object,
 	)
-	s := specOf(t, files)
+	s := modelOf(t, files)
 	if s.IsType(mustDoc(t, s, "README.md")) || s.IsType(mustDoc(t, s, "obj.md")) || !mustDoc(t, s, "obj.md").HasType() {
 		t.Error("an object stays an object, and a README is no type")
 	}
@@ -185,8 +185,8 @@ func TestPropertyLineLinks(t *testing.T) {
 		"page.md":  pageType,
 		"a.md":     "# A\n\n## P\nType: [Page](page.md), [Ghost](ghost.md), [Page again](page.md#body), [Ghost](ghost.md#x)\n",
 		"b.md":     "# B\n\n## P\nType: [Ghost](ghost.md), [Page](page.md)\n\nA [ghost](nowhere.md).\n",
-		"c.md":     "# C\n\n## P\nType: [Spec](README.md)\n",
-		"d.md":     "# D\n\n## P\nType: [Spec](README.md), [Ghost](ghost.md)\n",
+		"c.md":     "# C\n\n## P\nType: [Model](README.md)\n",
+		"d.md":     "# D\n\n## P\nType: [Model](README.md), [Ghost](ghost.md)\n",
 		"e/f/g.md": "# G\n\n## P\nType: [Up](../../page.md)\n",
 	}),
 		`a.md:4: property.unresolved: no document at "ghost.md"`,
