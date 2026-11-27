@@ -1,4 +1,4 @@
-// Package lang is the model language over supplied files: it parses documents,
+// Package lang is the modeling language over supplied files: it parses documents,
 // with their title, type or extends line, sections, the property type lines of
 // the sections and links, loads a model from a file system, resolves the sections
 // and the property types of a type through its chain of base types and checks

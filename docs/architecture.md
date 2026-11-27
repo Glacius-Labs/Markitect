@@ -24,7 +24,7 @@ All Go packages use one root Go module. One rule table in [`internal/tooling/arc
 | Responsibility | Packages | Depends on |
 | --- | --- | --- |
 | Version and license notices | `internal/buildinfo` | No other Markitect package |
-| The model language over a supplied file system: documents, types, sections, links, modules with their path patterns, and `check` ([language reference](guides/language-reference.md)) | `internal/lang` | No other Markitect package |
+| The modeling language over a supplied file system: documents, types, sections, links, modules with their path patterns, and `check` ([language reference](guides/language-reference.md)) | `internal/lang` | No other Markitect package |
 | The library: the reference values and question catalog of the default's modules, built into the tool ([library](guides/library.md)) | `internal/library` | No other Markitect package |
 | The statements, signals and topic view over a parsed model ([signals](guides/signals.md)) | `internal/signals` | The language |
 | The project over a supplied file system: the file `.markitect/model`, the project loaded with its model, its ignore file, and the difference between two projects: their models and, for each module, its files ([project reference](guides/project-reference.md)) | `internal/project` | The language |

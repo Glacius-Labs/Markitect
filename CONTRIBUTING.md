@@ -30,7 +30,7 @@ Product code and tests that handle a project's `.markitect/model` or `.markitect
 | What Markitect builds on: standards, literature and known practice | [Foundations](docs/foundations.md) |
 | The product as a whole | [Concept](docs/concept/README.md) |
 | Decisions in force and open questions | [Decisions](docs/decisions.md) |
-| The model language and the commands | [Language reference](docs/guides/language-reference.md) |
+| The modeling language and the commands | [Language reference](docs/guides/language-reference.md) |
 | The default, its modules and types, and what the tool has built in for it | [Library](docs/guides/library.md) |
 | The signals, the topic view, reference values and question catalogs | [Signals](docs/guides/signals.md) |
 | The project: finding it, `.markitect/model` and `.markitect/ignore`, setting one up by hand, `version` and `diff` | [Project reference](docs/guides/project-reference.md) |

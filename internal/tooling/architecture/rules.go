@@ -52,7 +52,7 @@ type Rules struct {
 var Table = Rules{
 	Layers: []Layer{
 		{Name: "build", Title: "Build data", Meaning: "Version identity and embedded license notices."},
-		{Name: "language", Title: "Language", Meaning: "The model language over a supplied file system: documents, types, sections, links and check."},
+		{Name: "language", Title: "Language", Meaning: "The modeling language over a supplied file system: documents, types, sections, links and check."},
 		{Name: "library", Title: "Library", Meaning: "The library: the reference values and question catalog of the default's modules, built into the tool."},
 		{Name: "signals", Title: "Signals", Meaning: "The statements of a model, its signals and the topic view, over a parsed model.", Imports: []string{"language"}},
 		{Name: "project", Title: "Project", Meaning: "A project over a supplied file system: the file .markitect/model, the project loaded with its model, its ignore file, and the difference between two projects: their models and, for each module, its files.", Imports: []string{"language"}},

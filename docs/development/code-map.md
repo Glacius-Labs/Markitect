@@ -15,7 +15,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Layer | Meaning | May import | Packages |
 |---|---|---|---|
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `language` | The model language over a supplied file system: documents, types, sections, links and check. | nothing | 1 |
+| `language` | The modeling language over a supplied file system: documents, types, sections, links and check. | nothing | 1 |
 | `library` | The library: the reference values and question catalog of the default's modules, built into the tool. | nothing | 1 |
 | `signals` | The statements of a model, its signals and the topic view, over a parsed model. | `language` | 1 |
 | `project` | A project over a supplied file system: the file .markitect/model, the project loaded with its model, its ignore file, and the difference between two projects: their models and, for each module, its files. | `language` | 1 |
@@ -35,7 +35,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/lang` | Package lang is the model language over supplied files: it parses documents, with their title, type or extends line, sections, the property type lines of the sections and links, loads a model from a file system, resolves the sections and the property types of a type through its chain of base types and checks it, the dependencies between its modules included. | [docs/guides/language-reference.md#documents](../guides/language-reference.md#documents) |
+| `internal/lang` | Package lang is the modeling language over supplied files: it parses documents, with their title, type or extends line, sections, the property type lines of the sections and links, loads a model from a file system, resolves the sections and the property types of a type through its chain of base types and checks it, the dependencies between its modules included. | [docs/guides/language-reference.md#documents](../guides/language-reference.md#documents) |
 
 ## Library
 

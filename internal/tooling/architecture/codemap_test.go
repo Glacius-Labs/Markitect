@@ -175,7 +175,7 @@ func TestRenderCodeMapLinksFromPageDirectory(t *testing.T) {
 		"| `cmd/markitect` | Command markitect runs. | [CONTRIBUTING.md](../../CONTRIBUTING.md) |",
 		"| `internal/buildinfo` | Package buildinfo knows the version. | [docs/development/other.md](other.md) |",
 		"| `internal/tooling/architecture` | Package architecture checks. | [internal/tooling/architecture/README.md](../../internal/tooling/architecture/README.md) |",
-		"| `language` | The model language over a supplied file system: documents, types, sections, links and check. | nothing | 1 |",
+		"| `language` | The modeling language over a supplied file system: documents, types, sections, links and check. | nothing | 1 |",
 		"| `entrypoint` | The thin entrypoint of markitect. | `command-line` | 1 |",
 		"| `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 0 |",
 		"| `cmd/markitect` | `internal/lang` | all | A fixture edge. |\n| `internal/tooling/architecture` | `internal/buildinfo` | tests only | Tests read the notices. |",

@@ -24,7 +24,7 @@ body:
     id: boundaries
     attributes:
       label: Product boundaries
-      description: Note effects on the model language, the record of what was verified, the agents' rights or a project's own files.
+      description: Note effects on the modeling language, the record of what was verified, the agents' rights or a project's own files.
       render: markdown
   - type: textarea
     id: alternatives

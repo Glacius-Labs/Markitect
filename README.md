@@ -134,7 +134,7 @@ The tool is built on Main and covered by tests and a command smoke, and the defa
 
 | Page | Covers |
 | --- | --- |
-| [Language reference](docs/guides/language-reference.md) | The model language and every command |
+| [Language reference](docs/guides/language-reference.md) | The modeling language and every command |
 | [Project reference](docs/guides/project-reference.md) | The project, its ignore file, setting one up by hand, `version` and `diff` |
 | [The plugin](docs/guides/plugin.md) | The launcher that fetches the tool, its start hooks, and the default it holds |
 | [Library](docs/guides/library.md), [Signals](docs/guides/signals.md) | The default, its modules and types, and the signals of a model |
