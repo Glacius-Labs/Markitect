@@ -26,7 +26,7 @@ type Text struct {
 // TextLine says that the source line Line starts at Offset of Text.
 type TextLine struct{ Offset, Line int }
 
-// TextLink is a link in Text, from Start to End, with the path below the spec
+// TextLink is a link in Text, from Start to End, with the path below the model
 // folder it resolves to when it is a link to a .md path, else "".
 type TextLink struct {
 	Start, End int

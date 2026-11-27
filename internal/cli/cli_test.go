@@ -19,27 +19,27 @@ func run(args ...string) (int, string, string) {
 	return code, out.String(), errOut.String()
 }
 
-// initialized is a new project: a folder with the file .markitect/spec, which
-// names docs/spec, and that empty spec folder. The tests of the commands start
+// initialized is a new project: a folder with the file .markitect/model, which
+// names docs/model, and that empty model folder. The tests of the commands start
 // from it.
 func initialized(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	markitectFile(t, dir)
-	if err := os.MkdirAll(specOf(dir), 0o755); err != nil {
+	if err := os.MkdirAll(modelOf(dir), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	return dir
 }
 
-// markitectFile writes .markitect/spec into dir.
+// markitectFile writes .markitect/model into dir.
 func markitectFile(t *testing.T, dir string) {
 	t.Helper()
-	write(t, dir, project.SpecFile, "docs/spec\n")
+	write(t, dir, project.ModelFile, "docs/model\n")
 }
 
-// specOf is the spec folder of a project made by initialized.
-func specOf(dir string) string { return filepath.Join(dir, "docs", "spec") }
+// modelOf is the model folder of a project made by initialized.
+func modelOf(dir string) string { return filepath.Join(dir, "docs", "model") }
 
 func write(t *testing.T, dir, p, text string) {
 	t.Helper()
@@ -61,12 +61,12 @@ func read(t *testing.T, dir, p string) string {
 	return string(data)
 }
 
-// spec sets up a project whose spec holds files and returns its folder.
-func spec(t *testing.T, files map[string]string) string {
+// model sets up a project whose model holds files and returns its folder.
+func model(t *testing.T, files map[string]string) string {
 	t.Helper()
 	dir := initialized(t)
 	for p, text := range files {
-		file := filepath.Join(specOf(dir), filepath.FromSlash(p))
+		file := filepath.Join(modelOf(dir), filepath.FromSlash(p))
 		if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
 			t.Fatal(err)
 		}
@@ -88,7 +88,7 @@ func readme(title string, shown ...string) string {
 }
 
 func TestCheckText(t *testing.T) {
-	dir := spec(t, map[string]string{
+	dir := model(t, map[string]string{
 		"types/README.md":         readme("Types", "member.md"),
 		"types/member.md":         "# Member\n\nA person.\n\n## Card\nThe number.\n",
 		"lending/README.md":       readme("Lending", "borrow.md", "loans/README.md"),
@@ -107,14 +107,14 @@ func TestCheckText(t *testing.T) {
 }
 
 func TestCheckClean(t *testing.T) {
-	dir := spec(t, map[string]string{"README.md": readme("A", "a.md"), "a.md": "# A\n"})
+	dir := model(t, map[string]string{"README.md": readme("A", "a.md"), "a.md": "# A\n"})
 	if code, out, _ := run("check", "-C", dir); code != ExitOK || out != "0 errors in 2 documents\n" {
 		t.Errorf("got %d %q", code, out)
 	}
 }
 
 func TestCheckJSON(t *testing.T) {
-	dir := spec(t, map[string]string{
+	dir := model(t, map[string]string{
 		"README.md":     readme("Root", "a.md", "sub/README.md"),
 		"a.md":          "# A\n",
 		"sub/README.md": readme("Sub", "b.md"),
@@ -134,7 +134,7 @@ func TestCheckJSON(t *testing.T) {
 			t.Errorf("%v: got %d %v", args, code, doc)
 		}
 	}
-	clean := spec(t, map[string]string{"README.md": readme("A", "a.md"), "a.md": "# A\n"})
+	clean := model(t, map[string]string{"README.md": readme("A", "a.md"), "a.md": "# A\n"})
 	if code, out, _ := run("check", "--json", "-C", clean); code != ExitOK || !strings.Contains(out, `"diagnostics": []`) {
 		t.Errorf("got %d %s", code, out)
 	}
@@ -170,8 +170,8 @@ func TestHelpGroupsTheCommands(t *testing.T) {
 }
 
 func TestUsage(t *testing.T) {
-	dir := spec(t, map[string]string{"a.md": "# A\n"})
-	file := filepath.Join(specOf(dir), "a.md")
+	dir := model(t, map[string]string{"a.md": "# A\n"})
+	file := filepath.Join(modelOf(dir), "a.md")
 	for _, tc := range []struct {
 		args []string
 		want string
@@ -183,7 +183,7 @@ func TestUsage(t *testing.T) {
 		{[]string{"check", "-C", dir, "--strict"}, "unknown flag --strict"},
 		{[]string{"check", "-C"}, "flag -C needs a value"},
 		{[]string{"check", "-C", ""}, "flag -C needs a folder"},
-		{[]string{"check", "-C", dir, "--spec", "x"}, "unknown flag --spec"},
+		{[]string{"check", "-C", dir, "--model", "x"}, "unknown flag --model"},
 		{[]string{"check", "-C", dir, "--all"}, "--all is a flag of topic"},
 		{[]string{"check", "-C", dir, "--file", "a.md"}, "unknown flag --file"},
 		{[]string{"init", "-C", dir}, `unknown command "init"`},
@@ -195,7 +195,7 @@ func TestUsage(t *testing.T) {
 		{[]string{"compare", "-C", dir}, `unknown command "compare"`},
 		{[]string{"check", "-C", filepath.Join(dir, "missing")}, "not a folder"},
 		{[]string{"check", "-C", file}, "not a folder"},
-		{[]string{"check", "-C", specOf(dir)}, "holds no .markitect/spec; that file holds one line, the path of the spec folder below the project folder"},
+		{[]string{"check", "-C", modelOf(dir)}, "holds no .markitect/model; that file holds one line, the path of the model folder below the project folder"},
 	} {
 		code, out, errOut := run(tc.args...)
 		if code != ExitFailed || out != "" || !strings.Contains(errOut, tc.want) {
@@ -212,7 +212,7 @@ func TestUsage(t *testing.T) {
 // The flags may stand before the command, as in markitect -C PROJECT check, and between its
 // arguments.
 func TestFlagsMayStandBeforeTheCommand(t *testing.T) {
-	dir := spec(t, map[string]string{"README.md": readme("A", "a.md"), "a.md": "# A\n"})
+	dir := model(t, map[string]string{"README.md": readme("A", "a.md"), "a.md": "# A\n"})
 	for _, args := range [][]string{
 		{"-C", dir, "check"},
 		{"--json", "-C", dir, "check"},
@@ -244,7 +244,7 @@ func TestFlagsMayStandBeforeTheCommand(t *testing.T) {
 // A wrong number of arguments prints the error and the one line of usage of
 // the command, not the whole help.
 func TestWrongArgumentsPrintOneLineOfUsage(t *testing.T) {
-	dir := spec(t, map[string]string{"a.md": "# A\n"})
+	dir := model(t, map[string]string{"a.md": "# A\n"})
 	for args, want := range map[string]string{
 		"show":        "usage: markitect show DOCUMENT [-C PROJECT] [--json]",
 		"check extra": "usage: markitect check [-C PROJECT] [--json]",
@@ -267,7 +267,7 @@ func TestFlagsBeforeTheCommandAreRead(t *testing.T) {
 	parent := t.TempDir()
 	project := filepath.Join(parent, "check")
 	markitectFile(t, project)
-	if err := os.MkdirAll(filepath.Join(project, "docs", "spec"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(project, "docs", "model"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	t.Chdir(parent)

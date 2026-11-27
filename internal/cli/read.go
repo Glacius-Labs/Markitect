@@ -57,14 +57,14 @@ func show(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	spec := w.Spec
-	d, err := document(spec, o.positional[0])
+	model := w.Model
+	d, err := document(model, o.positional[0])
 	if err != nil {
 		return ExitFailed, err
 	}
 	doc := showDocument{header: newHeader("show"), Path: d.Path, Title: d.Title, Type: d.TypePath,
 		Sections: []showSection{}, LinksTo: []showLink{}, LinkedFrom: []showLink{}, Documents: []string{}}
-	switch _, ok := spec.Document(d.TypePath); {
+	switch _, ok := model.Document(d.TypePath); {
 	case d.TypeLine == 0:
 		doc.TypeState = "none"
 	case !d.HasType():
@@ -77,10 +77,10 @@ func show(o options, stdout io.Writer) (int, error) {
 	if d.HasExtends() {
 		doc.Extends = d.ExtendsPath
 		doc.ExtendsState = "ok"
-		if _, ok := spec.Document(d.ExtendsPath); !ok {
+		if _, ok := model.Document(d.ExtendsPath); !ok {
 			doc.ExtendsState = "missing"
 		}
-		for _, s := range spec.ChainSections(d) {
+		for _, s := range model.ChainSections(d) {
 			heading := s.Name
 			if s.Optional {
 				heading += " (optional)"
@@ -89,14 +89,14 @@ func show(o options, stdout io.Writer) (int, error) {
 			if s.DeclaredBy != d.Path {
 				sec.DeclaredBy = s.DeclaredBy
 			}
-			propertyOf(spec, d, s.Name, &sec)
+			propertyOf(model, d, s.Name, &sec)
 			doc.Sections = append(doc.Sections, sec)
 		}
 	} else {
 		for _, s := range d.Sections {
 			sec := showSection{Heading: s.Heading}
-			if spec.IsType(d) {
-				propertyOf(spec, d, lang.SectionName(s.Heading), &sec)
+			if model.IsType(d) {
+				propertyOf(model, d, lang.SectionName(s.Heading), &sec)
 			}
 			doc.Sections = append(doc.Sections, sec)
 		}
@@ -105,11 +105,11 @@ func show(o options, stdout io.Writer) (int, error) {
 	for _, l := range d.Links {
 		if !seen[l.Target] {
 			seen[l.Target] = true
-			_, ok := spec.Document(l.Target)
+			_, ok := model.Document(l.Target)
 			doc.LinksTo = append(doc.LinksTo, showLink{Path: l.Target, Missing: !ok})
 		}
 	}
-	for _, other := range spec.Documents {
+	for _, other := range model.Documents {
 		seen := map[string]bool{}
 		for _, l := range other.Links {
 			if l.Target == d.Path && !seen[l.Section] {
@@ -118,12 +118,12 @@ func show(o options, stdout io.Writer) (int, error) {
 			}
 		}
 	}
-	for _, other := range spec.Documents {
+	for _, other := range model.Documents {
 		if other.HasExtends() && other.ExtendsPath == d.Path {
 			doc.ExtendedBy = append(doc.ExtendedBy, other.Path)
 		}
 	}
-	for _, other := range spec.Objects(d) {
+	for _, other := range model.Objects(d) {
 		doc.Documents = append(doc.Documents, other.Path)
 	}
 	sortLinks(doc.LinksTo)
@@ -133,10 +133,10 @@ func show(o options, stdout io.Writer) (int, error) {
 
 // propertyOf sets the type of the property name of the type t on its section: the
 // types of a reference, the values of fixed values, nothing for text.
-func propertyOf(spec *lang.Spec, t *lang.Document, name string, sec *showSection) {
-	prop := spec.PropertyType(t, name)
+func propertyOf(model *lang.Model, t *lang.Document, name string, sec *showSection) {
+	prop := model.PropertyType(t, name)
 	for _, p := range prop.Refs {
-		_, ok := spec.Document(p)
+		_, ok := model.Document(p)
 		sec.References = append(sec.References, showLink{Path: p, Missing: !ok})
 	}
 	sec.Values = prop.Values
@@ -257,27 +257,27 @@ func table(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	spec := w.Spec
+	model := w.Model
 	if len(o.positional) == 0 {
-		doc := specTable(spec)
-		return output(o, stdout, doc, specTableText(doc))
+		doc := modelTable(model)
+		return output(o, stdout, doc, modelTableText(doc))
 	}
-	t, err := document(spec, o.positional[0])
+	t, err := document(model, o.positional[0])
 	if err != nil {
 		return ExitFailed, err
 	}
-	doc := tableOf(spec, t)
+	doc := tableOf(model, t)
 	return output(o, stdout, doc, tableText(doc))
 }
 
 // tableOf is every document of the type t, and of every type that extends it,
 // as a row, with a column per section of t's chain.
-func tableOf(spec *lang.Spec, t *lang.Document) tableDocument {
+func tableOf(model *lang.Model, t *lang.Document) tableDocument {
 	doc := tableDocument{header: newHeader("table"), Type: t.Path, Columns: []string{}, Rows: []tableRow{}}
-	for _, s := range spec.ChainSections(t) {
+	for _, s := range model.ChainSections(t) {
 		doc.Columns = append(doc.Columns, s.Name)
 	}
-	for _, d := range spec.Objects(t) {
+	for _, d := range model.Objects(t) {
 		row := tableRow{Path: d.Path, Title: d.Title, Cells: []string{}}
 		for _, name := range doc.Columns {
 			s, _ := d.Section(name)
@@ -311,11 +311,11 @@ func tableText(doc tableDocument) string {
 	return b.String()
 }
 
-// specTable is every document of the spec with its type: the type of the
+// modelTable is every document of the model with its type: the type of the
 // table is "" and its only column is Type; the rows are sorted by path.
-func specTable(spec *lang.Spec) tableDocument {
+func modelTable(model *lang.Model) tableDocument {
 	doc := tableDocument{header: newHeader("table"), Columns: []string{"Type"}, Rows: []tableRow{}}
-	for _, d := range spec.Documents {
+	for _, d := range model.Documents {
 		typ := ""
 		if d.HasType() {
 			typ = d.TypePath
@@ -325,7 +325,7 @@ func specTable(spec *lang.Spec) tableDocument {
 	return doc
 }
 
-func specTableText(doc tableDocument) string {
+func modelTableText(doc tableDocument) string {
 	var b strings.Builder
 	b.WriteString("| Document | Type | Title |\n| --- | --- | --- |\n")
 	for _, r := range doc.Rows {

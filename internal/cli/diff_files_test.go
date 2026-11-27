@@ -12,22 +12,22 @@ import (
 // lendingFiles is a project with two modules that say where they are built, and the
 // files that build them.
 var lendingFiles = map[string]string{
-	"docs/spec/lending/README.md":     "# Lending\n\nHow members borrow.\n\n## Realized in\n- `src/lending/`\n\n## Contents\n- `*.md`\n",
-	"docs/spec/lending/loan-limit.md": "# Loan limit\n\nFive loans.\n",
-	"docs/spec/members/README.md":     "# Members\n\nWho borrows.\n\n## Realized in\n- `src/members/*.go`\n",
-	"src/lending/loan.go":             "package lending\n",
-	"src/lending/old.go":              "package lending\n",
-	"src/members/card.go":             "package members\n",
-	"tools/build.sh":                  "#!/bin/sh\n",
-	"LICENSE":                         "MIT\n",
-	".markitect/ignore":               "# generated, and the version control\nout/\n.git/\n.hidden/\n",
-	"out/result.txt":                  "left out by the ignore file\n",
-	".git/HEAD":                       "ref: refs/heads/main\n",
-	"docs/spec/lending/diagram.png":   "png",
-	"src/members/.hidden/secret.go":   "package secret\n",
+	"docs/model/lending/README.md":     "# Lending\n\nHow members borrow.\n\n## Realized in\n- `src/lending/`\n\n## Contents\n- `*.md`\n",
+	"docs/model/lending/loan-limit.md": "# Loan limit\n\nFive loans.\n",
+	"docs/model/members/README.md":     "# Members\n\nWho borrows.\n\n## Realized in\n- `src/members/*.go`\n",
+	"src/lending/loan.go":              "package lending\n",
+	"src/lending/old.go":               "package lending\n",
+	"src/members/card.go":              "package members\n",
+	"tools/build.sh":                   "#!/bin/sh\n",
+	"LICENSE":                          "MIT\n",
+	".markitect/ignore":                "# generated, and the version control\nout/\n.git/\n.hidden/\n",
+	"out/result.txt":                   "left out by the ignore file\n",
+	".git/HEAD":                        "ref: refs/heads/main\n",
+	"docs/model/lending/diagram.png":   "png",
+	"src/members/.hidden/secret.go":    "package secret\n",
 }
 
-// projectOf writes a project of the given files, with .markitect/spec, and
+// projectOf writes a project of the given files, with .markitect/model, and
 // returns its folder.
 func projectOf(t *testing.T, files map[string]string) string {
 	t.Helper()
@@ -79,17 +79,17 @@ func snapshotOf(t *testing.T, dir string) map[string]string {
 
 func changedLending() map[string]string {
 	return changes(lendingFiles, map[string]string{
-		"docs/spec/lending/loan-limit.md": "# Loan limit\n\nSix loans.\n",
-		"src/lending/loan.go":             "package lending // loans\n",
-		"src/lending/old.go":              "\x00gone",
-		"src/lending/renew.go":            "package lending\n",
-		"src/members/card.go":             "package members // card\n",
-		"tools/build.sh":                  "#!/bin/sh\nset -e\n",
-		"notes.txt":                       "new\n",
-		"out/result.txt":                  "changed, but left out\n",
-		".git/HEAD":                       "ref: refs/heads/dev\n",
-		"src/members/.hidden/secret.go":   "package secret // changed\n",
-		"docs/spec/lending/diagram.png":   "png2",
+		"docs/model/lending/loan-limit.md": "# Loan limit\n\nSix loans.\n",
+		"src/lending/loan.go":              "package lending // loans\n",
+		"src/lending/old.go":               "\x00gone",
+		"src/lending/renew.go":             "package lending\n",
+		"src/members/card.go":              "package members // card\n",
+		"tools/build.sh":                   "#!/bin/sh\nset -e\n",
+		"notes.txt":                        "new\n",
+		"out/result.txt":                   "changed, but left out\n",
+		".git/HEAD":                        "ref: refs/heads/dev\n",
+		"src/members/.hidden/secret.go":    "package secret // changed\n",
+		"docs/model/lending/diagram.png":   "png2",
 	})
 }
 
@@ -106,8 +106,8 @@ const lendingText = `# Difference
 ## Changed (1)
 
 lending/loan-limit.md
---- docs/spec/lending/loan-limit.md
-+++ docs/spec/lending/loan-limit.md
+--- docs/model/lending/loan-limit.md
++++ docs/model/lending/loan-limit.md
 @@ -1,3 +1,3 @@
  # Loan limit
  
@@ -116,7 +116,7 @@ lending/loan-limit.md
 
 ## Modules (2)
 
-lending: spec and files changed (3)
+lending: model and files changed (3)
   changed src/lending/loan.go
   gone    src/lending/old.go
   new     src/lending/renew.go
@@ -157,7 +157,7 @@ func TestDiffShowsModulesAndFiles(t *testing.T) {
 		Changed []struct{ Doc string }
 		Modules []struct {
 			Module       string
-			Spec, Files  bool
+			Model, Files bool
 			NewFiles     []string `json:"new_files"`
 			GoneFiles    []string `json:"gone_files"`
 			ChangedFiles []string `json:"changed_files"`
@@ -174,11 +174,11 @@ func TestDiffShowsModulesAndFiles(t *testing.T) {
 		t.Fatalf("%+v", doc)
 	}
 	lending, members := doc.Modules[0], doc.Modules[1]
-	if lending.Module != "lending" || !lending.Spec || !lending.Files || !reflect.DeepEqual(lending.NewFiles, []string{"src/lending/renew.go"}) ||
+	if lending.Module != "lending" || !lending.Model || !lending.Files || !reflect.DeepEqual(lending.NewFiles, []string{"src/lending/renew.go"}) ||
 		!reflect.DeepEqual(lending.GoneFiles, []string{"src/lending/old.go"}) || !reflect.DeepEqual(lending.ChangedFiles, []string{"src/lending/loan.go"}) {
 		t.Errorf("lending %+v", lending)
 	}
-	if members.Module != "members" || members.Spec || !members.Files || len(members.NewFiles)+len(members.GoneFiles) != 0 || !reflect.DeepEqual(members.ChangedFiles, []string{"src/members/card.go"}) {
+	if members.Module != "members" || members.Model || !members.Files || len(members.NewFiles)+len(members.GoneFiles) != 0 || !reflect.DeepEqual(members.ChangedFiles, []string{"src/members/card.go"}) {
 		t.Errorf("members %+v", members)
 	}
 	if doc.Unassigned.Total != 3 || len(doc.Unassigned.Changes) != 2 || doc.Unassigned.Changes[0].File != "notes.txt" || doc.Unassigned.Changes[0].Change != "new" ||
@@ -221,8 +221,8 @@ func TestDiffExitCodeFollowsFiles(t *testing.T) {
 			t.Errorf("%s: %d %q", name, code, errOut)
 		}
 	}
-	// A file that differs only inside the ignore file's reach, the spec folder or a dot name does not count.
-	newer := projectOf(t, changes(lendingFiles, map[string]string{"out/other.txt": "x", ".git/ci.yml": "x", "docs/spec/lending/diagram.png": "other", "src/lending/.hidden/x": "x"}))
+	// A file that differs only inside the ignore file's reach, the model folder or a dot name does not count.
+	newer := projectOf(t, changes(lendingFiles, map[string]string{"out/other.txt": "x", ".git/ci.yml": "x", "docs/model/lending/diagram.png": "other", "src/lending/.hidden/x": "x"}))
 	if code, out, _ := run("diff", older, newer); code != ExitOK {
 		t.Errorf("%d\n%s", code, out)
 	}
@@ -231,7 +231,7 @@ func TestDiffExitCodeFollowsFiles(t *testing.T) {
 // Two projects that differ only in documents: what is printed about them is what
 // it was; what is new is the two headings after it, the modules of the documents
 // that changed, the total, and in JSON the fields modules and unassigned.
-func TestDiffOfSpecsOnlyKeepsTheOldParts(t *testing.T) {
+func TestDiffOfModelsOnlyKeepsTheOldParts(t *testing.T) {
 	older, newer := beforeAndAfter(t)
 	_, text, _ := run("diff", older, newer)
 	const old = "# Difference\n\n## New (2)\n\nlending/fines.md\nroles/card-holder.md\n\n## Gone (2)\n\nlending/holds.md\nroles/member.md\n\n## Changed (1)\n\nlending/return.md\n"
@@ -239,7 +239,7 @@ func TestDiffOfSpecsOnlyKeepsTheOldParts(t *testing.T) {
 		t.Fatalf("the old part changed:\n%s", text)
 	}
 	rest := text[strings.Index(text, "\n## Modules"):]
-	const want = "\n## Modules (2)\n\nlending: spec changed\n\nroles: spec changed\n\n## Files no module names (0)\n\n(none)\n\nFiles of NEW that no module names: 0\n"
+	const want = "\n## Modules (2)\n\nlending: model changed\n\nroles: model changed\n\n## Files no module names (0)\n\n(none)\n\nFiles of NEW that no module names: 0\n"
 	if rest != want {
 		t.Errorf("rest:\n%q\nwant\n%q", rest, want)
 	}
@@ -316,7 +316,7 @@ func TestDiffIgnoreFileOfNewCountsForBothSides(t *testing.T) {
 
 // A project without Realized in: every changed file is one that no module names.
 func TestDiffWithoutRealizedIn(t *testing.T) {
-	files := map[string]string{"docs/spec/a.md": "# A\n", "src/x.go": "x", "src/y.go": "y"}
+	files := map[string]string{"docs/model/a.md": "# A\n", "src/x.go": "x", "src/y.go": "y"}
 	older, newer := projectOf(t, files), projectOf(t, changes(files, map[string]string{"src/x.go": "X", "src/z.go": "z", "src/y.go": "\x00gone"}))
 	code, out, _ := run("diff", older, newer)
 	want := "## Modules (0)\n\n(none)\n\n## Files no module names (3)\n\nchanged src/x.go\ngone    src/y.go\nnew     src/z.go\n\nFiles of NEW that no module names: 2\n"
@@ -327,8 +327,8 @@ func TestDiffWithoutRealizedIn(t *testing.T) {
 
 func TestCheckReportsABadRealizedInPattern(t *testing.T) {
 	dir := projectOf(t, map[string]string{
-		"docs/spec/shop/README.md": "# Shop\n\nThe shop.\n\n## Realized in\n- `src/shop/`\n- `../shop`\n- `C:\\shop`\n- `src//x`\n",
-		"docs/spec/shop/a.md":      "# A\n",
+		"docs/model/shop/README.md": "# Shop\n\nThe shop.\n\n## Realized in\n- `src/shop/`\n- `../shop`\n- `C:\\shop`\n- `src//x`\n",
+		"docs/model/shop/a.md":      "# A\n",
 	})
 	code, out, _ := run("check", "-C", dir)
 	want := "shop/README.md:7: readme.pattern: bad pattern \"../shop\": a pattern stays below the project folder, without ..\n" +
@@ -362,18 +362,18 @@ func TestDiffSkipsSymbolicLinks(t *testing.T) {
 }
 
 // Only the section Realized in changes between the states, the files are the
-// same: the module shows its spec as changed, no file.
+// same: the module shows its model as changed, no file.
 func TestDiffRealizedInChangedOnly(t *testing.T) {
 	older := projectOf(t, lendingFiles)
 	newer := projectOf(t, changes(lendingFiles, map[string]string{
-		"docs/spec/members/README.md": "# Members\n\nWho borrows.\n\n## Realized in\n- `src/members/*.go`\n- `tools/`\n- `LICENSE`\n",
+		"docs/model/members/README.md": "# Members\n\nWho borrows.\n\n## Realized in\n- `src/members/*.go`\n- `tools/`\n- `LICENSE`\n",
 	}))
 	code, out, _ := run("diff", older, newer)
-	if code != ExitFound || !strings.HasSuffix(out, "## Modules (1)\n\nmembers: spec changed\n\n## Files no module names (0)\n\n(none)\n\nFiles of NEW that no module names: 0\n") {
+	if code != ExitFound || !strings.HasSuffix(out, "## Modules (1)\n\nmembers: model changed\n\n## Files no module names (0)\n\n(none)\n\nFiles of NEW that no module names: 0\n") {
 		t.Errorf("%d\n%s", code, out)
 	}
 	_, out, _ = run("diff", older, newer, "--json")
-	if !strings.Contains(out, `"spec": true`) || !strings.Contains(out, `"files": false`) || !strings.Contains(out, `"new_files": []`) {
+	if !strings.Contains(out, `"model": true`) || !strings.Contains(out, `"files": false`) || !strings.Contains(out, `"new_files": []`) {
 		t.Errorf("%s", out)
 	}
 }
@@ -412,16 +412,16 @@ func TestDiffLeavesOutAProjectThatLiesInside(t *testing.T) {
 	}
 }
 
-// The spec folder is left out whatever case .markitect/spec writes its name in,
+// The model folder is left out whatever case .markitect/model writes its name in,
 // on a file system that does not regard case.
-func TestDiffLeavesOutTheSpecFolderInAnyCase(t *testing.T) {
+func TestDiffLeavesOutTheModelFolderInAnyCase(t *testing.T) {
 	older, newer := projectOf(t, lendingFiles), projectOf(t, changes(lendingFiles, map[string]string{
-		"docs/spec/lending/loan-limit.md": "# Loan limit\n\nSix loans.\n", "docs/spec/lending/diagram.png": "png2",
+		"docs/model/lending/loan-limit.md": "# Loan limit\n\nSix loans.\n", "docs/model/lending/diagram.png": "png2",
 	}))
 	for _, dir := range []string{older, newer} {
-		write(t, dir, ".markitect/spec", "Docs/Spec\n")
+		write(t, dir, ".markitect/model", "Docs/Model\n")
 	}
-	if _, err := os.Stat(filepath.Join(older, "Docs", "Spec")); err != nil {
+	if _, err := os.Stat(filepath.Join(older, "Docs", "Model")); err != nil {
 		t.Skip("this file system regards case")
 	}
 	code, out, errOut := run("diff", older, newer)

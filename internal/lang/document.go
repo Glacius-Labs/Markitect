@@ -1,6 +1,6 @@
-// Package lang is the spec language over supplied files: it parses documents,
+// Package lang is the model language over supplied files: it parses documents,
 // with their title, type or extends line, sections, the property type lines of
-// the sections and links, loads a spec from a file system, resolves the sections
+// the sections and links, loads a model from a file system, resolves the sections
 // and the property types of a type through its chain of base types and checks
 // it, the dependencies between its modules included.
 //
@@ -25,10 +25,10 @@ import (
 	"github.com/yuin/goldmark/util"
 )
 
-// Document is one Markdown file of a spec. Line numbers count from 1; 0 means
+// Document is one Markdown file of a model. Line numbers count from 1; 0 means
 // that the line is absent.
 type Document struct {
-	// Path is the document's path below the spec folder, with forward slashes.
+	// Path is the document's path below the model folder, with forward slashes.
 	Path string
 	// Title is the text of the level-1 heading that is the document's first
 	// block.
@@ -41,7 +41,7 @@ type Document struct {
 	// TypeLine is the line starting with "Type:" in the slot after the title.
 	TypeLine int
 	// TypeRaw is the path its link names as written, and TypePath that path
-	// resolved below the spec folder. Both are empty when the type line is
+	// resolved below the model folder. Both are empty when the type line is
 	// absent or is not exactly one link to a .md path.
 	TypeRaw  string
 	TypePath string
@@ -51,7 +51,7 @@ type Document struct {
 	// ExtendsLine is the line starting with "Extends:" in the slot after the
 	// title, where an object has its type line; a document has one of the two.
 	// ExtendsRaw is the path its link names as written, and ExtendsPath that
-	// path resolved below the spec folder. Both are empty when the extends line
+	// path resolved below the model folder. Both are empty when the extends line
 	// is absent or is not exactly one link to a .md path.
 	ExtendsLine int
 	ExtendsRaw  string
@@ -132,7 +132,7 @@ type PropertyLine struct {
 // PropertyRef is one link of a property type line.
 type PropertyRef struct {
 	// Raw is the path as written, without its #section, and Target that path
-	// resolved below the spec folder.
+	// resolved below the model folder.
 	Raw, Target string
 }
 
@@ -155,7 +155,7 @@ type CodeSpan struct {
 
 // Link is a link from a document to a .md path.
 type Link struct {
-	// Target is the linked path resolved below the spec folder; it may lie
+	// Target is the linked path resolved below the model folder; it may lie
 	// outside it, as "../x.md", or be absolute.
 	Target string
 	// Raw is the path as written, without its #section.
@@ -608,7 +608,7 @@ func unhex(c byte) byte {
 }
 
 // resolve resolves a link path, as written in the document at src, to a path
-// below the spec folder.
+// below the model folder.
 func resolve(src, raw string) string {
 	p := decode(raw)
 	if strings.HasPrefix(p, "/") {

@@ -24,17 +24,17 @@ func (s *smoke) version() error {
 }
 
 // smokeFiles are the documents of a small lending library that a person writes
-// by hand into the spec beside the default: a module domain with its README,
+// by hand into the model beside the default: a module domain with its README,
 // a concept of core's type, a type of their own with an operation of it, and a
 // type that extends another with a document of it.
 var smokeFiles = map[string]string{
-	"docs/spec/domain/README.md":       "# Domain\n\nHow members borrow books.\n\n## Contents\n- [Member](member.md)\n- [Borrow](borrow.md)\n\n## Concepts\n- [Member](member.md)\n\n## Operations\n- [Borrow](borrow.md)\n",
-	"docs/spec/domain/member.md":       "# Member\n\nType: [Concept](../core/concept.md)\n\n## Definition\nA person with a library card.\n",
-	"docs/spec/domain/operation.md":    "# Operation\n\nSomething a member can do.\n\n## Does\nWhat happens.\n\n## Who\nWho may do it.\n\n## Given\nWhat it needs.\n",
-	"docs/spec/domain/borrow.md":       "# Borrow\n\nType: [Operation](operation.md)\n\n## Does\nLends a book to a member for three weeks.\n\n## Who\nA [member](member.md).\n\n## Given\nThe book and the card.\n",
-	"docs/spec/domain/artifact.md":     "# Artifact\n\nSomething the library keeps.\n\n## Owner\nWho answers for it.\n",
-	"docs/spec/domain/catalog.md":      "# Catalog\n\nExtends: [Artifact](artifact.md)\n\nA list of books.\n\n## Entries\nThe books it lists.\n",
-	"docs/spec/domain/main-catalog.md": "# Main catalog\n\nType: [Catalog](catalog.md)\n\n## Owner\nThe head librarian.\n\n## Entries\nEvery book.\n",
+	"docs/model/domain/README.md":       "# Domain\n\nHow members borrow books.\n\n## Contents\n- [Member](member.md)\n- [Borrow](borrow.md)\n\n## Concepts\n- [Member](member.md)\n\n## Operations\n- [Borrow](borrow.md)\n",
+	"docs/model/domain/member.md":       "# Member\n\nType: [Concept](../core/concept.md)\n\n## Definition\nA person with a library card.\n",
+	"docs/model/domain/operation.md":    "# Operation\n\nSomething a member can do.\n\n## Does\nWhat happens.\n\n## Who\nWho may do it.\n\n## Given\nWhat it needs.\n",
+	"docs/model/domain/borrow.md":       "# Borrow\n\nType: [Operation](operation.md)\n\n## Does\nLends a book to a member for three weeks.\n\n## Who\nA [member](member.md).\n\n## Given\nThe book and the card.\n",
+	"docs/model/domain/artifact.md":     "# Artifact\n\nSomething the library keeps.\n\n## Owner\nWho answers for it.\n",
+	"docs/model/domain/catalog.md":      "# Catalog\n\nExtends: [Artifact](artifact.md)\n\nA list of books.\n\n## Entries\nThe books it lists.\n",
+	"docs/model/domain/main-catalog.md": "# Main catalog\n\nType: [Catalog](catalog.md)\n\n## Owner\nThe head librarian.\n\n## Entries\nEvery book.\n",
 }
 
 // snapshot reads every file below root, by its path with forward slashes, and
@@ -77,7 +77,7 @@ func sameFiles(before, after map[string]string) error {
 	return nil
 }
 
-// documents is the number of documents of the spec that check counts.
+// documents is the number of documents of the model that check counts.
 func documents(markitect func(int, ...string) (string, error), want int) (int, error) {
 	out, err := markitect(want, "check", "--json")
 	if err != nil {
@@ -92,21 +92,21 @@ func documents(markitect func(int, ...string) (string, error), want int) (int, e
 
 // layOut builds a project by hand, the way a person does since no command lays
 // one out: an empty folder, the default copied from plugin/default/ of the
-// repository into a spec folder, docs/spec, and the file .markitect/spec that
+// repository into a model folder, docs/model, and the file .markitect/model that
 // names that folder.
 func layOut(repo, project string) error {
-	if err := copyTree(defaultFolder(repo), filepath.Join(project, "docs", "spec")); err != nil {
+	if err := copyTree(defaultFolder(repo), filepath.Join(project, "docs", "model")); err != nil {
 		return err
 	}
-	return writeFile(project, ".markitect/spec", "docs/spec\n")
+	return writeFile(project, ".markitect/model", "docs/model\n")
 }
 
-// defaultFolder is the default that ships with Markitect: the spec folder that a
+// defaultFolder is the default that ships with Markitect: the model folder that a
 // project copies.
 func defaultFolder(repo string) string { return filepath.Join(repo, "plugin", "default") }
 
 // countDocuments counts the Markdown files below dir, which are the documents
-// that check counts once the folder is a spec.
+// that check counts once the folder is a model.
 func countDocuments(dir string) (int, error) {
 	n := 0
 	err := filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
@@ -132,7 +132,7 @@ func (s *smoke) projectCommands() error {
 	if err := os.MkdirAll(project, 0o755); err != nil {
 		return err
 	}
-	if err := s.refused(project, ".markitect/spec", "check"); err != nil {
+	if err := s.refused(project, ".markitect/model", "check"); err != nil {
 		return fmt.Errorf("check in an empty folder: %w", err)
 	}
 	if out, err := markitect(0, "licenses"); err != nil || !strings.Contains(out, "goldmark") {
@@ -142,13 +142,13 @@ func (s *smoke) projectCommands() error {
 	if err := layOut(s.repo, project); err != nil {
 		return err
 	}
-	if err := requirePresent(project, ".markitect/spec", "docs/spec/core/concept.md", "docs/spec/core/term.md"); err != nil {
+	if err := requirePresent(project, ".markitect/model", "docs/model/core/concept.md", "docs/model/core/term.md"); err != nil {
 		return err
 	}
 	if entries, err := os.ReadDir(filepath.Join(project, ".markitect")); err != nil {
 		return err
 	} else if len(entries) != 1 {
-		return fmt.Errorf(".markitect/ holds %d entries, not only spec", len(entries))
+		return fmt.Errorf(".markitect/ holds %d entries, not only model", len(entries))
 	}
 
 	// The default alone passes check, and table lists its documents, sorted by
@@ -181,7 +181,7 @@ func (s *smoke) projectCommands() error {
 	if out, err := markitect(0, "check"); err != nil {
 		return err
 	} else if out != fmt.Sprintf("0 errors in %d documents\n", total) {
-		return fmt.Errorf("check over the filled spec: %s", tail(out))
+		return fmt.Errorf("check over the filled model: %s", tail(out))
 	}
 	if out, err := markitect(0, "check", "--json"); err != nil {
 		return err
@@ -200,7 +200,7 @@ func (s *smoke) projectCommands() error {
 		}
 	}
 	// A document that breaks a rule is found, with its file and line.
-	if err := writeFile(project, "docs/spec/domain/broken.md", "# Broken\n\nSee [nothing](nothing.md).\n"); err != nil {
+	if err := writeFile(project, "docs/model/domain/broken.md", "# Broken\n\nSee [nothing](nothing.md).\n"); err != nil {
 		return err
 	}
 	if out, err := markitect(1, "check"); err != nil {
@@ -208,15 +208,15 @@ func (s *smoke) projectCommands() error {
 	} else if err := requireContains(out, "domain/broken.md:3: link.unresolved: no document at \"nothing.md\"\n", fmt.Sprintf("1 error in %d documents\n", total+1)); err != nil {
 		return err
 	}
-	if err := os.Remove(filepath.Join(project, "docs", "spec", "domain", "broken.md")); err != nil {
+	if err := os.Remove(filepath.Join(project, "docs", "model", "domain", "broken.md")); err != nil {
 		return err
 	}
 	// A module needs a README, and what its README does not list under Contents
 	// is internal to it: a link from outside is found.
-	if err := writeFile(project, "docs/spec/shop/cart.md", "# Cart\n\nWhat a customer buys.\n"); err != nil {
+	if err := writeFile(project, "docs/model/shop/cart.md", "# Cart\n\nWhat a customer buys.\n"); err != nil {
 		return err
 	}
-	if err := writeFile(project, "docs/spec/domain/shopping.md", "# Shopping\n\nSee [the cart](../shop/cart.md).\n"); err != nil {
+	if err := writeFile(project, "docs/model/domain/shopping.md", "# Shopping\n\nSee [the cart](../shop/cart.md).\n"); err != nil {
 		return err
 	}
 	if out, err := markitect(1, "check"); err != nil {
@@ -225,7 +225,7 @@ func (s *smoke) projectCommands() error {
 		"shop/README.md:1: module.readme: the folder shop holds documents and has no README.md\n", fmt.Sprintf("2 errors in %d documents\n", total+2)); err != nil {
 		return err
 	}
-	if err := writeFile(project, "docs/spec/shop/README.md", "# Shop\n\nWhat customers buy.\n"); err != nil {
+	if err := writeFile(project, "docs/model/shop/README.md", "# Shop\n\nWhat customers buy.\n"); err != nil {
 		return err
 	}
 	if out, err := markitect(1, "check", "--json"); err != nil {
@@ -233,7 +233,7 @@ func (s *smoke) projectCommands() error {
 	} else if err := requireContains(out, `"code": "link.internal"`, `"message": "\"shop/cart.md\" is internal to shop: shop/README.md does not list it under Contents"`); err != nil {
 		return err
 	}
-	if err := writeFile(project, "docs/spec/shop/README.md", "# Shop\n\nWhat customers buy.\n\n## Contents\n- [Cart](cart.md)\n"); err != nil {
+	if err := writeFile(project, "docs/model/shop/README.md", "# Shop\n\nWhat customers buy.\n\n## Contents\n- [Cart](cart.md)\n"); err != nil {
 		return err
 	}
 	if out, err := markitect(0, "check"); err != nil {
@@ -242,19 +242,19 @@ func (s *smoke) projectCommands() error {
 		return fmt.Errorf("check with a module that lists its cart: %s", tail(out))
 	}
 	// A pattern in Contents shows the documents of the folder that match it.
-	if err := writeFile(project, "docs/spec/shop/README.md", "# Shop\n\n## Contents\n- `ca*.md`\n"); err != nil {
+	if err := writeFile(project, "docs/model/shop/README.md", "# Shop\n\n## Contents\n- `ca*.md`\n"); err != nil {
 		return err
 	} else if out, err := markitect(0, "check"); err != nil || out != fmt.Sprintf("0 errors in %d documents\n", total+3) {
 		return fmt.Errorf("check with a module that shows its cart by a pattern: %v %s", err, tail(out))
 	}
-	if err := os.RemoveAll(filepath.Join(project, "docs", "spec", "shop")); err != nil {
+	if err := os.RemoveAll(filepath.Join(project, "docs", "model", "shop")); err != nil {
 		return err
 	}
-	if err := os.Remove(filepath.Join(project, "docs", "spec", "domain", "shopping.md")); err != nil {
+	if err := os.Remove(filepath.Join(project, "docs", "model", "domain", "shopping.md")); err != nil {
 		return err
 	}
 	// A derived type that makes a section of its base optional is found.
-	if err := writeFile(project, "docs/spec/domain/loose.md", "# Loose\n\nExtends: [Artifact](artifact.md)\n\n## Owner (optional)\nNobody.\n"); err != nil {
+	if err := writeFile(project, "docs/model/domain/loose.md", "# Loose\n\nExtends: [Artifact](artifact.md)\n\n## Owner (optional)\nNobody.\n"); err != nil {
 		return err
 	}
 	if out, err := markitect(1, "check"); err != nil {
@@ -262,7 +262,7 @@ func (s *smoke) projectCommands() error {
 	} else if err := requireContains(out, `domain/loose.md:5: extends.loosens: section "Owner" is required by domain/artifact.md`+"\n", fmt.Sprintf("1 error in %d documents\n", total+1)); err != nil {
 		return err
 	}
-	if err := os.Remove(filepath.Join(project, "docs", "spec", "domain", "loose.md")); err != nil {
+	if err := os.Remove(filepath.Join(project, "docs", "model", "domain", "loose.md")); err != nil {
 		return err
 	}
 	if err := s.propertyTypes(project, total); err != nil {
@@ -275,11 +275,11 @@ func (s *smoke) projectCommands() error {
 		return err
 	}
 
-	// The look commands: the topic view of the whole spec, show, table,
+	// The look commands: the topic view of the whole model, show, table,
 	// questions and licenses.
 	if out, err := markitect(0, "topic"); err != nil {
 		return err
-	} else if err := requireContains(out, "# Signals of the spec\n", "\n### weak ("); err != nil {
+	} else if err := requireContains(out, "# Signals of the model\n", "\n### weak ("); err != nil {
 		return err
 	}
 	if out, err := markitect(0, "show", "domain/borrow"); err != nil {
@@ -343,11 +343,11 @@ func (s *smoke) projectCommands() error {
 	}
 
 	// The commands find the project from a folder inside it.
-	inside := filepath.Join(project, "docs", "spec", "domain")
+	inside := filepath.Join(project, "docs", "model", "domain")
 	if out, err := s.exit(inside, 0, "check"); err != nil {
 		return err
 	} else if out != fmt.Sprintf("0 errors in %d documents\n", total) {
-		return fmt.Errorf("check from inside the spec: %s", tail(out))
+		return fmt.Errorf("check from inside the model: %s", tail(out))
 	}
 
 	read, err := snapshot(project)
@@ -358,24 +358,24 @@ func (s *smoke) projectCommands() error {
 		return fmt.Errorf("a command wrote into the project: %w", err)
 	}
 
-	// A change of the spec, seen against a copy made before it: a document
+	// A change of the model, seen against a copy made before it: a document
 	// gone, one new, and a loan that runs two weeks, not three. Writing the
 	// change is the person's, so it is done here by hand, after the check that
 	// no command wrote.
-	if err := writeFile(project, "docs/spec/domain/draft.md", "# Draft\n"); err != nil {
+	if err := writeFile(project, "docs/model/domain/draft.md", "# Draft\n"); err != nil {
 		return err
 	}
 	copyOf := filepath.Join(s.work, "lending-before")
 	if err := copyTree(project, copyOf); err != nil {
 		return err
 	}
-	if err := os.Remove(filepath.Join(project, "docs", "spec", "domain", "draft.md")); err != nil {
+	if err := os.Remove(filepath.Join(project, "docs", "model", "domain", "draft.md")); err != nil {
 		return err
 	}
-	if err := writeFile(project, "docs/spec/domain/fine.md", "# Fine\n\nType: [Concept](../core/concept.md)\n\n## Definition\nWhat a late book costs.\n"); err != nil {
+	if err := writeFile(project, "docs/model/domain/fine.md", "# Fine\n\nType: [Concept](../core/concept.md)\n\n## Definition\nWhat a late book costs.\n"); err != nil {
 		return err
 	}
-	if err := writeFile(project, "docs/spec/domain/borrow.md", strings.Replace(readFile(project, "docs/spec/domain/borrow.md"), "three weeks", "two weeks", 1)); err != nil {
+	if err := writeFile(project, "docs/model/domain/borrow.md", strings.Replace(readFile(project, "docs/model/domain/borrow.md"), "three weeks", "two weeks", 1)); err != nil {
 		return err
 	}
 	changed, err := snapshot(project)
@@ -385,7 +385,7 @@ func (s *smoke) projectCommands() error {
 	if out, err := markitect(1, "diff", copyOf); err != nil {
 		return err
 	} else if err := requireContains(out, "## New (1)\n\ndomain/fine.md\n", "## Gone (1)\n\ndomain/draft.md\n", "## Changed (1)\n\ndomain/borrow.md\n",
-		"--- docs/spec/domain/borrow.md\n+++ docs/spec/domain/borrow.md\n", "+Lends a book to a member for two weeks.\n"); err != nil {
+		"--- docs/model/domain/borrow.md\n+++ docs/model/domain/borrow.md\n", "+Lends a book to a member for two weeks.\n"); err != nil {
 		return err
 	}
 	if out, err := markitect(1, "diff", copyOf, "--json"); err != nil {
@@ -428,9 +428,9 @@ func (s *smoke) diffFiles(project string) error {
 	if err := copyTree(project, older); err != nil {
 		return err
 	}
-	readme := readFile(older, "docs/spec/domain/README.md") + "\n## Realized in\n- `src/borrow/`\n- `.claude/skills/triage/`\n"
+	readme := readFile(older, "docs/model/domain/README.md") + "\n## Realized in\n- `src/borrow/`\n- `.claude/skills/triage/`\n"
 	for name, content := range map[string]string{
-		"docs/spec/domain/README.md":     readme,
+		"docs/model/domain/README.md":    readme,
 		"src/borrow/borrow.go":           "package borrow\n",
 		".claude/skills/triage/SKILL.md": "triage\n",
 		".claude/skills/other/SKILL.md":  "nobody names it\n",

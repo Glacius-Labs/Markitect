@@ -2,10 +2,10 @@ package signals
 
 import "testing"
 
-// derived is a spec of a base type, a type that extends it and that no
+// derived is a model of a base type, a type that extends it and that no
 // document names, a document of the derived type and a document of its own.
 func derived(t *testing.T) *Analysis {
-	return Analyze(spec(t, map[string]string{
+	return Analyze(model(t, map[string]string{
 		"types/artifact.md": "# Artifact\n\nSomething a team makes.\n\n## Owner\nEvery artifact has one owner.\n",
 		"types/website.md":  "# Website\n\nExtends: [Artifact](artifact.md)\n\nA site people open.\n\n## Pages\nEach page is a document of its own.\n",
 		"sites/home.md":     "# Home page\n\nType: [Website](../types/website.md)\n\n## Owner\nAda\n\n## Pages\nOne.\n",
@@ -47,7 +47,7 @@ func TestTopicOfDerivedTypes(t *testing.T) {
 		eq(t, topic.Documents, want)
 	}
 	// A derived type nobody uses yet is a type; a document of it is not.
-	b := Analyze(spec(t, map[string]string{
+	b := Analyze(model(t, map[string]string{
 		"a.md": "# A\n\nBase.\n",
 		"b.md": "# B\n\nExtends: [A](a.md)\n",
 		"c.md": "# C\n\nText.\n",
@@ -60,7 +60,7 @@ func TestTopicOfDerivedTypes(t *testing.T) {
 }
 
 func TestInvalidExtendsLineIsNoType(t *testing.T) {
-	a := Analyze(spec(t, map[string]string{
+	a := Analyze(model(t, map[string]string{
 		"rules.md": "# Rules\n\nExtends: the borrowing rules of the house\n\nThe rules.\n\n## Rule\nEvery loan ends.\n",
 		"lost.md":  "# Lost\n\nExtends: [Nowhere](nowhere.md)\n\nA type.\n\n## Rule\nEvery loan ends.\n",
 	}), References{})

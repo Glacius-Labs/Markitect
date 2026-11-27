@@ -1,8 +1,8 @@
 // Package project is a Markitect project, over a file system rooted at the
-// project folder: the file .markitect/spec that makes a folder a project and
-// names its spec folder, the project loaded with its spec, the ignore file that
+// project folder: the file .markitect/model that makes a folder a project and
+// names its model folder, the project loaded with its model, the ignore file that
 // leaves out what does not belong to its files, and the difference between two
-// projects: their specs, and for each module its files. It reads only the file
+// projects: their models, and for each module its files. It reads only the file
 // systems it is handed, so that two projects, such as the two that diff
 // compares, load the same way.
 //
@@ -21,50 +21,50 @@ import (
 )
 
 // The file that makes a folder a project, by its path below the project
-// folder. Its one line names the spec folder; whatever else lies in .markitect/
+// folder. Its one line names the model folder; whatever else lies in .markitect/
 // is no concern of the tool.
 const (
-	Dir      = ".markitect"
-	SpecFile = ".markitect/spec"
+	Dir       = ".markitect"
+	ModelFile = ".markitect/model"
 )
 
-// SpecPath turns a spec folder, as written in .markitect/spec, into a clean
+// ModelPath turns a model folder, as written in .markitect/model, into a clean
 // path below the project folder with forward slashes. It refuses a path that
 // is empty, absolute, has a drive, leaves the project folder, is the project
 // folder itself, or lies in .markitect/, in any case.
-func SpecPath(arg string) (string, error) {
+func ModelPath(arg string) (string, error) {
 	p := strings.TrimSpace(strings.ReplaceAll(arg, "\\", "/"))
 	switch {
 	case p == "":
-		return "", errors.New("the spec folder is empty")
+		return "", errors.New("the model folder is empty")
 	case strings.HasPrefix(p, "/") || len(p) >= 2 && p[1] == ':':
-		return "", fmt.Errorf("the spec folder %s is not a path below the project folder", arg)
+		return "", fmt.Errorf("the model folder %s is not a path below the project folder", arg)
 	}
 	p = path.Clean(p)
 	if p == "." || p == ".." || strings.HasPrefix(p, "../") {
-		return "", fmt.Errorf("the spec folder %s is not a path below the project folder", arg)
+		return "", fmt.Errorf("the model folder %s is not a path below the project folder", arg)
 	}
 	// The reserved name counts in any case, as a file system that ignores
 	// case reads it.
 	if first, _, _ := strings.Cut(p, "/"); strings.EqualFold(first, Dir) {
-		return "", fmt.Errorf("the spec folder %s lies in %s/", arg, Dir)
+		return "", fmt.Errorf("the model folder %s lies in %s/", arg, Dir)
 	}
 	return p, nil
 }
 
-// ReadSpecFolder reads .markitect/spec, which holds one line: the spec folder.
+// ReadModelFolder reads .markitect/model, which holds one line: the model folder.
 // A byte order mark, white space and the line end around it are dropped, so a
 // checkout with CRLF reads the same.
-func ReadSpecFolder(fsys fs.FS) (string, error) {
-	line, err := readLine(fsys, SpecFile)
+func ReadModelFolder(fsys fs.FS) (string, error) {
+	line, err := readLine(fsys, ModelFile)
 	if err != nil {
 		return "", err
 	}
-	spec, err := SpecPath(line)
+	model, err := ModelPath(line)
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", SpecFile, err)
+		return "", fmt.Errorf("%s: %w", ModelFile, err)
 	}
-	return spec, nil
+	return model, nil
 }
 
 // readLine reads a file of one line.
@@ -88,31 +88,31 @@ func readLine(fsys fs.FS, name string) (string, error) {
 type Project struct {
 	// FS is the project folder.
 	FS fs.FS
-	// SpecFolder is the spec folder, a path below the project folder.
-	SpecFolder string
-	// SpecFS is the spec folder.
-	SpecFS fs.FS
-	Spec   *lang.Spec
+	// ModelFolder is the model folder, a path below the project folder.
+	ModelFolder string
+	// ModelFS is the model folder.
+	ModelFS fs.FS
+	Model   *lang.Model
 }
 
-// Load reads .markitect/spec of the project at fsys and its spec, whose
+// Load reads .markitect/model of the project at fsys and its model, whose
 // folder must exist.
 func Load(fsys fs.FS) (*Project, error) {
-	folder, err := ReadSpecFolder(fsys)
+	folder, err := ReadModelFolder(fsys)
 	if err != nil {
 		return nil, err
 	}
 	info, err := fs.Stat(fsys, folder)
 	if err != nil || !info.IsDir() {
-		return nil, fmt.Errorf("the spec folder %s, which %s names, is no folder", folder, SpecFile)
+		return nil, fmt.Errorf("the model folder %s, which %s names, is no folder", folder, ModelFile)
 	}
 	sub, err := fs.Sub(fsys, folder)
 	if err != nil {
 		return nil, err
 	}
-	spec, err := lang.Load(sub)
+	model, err := lang.Load(sub)
 	if err != nil {
 		return nil, err
 	}
-	return &Project{FS: fsys, SpecFolder: folder, SpecFS: sub, Spec: spec}, nil
+	return &Project{FS: fsys, ModelFolder: folder, ModelFS: sub, Model: model}, nil
 }

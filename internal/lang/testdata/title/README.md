@@ -1,4 +1,4 @@
-# Spec
+# Model
 
 ## Contents
 - [two-titles](two-titles.md)

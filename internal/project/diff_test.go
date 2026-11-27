@@ -8,8 +8,8 @@ import (
 func TestDiff(t *testing.T) {
 	old := []byte("# Return\r\n\r\nA book comes back within three weeks.\r\nLate books cost a fee.\r\n")
 	new := []byte("# Return\n\nA book comes back within four weeks.\nLate books cost a fee.\nA lost book is paid.\n")
-	want := "--- docs/spec/return.md\n+++ docs/spec/return.md\n@@ -1,4 +1,5 @@\n # Return\n \n-A book comes back within three weeks.\n+A book comes back within four weeks.\n Late books cost a fee.\n+A lost book is paid.\n"
-	if got := Diff("docs/spec/return.md", "docs/spec/return.md", old, new); got != want {
+	want := "--- docs/model/return.md\n+++ docs/model/return.md\n@@ -1,4 +1,5 @@\n # Return\n \n-A book comes back within three weeks.\n+A book comes back within four weeks.\n Late books cost a fee.\n+A lost book is paid.\n"
+	if got := Diff("docs/model/return.md", "docs/model/return.md", old, new); got != want {
 		t.Errorf("got\n%s\nwant\n%s", got, want)
 	}
 	if Diff("a", "b", old, []byte(strings.ReplaceAll(string(old), "\r\n", "\n"))) != "" {

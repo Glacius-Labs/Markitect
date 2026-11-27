@@ -88,7 +88,7 @@ func TestPluginHasTheVersionOfTheSource(t *testing.T) {
 
 // The plugin holds no skills, agents or jobs. Beside
 // the launcher and its hook it carries the default, default/, which is plain
-// Markdown that a project copies into its spec folder and no component that
+// Markdown that a project copies into its model folder and no component that
 // Claude Code loads.
 func TestPluginHoldsTheLauncherAndTheDefaultAndNothingElse(t *testing.T) {
 	for _, name := range []string{"skills", "agents", "jobs.md"} {

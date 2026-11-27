@@ -1,6 +1,6 @@
 # Reference values: core
 
-The reference values of the types of the core module, against which the signals show each number. These are first values, to be replaced by values measured on proven reference specs.
+The reference values of the types of the core module, against which the signals show each number. These are first values, to be replaced by values measured on proven reference models.
 
 | Type | Statements per document | Words per statement |
 |---|---|---|

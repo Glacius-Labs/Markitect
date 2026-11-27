@@ -14,7 +14,7 @@ import (
 func folder() fs.FS { return os.DirFS(".") }
 
 // defaultFolder is the default that ships with Markitect as it lies on disk:
-// the spec folder that a project copies, beside the plugin and not in the binary.
+// the model folder that a project copies, beside the plugin and not in the binary.
 func defaultFolder() fs.FS { return os.DirFS(filepath.Join("..", "..", "plugin", "default")) }
 
 func folders(t *testing.T, fsys fs.FS, dir string) []string {

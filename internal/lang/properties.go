@@ -156,7 +156,7 @@ type Property struct {
 	// "" for text.
 	Kind string
 	// Refs are the paths of the types a reference may point to, as written on
-	// the line, resolved below the spec folder.
+	// the line, resolved below the model folder.
 	Refs []string
 	// Values are the fixed values, in order.
 	Values []string
@@ -168,7 +168,7 @@ type Property struct {
 // the nearest type of its chain that has one for a section of that name, text
 // when none has. A type that declares the section again without a line keeps
 // the type of the one above.
-func (s *Spec) PropertyType(t *Document, name string) Property {
+func (s *Model) PropertyType(t *Document, name string) Property {
 	return propertyOf(s.Chain(t), name)
 }
 
@@ -252,7 +252,7 @@ func QuoteValues(values []string) string {
 
 // checkPropertyLines checks the property type lines of a document: where they
 // stand, what they say and which documents they name.
-func (s *Spec) checkPropertyLines(d *Document) []Diagnostic {
+func (s *Model) checkPropertyLines(d *Document) []Diagnostic {
 	var out []Diagnostic
 	add := func(line int, code, format string, args ...any) {
 		out = append(out, Diagnostic{Path: d.Path, Line: line, Code: code, Message: fmt.Sprintf(format, args...)})
@@ -288,7 +288,7 @@ func (s *Spec) checkPropertyLines(d *Document) []Diagnostic {
 
 // checkRetyped reports each property that a derived type types differently
 // than the types up its chain: a line where they have none, or another line.
-func (s *Spec) checkRetyped(d *Document) []Diagnostic {
+func (s *Model) checkRetyped(d *Document) []Diagnostic {
 	if !d.HasExtends() || !d.holdsProperties() {
 		return nil
 	}
@@ -334,7 +334,7 @@ func propertyAbove(above []*Document, name string) (Property, string, bool) {
 // declaredTypes returns the types a reference property may point to: the
 // documents its line links, but for a link that names no document or a README,
 // which is reported where the line stands.
-func (s *Spec) declaredTypes(prop Property) []*Document {
+func (s *Model) declaredTypes(prop Property) []*Document {
 	var out []*Document
 	for _, p := range prop.Refs {
 		if t, ok := s.Document(p); ok && !isReadme(t.Path) {
@@ -346,7 +346,7 @@ func (s *Spec) declaredTypes(prop Property) []*Document {
 
 // ofAny reports whether the document is an object of one of the types or of a
 // type that extends one.
-func (s *Spec) ofAny(d *Document, types []*Document) bool {
+func (s *Model) ofAny(d *Document, types []*Document) bool {
 	if !d.HasType() {
 		return false
 	}
@@ -380,7 +380,7 @@ func referenceLinks(d *Document, sec Section) []Link {
 // types of its type t and of every type up its chain: the links of a reference
 // property are objects of the declared types, and the first line of a section of
 // fixed values is one of them.
-func (s *Spec) checkProperties(d, t *Document) []Diagnostic {
+func (s *Model) checkProperties(d, t *Document) []Diagnostic {
 	var out []Diagnostic
 	add := func(line int, code, format string, args ...any) {
 		out = append(out, Diagnostic{Path: d.Path, Line: line, Code: code, Message: fmt.Sprintf(format, args...)})
@@ -435,7 +435,7 @@ func typesPhrase(refs []string) string {
 }
 
 // whatIs says what a document is that is no object of the declared types.
-func (s *Spec) whatIs(d *Document) string {
+func (s *Model) whatIs(d *Document) string {
 	switch {
 	case isReadme(d.Path):
 		return "a README"

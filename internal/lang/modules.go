@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-// A module is a folder of the spec that holds at least one document directly;
-// the spec folder itself is one when it holds a document directly. A folder
+// A module is a folder of the model that holds at least one document directly;
+// the model folder itself is one when it holds a document directly. A folder
 // that holds only folders, or no document at all, is no module and is
 // transparent: it counts as no level between two modules. The manifest of a
 // module is its README.md; the section Contents of it lists what the module
@@ -23,8 +23,8 @@ const (
 	// realizedSection is the section of a README that says where in the project
 	// the module is built.
 	realizedSection = "Realized in"
-	// specFolder is the name of the spec folder as a module folder.
-	specFolder = "."
+	// modelFolder is the name of the model folder as a module folder.
+	modelFolder = "."
 )
 
 // isReadme reports whether the path names a README, a document called
@@ -33,7 +33,7 @@ func isReadme(p string) bool { return path.Base(p) == readmeName }
 
 // readmeOf returns the path of the README of the module folder dir.
 func readmeOf(dir string) string {
-	if dir == specFolder {
+	if dir == modelFolder {
 		return readmeName
 	}
 	return dir + "/" + readmeName
@@ -69,7 +69,7 @@ func (d *Document) readWithoutHead() {
 
 // readHeadReadme reads a type line or an extends line that names a README as
 // naming no type; the path stays in HeadReadme.
-func (d *Document) readHeadReadme(s *Spec) {
+func (d *Document) readHeadReadme(s *Model) {
 	switch {
 	case d.HasType() && isReadmeDocument(s, d.TypePath):
 		d.HeadReadme = d.TypePath
@@ -80,7 +80,7 @@ func (d *Document) readHeadReadme(s *Spec) {
 	}
 }
 
-func isReadmeDocument(s *Spec, p string) bool {
+func isReadmeDocument(s *Model, p string) bool {
 	_, ok := s.byPath[p]
 	return ok && isReadme(p)
 }
@@ -88,13 +88,13 @@ func isReadmeDocument(s *Spec, p string) bool {
 // moduleChain returns the module folders that contain a document of the
 // folder dir, the outermost first and dir itself last: dir holds the document,
 // so it is a module.
-func (s *Spec) moduleChain(dir string) []string {
+func (s *Model) moduleChain(dir string) []string {
 	var chain []string
 	for cur := dir; ; cur = path.Dir(cur) {
 		if s.modules[cur] {
 			chain = append(chain, cur)
 		}
-		if cur == specFolder || cur == "/" {
+		if cur == modelFolder || cur == "/" {
 			break
 		}
 	}
@@ -108,7 +108,7 @@ func (s *Spec) moduleChain(dir string) []string {
 // shows to the modules outside it: the README itself, and what the README
 // links in its section Contents when that is a document directly in the folder
 // of the module or the README of the nearest module below it.
-func (s *Spec) shownByModule() map[string]map[string]bool {
+func (s *Model) shownByModule() map[string]map[string]bool {
 	shown := map[string]map[string]bool{}
 	for dir := range s.modules {
 		readme, ok := s.byPath[readmeOf(dir)]
@@ -188,14 +188,14 @@ func checkPatterns(d *Document) []Diagnostic {
 	return out
 }
 
-// SortModules sorts module folders by path, the spec folder first.
+// SortModules sorts module folders by path, the model folder first.
 func SortModules(modules []string) {
 	sort.Slice(modules, func(i, j int) bool { return moduleLess(modules[i], modules[j]) })
 }
 
 // checkModules reports every module without a README.md, at the path the
 // README would have, line 1.
-func (s *Spec) checkModules() []Diagnostic {
+func (s *Model) checkModules() []Diagnostic {
 	var dirs []string
 	for dir := range s.modules {
 		if _, ok := s.byPath[readmeOf(dir)]; !ok {
@@ -206,8 +206,8 @@ func (s *Spec) checkModules() []Diagnostic {
 	var out []Diagnostic
 	for _, dir := range dirs {
 		message := fmt.Sprintf("the folder %s holds documents and has no README.md", dir)
-		if dir == specFolder {
-			message = "the spec folder holds documents and has no README.md"
+		if dir == modelFolder {
+			message = "the model folder holds documents and has no README.md"
 		}
 		out = append(out, Diagnostic{Path: readmeOf(dir), Line: 1, Code: CodeModuleReadme, Message: message})
 	}
@@ -216,7 +216,7 @@ func (s *Spec) checkModules() []Diagnostic {
 
 // checkReadmeType reports the type line or extends line of a README, and a
 // type line or extends line that names a README.
-func (s *Spec) checkReadmeType(d *Document) []Diagnostic {
+func (s *Model) checkReadmeType(d *Document) []Diagnostic {
 	switch {
 	case len(d.ReadmeHeads) > 0:
 		var out []Diagnostic
@@ -240,7 +240,7 @@ func (s *Spec) checkReadmeType(d *Document) []Diagnostic {
 // out; the others, M1 the outermost to Mk the target's own, must show the way:
 // each Mi but the last the README of M(i+1), the last the target unless that is
 // its README. The first step that is not shown makes the link an error.
-func (s *Spec) checkInternal(d *Document, shown map[string]map[string]bool) []Diagnostic {
+func (s *Model) checkInternal(d *Document, shown map[string]map[string]bool) []Diagnostic {
 	var out []Diagnostic
 	seen := map[string]bool{}
 	check := func(target string, line int) {
@@ -272,7 +272,7 @@ func (s *Spec) checkInternal(d *Document, shown map[string]map[string]bool) []Di
 			}
 			// The cause: a module on the way without a README, or a README that
 			// does not list what is behind it. The module that is checked is
-			// never the spec folder, which holds the linking document.
+			// never the model folder, which holds the linking document.
 			reason := fmt.Sprintf("%s does not list %s under %s", readmeOf(dir), what, contentsSection)
 			onTheWay := []string{dir}
 			if i < len(chain)-1 {

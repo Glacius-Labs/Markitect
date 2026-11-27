@@ -44,21 +44,21 @@ func realPath(p string, links int) (string, error) {
 	return at, nil
 }
 
-// specInside refuses a spec folder that, through a symbolic link or a
-// junction, lies outside the project folder dir. The spec folder exists: the
+// modelInside refuses a model folder that, through a symbolic link or a
+// junction, lies outside the project folder dir. The model folder exists: the
 // project is loaded before this is asked.
-func specInside(dir, spec string) error {
+func modelInside(dir, model string) error {
 	project, err := realPath(dir, 0)
 	if err != nil {
 		return err
 	}
-	real, err := realPath(filepath.Join(dir, filepath.FromSlash(spec)), 0)
+	real, err := realPath(filepath.Join(dir, filepath.FromSlash(model)), 0)
 	if err != nil {
 		return err
 	}
 	rel, err := filepath.Rel(project, real)
 	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) || filepath.IsAbs(rel) {
-		return fmt.Errorf("the spec folder %s lies outside the project, at %s", spec, real)
+		return fmt.Errorf("the model folder %s lies outside the project, at %s", model, real)
 	}
 	return nil
 }

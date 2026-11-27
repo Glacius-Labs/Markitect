@@ -1,4 +1,4 @@
-# Spec
+# Model
 
 ## Contents
 - [loan](loan.md)

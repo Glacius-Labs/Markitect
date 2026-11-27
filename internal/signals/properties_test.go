@@ -6,7 +6,7 @@ import "testing"
 // type like any other: the text under its sections is no statement, its title
 // is no name, and the line itself is no prose.
 func TestTypesByPropertyTypeLines(t *testing.T) {
-	a := Analyze(spec(t, map[string]string{
+	a := Analyze(model(t, map[string]string{
 		"types/shop.md":    "# Shop\n\nWhere a customer buys things.\n\n## Orders\nType: [Order](order.md)\n\nEvery order is listed here, always.\n\n## Currency\nType: `euro`, `dollar`\n\nOnly these two are allowed.\n",
 		"types/order.md":   "# Order\n\nWhat a customer buys.\n\n## Items\nEach item has a price.\n",
 		"types/orphan.md":  "# Orphan\n\n## State\nType: `a`\n\nAll states of the orphan.\n",
@@ -43,7 +43,7 @@ func TestTypesByPropertyTypeLines(t *testing.T) {
 // A property type line in a document with a type line is an error and makes it
 // no type; it is no prose either.
 func TestPropertyTypeLineOfAnObjectMakesNoType(t *testing.T) {
-	a := Analyze(spec(t, map[string]string{
+	a := Analyze(model(t, map[string]string{
 		"types/kind.md": "# Kind\n\nA kind.\n\n## Name\nWho.\n",
 		"thing.md":      "# Thing\n\nType: [Kind](types/kind.md)\n\n## Name\nType: `x`\n\nAda\n",
 	}), References{})

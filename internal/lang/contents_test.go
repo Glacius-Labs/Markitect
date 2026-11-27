@@ -111,7 +111,7 @@ func TestOtherSpellingsOfReadmeAreOrdinaryDocuments(t *testing.T) {
 		`a/readme.md:3: readme.type: "t/README.md" is a README, which is no type`,
 		`b/README.MD:3: readme.type: "t/README.md" is a README, which is no type`,
 		`b/README.md:1: module.readme: the folder b holds documents and has no README.md`)
-	s := specOf(t, files)
+	s := modelOf(t, files)
 	d, _ := s.Document("a/readme.md")
 	if len(d.ReadmeHeads) != 0 {
 		t.Errorf("readme.md is read as a README: %+v", d)

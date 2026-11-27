@@ -63,7 +63,7 @@ func (f *folders) holds(p string, e fs.DirEntry) bool {
 
 // listFiles walks the project at fsys and returns its files that are looked at.
 // Left out are the folder .markitect/ at the top, the folders named, which are
-// the spec folder and a project that lies inside this one, links and junctions,
+// the model folder and a project that lies inside this one, links and junctions,
 // which are never followed, special files, and what the ignore file leaves out;
 // a folder that is left out is not entered. A name that starts with a dot is a
 // name like any other.

@@ -134,7 +134,7 @@ func TestIgnoreNothing(t *testing.T) {
 // walked lists the files of a project: the fixed rules, then the ignore file.
 func walked(t *testing.T, files map[string]string, ignore string) string {
 	t.Helper()
-	got, err := listFiles(tree(files), mustIgnore(t, ignore), Folder{Path: "docs/spec"})
+	got, err := listFiles(tree(files), mustIgnore(t, ignore), Folder{Path: "docs/model"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -144,24 +144,24 @@ func walked(t *testing.T, files map[string]string, ignore string) string {
 func TestListFilesWithoutAnIgnoreFile(t *testing.T) {
 	files := map[string]string{
 		"main.go":                  "",
-		"docs/spec/a.md":           "# A\n",
-		"docs/spec/img/a.png":      "png",
+		"docs/model/a.md":          "# A\n",
+		"docs/model/img/a.png":     "png",
 		"docs/notes.txt":           "",
-		"docs/spec-old/b.md":       "",
+		"docs/model-old/b.md":      "",
 		".git/config":              "",
 		".github/workflows/ci.yml": "",
 		".hidden":                  "",
 		"src/.env":                 "",
 		"src/code/x.go":            "",
-		".markitect/spec":          "docs/spec\n",
+		".markitect/model":         "docs/model\n",
 		".markitect/ignore":        "x\n",
 		".Markitect/other":         "x",
-		"sub/.markitect/spec":      "x",
+		"sub/.markitect/model":     "x",
 		"a b/c d.txt":              "",
 	}
-	// Left out are the spec folder and the folder .markitect/ at the top, in any
+	// Left out are the model folder and the folder .markitect/ at the top, in any
 	// case, and nothing else: a name that starts with a dot is a name like any other.
-	want := ".git/config .github/workflows/ci.yml .hidden a b/c d.txt docs/notes.txt docs/spec-old/b.md main.go src/.env src/code/x.go sub/.markitect/spec"
+	want := ".git/config .github/workflows/ci.yml .hidden a b/c d.txt docs/model-old/b.md docs/notes.txt main.go src/.env src/code/x.go sub/.markitect/model"
 	if got := walked(t, files, ""); got != want {
 		t.Errorf("got  %s\nwant %s", got, want)
 	}

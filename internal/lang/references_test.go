@@ -11,7 +11,7 @@ func TestPropertyLineVisibility(t *testing.T) {
 		"shop/README.md":     "# Shop\n\n## Contents\n- [Cart](cart.md)\n",
 		"shop/cart.md":       "# Cart\n\nA cart.\n\n## Items\nWhat is in it.\n",
 		"shop/cart-limit.md": "# Cart limit\n\nAt most ten.\n",
-		"README.md":          "# Spec\n\n## Contents\n- [Order](order.md)\n- [Shop](shop/README.md)\n",
+		"README.md":          "# Model\n\n## Contents\n- [Order](order.md)\n- [Shop](shop/README.md)\n",
 		"order.md":           "# Order\n\n## Cart\nType: [Cart](shop/cart.md)\n\n## Limit\nType: [Cart limit](shop/cart-limit.md), [Cart](shop/cart.md)\n\n## Both\nType: [Cart limit](shop/cart-limit.md)\n",
 	}
 	internal := `: link.internal: "shop/cart-limit.md" is internal to shop: shop/README.md does not list it under Contents`
@@ -110,7 +110,7 @@ func TestReferenceToAnUnresolvedType(t *testing.T) {
 		"free.md": "# Free\n",
 	}), `site.md:6: property.unresolved: no document at "ghost.md"`)
 	expect(t, checkFiles(t, map[string]string{
-		"site.md": "# Site\n\nA site.\n\n## Pages\nType: [Spec](README.md)\n",
+		"site.md": "# Site\n\nA site.\n\n## Pages\nType: [Model](README.md)\n",
 		"home.md": "# Home\n\nType: [Site](site.md)\n\n## Pages\n[Free](free.md)\n",
 		"free.md": "# Free\n",
 	}), `site.md:6: readme.type: "README.md" is a README, which is no type`)
@@ -175,7 +175,7 @@ func TestPropertyTypeComesDownTheChain(t *testing.T) {
 		"f.md:6: property.value: the first line of section \"State\" is \"z\", not one of `x`, `y`",
 		"f.md:9: reference.type: section \"Link\" refers to documents of c.md or a type that extends it, but \"f.md\" is a document of b.md",
 	)
-	s := specOf(t, withReadmes(files))
+	s := modelOf(t, withReadmes(files))
 	got := func(typ, name string) Property { return s.PropertyType(mustDoc(t, s, typ), name) }
 	if p := got("b.md", "State"); p.Kind != PropertyValues || !reflect.DeepEqual(p.Values, []string{"x", "y"}) || p.From != "a.md" {
 		t.Errorf("b.md State: %+v", p)
@@ -268,7 +268,7 @@ func TestFootnoteLinksAreNoReferences(t *testing.T) {
 		"home.md":       "# Home\n\nType: [Site](site.md)\n\n## Pages\n[Start](start.md)[^1]\n\n[^1]: See [free](free.md) and [the other](other/free.md).\n",
 	}
 	expect(t, checkFiles(t, files))
-	d := mustDoc(t, specOf(t, withReadmes(files)), "home.md")
+	d := mustDoc(t, modelOf(t, withReadmes(files)), "home.md")
 	if len(d.Links) != 3 {
 		t.Errorf("links %+v", d.Links)
 	}
@@ -299,7 +299,7 @@ func TestPropertyDeclaredTwice(t *testing.T) {
 		"first.md:9: type.line: "+stray,
 		"plain.md:9: type.line: "+stray,
 	)
-	s := specOf(t, withReadmes(files))
+	s := modelOf(t, withReadmes(files))
 	// plain.md and bad.md have no property type; first.md has the first line's.
 	if p := s.PropertyType(mustDoc(t, s, "plain.md"), "Pages"); p.Kind != "" {
 		t.Errorf("plain: %+v", p)

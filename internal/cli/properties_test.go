@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// shops is a small spec with property types: a type with a reference property
+// shops is a small model with property types: a type with a reference property
 // and a property of fixed values, one that extends it, and a document of each.
 var shops = map[string]string{
 	"types/README.md":    readme("Types", "artifact.md", "website.md", "page.md", "orphan.md"),
@@ -21,7 +21,7 @@ var shops = map[string]string{
 }
 
 func TestShowTypeWithPropertyTypes(t *testing.T) {
-	dir := spec(t, shops)
+	dir := model(t, shops)
 	_, out, _ := run("show", "-C", dir, "types/website")
 	want := "types/website.md\nTitle: Website\nExtends: types/artifact.md\nSections:\n" +
 		"  Owner (from types/artifact.md)\n" +
@@ -82,7 +82,7 @@ func TestShowTypeWithPropertyTypes(t *testing.T) {
 }
 
 func TestTypeByPropertyLineAloneIsAType(t *testing.T) {
-	dir := spec(t, shops)
+	dir := model(t, shops)
 	_, out, _ := run("topic", "-C", dir, "types/orphan", "--json")
 	if !strings.Contains(out, `"topic_kind": "type"`) {
 		t.Error(out)
@@ -101,7 +101,7 @@ func TestCheckPropertyTypes(t *testing.T) {
 	}
 	files["sites/home.md"] = "# Home\n\nType: [Website](../types/website.md)\n\n## Owner\nAda\n\n## State\nwip\n\n## Pages\n[Start](start.md), [Elsewhere](elsewhere.md)\n\n## Hosting\nSomewhere.\n"
 	files["sites/README.md"] = readme("Sites", "home.md", "start.md", "elsewhere.md")
-	code, out, _ := run("check", "-C", spec(t, files))
+	code, out, _ := run("check", "-C", model(t, files))
 	want := "sites/home.md:9: property.value: the first line of section \"State\" is \"wip\", not one of `draft`, `live`, `retired`\n" +
 		"sites/home.md:12: reference.type: section \"Pages\" refers to documents of types/page.md or a type that extends it, but \"sites/elsewhere.md\" is a document without a type\n" +
 		"types/website.md:8: property.unresolved: no document at \"ghost.md\"\n" +
@@ -115,7 +115,7 @@ func TestCheckPropertyTypes(t *testing.T) {
 		"a/t.md": "# T\n\nA.\n", "b/t.md": "# T\n\nB.\n",
 		"a/x.md": "# X\n\nType: [T](../b/t.md)\n", "b/y.md": "# Y\n\nType: [T](../a/t.md)\n",
 	}
-	dir := spec(t, files)
+	dir := model(t, files)
 	code, out, _ = run("check", "-C", dir)
 	if code != ExitFound || out != "a/x.md:3: module.cycle: module cycle a -> b -> a: a/x.md:3 is of type b/t.md, b/y.md:3 is of type a/t.md\n1 error in 6 documents\n" {
 		t.Errorf("%d\n%s", code, out)
@@ -127,7 +127,7 @@ func TestCheckPropertyTypes(t *testing.T) {
 }
 
 func TestShowFixedValuesWithBackticks(t *testing.T) {
-	dir := spec(t, map[string]string{"t.md": "# T\n\nA.\n\n## State\nType: ``a`b``, `live`\n"})
+	dir := model(t, map[string]string{"t.md": "# T\n\nA.\n\n## State\nType: ``a`b``, `live`\n"})
 	_, out, _ := run("show", "-C", dir, "t")
 	if !strings.Contains(out, "Sections:\n  State: one of ``a`b``, `live`\n") {
 		t.Error(out)

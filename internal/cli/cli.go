@@ -1,5 +1,5 @@
 // Package cli is the command line of markitect: it parses the arguments,
-// finds the project they work in, reads its spec and prints what the language
+// finds the project they work in, reads its model and prints what the language
 // finds, as text or as JSON. It writes nothing.
 package cli
 
@@ -32,15 +32,15 @@ Look
   show DOCUMENT               a document with its type, sections and links
   table [TYPE]                every document of a type as a Markdown table, or
                               every document with its type and title
-  topic [TOPIC] [--all]       the signals of the spec, or everything about a
+  topic [TOPIC] [--all]       the signals of the model, or everything about a
                               document, a type or a folder
-  questions                   the questions of the modules the spec has
-  diff OLD [NEW]              what is new, gone or changed in the spec and the
+  questions                   the questions of the modules the model has
+  diff OLD [NEW]              what is new, gone or changed in the model and the
                               files of NEW, by default this project, against
                               the project OLD
 
 Check
-  check                       check the spec
+  check                       check the model
 
 Tool
   version                     the tool's version and build
@@ -48,8 +48,8 @@ Tool
                               built from
 
 The project is the nearest folder, from the working directory upward, that
-holds the file .markitect/spec, or the folder -C names; the file's one line
-names the spec folder. A DOCUMENT, TYPE or TOPIC is a path below the spec
+holds the file .markitect/model, or the folder -C names; the file's one line
+names the model folder. A DOCUMENT, TYPE or TOPIC is a path below the model
 folder, with or without .md. Diagnostics read path:line: code: message. --json
 prints one document with format_version and kind. Exit codes: 0 when all is
 well, 1 when the command found something, 2 when it could not run.
@@ -225,9 +225,9 @@ func parse(args []string) (options, error) {
 }
 
 // document finds a document named on the command line.
-func document(spec *lang.Spec, arg string) (*lang.Document, error) {
+func document(model *lang.Model, arg string) (*lang.Document, error) {
 	if p, ok := documentPath(arg); ok {
-		if d, ok := spec.Document(p); ok {
+		if d, ok := model.Document(p); ok {
 			return d, nil
 		}
 	}
@@ -239,10 +239,10 @@ func check(o options, stdout io.Writer) (int, error) {
 	if err != nil {
 		return ExitFailed, err
 	}
-	spec := w.Spec
-	found := lang.Check(spec)
+	model := w.Model
+	found := lang.Check(model)
 	if o.json {
-		doc := checkDocument{header: newHeader("check"), Documents: len(spec.Documents), Diagnostics: []diagnostic{}}
+		doc := checkDocument{header: newHeader("check"), Documents: len(model.Documents), Diagnostics: []diagnostic{}}
 		for _, d := range found {
 			doc.Diagnostics = append(doc.Diagnostics, diagnostic{File: d.Path, Line: d.Line, Code: d.Code, Message: d.Message})
 		}
@@ -254,7 +254,7 @@ func check(o options, stdout io.Writer) (int, error) {
 		for _, d := range found {
 			b.WriteString(d.String() + "\n")
 		}
-		fmt.Fprintf(&b, "%s in %s\n", plural(len(found), "error"), plural(len(spec.Documents), "document"))
+		fmt.Fprintf(&b, "%s in %s\n", plural(len(found), "error"), plural(len(model.Documents), "document"))
 		if _, err := io.WriteString(stdout, b.String()); err != nil {
 			return ExitFailed, err
 		}
@@ -274,7 +274,7 @@ type header struct {
 func newHeader(kind string) header { return header{FormatVersion: FormatVersion, Kind: kind} }
 
 // checkDocument is the JSON document of check: the number of documents of
-// the spec, and the diagnostics.
+// the model, and the diagnostics.
 type checkDocument struct {
 	header
 	Documents   int          `json:"documents"`
@@ -282,7 +282,7 @@ type checkDocument struct {
 }
 
 // diagnostic is one diagnostic in a JSON document; file is the path below the
-// spec folder.
+// model folder.
 type diagnostic struct {
 	File    string `json:"file"`
 	Line    int    `json:"line"`
@@ -325,8 +325,8 @@ func plural(n int, word string) string {
 }
 
 // documentPath turns a document's name on the command line into its path
-// below the spec folder: backslashes become slashes and ".md" is added when it
-// is missing. ok is false for a path that leaves the spec folder, is absolute,
+// below the model folder: backslashes become slashes and ".md" is added when it
+// is missing. ok is false for a path that leaves the model folder, is absolute,
 // has a scheme or names no file.
 func documentPath(arg string) (string, bool) {
 	p := strings.TrimSpace(strings.ReplaceAll(arg, "\\", "/"))

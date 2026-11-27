@@ -15,11 +15,11 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 | Layer | Meaning | May import | Packages |
 |---|---|---|---|
 | `build` | Version identity and embedded license notices. | nothing | 1 |
-| `language` | The spec language over a supplied file system: documents, types, sections, links and check. | nothing | 1 |
+| `language` | The model language over a supplied file system: documents, types, sections, links and check. | nothing | 1 |
 | `library` | The library: the reference values and question catalog of the default's modules, built into the tool. | nothing | 1 |
-| `signals` | The statements of a spec, its signals and the topic view, over a parsed spec. | `language` | 1 |
-| `project` | A project over a supplied file system: the file .markitect/spec, the project loaded with its spec, its ignore file, and the difference between two projects: their specs and, for each module, its files. | `language` | 1 |
-| `command-line` | The command line: its arguments, the project it works in, the commands that read its spec, version and licenses, and the text and JSON output. It writes nothing. | `build`, `language`, `library`, `signals`, `project` | 1 |
+| `signals` | The statements of a model, its signals and the topic view, over a parsed model. | `language` | 1 |
+| `project` | A project over a supplied file system: the file .markitect/model, the project loaded with its model, its ignore file, and the difference between two projects: their models and, for each module, its files. | `language` | 1 |
+| `command-line` | The command line: its arguments, the project it works in, the commands that read its model, version and licenses, and the text and JSON output. It writes nothing. | `build`, `language`, `library`, `signals`, `project` | 1 |
 | `entrypoint` | The thin entrypoint of markitect. | `command-line` | 1 |
 | `maintenance` | The import gate and the code map, separate from product execution. | nothing | 1 |
 | `test-support` | Hermetic fixtures. Only test files may import it. It imports no Markitect package, not even from tests. | nothing | 1 |
@@ -35,7 +35,7 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/lang` | Package lang is the spec language over supplied files: it parses documents, with their title, type or extends line, sections, the property type lines of the sections and links, loads a spec from a file system, resolves the sections and the property types of a type through its chain of base types and checks it, the dependencies between its modules included. | [docs/guides/language-reference.md#documents](../guides/language-reference.md#documents) |
+| `internal/lang` | Package lang is the model language over supplied files: it parses documents, with their title, type or extends line, sections, the property type lines of the sections and links, loads a model from a file system, resolves the sections and the property types of a type through its chain of base types and checks it, the dependencies between its modules included. | [docs/guides/language-reference.md#documents](../guides/language-reference.md#documents) |
 
 ## Library
 
@@ -47,19 +47,19 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/signals` | Package signals finds where reading a spec pays off: it splits the prose of the documents into statements, finds the marker words in them, computes the eight signals of the spec itself and gathers the topic view of a document, a type or a folder. | [docs/guides/signals.md](../guides/signals.md) |
+| `internal/signals` | Package signals finds where reading a model pays off: it splits the prose of the documents into statements, finds the marker words in them, computes the eight signals of the model itself and gathers the topic view of a document, a type or a folder. | [docs/guides/signals.md](../guides/signals.md) |
 
 ## Project
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/project` | Package project is a Markitect project, over a file system rooted at the project folder: the file .markitect/spec that makes a folder a project and names its spec folder, the project loaded with its spec, the ignore file that leaves out what does not belong to its files, and the difference between two projects: their specs, and for each module its files. | [docs/guides/project-reference.md](../guides/project-reference.md) |
+| `internal/project` | Package project is a Markitect project, over a file system rooted at the project folder: the file .markitect/model that makes a folder a project and names its model folder, the project loaded with its model, the ignore file that leaves out what does not belong to its files, and the difference between two projects: their models, and for each module its files. | [docs/guides/project-reference.md](../guides/project-reference.md) |
 
 ## Command line
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `internal/cli` | Package cli is the command line of markitect: it parses the arguments, finds the project they work in, reads its spec and prints what the language finds, as text or as JSON. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
+| `internal/cli` | Package cli is the command line of markitect: it parses the arguments, finds the project they work in, reads its model and prints what the language finds, as text or as JSON. | [docs/guides/language-reference.md#commands](../guides/language-reference.md#commands) |
 
 ## Entrypoint
 
@@ -83,4 +83,4 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 | Package | Summary | Owning document |
 |---|---|---|
-| `tools/smoke` | Command smoke builds markitect from the repository and drives its commands over a small project that it builds by hand, the way a person does: an empty folder, the default (plugin/default/) copied into a spec folder, a few documents of its own and the file .markitect/spec. | [docs/architecture.md#distribution](../architecture.md#distribution) |
+| `tools/smoke` | Command smoke builds markitect from the repository and drives its commands over a small project that it builds by hand, the way a person does: an empty folder, the default (plugin/default/) copied into a model folder, a few documents of its own and the file .markitect/model. | [docs/architecture.md#distribution](../architecture.md#distribution) |

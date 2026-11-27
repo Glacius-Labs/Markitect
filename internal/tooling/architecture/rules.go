@@ -52,11 +52,11 @@ type Rules struct {
 var Table = Rules{
 	Layers: []Layer{
 		{Name: "build", Title: "Build data", Meaning: "Version identity and embedded license notices."},
-		{Name: "language", Title: "Language", Meaning: "The spec language over a supplied file system: documents, types, sections, links and check."},
+		{Name: "language", Title: "Language", Meaning: "The model language over a supplied file system: documents, types, sections, links and check."},
 		{Name: "library", Title: "Library", Meaning: "The library: the reference values and question catalog of the default's modules, built into the tool."},
-		{Name: "signals", Title: "Signals", Meaning: "The statements of a spec, its signals and the topic view, over a parsed spec.", Imports: []string{"language"}},
-		{Name: "project", Title: "Project", Meaning: "A project over a supplied file system: the file .markitect/spec, the project loaded with its spec, its ignore file, and the difference between two projects: their specs and, for each module, its files.", Imports: []string{"language"}},
-		{Name: "command-line", Title: "Command line", Meaning: "The command line: its arguments, the project it works in, the commands that read its spec, version and licenses, and the text and JSON output. It writes nothing.", Imports: []string{"build", "language", "library", "signals", "project"}},
+		{Name: "signals", Title: "Signals", Meaning: "The statements of a model, its signals and the topic view, over a parsed model.", Imports: []string{"language"}},
+		{Name: "project", Title: "Project", Meaning: "A project over a supplied file system: the file .markitect/model, the project loaded with its model, its ignore file, and the difference between two projects: their models and, for each module, its files.", Imports: []string{"language"}},
+		{Name: "command-line", Title: "Command line", Meaning: "The command line: its arguments, the project it works in, the commands that read its model, version and licenses, and the text and JSON output. It writes nothing.", Imports: []string{"build", "language", "library", "signals", "project"}},
 		{Name: "entrypoint", Title: "Entrypoint", Meaning: "The thin entrypoint of markitect.", Imports: []string{"command-line"}},
 		{Name: "maintenance", Title: "Maintenance", Meaning: "The import gate and the code map, separate from product execution."},
 		{Name: "test-support", Title: "Test support", Meaning: "Hermetic fixtures.", TestOnly: true, Standalone: true},

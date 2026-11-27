@@ -9,7 +9,7 @@ import (
 // first: t, its base, its base's base, and so on. The chain ends at a type
 // without a valid extends line, at a base that is no document and where it
 // comes back to a type it already holds, so every type stands in it once.
-func (s *Spec) Chain(t *Document) []*Document {
+func (s *Model) Chain(t *Document) []*Document {
 	chain := []*Document{t}
 	seen := map[string]bool{t.Path: true}
 	for cur := t; cur.HasExtends(); {
@@ -43,7 +43,7 @@ type ChainSection struct {
 // counts once: it is required when any level requires it, and the most derived
 // level that declares it describes it. The base's sections come first, each
 // level in its own order, then what the derived types add.
-func (s *Spec) ChainSections(t *Document) []ChainSection {
+func (s *Model) ChainSections(t *Document) []ChainSection {
 	chain := s.Chain(t)
 	var out []ChainSection
 	for i := len(chain) - 1; i >= 0; i-- {
@@ -72,11 +72,11 @@ func (s *Spec) ChainSections(t *Document) []ChainSection {
 // IsType reports whether d is a type: a document that another document names
 // in its type line, its extends line or a property type line, or one whose
 // extends line is a link or that has a property type line. A README is none.
-func (s *Spec) IsType(d *Document) bool { return s.types[d.Path] }
+func (s *Model) IsType(d *Document) bool { return s.types[d.Path] }
 
 // Objects returns the documents whose type is t or a type that extends t,
 // directly or further down, in path order.
-func (s *Spec) Objects(t *Document) []*Document {
+func (s *Model) Objects(t *Document) []*Document {
 	var out []*Document
 	for _, d := range s.Documents {
 		if !d.HasType() {
@@ -97,7 +97,7 @@ func (s *Spec) Objects(t *Document) []*Document {
 }
 
 // inCycle reports whether the chain of d comes back to d.
-func (s *Spec) inCycle(d *Document) bool {
+func (s *Model) inCycle(d *Document) bool {
 	seen := map[string]bool{d.Path: true}
 	for cur := d; cur.HasExtends(); {
 		base, ok := s.Document(cur.ExtendsPath)
@@ -127,7 +127,7 @@ func (d *Document) inHead(line int) bool {
 
 // checkExtends checks the extends line of a type: the line, its base, the
 // cycle and the sections the type loosens.
-func (s *Spec) checkExtends(d *Document) []Diagnostic {
+func (s *Model) checkExtends(d *Document) []Diagnostic {
 	add := func(line int, code, format string, args ...any) Diagnostic {
 		return Diagnostic{Path: d.Path, Line: line, Code: code, Message: fmt.Sprintf(format, args...)}
 	}
@@ -157,7 +157,7 @@ func (s *Spec) checkExtends(d *Document) []Diagnostic {
 
 // loosened reports each section that the type d marks optional and a type up
 // its chain requires, at d's heading of the section.
-func (s *Spec) loosened(d *Document) []Diagnostic {
+func (s *Model) loosened(d *Document) []Diagnostic {
 	above := s.Chain(d)[1:]
 	var out []Diagnostic
 	for _, own := range d.Declared() {
