@@ -1,16 +1,16 @@
 # Signals and the topic view
 
-How the tool `markitect` shows where reading a spec pays off: the statements it reads, the marker words, the eight signals of [the spec itself](../concept/is-the-spec-good.md#the-spec-itself), the topic view, the reference values and the question catalogs ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-characteristics-and-shows-them-in-four-sources)). The tool judges nothing and has no thresholds: each signal is a list, strongest first, and the reader decides. [The language reference](language-reference.md) gives the rules of the language and the other commands; the [library](library.md) holds the reference values and the catalogs.
+How the tool `markitect` shows where reading a model pays off: the statements it reads, the marker words, the eight signals of [the model itself](../concept/is-the-model-good.md#the-model-itself), the topic view, the reference values and the question catalogs ([DEC-123](../decisions.md#dec-123-a-good-model-has-five-characteristics-and-shows-them-in-four-sources)). The tool judges nothing and has no thresholds: each signal is a list, strongest first, and the reader decides. [The language reference](language-reference.md) gives the rules of the language and the other commands; the [library](library.md) holds the reference values and the catalogs.
 
 ## Commands
 
 | Command | Does |
 |---|---|
-| `markitect topic` | The signals of the whole spec. The text shows the first ten findings of each signal; `--all` shows every one, and `--json` always does |
+| `markitect topic` | The signals of the whole model. The text shows the first ten findings of each signal; `--all` shows every one, and `--json` always does |
 | `markitect topic TOPIC` | The topic view of a document, a type or a folder, with every finding |
-| `markitect questions` | The question catalog of the default's module `core`, for a spec that has the folder `core` directly below the spec folder |
+| `markitect questions` | The question catalog of the default's module `core`, for a model that has the folder `core` directly below the model folder |
 
-A finding reads `path:line: signal: detail`. With `--json`, `topic` prints `topic`, `topic_kind` (`spec`, `document`, `type` or `folder`), `documents`, the paths of the documents of the topic, `strong`, `linked_from` and `named` as lists of statements with `file`, `line`, `section` and `text`, and `signals`, each signal's list of findings with `file`, `line` and `detail`; for a type also `typed_documents`, those of the types that extend it included. `questions` prints `modules`, each with `module` and `questions`.
+A finding reads `path:line: signal: detail`. With `--json`, `topic` prints `topic`, `topic_kind` (`model`, `document`, `type` or `folder`), `documents`, the paths of the documents of the topic, `strong`, `linked_from` and `named` as lists of statements with `file`, `line`, `section` and `text`, and `signals`, each signal's list of findings with `file`, `line` and `detail`; for a type also `typed_documents`, those of the types that extend it included. `questions` prints `modules`, each with `module` and `questions`.
 
 ## Statements
 
@@ -18,7 +18,7 @@ A statement is the unit of every signal: a sentence of a paragraph, a list item,
 
 - **Sentences.** A paragraph splits after `.`, `!` or `?`, together with any further `.!?` and closing quotes or brackets, when white space or the end follows. It does not split after `e.g.`, `i.e.`, `etc.` or `vs.`, nor inside a number such as `2.5`.
 - **Whole units.** A list item is one statement, whatever its sentences; its nested lists are statements of their own. A table body row is one statement, its cells joined by ` | `; the header row is none. A block quote's paragraphs and lists are statements like any other.
-- **Not statements.** Headings, the type line and any other line starting with `Type:`, the extends line and any other line starting with `Extends:`, code, HTML, link reference definitions and footnotes. In a type, the text under its sections tells the writer what belongs there and is no statement of the spec; only its text before the first section, which says what the type is, counts.
+- **Not statements.** Headings, the type line and any other line starting with `Type:`, the extends line and any other line starting with `Extends:`, code, HTML, link reference definitions and footnotes. In a type, the text under its sections tells the writer what belongs there and is no statement of the model; only its text before the first section, which says what the type is, counts.
 - **What a statement keeps.** Its document, its section, or none before the first section, its line, its words, the documents its links point to, and its markers.
 - **Words** are runs of letters and digits, joined inside a word by a hyphen or an apostrophe, compared in lower case. `user-friendly` is one word; `e.g.` is two.
 
@@ -49,11 +49,11 @@ Each signal is a list sorted strongest first; equal ones stand in path and line 
 
 **Name without a link.** A statement that names a document's title without linking it is no mention, since a mention is a link in text ([language reference](language-reference.md#properties-and-their-types)); this signal lists such statements. A title is found as whole words, without regard to case; at each word the longest title counts. One-word titles shorter than four letters do not count, nor do the titles of types, which stand in prose as ordinary words, such as "the role". A document does not name itself.
 
-**Two reference points.** Where a signal shows a number, it shows the project's values beside it, and the reference value of the document's type when the tool has one for it: `core/rule.md`, directly below the spec folder, matches `core`'s `rule`. A type without a reference value, such as a project's own, one of the default's way of working or one of `core` that the table does not list, shows only the project's values.
+**Two reference points.** Where a signal shows a number, it shows the project's values beside it, and the reference value of the document's type when the tool has one for it: `core/rule.md`, directly below the model folder, matches `core`'s `rule`. A type without a reference value, such as a project's own, one of the default's way of working or one of `core` that the table does not list, shows only the project's values.
 
 ## The topic view
 
-A topic is a document, a type ([language reference](language-reference.md#types-objects-and-properties)), or a folder below the spec folder. `topic` prints one text:
+A topic is a document, a type ([language reference](language-reference.md#types-objects-and-properties)), or a folder below the model folder. `topic` prints one text:
 
 1. **Strong statements about it** from other documents: those that link to it or name it. They come first, since the single cases are read against them.
 2. **The topic itself:** a document's text; a type's text and its objects, those of the types that extend it included, as the [`table`](language-reference.md#commands-that-read); a folder's documents in path order, its README among them.
@@ -61,12 +61,12 @@ A topic is a document, a type ([language reference](language-reference.md#types-
 4. **Named without a link:** every statement of another document that names it while that document has no link to it.
 5. **Signals:** every finding that concerns a document of the topic.
 
-A link to the README of a folder that holds a topic document counts as a link to the topic, so a rule that applies to a folder, and every folder above it, shows for each document in it. Only READMEs of folders below the spec root count this way: a link to the root's `README.md` concerns that document alone.
+A link to the README of a folder that holds a topic document counts as a link to the topic, so a rule that applies to a folder, and every folder above it, shows for each document in it. Only READMEs of folders below the model root count this way: a link to the root's `README.md` concerns that document alone.
 
 ## Reference values
 
-The reference values of the default's module `core` ship inside the tool and are not copied into a spec. They are a Markdown table with a row per type, today for six of its types, concept, decision, goal, role, rule and term: its name, the statements per document and the words per statement, each as low–high. Every type starts with 1–5 statements per document, since a document of more than a few sentences is too big, and 5–25 words per statement. These are first values, to be replaced by values measured on proven reference specs, those that the people who answer for them name as a reference.
+The reference values of the default's module `core` ship inside the tool and are not copied into a model. They are a Markdown table with a row per type, today for six of its types, concept, decision, goal, role, rule and term: its name, the statements per document and the words per statement, each as low–high. Every type starts with 1–5 statements per document, since a document of more than a few sentences is too big, and 5–25 words per statement. These are first values, to be replaced by values measured on proven reference models, those that the people who answer for them name as a reference.
 
 ## Question catalogs
 
-The default's module `core` has a catalog of competency questions, which ships inside the tool: five to ten questions across documents that a spec built on its types should answer, generic and in English. `questions` prints it for a spec that has the folder `core` directly below the spec folder. Answering them, each from the spec alone with a citation, is the work of an agent; a project keeps its own questions beside the spec, not in it.
+The default's module `core` has a catalog of competency questions, which ships inside the tool: five to ten questions across documents that a model built on its types should answer, generic and in English. `questions` prints it for a model that has the folder `core` directly below the model folder. Answering them, each from the model alone with a citation, is the work of an agent; a project keeps its own questions beside the model, not in it.

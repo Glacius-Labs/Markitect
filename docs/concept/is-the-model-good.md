@@ -1,42 +1,42 @@
-# Is the spec good?
+# Is the model good?
 
-**A good spec has five characteristics, and four sources show them** ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-characteristics-and-shows-them-in-four-sources)). They come from the characteristics of good requirements in ISO/IEC/IEEE 29148.
+**A good model has five characteristics, and four sources show them** ([DEC-123](../decisions.md#dec-123-a-good-model-has-five-characteristics-and-shows-them-in-four-sources)). They come from the characteristics of good requirements in ISO/IEC/IEEE 29148.
 
 | Characteristic | Means | Holds for | A bad sign |
 |---|---|---|---|
 | **Necessary** | Only what is fixed: someone relies on it, or it was decided. Nothing about how it is done | Each statement | A role whose responsibility reads "works conscientiously": nobody relies on that |
-| **Complete** | Nothing fixed is missing; the executor never has to guess what counts outside | The whole spec | One step of a process names who may do it, a similar step does not |
-| **Consistent** | No two statements exclude each other, a general rule and a single case included, and nothing asks more than the world allows. The writing rule is the best means | The whole spec | A rule says someone never works unsupervised, a task has them work alone after hours |
+| **Complete** | Nothing fixed is missing; the executor never has to guess what counts outside | The whole model | One step of a process names who may do it, a similar step does not |
+| **Consistent** | No two statements exclude each other, a general rule and a single case included, and nothing asks more than the world allows. The writing rule is the best means | The whole model | A rule says someone never works unsupervised, a task has them work alone after hours |
 | **Unambiguous and verifiable** | Two readers understand the same, and a checker can say yes or no. Every statement is as strong as possible: general and without exceptions. A real exception is a statement of its own, not a clause | Each statement | "Only for simple cases": who decides what is simple? A quality without a measure |
 | **Structured** | One thing per document. Each fact stands in its section and on the level it holds for. What has facts of its own, or is needed by several, is a document of its own that others link | Each document | Facts in the text before the first section; general planning rules inside one task |
 
-Something deserves a document of its own when it has facts of its own, is needed by several documents, changes at its own pace, or has a rule of its own. A value that only one document relies on does not, or the spec falls apart into tiny documents. The type decides: where a property is a reference, every object links ([§3](the-language.md#types)).
+Something deserves a document of its own when it has facts of its own, is needed by several documents, changes at its own pace, or has a rule of its own. A value that only one document relies on does not, or the model falls apart into tiny documents. The type decides: where a property is a reference, every object links ([§3](the-language.md#types)).
 
-**Not in the list.** *Correct*, whether the spec says what is meant, no reader can judge without the people who decide; it shows only in use. *Ranked* is a priority, which is work. *Traceable*, which artifact realizes which statement, is the project's way of working. *Modifiable* is in consistent and structured. Coupling, cohesion, abstractness and link density are no measures: a module only groups and shows, a module sorted by kind is not worse, and a high fan-in is natural for a role everyone names.
+**Not in the list.** *Correct*, whether the model says what is meant, no reader can judge without the people who decide; it shows only in use. *Ranked* is a priority, which is work. *Traceable*, which artifact realizes which statement, is the project's way of working. *Modifiable* is in consistent and structured. Coupling, cohesion, abstractness and link density are no measures: a module only groups and shows, a module sorted by kind is not worse, and a high fan-in is natural for a role everyone names.
 
 ## Four sources
 
-No source suffices alone, and the spec shows what is missing only as far as one asks it.
+No source suffices alone, and the model shows what is missing only as far as one asks it.
 
 | Source | Shows mainly | Means |
 |---|---|---|
-| **The spec itself** | Necessary, consistent, unambiguous, structured; complete as far as the questions reach | Check, show, read and question, below |
+| **The model itself** | Necessary, consistent, unambiguous, structured; complete as far as the questions reach | Check, show, read and question, below |
 | **Its changes** | Consistent, structured, unambiguous | Six signals in the repository's history ([below](#its-changes)) |
 | **What is built from it** | Complete, unambiguous, consistent, verifiable, necessary, and correct | What those who build and check find, and a person looking at a result |
 | **The questions it raises** | Complete, unambiguous, consistent, structured | What those who work with it have to ask |
 
-## The spec itself
+## The model itself
 
-Four steps, as a person who reviews a spec would take them:
+Four steps, as a person who reviews a model would take them:
 
 1. **Check.** `check` finds what is technically wrong: titles, types, missing or empty sections, references and values that do not fit their property, dead links, links into what a module keeps internal and cycles between modules ([§3](the-language.md#what-check-catches)). The type works as a checklist.
 2. **Show.** The tool judges nothing; it gathers what has to be compared and says where reading pays off.
 3. **Read.** A person or an agent judges the meaning against the five characteristics. Only a reader sees whether something is right.
-4. **Question.** One asks the spec questions that a spec of its kind must answer, and sees how well it does. This is the one means that checks completeness on the spec itself.
+4. **Question.** One asks the model questions that a model of its kind must answer, and sees how well it does. This is the one means that checks completeness on the model itself.
 
 **The topic view.** A topic is a document, a type or a folder. The topic view shows it as one text with everything that belongs to it: what links to it, with the section the link stands in; the rules that hold for it, also through the README of a module that holds it; and the places that name it without a link. The strong statements about the topic come first, since the single cases are checked against them. A table per type, `markitect table`, shows a column with the same value everywhere: that fact belongs a level higher.
 
-**Signals** say where reading pays off. They have no fixed thresholds and give no warnings; each counts occurrences or compares with the rest of the spec, and the output is a sorted list for the whole spec or a topic. The reader decides.
+**Signals** say where reading pays off. They have no fixed thresholds and give no warnings; each counts occurrences or compares with the rest of the model, and the output is a sorted list for the whole model or a topic. The reader decides.
 
 | Group | Signal | Points at |
 |---|---|---|
@@ -49,18 +49,18 @@ Four steps, as a person who reviews a spec would take them:
 | | **Scattered rules:** one thing in many conditional or restricting statements across many documents, which belongs in one place | Structured, consistent |
 | Connections | **Name without a link:** a document's title in another's text, unlinked | Consistent, structured |
 
-**Two reference points for every number** ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-characteristics-and-shows-them-in-four-sources)). A value is shown beside the reference value of its type, which ships with the default for the types it covers, and beside the rest of the project: "documents of this type usually have 200 to 400 characters; all of yours do, and this one has 900". Both are needed: when every document of a project is too long, nothing stands out within it. Reference values come from proven specs, those named as a reference by the people who answer for them, and improve with each version of the default. Until there are enough, the default's first values hold.
+**Two reference points for every number** ([DEC-123](../decisions.md#dec-123-a-good-model-has-five-characteristics-and-shows-them-in-four-sources)). A value is shown beside the reference value of its type, which ships with the default for the types it covers, and beside the rest of the project: "documents of this type usually have 200 to 400 characters; all of yours do, and this one has 900". Both are needed: when every document of a project is too long, nothing stands out within it. Reference values come from proven models, those named as a reference by the people who answer for them, and improve with each version of the default. Until there are enough, the default's first values hold.
 
-**Competency questions.** A spec is as good as it answers the questions it exists for. Valuable are questions across documents: "who may do this alone?", "what happens when someone fails to show up twice?". Each answer comes only from the spec, with a citation, and is rated answered, only inferred, two answers or not answered; anything without a citation is "not stated". The share of cleanly answered questions measures the spec by its purpose. Catalogs ship with the default; a project's own questions lie beside the spec, not in it, as tests lie beside code. An answered question from use becomes a fixed question, a general one may move into the default, and a question stays while it finds something or people want to keep it.
+**Competency questions.** A model is as good as it answers the questions it exists for. Valuable are questions across documents: "who may do this alone?", "what happens when someone fails to show up twice?". Each answer comes only from the model, with a citation, and is rated answered, only inferred, two answers or not answered; anything without a citation is "not stated". The share of cleanly answered questions measures the model by its purpose. Catalogs ship with the default; a project's own questions lie beside the model, not in it, as tests lie beside code. An answered question from use becomes a fixed question, a general one may move into the default, and a question stays while it finds something or people want to keep it.
 
 ## Its changes
 
-A good link catches a change: when each fact stands in one place, only that place changes. When a change reaches far all the same, a fact is scattered or misplaced. The repository's history gives the data, read by an agent from the project's version control; each signal is compared with the project's other changes, and mechanical changes, such as the links rewritten for a moved document, do not count. The tool computes none of these signals ([DEC-123](../decisions.md#dec-123-a-good-spec-has-five-characteristics-and-shows-them-in-four-sources)).
+A good link catches a change: when each fact stands in one place, only that place changes. When a change reaches far all the same, a fact is scattered or misplaced. The repository's history gives the data, read by an agent from the project's version control; each signal is compared with the project's other changes, and mechanical changes, such as the links rewritten for a moved document, do not count. The tool computes none of these signals ([DEC-123](../decisions.md#dec-123-a-good-model-has-five-characteristics-and-shows-them-in-four-sources)).
 
 | Signal | Usually means | Points at |
 |---|---|---|
 | **Wide change:** one change touches far more documents than usual | A fact stands in several places | Consistent |
-| **Change without a link:** two documents keep changing together with no link between them | A connection the spec does not state, a doubled fact or a missing concept | Consistent, structured |
+| **Change without a link:** two documents keep changing together with no link between them | A connection the model does not state, a doubled fact or a missing concept | Consistent, structured |
 | **Dragged links:** a document changes, and those that link to it change with it | They repeat its content instead of linking | Consistent |
 | **Hotspot:** often changed and much linked | Stable and changing facts are mixed and belong apart | Structured |
 | **Back and forth:** a statement changes and changes back | Something is not decided; a decision with its reason is missing | Unambiguous |
@@ -82,12 +82,12 @@ Everything found names its place and the characteristic it violates:
 | An answer was found only in an unexpected place | Misplaced | Structured |
 | A person sees the result and says it was not meant so | Wrongly stated | Correct |
 
-Three signals follow: problems found again and again at the same place show a bad place; a problem settled without a change of the spec leaves the spec incomplete there; and each answered question becomes a fixed question. These problems are also the touchstone for everything above: whether the signals pointed at these places beforehand, whether a reference spec is really proven, and whether a project converges, with fewer problems per module over time.
+Three signals follow: problems found again and again at the same place show a bad place; a problem settled without a change of the model leaves the model incomplete there; and each answered question becomes a fixed question. These problems are also the touchstone for everything above: whether the signals pointed at these places beforehand, whether a reference model is really proven, and whether a project converges, with fewer problems per module over time.
 
 ## Writing it well
 
-The characteristics say what a good spec is; a few habits keep a spec there as it grows, because links are how a change of one document reaches those that rely on it.
+The characteristics say what a good model is; a few habits keep a model there as it grows, because links are how a change of one document reaches those that rely on it.
 
 - **Link what a document relies on, and only that.** A link the document does not need ties it to changes it does not care about, and a missing one lets a change pass unseen. Link the smallest document that holds what is used, and a document whose title stands in the text without a link is a gap, which the signal "name without a link" shows.
 - **One fact in one place, linked where it is used** ([the writing rule](../vision.md#founding-intent)). When a fact stands in several places, they move apart with every change; a wide change or a hotspot points at a fact that is scattered or mixed.
-- **Only what is fixed.** What a date, an amount or an email address is, nobody relies on the spec for: a document that restates it is one more to keep true, and it is not necessary.
+- **Only what is fixed.** What a date, an amount or an email address is, nobody relies on the model for: a document that restates it is one more to keep true, and it is not necessary.

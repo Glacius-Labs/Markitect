@@ -1,6 +1,6 @@
 # Architecture
 
-How the source is composed, where each responsibility lives and which contracts hold between the packages. Main builds the [concept](concept/README.md). The tool checks a project's spec, analyses it and helps reading it; it never writes, keeps no state, starts no agent and steers no work ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads), [DEC-097](decisions.md#dec-097-the-language-and-the-tool-neither-need-nor-know-version-control); [where Main is](roadmap.md#where-main-is)). The default is a spec of plain files in the [plugin](guides/plugin.md)'s folder `plugin/default/`, which a person copies into a project and which is no part of the binary; the plugin fetches the tool and holds the default.
+How the source is composed, where each responsibility lives and which contracts hold between the packages. Main builds the [concept](concept/README.md). The tool checks a project's model, analyses it and helps reading it; it never writes, keeps no state, starts no agent and steers no work ([DEC-154](decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads), [DEC-097](decisions.md#dec-097-the-language-and-the-tool-neither-need-nor-know-version-control); [where Main is](roadmap.md#where-main-is)). The default is a model of plain files in the [plugin](guides/plugin.md)'s folder `plugin/default/`, which a person copies into a project and which is no part of the binary; the plugin fetches the tool and holds the default.
 
 This page owns the package contracts and the repository layout. The [language reference](guides/language-reference.md) owns the language and the commands, the [project reference](guides/project-reference.md) the project; the [code map](development/code-map.md) lists every package with its owning document.
 
@@ -9,9 +9,9 @@ This page owns the package contracts and the repository layout. The [language re
 `cmd/markitect → internal/cli → internal/project, internal/signals, internal/library → internal/lang`.
 
 - `cmd/markitect` only calls `cli.Run` with the arguments and the output streams.
-- The command line (`internal/cli`) parses the arguments, finds the project, the nearest folder upward that holds `.markitect/spec` or the one `-C` names, makes sure its spec folder lies inside it, runs the command, and prints text or JSON. It prints the version and the license notices from `internal/buildinfo`. It writes no file.
-- The project (`internal/project`) loads a project through the `os.DirFS` of its folder: the file `.markitect/spec`, the spec it names, the ignore file `.markitect/ignore`, and the difference between two projects that `diff` prints: their specs and, for each module, its files. It reads and returns.
-- The signals (`internal/signals`) read a parsed spec: its statements, the eight signals and the topic view.
+- The command line (`internal/cli`) parses the arguments, finds the project, the nearest folder upward that holds `.markitect/model` or the one `-C` names, makes sure its model folder lies inside it, runs the command, and prints text or JSON. It prints the version and the license notices from `internal/buildinfo`. It writes no file.
+- The project (`internal/project`) loads a project through the `os.DirFS` of its folder: the file `.markitect/model`, the model it names, the ignore file `.markitect/ignore`, and the difference between two projects that `diff` prints: their models and, for each module, its files. It reads and returns.
+- The signals (`internal/signals`) read a parsed model: its statements, the eight signals and the topic view.
 - The library (`internal/library`) builds into the binary the reference values and question catalog of the default's modules, today those of `core`; the default itself lies in `plugin/default/`.
 - The language (`internal/lang`) parses and checks the documents of the file system it is handed, and reads the path patterns under `Realized in` that say where each module is built; it writes nothing.
 
@@ -24,10 +24,10 @@ All Go packages use one root Go module. One rule table in [`internal/tooling/arc
 | Responsibility | Packages | Depends on |
 | --- | --- | --- |
 | Version and license notices | `internal/buildinfo` | No other Markitect package |
-| The spec language over a supplied file system: documents, types, sections, links, modules with their path patterns, and `check` ([language reference](guides/language-reference.md)) | `internal/lang` | No other Markitect package |
+| The model language over a supplied file system: documents, types, sections, links, modules with their path patterns, and `check` ([language reference](guides/language-reference.md)) | `internal/lang` | No other Markitect package |
 | The library: the reference values and question catalog of the default's modules, built into the tool ([library](guides/library.md)) | `internal/library` | No other Markitect package |
-| The statements, signals and topic view over a parsed spec ([signals](guides/signals.md)) | `internal/signals` | The language |
-| The project over a supplied file system: the file `.markitect/spec`, the project loaded with its spec, its ignore file, and the difference between two projects: their specs and, for each module, its files ([project reference](guides/project-reference.md)) | `internal/project` | The language |
+| The statements, signals and topic view over a parsed model ([signals](guides/signals.md)) | `internal/signals` | The language |
+| The project over a supplied file system: the file `.markitect/model`, the project loaded with its model, its ignore file, and the difference between two projects: their models and, for each module, its files ([project reference](guides/project-reference.md)) | `internal/project` | The language |
 | The command line: arguments, the project it works in, the commands that read it, `version` and `licenses`, and the text and JSON output; it writes nothing | `internal/cli` | Every layer above, and build data |
 | The entrypoint, `markitect` | `cmd/markitect` | The command line |
 | Maintenance: the import gate and the code map | `internal/tooling/architecture` | No other Markitect package; separate from product execution |

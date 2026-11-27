@@ -8,7 +8,7 @@ For unexpected behavior, choose the **Bug report** issue form. For a proposed ca
 
 ## Project-specific questions
 
-Adopting repositories own their spec, checks and acceptance policy. Markitect issues can clarify the product contract; questions about a particular repository's policy belong with that repository's maintainers.
+Adopting repositories own their model, checks and acceptance policy. Markitect issues can clarify the product contract; questions about a particular repository's policy belong with that repository's maintainers.
 
 ## Distribution
 

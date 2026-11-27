@@ -1,15 +1,15 @@
 # The language
 
-A spec is documentation with a fixed structure, in plain Markdown ([DEC-121](../decisions.md#dec-121-a-spec-is-plain-markdown-with-types-and-modules)). A type is a class, a document of it its object, and a section the type declares a property; modules are folders that group documents and say what they show. A spec renders and links on GitHub, in editors and in note tools alike.
+A model is documentation with a fixed structure, in plain Markdown ([DEC-121](../decisions.md#dec-121-a-model-is-plain-markdown-with-types-and-modules)). A type is a class, a document of it its object, and a section the type declares a property; modules are folders that group documents and say what they show. A model renders and links on GitHub, in editors and in note tools alike.
 
 ## Documents
 
-A spec is a folder, by default `docs/spec/`, and every `.md` file in it, at any depth, is a document. Folders group documents into [modules](#modules): by feature, by kind, or mixed.
+A model is a folder, by default `docs/model/`, and every `.md` file in it, at any depth, is a document. Folders group documents into [modules](#modules): by feature, by kind, or mixed.
 
-- **Path.** A document is known by its path below the spec folder, such as `lending/borrow.md`. File names use lowercase letters, digits and `-`, so that links stay plain, except a module's `README.md`; the readable name is the title.
+- **Path.** A document is known by its path below the model folder, such as `lending/borrow.md`. File names use lowercase letters, digits and `-`, so that links stay plain, except a module's `README.md`; the readable name is the title.
 - **Title.** The first line with content is a level-1 heading, the title. No other level-1 heading follows.
 - **Sections.** Each level-2 heading `## …` opens a section.
-- **Links.** A link is an ordinary Markdown link with a relative path to a `.md` file, `[Librarian](../team/librarian.md)`, optionally with a section, `[Librarian](../team/librarian.md#does)`. Every such link must point to a document of the spec that is shown to it ([below](#modules)). Web addresses, `mailto:` and a bare `#section` are not checked, and links in code are text.
+- **Links.** A link is an ordinary Markdown link with a relative path to a `.md` file, `[Librarian](../team/librarian.md)`, optionally with a section, `[Librarian](../team/librarian.md#does)`. Every such link must point to a document of the model that is shown to it ([below](#modules)). Web addresses, `mailto:` and a bare `#section` are not checked, and links in code are text.
 
 A link says that one document concerns another, and where it stands decides what more it says ([below](#types)): the type line, the extends line and a property type line name types, a link in a reference property is a reference, and a link anywhere else in the text is a mention. A section means something to the tool only as a property of a type; a module's README has a form of its own.
 
@@ -110,13 +110,13 @@ The property's type gives a value its form. A fixed value, such as the status of
 
 ## Modules
 
-**A module is a folder, and it only groups** ([DEC-156](../decisions.md#dec-156-a-module-is-a-folder-and-its-readme-says-what-it-shows)). It is no type, and there are no kinds of modules. The folder is its namespace. Every folder of the spec that holds a document directly is a module and has a README; a folder without documents of its own, such as one that holds only images or only other folders, is none. Modules nest as their folders do.
+**A module is a folder, and it only groups** ([DEC-156](../decisions.md#dec-156-a-module-is-a-folder-and-its-readme-says-what-it-shows)). It is no type, and there are no kinds of modules. The folder is its namespace. Every folder of the model that holds a document directly is a module and has a README; a folder without documents of its own, such as one that holds only images or only other folders, is none. Modules nest as their folders do.
 
 **The README is the manifest of its module.** It has no type line, since its form belongs to the language, and it is never a type:
 
 - The text before its first section says what the module is for.
 - `Responsible`, optional, links the role that answers for the module. Without it, the role of the module above answers.
-- `Realized in`, optional, says where in the project the module is built: paths written as code, relative to the project folder, with the wildcards of the patterns below; a path that ends with `/` is a folder with everything below it ([DEC-158](../decisions.md#dec-158-a-module-says-where-it-is-built-and-diff-compares-its-spec-and-its-files)). `diff` reads them to report for each module whether its spec, its files or both changed ([§6](the-tool.md#reading-the-spec)).
+- `Realized in`, optional, says where in the project the module is built: paths written as code, relative to the project folder, with the wildcards of the patterns below; a path that ends with `/` is a folder with everything below it ([DEC-158](../decisions.md#dec-158-a-module-says-where-it-is-built-and-diff-compares-its-model-and-its-files)). `diff` reads them to report for each module whether its model, its files or both changed ([§6](the-tool.md#reading-the-model)).
 - `Contents` lists what the module shows to the other modules.
 
 A README is never itself the thing it describes: in a module `shop`, the shop is a document `shop/shop.md` of its own, and the README says what the module holds.
@@ -128,7 +128,7 @@ A README is never itself the thing it describes: in a module `shop`, the shop is
 A library has a module `lending` with one public and one internal document:
 
 ```text
-docs/spec/
+docs/model/
   core/         the default's general types
   lending/
     README.md
@@ -192,11 +192,11 @@ An agent writes the structure, the sections and the links, as it writes the pros
 | `extends.loosens` | A type marks optional a property that a type up its chain requires |
 | `section.missing` | An object lacks the section of a required property of its type, or of a type up its chain |
 | `section.empty` | The section of a property of the type, or of a type up its chain, has no text |
-| `link.unresolved` | A link to a `.md` path points to no document of the spec |
+| `link.unresolved` | A link to a `.md` path points to no document of the model |
 | `link.internal` | A link, a type line, an extends line or a property type line from outside a module points to a document that the module's README does not show under `Contents` |
 | `module.readme` | A folder that holds a document directly has no README |
 | `module.cycle` | Modules depend on each other in a cycle |
 | `readme.pattern` | A pattern in a README's `Contents` or `Realized in` is not valid |
 | `readme.type` | A README has a type line or an extends line, or a type line, an extends line or a property type line names a README |
 
-What the language does not catch, contradictions between values, gaps and wrong values, a reader finds ([§5](is-the-spec-good.md)). Beyond references and fixed values there are no value forms, and there are no check rules: something new joins only when a real project needs it.
+What the language does not catch, contradictions between values, gaps and wrong values, a reader finds ([§5](is-the-model-good.md)). Beyond references and fixed values there are no value forms, and there are no check rules: something new joins only when a real project needs it.

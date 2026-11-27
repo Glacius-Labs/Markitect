@@ -1,12 +1,12 @@
 # Language reference
 
-The exact rules of the spec language as the tool implements them, and the commands of `markitect`. [The language](../concept/the-language.md) in the concept says what the language is for; this page says precisely what the tool reads and reports. The examples are a small lending library.
+The exact rules of the model language as the tool implements them, and the commands of `markitect`. [The language](../concept/the-language.md) in the concept says what the language is for; this page says precisely what the tool reads and reports. The examples are a small lending library.
 
 ## Documents
 
-A spec is a folder. Every file in it, at any depth, whose name ends in `.md` in any case is a document; a file named only `.md` is not, and neither is a folder whose name ends in `.md`. Other files are ignored.
+A model is a folder. Every file in it, at any depth, whose name ends in `.md` in any case is a document; a file named only `.md` is not, and neither is a folder whose name ends in `.md`. Other files are ignored.
 
-- **Path.** A document is known by its path below the spec folder, with forward slashes, such as `lending/borrow.md`. Paths are compared exactly, case included, on every system.
+- **Path.** A document is known by its path below the model folder, with forward slashes, such as `lending/borrow.md`. Paths are compared exactly, case included, on every system.
 - **Text.** A document is read as UTF-8. A leading byte order mark is dropped, and bytes that are not UTF-8 are replaced. Lines end with LF, CRLF or CR, and are numbered from 1.
 - **Markdown.** A document is read as [CommonMark](https://spec.commonmark.org/) with GitHub's extensions, tables, task lists, strikethrough, autolinks and footnotes, as GitHub renders it. So code is what CommonMark calls code: fenced and indented code blocks, also inside lists, and code spans. Nothing in code or in raw HTML, comments included, is a heading, a type line, an extends line, a property type line or a link, and a character escaped with a backslash is text.
 
@@ -23,9 +23,9 @@ A link is a Markdown link outside code and raw HTML: an inline link, `[text](des
 
 A link counts when its destination, without its `#section` and after decoding, ends in `.md` in any case and does not start with a scheme such as `https:`, `mailto:` or `C:`. Web addresses, other files and a bare `#section` are not checked.
 
-- **Resolution.** The path is relative to the folder of the linking document. Backslash escapes and character references, named and numeric such as `&#46;` and `&#x2E;`, are resolved, and percent-encoding is decoded, so `open%20loans.md` names `open loans.md`; a `%` that is not followed by two hexadecimal digits stays as it is. A path that starts with `/`, or that leaves the spec folder with `..`, names no document.
+- **Resolution.** The path is relative to the folder of the linking document. Backslash escapes and character references, named and numeric such as `&#46;` and `&#x2E;`, are resolved, and percent-encoding is decoded, so `open%20loans.md` names `open loans.md`; a `%` that is not followed by two hexadecimal digits stays as it is. A path that starts with `/`, or that leaves the model folder with `..`, names no document.
 - **Sections.** A link with a section, `[Card](members/ada.md#card)`, points to the document; the section is not checked.
-- **Every counted link must point to a document of the spec**, by its exact path, and to one that is shown across the boundaries of modules ([below](#visibility)).
+- **Every counted link must point to a document of the model**, by its exact path, and to one that is shown across the boundaries of modules ([below](#visibility)).
 
 ## Types, objects and properties
 
@@ -115,7 +115,7 @@ An object of a derived type has each required property of the type's chain, and 
 
 ## Modules
 
-A **module** is a folder of the spec that holds a document directly, as a file of its own and not only in a folder below it ([DEC-156](../decisions.md#dec-156-a-module-is-a-folder-and-its-readme-says-what-it-shows)). The spec folder itself is a module only when it holds a document directly. A module **holds** the documents of its folder and of every folder below it, those of the modules below included.
+A **module** is a folder of the model that holds a document directly, as a file of its own and not only in a folder below it ([DEC-156](../decisions.md#dec-156-a-module-is-a-folder-and-its-readme-says-what-it-shows)). The model folder itself is a module only when it holds a document directly. A module **holds** the documents of its folder and of every folder below it, those of the modules below included.
 
 - **Transparent folders.** A folder that holds no document directly, only folders or files that are no documents, is no module and needs no README. It shows and hides nothing: the modules in it count as lying directly in the nearest module above it.
 - **Nesting.** A module lies within every module whose folder holds its folder at any depth. A module is **directly below** another when it lies within it and within no other module that lies within it, transparent folders passed over. When the module `lending/` holds `fines/late.md`, and a folder `rules/` that holds no document but the folder `renewals/` with `limit.md`, both `lending/fines/` and `lending/rules/renewals/` are directly below `lending/`.
@@ -155,15 +155,15 @@ How members borrow copies and bring them back.
 
 ### Realized in
 
-`Realized in` is every section of a README whose level-2 heading is `Realized in`, without regard to case; when there are two, the patterns of both count ([DEC-158](../decisions.md#dec-158-a-module-says-where-it-is-built-and-diff-compares-its-spec-and-its-files)). Every code span in it is a **path pattern**, in list items and block quotes too; fenced and indented code blocks do not count, and text around a code span, such as the words after `src/lending/` above, is free. `check` reads the patterns; only [`diff`](project-reference.md#diff) uses them.
+`Realized in` is every section of a README whose level-2 heading is `Realized in`, without regard to case; when there are two, the patterns of both count ([DEC-158](../decisions.md#dec-158-a-module-says-where-it-is-built-and-diff-compares-its-model-and-its-files)). Every code span in it is a **path pattern**, in list items and block quotes too; fenced and indented code blocks do not count, and text around a code span, such as the words after `src/lending/` above, is free. `check` reads the patterns; only [`diff`](project-reference.md#diff) uses them.
 
-- **Relative to the project folder.** A path pattern names files by their path below the project folder, the folder that holds `.markitect/spec`, with `/` between folders, not relative to the README as a link is. `src/lending/` in the README above is the folder `src/lending` beside `.markitect/`, wherever the spec folder lies.
+- **Relative to the project folder.** A path pattern names files by their path below the project folder, the folder that holds `.markitect/model`, with `/` between folders, not relative to the README as a link is. `src/lending/` in the README above is the folder `src/lending` beside `.markitect/`, wherever the model folder lies.
 - **Wildcards.** `*` stands for any run of characters, `?` for one character and a class such as `[a-z]` for one of a set, or `[^a-z]` for one outside it, as in the patterns under `Contents`. None of them matches across a `/`: each matches within one folder name or the file name, a dot at its start included, so `*/workflows/` reaches `.github/workflows/`. `**/` at the start matches in any folder, `/**` at the end everything inside, and `/**/` in the middle zero or more folders: `**/*.sql` names `top.sql` and `db/x/q.sql`. Everything else matches itself, case included.
 - **Files.** A pattern that does not end with `/` names the files whose whole path matches it: `db/migrations/*-loans.sql` names `db/migrations/0042-loans.sql`, and not `db/migrations/old/0001-loans.sql`.
 - **Folders.** A pattern that ends with `/` names a folder and every file below it, at any depth: `src/lending/` names `src/lending/borrow.go` and `src/lending/store/sql.go`. A name that starts with a dot is a name like any other: `src/` names `src/.env` as well.
 - **Not valid.** A pattern that is empty or only white space, absolute, starts with a drive such as `C:`, holds a backslash, has an empty folder name or `.` or `..` as a folder name, or is malformed, such as `` `src/[a.go` ``, is `readme.pattern` and names nothing.
 
-`check` does not check whether a path exists: it reads only the spec, and a pattern that names no file is no error. A pattern never names a file in the spec folder, in the folder `.markitect/` at the top of the project, or what the project's ignore file leaves out ([project reference](project-reference.md#the-ignore-file)).
+`check` does not check whether a path exists: it reads only the model, and a pattern that names no file is no error. A pattern never names a file in the model folder, in the folder `.markitect/` at the top of the project, or what the project's ignore file leaves out ([project reference](project-reference.md#the-ignore-file)).
 
 ### Visibility
 
@@ -181,7 +181,7 @@ With the README above, `lending/fines/README.md` showing `late.md`, and a furthe
 | Two levels | `members/card.md` | `lending/fines/late.md` | Yes: `lending` shows `fines/README.md`, and `fines` shows `late.md` |
 | Two levels | `members/card.md` | `lending/fines/waiver.md`, not listed in `fines` | No: `link.internal` |
 
-A module that holds both documents is never asked, so the spec folder, when it is a module, never hides anything. A link that points to no document is `link.unresolved`, not `link.internal`.
+A module that holds both documents is never asked, so the model folder, when it is a module, never hides anything. A link that points to no document is `link.unresolved`, not `link.internal`.
 
 ### Dependencies and cycles
 
@@ -200,7 +200,7 @@ A **cycle** is a chain of dependencies that leads from a module back to itself. 
 a/x.md:6: module.cycle: module cycle a -> b -> a: a/x.md:6 refers to b/y.md, b/y.md:6 refers to a/x.md
 ```
 
-Each step names its kind: `is of type` for a type line, `extends` for an extends line, `declares a reference to` for a property type line and `refers to` for a reference, as in `module cycle a -> b -> a: a/x.md:3 is of type b/thing.md, b/y.md:6 refers to a/x.md`. A module is named by its folder below the spec folder, such as `lending/fines`, and the spec folder as `(spec folder)`.
+Each step names its kind: `is of type` for a type line, `extends` for an extends line, `declares a reference to` for a property type line and `refers to` for a reference, as in `module cycle a -> b -> a: a/x.md:3 is of type b/thing.md, b/y.md:6 refers to a/x.md`. A module is named by its folder below the model folder, such as `lending/fines`, and the model folder as `(model folder)`.
 
 ## What check reports
 
@@ -221,8 +221,8 @@ Each step names its kind: `is of type` for a type line, `extends` for an extends
 | `reference.type` | A reference in an object points to a document that is no object of a type its property names, or of a type derived from one: `section "NAME" refers to documents of TYPEPATH or a type that extends it, but "PATH" is a document of OTHERPATH`, with several types `documents of one of TYPEPATH, TYPEPATH or a type that extends one of them`; for a target that is no object the end reads `is a type`, `is a README` or `is a document without a type`. Once for each wrong target in a section | The target's first link in the section |
 | `property.value` | The first line of a fixed-values section in an object is none of the values: ``the first line of section "NAME" is "TEXT", not one of `A`, `B` ``. A value that holds a backtick prints between as many backticks as keep it unambiguous, ``` ``a`b`` ``` | The line that holds the value, the first line of the section's text |
 | `link.unresolved` | A counted link points to no document: `no document at "PATH"`, with the path as written, without its section | The link's first line |
-| `link.internal` | A counted link, those of the type line, the extends line and a property type line included, points to a document of a module that does not show the way to it ([visibility](#visibility)): `"PATH" is internal to MODULE: MODULE/README.md does not list it under Contents`, for the first module of the way that does not show its step, or `… does not list MODULE/BELOW/README.md under Contents` when that step is the README of a module below; when a module on the way has no README, `"PATH" is internal to MODULE: BELOW has no README.md`, where BELOW is that module, MODULE itself or one below it. PATH is the target below the spec folder | The link's first line |
-| `module.readme` | A folder that holds a document directly has no `README.md`: `the folder FOLDER holds documents and has no README.md`, or for the spec folder `the spec folder holds documents and has no README.md`. Once per folder | Line 1 of the README's path, such as `shop/README.md:1` or `README.md:1` |
+| `link.internal` | A counted link, those of the type line, the extends line and a property type line included, points to a document of a module that does not show the way to it ([visibility](#visibility)): `"PATH" is internal to MODULE: MODULE/README.md does not list it under Contents`, for the first module of the way that does not show its step, or `… does not list MODULE/BELOW/README.md under Contents` when that step is the README of a module below; when a module on the way has no README, `"PATH" is internal to MODULE: BELOW has no README.md`, where BELOW is that module, MODULE itself or one below it. PATH is the target below the model folder | The link's first line |
+| `module.readme` | A folder that holds a document directly has no `README.md`: `the folder FOLDER holds documents and has no README.md`, or for the model folder `the model folder holds documents and has no README.md`. Once per folder | Line 1 of the README's path, such as `shop/README.md:1` or `README.md:1` |
 | `module.cycle` | Modules depend on each other in a cycle ([dependencies and cycles](#dependencies-and-cycles)): `module cycle MODULE -> MODULE -> MODULE: PATH:LINE STEP PATH, ...`, where STEP names the kind of the step, once per group of modules that all reach each other, with one shortest cycle and one link per step | The link of the first step |
 | `readme.pattern` | A code span in a README's `Contents` without `/` is no valid pattern: `bad pattern "TEXT": a pattern uses the wildcards *, ? and [a-z]`. A code span in a README's `Realized in` is no valid path pattern ([Realized in](#realized-in)): `bad pattern "TEXT": REASON`, where REASON is `a pattern is not empty`, `a pattern separates folders with /, not \`, `a pattern is relative to the project folder and has no drive`, `a pattern is relative to the project folder, not absolute`, `a pattern stays below the project folder, without ..`, `a pattern has no empty folder name and no .` or `a pattern uses the wildcards *, ? and [a-z]`, as in `shop/README.md:7: readme.pattern: bad pattern "../shop": a pattern stays below the project folder, without ..` | The code span's line |
 | `readme.type` | A README has a type line or an extends line: `a README has no type line` or `a README has no extends line`, once for each line it has. A type line, an extends line or a property type line names a README: `"PATH" is a README, which is no type` | That line |
@@ -231,24 +231,24 @@ A document reports each unresolved or internal target once, at its first link, w
 
 ## Commands
 
-Every command but `version` and `licenses` works in a project and finds its spec through it: the folder `-C PROJECT` names, or the nearest folder from the working directory upward that holds `.markitect/spec` ([project reference](project-reference.md#the-project)). A document, type, topic or folder named on the command line is a path below the spec folder, with or without `.md`, with `/` or `\` between folders; a path that leaves the spec folder, is absolute or starts with a scheme names no document. The `OLD` and `NEW` of `diff` are project folders.
+Every command but `version` and `licenses` works in a project and finds its model through it: the folder `-C PROJECT` names, or the nearest folder from the working directory upward that holds `.markitect/model` ([project reference](project-reference.md#the-project)). A document, type, topic or folder named on the command line is a path below the model folder, with or without `.md`, with `/` or `\` between folders; a path that leaves the model folder, is absolute or starts with a scheme names no document. The `OLD` and `NEW` of `diff` are project folders.
 
-A flag may stand anywhere, before the command as well, as in `markitect -C PROJECT check`, and `-json` is the same as `--json`. `--all` is a flag of `topic` only. `--` ends the flags, so that a name starting with `-` can follow. `markitect help`, or `-h` or `--help` wherever it stands, even after a command, prints the general usage, which groups the commands as this table does; the usage of one command is printed with a wrong number of arguments. A flag that no command has, or one that lacks its value, is an error that names it. Output paths are below the spec folder, with `/`.
+A flag may stand anywhere, before the command as well, as in `markitect -C PROJECT check`, and `-json` is the same as `--json`. `--all` is a flag of `topic` only. `--` ends the flags, so that a name starting with `-` can follow. `markitect help`, or `-h` or `--help` wherever it stands, even after a command, prints the general usage, which groups the commands as this table does; the usage of one command is printed with a wrong number of arguments. A flag that no command has, or one that lacks its value, is an error that names it. Output paths are below the model folder, with `/`.
 
 | Group | Command | Does |
 |---|---|---|
 | Look | `markitect show DOCUMENT` | The document's title, its type or, for a derived type, its base, its sections (a type's those of its whole chain, with their `(optional)` marker, each property's type and, for an inherited one, the type that declares it), the documents it links to, the documents that link to it with the section each link stands in, and for a type the types that extend it and its objects, those of the types that extend it included |
 | | `markitect table [TYPE]` | Every object of the type and of every type that extends it as a Markdown table: the title, then one column per section of the type's chain. Without a type, every document with its type and title |
-| | `markitect topic [TOPIC] [--all]` | The signals of the spec, or the topic view of a document, a type or a folder ([signals](signals.md)) |
-| | `markitect questions` | The question catalog of the default's module `core`, when the spec has it ([signals](signals.md#question-catalogs)) |
-| | `markitect diff OLD [NEW]` | What is new, gone or changed in the spec of NEW, by default this project, against the project OLD, with a diff for what changed; for each module whether its spec, its files or both changed; and the files that no module names ([project reference](project-reference.md#diff)) |
-| Check | `markitect check` | Checks the spec by the rules above |
+| | `markitect topic [TOPIC] [--all]` | The signals of the model, or the topic view of a document, a type or a folder ([signals](signals.md)) |
+| | `markitect questions` | The question catalog of the default's module `core`, when the model has it ([signals](signals.md#question-catalogs)) |
+| | `markitect diff OLD [NEW]` | What is new, gone or changed in the model of NEW, by default this project, against the project OLD, with a diff for what changed; for each module whether its model, its files or both changed; and the files that no module names ([project reference](project-reference.md#diff)) |
+| Check | `markitect check` | Checks the model by the rules above |
 | Tool | `markitect version` | The tool's version and build ([project reference](project-reference.md#version)) |
 | | `markitect licenses` | The license notices of the Go modules the tool is built from |
 
 The commands only read: none writes a file, keeps a state, starts an agent or steers work, and each does one thing on its own.
 
-**Exit codes.** 0 when all is well, 1 when `check` or `diff` found something, and 2 when the command could not run: an unknown command or flag, a flag without its value, no command at all, a wrong number of arguments, no project, a `.markitect/spec` that cannot be read or names a spec folder it may not, a spec folder that does not exist, a document, type or topic that the spec does not have, an ignore file with a line that is no valid pattern, or a file that cannot be read.
+**Exit codes.** 0 when all is well, 1 when `check` or `diff` found something, and 2 when the command could not run: an unknown command or flag, a flag without its value, no command at all, a wrong number of arguments, no project, a `.markitect/model` that cannot be read or names a model folder it may not, a model folder that does not exist, a document, type or topic that the model does not have, an ignore file with a line that is no valid pattern, or a file that cannot be read.
 
 ### Commands that read
 
@@ -262,7 +262,7 @@ roles/member.md:5: section.empty: empty section "Does"
 
 **`show`** prints the document's path, `Title:`, `Type:` (the type's path, `(none)`, `(invalid line)` for a type line that is not one link, or the path with `(missing)`), or for a document with an extends line `Extends:` (the base's path, or the path with `(missing)`), then the lists `Sections:`, `Extended by:`, the types that extend it directly, sorted, only for a type that has some, `Links to:`, with `(missing)` after a path that names no document, and `Linked from:`, each `(none)` when empty, and `Documents:` only for a type that has some objects, with the objects of the types that extend it, directly or further down. A derived type's `Sections:` are those of its whole chain in chain order, an optional one with its marker and an inherited one with the type that declares it: `Due (from types/loan.md)`. A section the derived type declares again is its own and stands in its base's place. On a type, a property with a type shows it after a colon, `Borrower (from types/loan.md): reference to types/member.md` or ``State (from types/loan.md): one of `open`, `returned`, `overdue` ``, a value that holds a backtick between as many backticks as keep it unambiguous, with several types separated by commas and `(missing)` after a path that names no document; a text property shows nothing more. `Links to:` holds each path once; `Linked from:` holds one entry per linking document and section, `path (Section)`, or the bare path for a link that stands before any section, so a document that links from two sections appears twice. Both are sorted without regard to case, and both leave out the links of type lines, extends lines and property type lines.
 
-**`table`** prints a row per object of the type and of every type that extends it, directly or further down, in path order, with one column per section of the type's own chain. A cell holds the first line of the section's text as plain text: markup, list markers, HTML tags and comments are dropped, and links, reference links and images show as their text. A section that starts with code shows its first code line, one that starts with a table its first row, cells separated by ` | `. `|` is escaped, and a cell is empty when the section has no text or the object leaves an optional property out. A row's title is the document's title, or its path. Without a type, `table` prints every document of the spec in path order as `| Document | Type | Title |`: its path, the path of its type line's type, empty without one, as for a derived type, and its title.
+**`table`** prints a row per object of the type and of every type that extends it, directly or further down, in path order, with one column per section of the type's own chain. A cell holds the first line of the section's text as plain text: markup, list markers, HTML tags and comments are dropped, and links, reference links and images show as their text. A section that starts with code shows its first code line, one that starts with a table its first row, cells separated by ` | `. `|` is escaped, and a cell is empty when the section has no text or the object leaves an optional property out. A row's title is the document's title, or its path. Without a type, `table` prints every document of the model in path order as `| Document | Type | Title |`: its path, the path of its type line's type, empty without one, as for a derived type, and its title.
 
 ### JSON
 
@@ -270,7 +270,7 @@ With `--json`, every command prints one document that starts with `format_versio
 
 | Kind | Fields |
 |---|---|
-| `check` | `documents`, the number of documents of the spec, and `diagnostics`, a list, empty when nothing is found, of objects with `file`, `line`, `code` and `message` |
+| `check` | `documents`, the number of documents of the model, and `diagnostics`, a list, empty when nothing is found, of objects with `file`, `line`, `code` and `message` |
 | `show` | `path`, `title`, `type`, `type_state` (`none`, `invalid`, `missing` or `ok`), `extends` and `extends_state` (`missing` or `ok`) for a document with an extends line, whose `type` is then empty and `type_state` `none`, `sections` with `heading`, the marker included, `declared_by` for an inherited one, and `references`, objects with `path` and `missing`, for a reference property or `values` for a fixed-values property, both left out for text, `extended_by`, `links_to` with `path` and `missing`, `linked_from` with `path` and `section`, and `documents`; an empty `section`, `extends`, `extends_state`, `declared_by` or `extended_by` and a `missing` that is false are left out |
 | `table` | `type`, `columns`, and `rows` with `path`, `title` and `cells`; without a type, `type` is empty and the one column is `Type` |
 | `version`, `diff` | As the [project reference](project-reference.md) says |

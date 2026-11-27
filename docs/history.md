@@ -8,13 +8,13 @@ Each earlier concept has an archive branch at the last Main commit where it was 
 
 | Branch | On Main | In short |
 |---|---|---|
-| `archive/concept-1.0` | 24 to 28 October 2026 | A hierarchy of agents per Package over a spec in typed YAML, each change run in isolated environments |
-| `archive/concept-2.0` | 28 October to 4 November 2026 | The spec as typed Markdown; one run per change with a maker and a checker per Package; a desktop app |
+| `archive/concept-1.0` | 24 to 28 October 2026 | A hierarchy of agents per Package over a model in typed YAML, each change run in isolated environments |
+| `archive/concept-2.0` | 28 October to 4 November 2026 | The model as typed Markdown; one run per change with a maker and a checker per Package; a desktop app |
 | `archive/concept-3.0` | 4 to 6 November 2026 | One implementer and one reviewer per change in an isolated environment, and a gate in the tool |
 | `archive/concept-4.0` | 6 to 20 November 2026 | Typed Definitions in Packages with a registry, a record of verdicts, and agents started by the owner's own session with their rights held by a hook |
 | `archive/concept-5.0` | 20 to 22 November 2026 | One owner and jobs started by a runner: reports and actions, a landing rule and a write table checked by the tool, and the jobs as skills and agents of a plugin |
 
-The concept on Main from 22 to 23 November 2026, a team's circle around the spec, with the way of working in the spec's `factory` part realized by fourteen skills of the standard and a state of verdicts that the tool computed and bound, has no archive branch yet; its documentation is at [`91ca6123`](https://github.com/Glacius-Labs/Markitect/tree/91ca61235c97aa37e5b5f04cc7b7f47343f453fd/docs).
+The concept on Main from 22 to 23 November 2026, a team's circle around the model, with the way of working in the model's `factory` part realized by fourteen skills of the standard and a state of verdicts that the tool computed and bound, has no archive branch yet; its documentation is at [`91ca6123`](https://github.com/Glacius-Labs/Markitect/tree/91ca61235c97aa37e5b5f04cc7b7f47343f453fd/docs).
 
 The current concept has been on Main since 23 November 2026.
 
