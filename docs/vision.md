@@ -6,7 +6,18 @@ This page says why Markitect exists, where its trust comes from and what it leav
 
 Read this section first, then [Why Markitect exists](#why-markitect-exists), [Founding intent](#founding-intent) and [Common misreadings](#common-misreadings).
 
-**What it is: a way to architect a project in Markdown** ([DEC-119](decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-modeling-language)). An architect draws the plan, builders build to it, and an inspection checks the building against the plan. A change of plan goes through the architect. Markitect works the same way, with one difference: the plan lives and moves with every change. The model is the plan, and it is binding. Agents build to it, and the result is checked against it. Architecture is the whole design: what the project's concepts are and mean, how they relate, its interfaces, structure, rules and way of working.
+**What it is: a way to architect a project in Markdown** ([DEC-119](decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-modeling-language)). What a project's way of working sets up is a company that works by its rulebook ([DEC-160](decisions.md#dec-160-markitects-picture-is-a-company-that-works-by-its-rulebook)). It does not repeat one fixed process: it designs new things, decides, builds, accepts its work and improves its own way of working. People are its owner, and agents are its employees. The model is its rulebook, and it is binding: agents work by it, and the result is checked against it. The employees come to every assignment without memory, so what the rulebook does not say, nobody knows; this is why one complete, checked rulebook matters. Architecture is the whole design: what the project's concepts are and mean, how they relate, its interfaces, structure, rules and way of working.
+
+| In the company | In Markitect |
+|---|---|
+| The company | What a project's way of working sets up. A company can make anything; the default ships a software company. |
+| The owner | People. They found the company, set its purpose and goals and lay down the essentials of its rulebook. They can step in anywhere at any time, but have no routine step to do. |
+| The employees | Agents, each in a role and on a level. People may work in the company too. |
+| The product | What the company makes: its artifacts, such as code, tests, configuration and documentation. Its users are described in the model too. |
+| The rulebook | The model: what the company is, what it makes, how it works and what holds. The plan of the product is one part of it. |
+| The departments | Modules. A role answers for each, and its README states what it shows the others. |
+| A template rulebook | The default: a complete rulebook for a software company, which a new company adopts and then owns and changes. |
+| The language of every rulebook, and its check | Markitect: the language, and the tool that checks a rulebook for its form and its structural contradictions. The tool takes no part in the work. |
 
 **Who holds what.**
 - People maintain one authoritative place per project: the model. It is written in a typed, declarative modeling language in Markdown: documents with a type and ordinary links, grouped in modules whose READMEs say what each shows to the others. It states what is fixed about the project: its concepts, rules, boundaries, interfaces, structure and way of working.
@@ -40,7 +51,7 @@ Markitect expects people's work to move from writing code to architecture: desig
 - **Trust.** The author knew that the code reflected what was meant.
 - **Overview.** The author knew the project's state, how it works and how it is organized.
 
-Reading everything again would bring both back, and it would make people the bottleneck at the speed agents change a project. People's time belongs to ideas, concepts, organization and delegation: the work of a manager.
+Reading everything again would bring both back, and it would make people the bottleneck at the speed agents change a project. People's time belongs to ideas, concepts, organization and delegation: the work of an owner.
 
 **Today's substitutes have no measure.** People ask the agent how something works. They start separate sessions to look for bugs, to judge the architecture, to check that everything fits, and after a fix to check that nothing else broke. Each of these passes looks from one angle, and each does find what the implementing session missed. Two things limit them: "everything fits" has nothing to fit against, and a pass runs only when someone thinks of it. So projects add rules, processes and skills. These live in agent instructions and documentation. They are more artifacts to remember, to maintain and to keep uniform, and more for an agent to overlook. Consolidating them with an agent works on a small project, scales badly, and leaves nothing that shows the result is consistent.
 
@@ -101,11 +112,11 @@ Two claims stay apart ([DEC-138](decisions.md#dec-138-the-compiler-is-a-borrowed
 
 | Role | Responsibility |
 |---|---|
-| People | Decide what should exist and why; choose concepts, architecture, boundaries, rules and the way of working; answer for what the model means. |
+| People | Are the owner: set the purpose and goals; decide what should exist and why; choose concepts, architecture, boundaries, rules and the essentials of the way of working; answer for what the model means. They receive reports and can step in anywhere, with no routine step of their own. |
 | Markitect | Ship the language and a default to start from, with general types, a way of working and modules for the work; check the model, analyse it and help reading it. The tool writes nothing, keeps no state, starts no agent and steers no work. |
-| Agents | Write the model with people, realize it and check the result, as the project's way of working says. An agent's report is not a person's approval. |
+| Agents | Write the model with people, realize it and check the result, as the project's way of working says; agents in leading roles manage the day-to-day work. An agent's report is not a person's approval. |
 
-A real change of intent changes the model first. When intent is unchanged, a bug or a stale file is repaired against the same model; no artificial model edit is needed. The target human role is modeling and engineering judgment, not being a permanent agent scheduler, prompt supervisor or reader of every routine diff. Whether that work can actually be reduced is what Markitect has to show.
+A real change of intent changes the model first. When intent is unchanged, a bug or a stale file is repaired against the same model; no artificial model edit is needed. The target human role is the owner's: purpose and goals, modeling and engineering judgment, and stepping in where it matters, not being a permanent agent scheduler, prompt supervisor or reader of every routine diff. Whether that work can actually be reduced is what Markitect has to show.
 
 ## Expected outcomes
 
@@ -146,7 +157,7 @@ Check an assessment against this table before treating one of these as a finding
 | Misreading | Correct reading |
 |---|---|
 | Markitect is a linter or context tool for AI instructions such as rules, skills and `AGENTS.md`. | That is where the project began. With Markitect, people architect the whole project in Markdown, and agents realize it. Agent instructions are one kind of realization among many. |
-| Markitect is a tool for architecture documentation. | The model is the plan the project is built from, and it is binding: agents realize it, and the result is checked against it. Architecture covers the domain too: what a concept is, what can be done with it and how things relate. |
+| Markitect is a tool for architecture documentation. | The model is the rulebook the project works by, and it is binding: the plan of the product is one part of it, beside how the project works and what holds. Agents realize it, and the result is checked against it. Architecture covers the domain too: what a concept is, what can be done with it and how things relate. |
 | Markitect is a programming language. | Nothing in the model is executed, as in the specification languages TLA+ and Alloy. It is written in a typed, declarative modeling language: its structure is checked, and agents realize its content ([DEC-119](decisions.md#dec-119-people-architect-their-project-in-a-typed-declarative-modeling-language), [DEC-138](decisions.md#dec-138-the-compiler-is-a-borrowed-idea-and-two-claims-stay-apart)). People's work is architecture, and agents write the code. |
 | Markitect is a new, unproven formalism. | It builds on proven practice: a declared configuration as Terraform has it, static typing, and the characteristics of good requirements. What is new is that the statement of what the whole project should be is plain text checked deterministically, and that agents realize it. |
 | Markitect is a validator for Markdown, and building from the model is beside the point. | The model is there to be built from: delegated realization is the purpose it serves. Markitect ships the language, the default and the tool that make it possible, and none of the realization, which a project's way of working does ([DEC-001](decisions.md#dec-001-delegated-realization-is-the-purpose)). |
@@ -167,4 +178,4 @@ Markitect does not decide which architecture is right, which business goal matte
 
 ## Origin of the name
 
-**Markitect = Markdown + Architect.** The project began with architecture and process knowledge in readable documentation, rules, skills and agent instructions. The model is Markdown, typed by its own types. The name says what a person does with Markitect: architect their project in Markdown. The origin does not limit the product to agent instructions.
+**Markitect = Markdown + Architect.** The project began with architecture and process knowledge in readable documentation, rules, skills and agent instructions. The model is Markdown, typed by its own types. The name says what a person does with Markitect: architect in Markdown both the company that does a project's work and the product it makes. The origin does not limit the product to agent instructions.

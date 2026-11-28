@@ -4,6 +4,8 @@
 
 The model describes the whole project, its way of working included. That way of working is the project's own: Markitect gives the language to state it, and its default a way of working to start from, which the project copies and then owns ([DEC-154](../decisions.md#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads), [DEC-159](../decisions.md#dec-159-the-default-is-a-whole-model-to-start-from-and-lies-in-the-plugin)).
 
+What a project's way of working sets up is a company that works by its rulebook: people are its owner, agents its employees, the model its rulebook and the modules its departments, and the default is a template rulebook for a software company ([DEC-160](../decisions.md#dec-160-markitects-picture-is-a-company-that-works-by-its-rulebook); [vision](../vision.md#markitect-in-brief)). Terraform, below, is the image for how the model works: it states what should hold, and agents make the project match it.
+
 ## Terraform is the image
 
 Terraform makes infrastructure match a configuration that states what should exist. Markitect does the same for the intent of a project, with an agent where Terraform has its providers:
