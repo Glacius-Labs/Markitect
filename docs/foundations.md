@@ -17,7 +17,7 @@ This page says what Markitect builds on. For each of its solutions it names what
 | [The default and the tool](#the-default-and-the-tool) | Terraform's command line and modules, as an analogy |
 | [The tool's conventions](#the-tools-conventions) | The output of compilers and linters |
 
-[Related practice](#related-practice) says how Markitect differs from spec-driven development, and [weighed and not taken](#weighed-and-not-taken) what was considered and left out.
+[Related practice](#related-practice) says how Markitect differs from spec-driven development, retrieval, agent memory and ontologies, and [weighed and not taken](#weighed-and-not-taken) what was considered and left out.
 
 ## The model in the repository
 
@@ -101,6 +101,12 @@ This page says what Markitect builds on. For each of its solutions it names what
 
 **Spec-driven development**, as GitHub Spec Kit and Kiro practise it, writes a spec for each feature or fix, plans and implements it, and keeps standing project knowledge apart: Spec Kit's constitution, Kiro's steering files. Markitect keeps one standing model of the whole project: a change is a change to that model, which stays current after the change is built. What both share is that the agent works from a written statement of what is wanted rather than a prompt.
 
+**Retrieval-augmented generation** (Lewis et al. 2020) finds the passages of a body of text that resemble a question and adds them to the agent's context. It works on any text, but it finds by resemblance, and it does not know which passage holds and which is out of date. In a model an agent follows links: what a change reaches follows from its references, and the text is checked and binding. Retrieval can still be a way into a model, from which the links lead on.
+
+**Agent memory**, as MemGPT (Packer et al. 2023) and Mem0 (Chhikara et al. 2025) build it, keeps what an agent noted in earlier conversations and brings it back later. The agent writes it itself, and nobody checks it. It holds what an agent remembers, where the model holds what the project says should hold, written deliberately, checked and owned by the project.
+
+**Ontologies** in RDF with OWL give classes, individuals and relations a formal meaning, so that a reasoner can infer facts and find logical contradictions, and SHACL checks data against shapes. Markitect takes types and objects, typed properties, competency questions ([designing a good model](#designing-a-good-model)) and a check in a closed world like SHACL's, where what is missing is an error. Its content is prose that an agent interprets, not axioms, and nothing is inferred from it; the ontology languages themselves were weighed as the model's form and not taken ([weighed and not taken](#weighed-and-not-taken)).
+
 ## Weighed and not taken
 
 - **An ontology language or SysML v2 as the form of the model,** and front matter with typed fields. RDF with OWL and SHACL, SysML v2 and TypeScript were weighed. Markdown is what people and agents already write ([DEC-121](decisions.md#dec-121-a-model-is-plain-markdown-with-types-and-modules)).
@@ -120,6 +126,8 @@ Each source is named as in the text above. ISO standards are cited by their numb
 - ISO/IEC/IEEE 29148:2018, *Systems and software engineering — Life cycle processes — Requirements engineering*. <https://www.iso.org/standard/72089.html>
 - ISO/IEC/IEEE 42010:2022, *Software, systems and enterprise — Architecture description*. <https://www.iso.org/standard/74393.html>
 - OMG 2025: *OMG Systems Modeling Language (SysML), Version 2.0*. <https://www.omg.org/spec/SysML/2.0>
+- W3C 2012: *OWL 2 Web Ontology Language Document Overview (Second Edition)*. <https://www.w3.org/TR/owl2-overview/>
+- W3C 2017: *Shapes Constraint Language (SHACL)*. <https://www.w3.org/TR/shacl/>
 
 **Methods, tools and documentation**
 
@@ -138,13 +146,16 @@ Each source is named as in the text above. ISO standards are cited by their numb
 **Literature**
 
 - Bass, L., Clements, P., Kazman, R. *Software Architecture in Practice*, 2nd ed. Addison-Wesley, 2003. ISBN 0-321-15495-9.
+- Chhikara, P., Khant, D., Aryan, S., et al. Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory, 2025. <https://arxiv.org/abs/2504.19413>
 - Clements, P., Bachmann, F., Bass, L., Garlan, D., Ivers, J., Little, R., Merson, P., Nord, R., Stafford, J. *Documenting Software Architectures: Views and Beyond*, 2nd ed. Addison-Wesley, 2010. ISBN 978-0-321-55268-6.
 - Grüninger, M., Fox, M. S. Methodology for the Design and Evaluation of Ontologies. *Workshop on Basic Ontological Issues in Knowledge Sharing*, IJCAI-95, Montreal, 1995.
+- Lewis, P., Perez, E., Piktus, A., et al. Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks, 2020. <https://arxiv.org/abs/2005.11401>
 - Martin, R. C. *Agile Software Development, Principles, Patterns, and Practices*. Prentice Hall, 2002. ISBN 0-13-597444-5.
 - Meyer, B. Applying "Design by Contract". *IEEE Computer* 25(10), 1992, 40–51. doi:[10.1109/2.161279](https://doi.org/10.1109/2.161279)
 - Meyer, B. *Object-Oriented Software Construction*, 2nd ed. Prentice Hall, 1997. ISBN 978-0-13-629155-8.
 - Meyer, B. *Handbook of Requirements and Business Analysis*. Springer, 2022. doi:[10.1007/978-3-031-06739-6](https://doi.org/10.1007/978-3-031-06739-6)
 - Nygard, M. *Documenting Architecture Decisions*, 2011. <https://www.cognitect.com/blog/2011/11/15/documenting-architecture-decisions>
+- Packer, C., Wooders, S., Lin, K., et al. MemGPT: Towards LLMs as Operating Systems, 2023. <https://arxiv.org/abs/2310.08560>
 - Parnas, D. L. On the Criteria To Be Used in Decomposing Systems into Modules. *Communications of the ACM* 15(12), 1972, 1053–1058. doi:[10.1145/361598.361623](https://doi.org/10.1145/361598.361623)
 - Parnas, D. L., Clements, P. C. A Rational Design Process: How and Why to Fake It. *IEEE Transactions on Software Engineering* SE-12(2), 1986, 251–257. doi:[10.1109/TSE.1986.6312940](https://doi.org/10.1109/TSE.1986.6312940)
 - Tornhill, A. *Your Code as a Crime Scene*. Pragmatic Bookshelf, 2015. ISBN 978-1-68050-038-7.
