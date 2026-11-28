@@ -47,6 +47,16 @@ The decisions that hold for Markitect, grouped by topic, and the questions still
 - The [library](guides/library.md) guide and [the project](concept/the-project.md#the-default) page describe it, and the [project reference](guides/project-reference.md#setting-up-a-project-by-hand) gives the steps of setting up.
 - Reopen when a second provider's plugin needs the same files; when projects that start from the default repeatedly remove most of its way of working; or when the work kept in a model is repeatedly read as what should hold.
 
+### DEC-160 Markitect's picture is a company that works by its rulebook
+
+- What a project's way of working sets up is a company. It designs new things, decides, builds, accepts its work and improves its own way of working. A company can make anything; the default ships a software company ([DEC-159](#dec-159-the-default-is-a-whole-model-to-start-from-and-lies-in-the-plugin)).
+- People are the owner, not the managing director: they found the company, set its purpose and goals, and own the whole model, which they shape with agents and answer for ([DEC-119](#dec-119-people-architect-their-project-in-a-typed-declarative-modeling-language)). They receive reports and can step in anywhere at any time, and the day-to-day work holds no routine step of theirs; where the way of working says so, agents in leading roles manage the day-to-day work. Agents are the employees, each in a role and on a level, and people may work in the company too.
+- The model is the company's rulebook, and it is binding: what the company is, what it makes, how it works and what holds. The product, the company's artifacts, is planned in one part of it. Modules are its departments, the default is a template rulebook, and Markitect is the language every rulebook is written in and the tool that checks one, which takes no part in the work ([DEC-154](#dec-154-markitect-is-a-language-its-default-and-a-tool-that-only-reads)). The [vision](vision.md#markitect-in-brief) maps the picture in full.
+- The term stays "model": the picture explains it and does not replace it.
+- Why: the employees come to every assignment without memory, so what the model does not say, nobody knows. The picture shows why one complete, checked model matters.
+- Weighed and not taken: a factory, which repeats one fixed process, where this company designs new things and improves its own way of working; and a building site, which explains only the product, not the organization, its improvement or the place of people.
+- Reopen when the picture misleads people or agents about what Markitect does, or when a better-fitting picture is found.
+
 <a id="dec-001-delegated-realization-is-central-to-the-product"></a>
 
 ### DEC-001 Delegated realization is the purpose
